@@ -10,13 +10,11 @@ release=1
 source=(https://download.qt.io/official_releases/qt/${version%.*}/$version/submodules/qtwebengine-everywhere-src-$version.tar.xz
   ninja-1.12-2.patch
   no-h264.patch
-  03-gn-bootstrap.patch
-  pipewire14.patch
-  add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
-)
+  03-gn-bootstrap.patch)
 
 build() {
-  SYSLIBS="freetype harfbuzz-ng libdrm libevent libpng libxml libxslt"
+  # WARNING: QtWebEngine won't be built. Could not find all necessary libraries for qpa-xcb support. X11:YES LIBDRM:YES XCOMPOSITE:YES XCURSOR:YES XRANDR:YES XI:YES XPROTO:YES XSHMFENCE:YES XTST:YES
+  
 
   prt-get isinst alsa-lib && PKGMK_QT6+=' -D QT_FEATURE_webengine_system_alsa=ON'
   prt-get isinst krb5 && PKGMK_QT6+=' -D QT_FEATURE_webengine_kerberos=ON'
@@ -36,22 +34,25 @@ build() {
   sed -e 's/^#define BA_LB_COUNT.*$/#define BA_LB_COUNT 40/' \
     -i qtwebengine-everywhere-src-$version/src/3rdparty/chromium/third_party/blink/renderer/platform/text/text_break_iterator.cc
 
-  patch -Np1 -d qtwebengine-everywhere-src-$version -i $SRC/ninja-1.12-2.patch
+   patch -Np1 -d qtwebengine-everywhere-src-$version -i $SRC/ninja-1.12-2.patch
   patch -Np1 -d qtwebengine-everywhere-src-$version -i $SRC/no-h264.patch
   patch -Np1 -d qtwebengine-everywhere-src-$version -i $SRC/03-gn-bootstrap.patch
 
+
   cd $SRC/qtwebengine-everywhere-src-$version/src/3rdparty/chromium
+pushd src/3rdparty/chromium/third_party/webrtc/modules &&
+
+  sed -e "88 s/proxy_/reinterpret_cast<pw_node*>(&)/"       \
+      -e "120s/that->proxy_/reinterpret_cast<pw_node*>(&)/" \
+      -i video_capture/linux/pipewire_session.cc            &&
+
+popd
   ./build/linux/unbundle/replace_gn_files.py --system-libraries $SYSLIBS
-  patch -Np1 -i $SRC/pipewire14.patch
-  patch -Np1 -i $SRC/add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
 
-  ./build/linux/unbundle/replace_gn_files.py --system-libraries $SYSLIBS
+cd $SRC
+#  export NINJAFLAGS="-j $(( $(awk '/^MemAvailable:/ {print $2}' /proc/meminfo) / 3000000))"
 
-  cd $SRC
-
-  export NINJAFLAGS="-j $(( $(awk '/^MemAvailable:/ {print $2}' /proc/meminfo) / 3000000))"
-
-    PYTHON=/usr/bin/python3 \
+  PYTHON=/usr/bin/python3 \
   cmake -S qtwebengine-everywhere-src-$version -B build -G Ninja $PKGMK_QT6 \
     -D CMAKE_BUILD_TYPE=Release \
     -D CMAKE_CXX_FLAGS_RELEASE="$CXXFLAGS" \

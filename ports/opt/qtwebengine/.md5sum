@@ -1,4 +1,6 @@
 155d8959a5d72507b6f9e238d60588fd  03-gn-bootstrap.patch
+3d33f8598a13d0b25834578b73d7e6db  add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
 4db7d1c0d01ebaaf0b98b36d2fcfa9d0  ninja-1.12-2.patch
 bc614ee8b042bccf5883f7eaa3a2f133  no-h264.patch
-0c1c72b141b4ba24ce6ac9c1d149c3ce  qtwebengine-everywhere-src-6.8.3.tar.xz
+41af287ed717fb442d579c369e3b6d10  pipewire14.patch
+3a029321d733cd4a420ab99bd0488013  qtwebengine-everywhere-src-6.9.0.tar.xz
