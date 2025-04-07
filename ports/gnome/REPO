@@ -84,9 +84,9 @@ d:nautilus
 f:8baae93230e8b93069a9f1cf06dfc9a5:geocode-glib/.md5sum
 f:9d344d8275637d998039290ee83b17cc:geocode-glib/.footprint
 f:20140c059480cde9a4d5bd00583e3bf3:geocode-glib/Pkgfile
-f:38647995fe08122a4e5955446a60c595:gcr4/.md5sum
+f:2cf65dfc5c7912ba9e132607fa946c0b:gcr4/.md5sum
 f:4eec5cec00200897a96a7ad732e01119:gcr4/.footprint
-f:8854ab52544621c419de33de5edced26:gcr4/Pkgfile
+f:1c83279f3075a608ddea194ec5df04e8:gcr4/Pkgfile
 f:39d1fbcebb65f1aae4b0617eb8e99425:file-roller/.md5sum
 f:7229b9f68ac47a85c6265b270c120515:file-roller/.footprint
 f:ee9f0df236ca91aa1133d0180df1661e:file-roller/post-install

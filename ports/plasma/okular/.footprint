@@ -69,15 +69,6 @@ drwxr-xr-x	root/root	share/applications/
 -rwxr-xr-x	root/root	share/applications/okularApplication_tiff.desktop
 -rwxr-xr-x	root/root	share/applications/okularApplication_txt.desktop
 -rwxr-xr-x	root/root	share/applications/okularApplication_xps.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_comicbook.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_dvi.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_fax.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_fb.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_kimgio.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_pdf.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_tiff.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_txt.desktop
--rwxr-xr-x	root/root	share/applications/org.kde.mobile.okular_xps.desktop
 -rwxr-xr-x	root/root	share/applications/org.kde.okular.desktop
 drwxr-xr-x	root/root	share/config.kcfg/
 -rw-r--r--	root/root	share/config.kcfg/okular.kcfg

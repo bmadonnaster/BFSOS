@@ -5,7 +5,7 @@
 # Optional: lvm2 sphinx reiserfsprogs
 
 name=btrfs-progs
-version=6.13
+version=6.14
 release=1
 source=(https://www.kernel.org/pub/linux/kernel/people/kdave/$name/$name-v$version.tar.xz)
 
@@ -14,7 +14,7 @@ build() {
 
 	./configure --prefix=/usr           \
             --disable-static        \
-            --enable-documentation &&
+            --disable-documentation &&
 make
 	make DESTDIR=$PKG install
 #mkdir -p $PKG/usr/share/man/man8

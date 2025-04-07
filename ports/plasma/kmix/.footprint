@@ -10,8 +10,8 @@ drwxr-xr-x	root/root	opt/kf6/etc/xdg/autostart/
 -rw-r--r--	root/root	opt/kf6/etc/xdg/autostart/kmix_autostart.desktop
 -rw-r--r--	root/root	opt/kf6/etc/xdg/autostart/restore_kmix_volumes.desktop
 drwxr-xr-x	root/root	opt/kf6/lib/
--rwxr-xr-x	root/root	opt/kf6/lib/libkmixcore.so.24.12.0
-lrwxrwxrwx	root/root	opt/kf6/lib/libkmixcore.so.6 -> libkmixcore.so.24.12.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkmixcore.so.24.12.3
+lrwxrwxrwx	root/root	opt/kf6/lib/libkmixcore.so.6 -> libkmixcore.so.24.12.3
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/applications/
 -rwxr-xr-x	root/root	opt/kf6/share/applications/org.kde.kmix.desktop
