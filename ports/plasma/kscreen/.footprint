@@ -193,6 +193,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nb/
 drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kscreen.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kscreen_common.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/plasma_applet_org.kde.kscreen.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_kscreen.mo

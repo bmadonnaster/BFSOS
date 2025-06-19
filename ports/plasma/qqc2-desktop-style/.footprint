@@ -155,6 +155,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/lv/
 drwxr-xr-x	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/qqc2desktopstyle_qt.qm
+drwxr-xr-x	root/root	opt/kf6/share/locale/nb/
+drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/qqc2desktopstyle_qt.qm
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/qqc2desktopstyle_qt.qm

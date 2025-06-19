@@ -34,11 +34,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/Plasma5Support/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/Plasma5Support/Plasma5SupportTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/Plasma5Support/Plasma5SupportTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so -> libPlasma5Support.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so.6 -> libPlasma5Support.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasma5Support.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so.6 -> libPlasma5Support.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasma5Support.so.6.3.4
 lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so -> libplasma-geolocation-interface.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6 -> libplasma-geolocation-interface.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6 -> libplasma-geolocation-interface.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6.3.4
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma5support/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma5support/dataengine/

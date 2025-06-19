@@ -1,8 +1,8 @@
 drwxr-xr-x	root/root	opt/
 drwxr-xr-x	root/root	opt/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/
-lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-volume.so.6 -> libplasma-volume.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libplasma-volume.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-volume.so.6 -> libplasma-volume.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libplasma-volume.so.6.3.4
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kded/

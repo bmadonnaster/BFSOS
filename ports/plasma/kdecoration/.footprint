@@ -41,11 +41,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KDecoration3/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDecoration3/KDecoration3Targets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDecoration3/KDecoration3Targets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so -> libkdecorations3.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so.6 -> libkdecorations3.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so.6 -> libkdecorations3.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3.so.6.3.4
 lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so -> libkdecorations3private.so.2
-lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so.2 -> libkdecorations3private.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3private.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so.2 -> libkdecorations3private.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3private.so.6.3.4
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/locale/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/

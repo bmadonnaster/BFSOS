@@ -180,8 +180,8 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KF6WidgetsAddons/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6WidgetsAddons/KF6WidgetsAddonsTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6WidgetsAddons/KF6WidgetsAddonsTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6WidgetsAddons.so -> libKF6WidgetsAddons.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKF6WidgetsAddons.so.6 -> libKF6WidgetsAddons.so.6.11.0
--rwxr-xr-x	root/root	opt/kf6/lib/libKF6WidgetsAddons.so.6.11.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKF6WidgetsAddons.so.6 -> libKF6WidgetsAddons.so.6.13.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKF6WidgetsAddons.so.6.13.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/designer/
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/designer/kwidgetsaddons6widgets.so

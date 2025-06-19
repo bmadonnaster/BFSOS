@@ -108,6 +108,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ml/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/xdg-desktop-portal-kde.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/nb/
+drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/xdg-desktop-portal-kde.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/xdg-desktop-portal-kde.mo

@@ -38,10 +38,10 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KF6Baloo/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6Baloo/KF6BalooTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6Baloo/KF6BalooTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Baloo.so -> libKF6Baloo.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Baloo.so.6 -> libKF6Baloo.so.6.11.0
--rwxr-xr-x	root/root	opt/kf6/lib/libKF6Baloo.so.6.11.0
-lrwxrwxrwx	root/root	opt/kf6/lib/libKF6BalooEngine.so.6 -> libKF6BalooEngine.so.6.11.0
--rwxr-xr-x	root/root	opt/kf6/lib/libKF6BalooEngine.so.6.11.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Baloo.so.6 -> libKF6Baloo.so.6.13.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKF6Baloo.so.6.13.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKF6BalooEngine.so.6 -> libKF6BalooEngine.so.6.13.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKF6BalooEngine.so.6.13.0
 drwxr-xr-x	root/root	opt/kf6/lib/pkgconfig/
 -rw-r--r--	root/root	opt/kf6/lib/pkgconfig/KF6Baloo.pc
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/

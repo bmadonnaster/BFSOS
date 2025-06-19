@@ -60,11 +60,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/PlasmaQuick/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaQuick/PlasmaQuickTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaQuick/PlasmaQuickTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so -> libPlasma.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so.6 -> libPlasma.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasma.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so.6 -> libPlasma.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasma.so.6.3.4
 lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so -> libPlasmaQuick.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so.6 -> libPlasmaQuick.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaQuick.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so.6 -> libPlasmaQuick.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaQuick.so.6.3.4
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kirigami/

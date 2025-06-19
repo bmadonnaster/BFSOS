@@ -297,11 +297,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/kwin-6.0-reset-active-mouse-screen
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/kwin-6.1-remove-gridview-expose-shortcuts
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/kwin5_update_default_rules
-lrwxrwxrwx	root/root	opt/kf6/lib/libkcmkwincommon.so.6 -> libkcmkwincommon.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libkcmkwincommon.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libkcmkwincommon.so.6 -> libkcmkwincommon.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libkcmkwincommon.so.6.3.4
 lrwxrwxrwx	root/root	opt/kf6/lib/libkwin.so -> libkwin.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkwin.so.6 -> libkwin.so.6.3.2
--rwxr-xr-x	root/root	opt/kf6/lib/libkwin.so.6.3.2
+lrwxrwxrwx	root/root	opt/kf6/lib/libkwin.so.6 -> libkwin.so.6.3.4
+-rwxr-xr-x	root/root	opt/kf6/lib/libkwin.so.6.3.4
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/packagestructure/
@@ -1848,11 +1848,14 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kwin.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/nb/
 drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwin_effects.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwin_scripts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwin_virtualdesktops.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwindecoration.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwinrules.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwintabbox.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_kwinxwayland.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_virtualkeyboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcmkwincommon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcmkwincompositing.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcmkwinscreenedges.mo
