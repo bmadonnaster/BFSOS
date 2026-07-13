@@ -1,7 +1,7 @@
 # See also services(5) and IANA offical page :
 # https://www.iana.org/assignments/service-names-port-numbers
 #
-# (last updated 2025-08-07)
+# (last updated 2026-06-17)
 tcpmux           1/tcp      # TCP Port Service Multiplexer
 tcpmux           1/udp      # TCP Port Service Multiplexer
 rje              5/tcp      # Remote Job Entry
@@ -1328,12 +1328,6 @@ pkix-3-ca-ra     829/tcp    # PKIX-3 CA/RA
 pkix-3-ca-ra     829/udp    # PKIX-3 CA/RA
 netconf-ssh      830/tcp    # NETCONF over SSH
 netconf-ssh      830/udp    # NETCONF over SSH
-netconf-beep     831/tcp    # NETCONF over BEEP
-netconf-beep     831/udp    # NETCONF over BEEP
-netconfsoaphttp  832/tcp    # NETCONF for SOAP over HTTPS
-netconfsoaphttp  832/udp    # NETCONF for SOAP over HTTPS
-netconfsoapbeep  833/tcp    # NETCONF for SOAP over BEEP
-netconfsoapbeep  833/udp    # NETCONF for SOAP over BEEP
 dhcp-failover2   847/tcp    # dhcp-failover 2
 dhcp-failover2   847/udp    # dhcp-failover 2
 gdoi             848/tcp    # GDOI
@@ -1995,8 +1989,8 @@ brcd             1323/tcp   # brcd
 brcd             1323/udp   # brcd
 delta-mcp        1324/tcp   # delta-mcp
 delta-mcp        1324/udp   # delta-mcp
-dx-instrument    1325/tcp   # DX-Instrument
-dx-instrument    1325/udp   # DX-Instrument
+dx-instrument    1325/tcp   # Thermo Fisher Scientific Instrumentation (Formally Dionex)
+dx-instrument    1325/udp   # Thermo Fisher Scientific Instrumentation (Formally Dionex)
 wimsic           1326/tcp   # WIMSIC
 wimsic           1326/udp   # WIMSIC
 ultrex           1327/tcp   # Ultrex
@@ -3304,8 +3298,8 @@ unisql           1978/tcp   # UniSQL
 unisql           1978/udp   # UniSQL
 unisql-java      1979/tcp   # UniSQL Java
 unisql-java      1979/udp   # UniSQL Java
-pearldoc-xact    1980/tcp   # PearlDoc XACT
-pearldoc-xact    1980/udp   # PearlDoc XACT
+panquest-xact    1980/tcp   # PanQuest XACT
+panquest-xact    1980/udp   # PanQuest XACT
 p2pq             1981/tcp   # p2pQ
 p2pq             1981/udp   # p2pQ
 estamp           1982/tcp   # Evidentiary Timestamp
@@ -7692,8 +7686,8 @@ perrla           4313/tcp   # PERRLA User Services
 choiceview-agt   4314/tcp   # ChoiceView Agent
 choiceview-clt   4316/tcp   # ChoiceView Client
 opentelemetry    4317/tcp   # OpenTelemetry Protocol
-fox-skytale      4319/tcp   # Fox SkyTale encrypted communication
-fox-skytale      4319/udp   # Fox SkyTale encrypted communication
+skytale          4319/tcp   # Sentyron SkyTale encrypted communication
+skytale          4319/udp   # Sentyron SkyTale encrypted communication
 fdt-rcatp        4320/tcp   # FDT Remote Categorization Protocol
 fdt-rcatp        4320/udp   # FDT Remote Categorization Protocol
 rwhois           4321/tcp   # Remote Who Is
@@ -7816,8 +7810,8 @@ netcabinet-com   4409/tcp   # Net-Cabinet comunication
 itwo-server      4410/tcp   # RIB iTWO Application Server
 found            4411/tcp   # Found Messaging Protocol
 smallchat        4412/udp   # SmallChat
-avi-nms          4413/tcp   # AVI Systems NMS
-avi-nms-disc     4413/udp   # AVI Systems NMS
+vision-mon       4413/tcp   # FORTÉ Vision Monitoring platform
+vision-mon-disc  4413/udp   # FORTÉ Vision Monitoring platform
 updog            4414/tcp   # Updog Monitoring and Status Framework
 brcd-vr-req      4415/tcp   # Brocade Virtual Router Request
 pjj-player       4416/tcp   # PJJ Media Player
@@ -7881,6 +7875,8 @@ prregister       4457/udp   # PR Register
 mcp              4458/tcp   # Matrix Configuration Protocol
 mcp              4458/udp   # Matrix Configuration Protocol
 ntske            4460/tcp   # Network Time Security Key Establishment
+agtp             4480/tcp   # Agent Transfer Protocol
+agtp-quic        4480/udp   # Agent Transfer Protocol over QUIC
 hpssmgmt         4484/tcp   # hpssmgmt service
 hpssmgmt         4484/udp   # hpssmgmt service
 assyst-dr        4485/tcp   # Assyst Data Repository Service
@@ -8113,6 +8109,7 @@ roce             4791/udp   # IP Routable RocE
 unified-bus      4792/tcp   # IP Routable Unified Bus
 unified-bus      4792/udp   # IP Routable Unified Bus
 uet              4793/udp   # Ultra Ethernet Transport
+veroce           4794/udp   # veRoCE Transport Protocol
 iims             4800/tcp   # Icona Instant Messenging System
 iims             4800/udp   # Icona Instant Messenging System
 iwec             4801/tcp   # Icona Web Embedded Chat
@@ -8549,6 +8546,8 @@ hacl-poll        5315/udp   # HA Cluster UDP Polling
 hpbladems        5316/tcp   # HPBladeSystem Monitor Service
 hpdevms          5317/tcp   # HP Device Monitor Service
 pkix-cmc         5318/tcp   # PKIX Certificate Management using CMS (CMC)
+roughtime        5319/tcp   # Roughtime time synchronization
+roughtime        5319/udp   # Roughtime time synchronization
 bsfserver-zn     5320/tcp   # Webservices-based Zn interface of BSF
 bsfsvr-zn-ssl    5321/tcp   # Webservices-based Zn interface of BSF over SSL
 kfserver         5343/tcp   # Sculptor Database Server
@@ -9288,6 +9287,8 @@ joajewelsuite    6583/udp   # JOA Jewel Suite
 mshvlm           6600/tcp   # Microsoft Hyper-V Live Migration
 mstmg-sstp       6601/tcp   # Microsoft Threat Management Gateway SSTP
 wsscomfrmwk      6602/tcp   # Windows WSS Communication Framework
+bencher          6610/tcp   # Bencher API
+bencher          6610/udp   # Bencher API
 odette-ftps      6619/tcp   # ODETTE-FTP over TLS/SSL
 odette-ftps      6619/udp   # ODETTE-FTP over TLS/SSL
 kftp-data        6620/tcp   # Kerberos V5 FTP Data
@@ -10274,6 +10275,8 @@ apani4           9163/tcp   # apani4
 apani4           9163/udp   # apani4
 apani5           9164/tcp   # apani5
 apani5           9164/udp   # apani5
+sirius-agent     9183/tcp   # Sirius Configuration Agent
+sirius-agent     9183/udp   # Sirius Configuration Agent
 sun-as-jpda      9191/tcp   # Sun AppSvr JPDA
 sun-as-jpda      9191/udp   # Sun AppSvr JPDA
 wap-wsp          9200/tcp   # WAP connectionless session service
@@ -10498,6 +10501,7 @@ odnsp            9966/udp   # OKI Data Network Setting Protocol
 xybrid-rt        9978/tcp   # XYBRID RT Server
 visweather       9979/tcp   # Valley Information Systems Weather station data
 pumpkindb        9981/tcp   # Event sourcing database engine with a built-in programming language
+kaostransport    9986/tcp  
 dsm-scm-target   9987/tcp   # DSM/SCM Target Interface
 dsm-scm-target   9987/udp   # DSM/SCM Target Interface
 nsesrvr          9988/tcp   # Software Essentials Secure HTTP server
@@ -10678,6 +10682,7 @@ atm-uhas         11367/udp  # ATM UHAS
 hkp              11371/tcp  # OpenPGP HTTP Keyserver
 hkp              11371/udp  # OpenPGP HTTP Keyserver
 lsdp             11430/udp  # Lenbrook Service Discovery Protocol
+ollama           11434/tcp  # Ollama
 asgcypresstcps   11489/tcp  # ASG Cypress Secure Only
 tempest-port     11600/tcp  # Tempest Protocol Port
 tempest-port     11600/udp  # Tempest Protocol Port
@@ -11033,6 +11038,7 @@ notezilla-lan    21010/tcp  # Notezilla.Lan Server
 trinket-agent    21212/tcp  # Distributed artificial intelligence
 cohesity-agent   21213/tcp  # Cohesity backup agents
 aigairserver     21221/tcp  # Services for Air Server
+xahaud           21337/tcp  # Xahau P2P network protocol
 rdm-tfs          21553/tcp  # Raima RDM TFS
 dfserver         21554/tcp  # MineScape Design File Server
 dfserver         21554/udp  # MineScape Design File Server
@@ -11147,6 +11153,7 @@ binkp            24554/tcp  # BINKP
 binkp            24554/udp  # BINKP
 bilobit          24577/tcp  # bilobit Service
 bilobit-update   24577/udp  # bilobit Service Update
+udpstp           24601/udp  # UDP-based IP-Layer Capacity and Performance Measurement protocol
 sdtvwcam         24666/tcp 
 canditv          24676/tcp  # Canditv Message Service
 canditv          24676/udp  # Canditv Message Service
@@ -11263,6 +11270,8 @@ kingdomsonline   30260/tcp  # Kingdoms Online (CraigAvenue)
 kingdomsonline   30260/udp  # Kingdoms Online (CraigAvenue)
 gs-realtime      30400/tcp  # GroundStar RealTime System
 samsung-disc     30832/udp  # Samsung Convergence Discovery Protocol
+dilithium3       30939/tcp 
+dilithium3       30939/udp  # Kademlia DHT peer discovery and routing table maintenance.
 ovobs            30999/tcp  # OpenView Service Desk Client
 ovobs            30999/udp  # OpenView Service Desk Client
 ka-sddp          31016/tcp  # Kollective Agent Secure Distributed Delivery Protocol
@@ -11352,6 +11361,9 @@ profinet-rtm     34963/tcp  # PROFInet RT Multicast
 profinet-rtm     34963/udp  # PROFInet RT Multicast
 profinet-cm      34964/tcp  # PROFInet Context Manager
 profinet-cm      34964/udp  # PROFInet Context Manager
+profinet-cm-sec  34965/tcp  # PROFINET secure connection management and key provisioning
+profinet-cm-sec  34965/udp  # PROFINET secure connection management and key provisioning
+profinet-rt-sec  34966/udp 
 ethercat         34980/tcp  # EtherCAT Port
 ethercat         34980/udp  # EtherCAT Port
 heathview        35000/tcp  # HeathView
@@ -11462,8 +11474,8 @@ ciscocsdb        43441/udp  # Cisco NetMgmt DB Ports
 z-wave-tunnel    44123/tcp  # Z-Wave Secure Tunnel
 pmcd             44321/tcp  # PCP server (pmcd)
 pmcd             44321/udp  # PCP server (pmcd)
-pmcdproxy        44322/tcp  # PCP server (pmcd) proxy
-pmcdproxy        44322/udp  # PCP server (pmcd) proxy
+pmproxy          44322/tcp  # PCP proxy (pmproxy)
+pmproxy          44322/udp  # PCP proxy (pmproxy)
 pmwebapi         44323/tcp  # HTTP binding for Performance Co-Pilot client API
 cognex-dataman   44444/tcp  # Cognex DataMan Management Protocol
 acronis-backup   44445/tcp  # Acronis Backup Gateway service port
