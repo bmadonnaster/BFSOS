@@ -7,9 +7,12 @@ build_opt="--prefix=/usr
             --with-shared           
             --without-debug         
             --without-normal        
+	    --without-ada
             --with-cxx-shared       
             --enable-pc-files       
-            --with-pkg-config-libdir=/usr/lib/pkgconfig"
+            --with-pkg-config-libdir=/usr/lib/pkgconfig
+	    --disable-stripping 
+	    AWK=gawk"
 CFLAGS+=' -std=gnu17'
 bootstrap_build() {
 mkdir build
