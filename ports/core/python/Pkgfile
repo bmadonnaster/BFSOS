@@ -10,7 +10,7 @@ build_opt="--without-ensurepip
 	--enable-optimizations
 	--disable-test-modules"
 
-bootstrap_opt="--without-ensurepip --disable-test-modules"
+bootstrap_opt="--without-ensurepip --disable-test-modules --without-static-libpython"
 
 bootstrap_build() {
 cat > Modules/Setup.local <<-EOF 
@@ -19,6 +19,7 @@ readline
 _ctypes
 _uuid
 _blake2
+_zstd
 EOF
 ./configure --prefix=$TOOLS $bootstrap_opt
 make

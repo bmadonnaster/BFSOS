@@ -15,6 +15,8 @@ bootstrap_build() {
 			--disable-nls \
 			--disable-werror \
 			--enable-gprofng=no \
+			-enable-new-dtags \
+			--enable-default-hash-style=gnu \
 			--with-lib-path=$TOOLS/lib:$TOOLS/lib32:$TOOLS/libx32
 		make
 		mkdir -v $TOOLS/lib && ln -sv lib $TOOLS/lib64
@@ -27,12 +29,16 @@ bootstrap_build() {
 		RANLIB=$LFS_TGT-ranlib \
 		../configure \
 			--prefix=$TOOLS \
+			--enable-shared \
 			--disable-nls \
 			--disable-werror \
+			-enable-64-bit-bfd \
+			--enable-new-dtags \
+    			--enable-default-hash-style=gnu \
 			--with-lib-path=$TOOLS/lib \
 			--enable-gprofng=no \
 			--with-sysroot
-		make || make -j1
+		make CFLAGS="-O2 -DPATH_MAX=4096" || make -j1
 		make install
 		make -C ld clean
 		make -C ld LIB_PATH=/usr/lib:/lib:/usr/lib32:/usr/libx32

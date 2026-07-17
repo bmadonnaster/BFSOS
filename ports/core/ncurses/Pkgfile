@@ -1,7 +1,7 @@
 name=ncurses
 version=6.6
 release=1
-source=(https://invisible-mirror.net/archives/$name/current/$name-$version.tgz)
+source=(https://invisible-mirror.net/archives/$name/$name-$version.tar.gz)
 build_opt="--prefix=/usr           
             --mandir=/usr/share/man 
             --with-shared           
