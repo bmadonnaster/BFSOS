@@ -1,5 +1,7 @@
+# Add your top line text here
+# Your line to add at the top here
 name=linux-pam
-version=1.7.0
+version=1.7.2
 release=1
 source=(https://github.com/linux-pam/linux-pam/releases/download/v$version/Linux-PAM-$version.tar.xz
 https://anduin.linuxfromscratch.org/BLFS/Linux-PAM/Linux-PAM-$version-docs.tar.xz

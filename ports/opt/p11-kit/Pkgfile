@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: Provides a way to load and enumerate PKCS #11 (a Cryptographic Token Interface Standard) modules
 # URL:         
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  
 # Optional: libtasn1 make-ca gtk-doc libxslt nss
 name=p11-kit

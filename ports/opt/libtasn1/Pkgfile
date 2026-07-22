@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: Highly portable C library that encodes and decodes DER/BER data following an ASN.1 schema
 # URL:         
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:
 # Optional: gtk-doc valgrind
 

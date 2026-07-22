@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: generates fstab
 # URL:         https://github.com/glacion/genfstab
-# Maintainer:  
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: git  
 
 name=genfstab

@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: High productivity build system.
 # URL: https://mesonbuild.com/
-# Maintainer: CRUX System Team, core-ports at crux dot nu
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: python3-setuptools
 
 name=meson

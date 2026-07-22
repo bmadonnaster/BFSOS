@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: The Libxcrypt package contains a modern library for one-way hashing of passwords.
 # URL:         https://github.com/besser82/libxcrypt/
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  
 
 name=libxcrypt

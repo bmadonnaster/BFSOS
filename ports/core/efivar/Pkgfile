@@ -1,10 +1,12 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: Tools and library to manipulate EFI variables
 # URL:         
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  popt mandoc
 
 name=efivar
-version=38
+version=39
 release=1
 source=(https://github.com/rhboot/efivar/releases/download/$version/$name-$version.tar.bz2)
 

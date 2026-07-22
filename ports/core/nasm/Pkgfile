@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: 80x86 assembler
 # URL: https://www.nasm.us/
-# Maintainer: CRUX System Team, core-ports at crux dot nu
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Optional: asciidoc xmlto 
 
 name=nasm

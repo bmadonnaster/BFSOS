@@ -180,7 +180,7 @@ grep -B1 '^ /usr/include' dummy.log >> /tmp/adjusttoolchainresult
 grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g' >> /tmp/adjusttoolchainresult
 grep "/lib.*/libc.so.6 " dummy.log >> /tmp/adjusttoolchainresult
 grep found dummy.log >> /tmp/adjusttoolchainresult
-rm -v dummy.c a.out dummy.log
+rm -fv dummy.c a.out dummy.log
 EOF
 				chroot $LFS env -i PATH=$LFSPATH sh /tmp/glibc-postinstall
 				rm -f $LFS/tmp/glibc-postinstall
@@ -235,7 +235,7 @@ export TOOLS=/tmp/lfs-tools
 export LC_ALL=C
 export PATH=$TOOLS/bin:$PATH
 toolchainpkg="binutils-pass1 gmp mpfr mpc gcc-pass1 linux-headers glibc gcc-pass2 binutils-pass2 libxcrypt gcc-pass3 m4  ncurses bash bison bzip2 coreutils diffutils file findutils gawk gettext grep gzip make patch perl zlib xz libtirpc libnsl python sed tar texinfo  openssl ca-certificates curl libarchive"
-basepkg="aaa_filesystem linux-headers man-pages glibc tzdata zlib bzip2 xz file ncurses readline m4 bc binutils pkgconf libxcrypt gmp mpfr mpc attr acl gcc pkgconf libcap sed psmisc iana-etc bison flex pcre2 grep bash libtool gdbm gperf expat inetutils perl perl-xml-parser intltool autoconf automake openssl ca-certificates curl gettext elfutils libffi sqlite python coreutils check diffutils gawk findutils groff less gzip zstd iptables libtirpc iproute2 kbd libpipeline make patch man-db tar texinfo python3-setuptools python3-pip python3-flit-core python3-packaging python3-installer python3-build python3-pyproject-hooks python3-wheel util-linux meson ninja kmod linux-pam libcap shadow libpng which freetype fuse grub popt mandoc efivar efibootmgr grub-efi vim nano python3-markupsafe python3-packaging python3-tomli python3-pyproject-hooks python3-build python3-installer python3-pytz python3-babel python3-jinja2 systemd dbus procps-ng util-linux e2fsprogs libarchive pkgutils dialog prt-get httpup ports prt-utils signify"
+basepkg="aaa_filesystem linux-headers man-pages glibc autoconf  zlib bzip2 xz file ncurses readline m4 bc binutils pkgconf libxcrypt gmp mpfr mpc attr acl gcc libcap psmisc sed tzdata iana-etc bison flex pcre2 grep bash libtool gdbm gperf expat inetutils perl perl-xml-parser intltool autoconf automake openssl ca-certificates curl gettext elfutils libffi sqlite python coreutils check diffutils gawk findutils groff less gzip zstd iptables libtirpc iproute2 kbd libpipeline make patch man-db tar texinfo python3-setuptools python3-pip python3-flit-core python3-packaging python3-installer python3-build python3-pyproject-hooks python3-wheel util-linux meson ninja kmod linux-pam shadow libpng which freetype fuse grub popt mandoc efivar efibootmgr grub-efi vim nano python3-markupsafe python3-packaging python3-tomli python3-pyproject-hooks python3-build python3-installer python3-pytz python3-babel python3-jinja2 systemd dbus procps-ng util-linux e2fsprogs libarchive pkgutils dialog prt-get httpup ports prt-utils signify"
 
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"

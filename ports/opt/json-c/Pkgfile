@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: The JSON-C implements a reference counting object model that allows you to easily construct JSON objects in C, output them as JSON formatted strings and parse JSON formatted strings back into the C representation of JSON objects.
 # URL:          https://s3.amazonaws.com/
-# Maintainer:  cmake doxygen
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  graphviz
 
 name=json-c

@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: Vi Improved, a highly configurable, improved version of the vi text editor
 # URL:         https://www.vim.org/
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  acl gawk
 
 name=vim

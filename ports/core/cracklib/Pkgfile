@@ -1,6 +1,8 @@
+# Add your top line text here
+# Your line to add at the top here
 # Description: The CrackLib package contains a library used to enforce strong passwords by comparing user selected passwords to words in chosen word lists.
 # URL:          https://github.com/cracklib/
-# Maintainer:  Emmett1, emmett1 dot 2miligrams at gmail dot com
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  
 
 name=cracklib
