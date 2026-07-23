@@ -1,7 +1,5 @@
-livecd /home/gentoo/bfs-linux-install # cat bootstrap.sh
-#!/bin/bash -e
 
-# Bootstrap environments do not necessarily have generated UTF-8 locales.
+otstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
 # deterministic.
 unset LC_CTYPE
@@ -18,227 +16,11 @@ export LANGUAGE=C
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# BFS release. The VERSION file is authoritative when present.
-if [ -f "$SCRIPT_DIR/VERSION" ]; then
-    BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
-else
-    BFS_VERSION="0.9.0"
-fi
-
-BUILD_DATE="$(date +%Y%m%d)"
-
-ARCHIVE_DIR="$SCRIPT_DIR/archives"
-TOOLCHAIN_ARCHIVE_DIR="$ARCHIVE_DIR/toolchain"
-BASE_ARCHIVE_DIR="$ARCHIVE_DIR/base"
-
-_ensure_archive_dirs() {
-    mkdir -p "$TOOLCHAIN_ARCHIVE_DIR" "$BASE_ARCHIVE_DIR"
-}
-
-_clean_start() {
-    local answer
-
-    echo
-    echo "Start a completely clean BFS build?"
-    echo
-    echo "This will permanently delete:"
-    echo "  /tmp/lfs*"
-    echo "  $packagedir/*"
-    echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
-    echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
-    echo
-    printf "Type YES to continue, or press Enter to keep existing files: "
-    read -r answer
-
-    if [ "$answer" != "YES" ]; then
-        echo
-        echo "Keeping existing build files."
-        return 0
-    fi
-
-    case "$LFS" in
-        /tmp/lfs-rootfs)
-            ;;
-        *)
-            echo "ERROR: Refusing to remove unexpected LFS path: $LFS" >&2
-            exit 1
-            ;;
-    esac
-
-    case "$TOOLS" in
-        /tmp/lfs-tools)
-            ;;
-        *)
-            echo "ERROR: Refusing to remove unexpected tools path: $TOOLS" >&2
-            exit 1
-            ;;
-    esac
-
-    echo
-    echo "Removing old BFS build files..."
-
-    find /tmp \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -name 'lfs*' \
-        -print \
-        -exec sudo rm -rf -- {} +
-
-    sudo mkdir -p "$packagedir"
-
-    sudo find "$packagedir" \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -print \
-        -exec rm -rf -- {} +
-
-    _ensure_archive_dirs
-
-    sudo find "$TOOLCHAIN_ARCHIVE_DIR" \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -type f \
-        -name 'bfs-toolchain-*.tar.xz' \
-        -print \
-        -delete
-
-    sudo find "$BASE_ARCHIVE_DIR" \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -type f \
-        -name 'bfs-rootfs-*.tar.xz' \
-        -print \
-        -delete
-
-    echo
-    echo "Clean start completed."
-}
-
-_latest_archive() {
-    local directory="$1"
-    local pattern="$2"
-    local latest
-
-    latest="$(
-        find "$directory" -maxdepth 1 -type f -name "$pattern" -printf '%f\n' 2>/dev/null |
-            sort -V |
-            tail -n 1
-    )"
-
-    [ -n "$latest" ] || return 1
-
-    printf '%s/%s\n' "$directory" "$latest"
-}
-
-_clear_rootfs() {
-    case "$LFS" in
-        /tmp/lfs-rootfs)
-            ;;
-        *)
-            echo "ERROR: Refusing to clear unexpected LFS path: $LFS" >&2
-            exit 1
-            ;;
-    esac
-
-    mkdir -p "$LFS"
-    find "$LFS" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-}
-
-_restore_toolchain() {
-    local archive
-
-    archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR"         'bfs-toolchain-*.tar.xz')" || {
-        echo "ERROR: No toolchain archive found in:" >&2
-        echo "  $TOOLCHAIN_ARCHIVE_DIR" >&2
-        exit 1
-    }
-
-    echo "Restoring newest toolchain archive:"
-    echo "  $archive"
-
-    tar -tJf "$archive" >/dev/null
-
-    _clear_rootfs
-    tar -xJpf "$archive" -C "$LFS"
-
-    rm -f "$TOOLS"
-    ln -s "${LFS}${TOOLS}" "$TOOLS"
-
-    if [ ! -x "$TOOLS/bin/gcc" ] ||
-        [ ! -x "$TOOLS/bin/ld" ] ||
-        [ ! -x "$TOOLS/bin/pkgmk" ]
-    then
-        echo "ERROR: Restored toolchain failed verification." >&2
-        exit 1
-    fi
-
-    echo
-    echo "Toolchain restored successfully."
-    echo "Continue with:"
-    echo "  $0 2"
-}
-
-_restore_rootfs() {
-    local archive
-
-    archive="$(_latest_archive "$BASE_ARCHIVE_DIR"         'bfs-rootfs-*.tar.xz')" || {
-        echo "ERROR: No base rootfs archive found in:" >&2
-        echo "  $BASE_ARCHIVE_DIR" >&2
-        exit 1
-    }
-
-    echo "Restoring newest base rootfs archive:"
-    echo "  $archive"
-
-    tar -tJf "$archive" >/dev/null
-
-    _clear_rootfs
-    tar -xJpf "$archive" -C "$LFS"
-
-    for link in bin lib sbin; do
-        if [ ! -e "$LFS/$link" ]; then
-            ln -s "usr/$link" "$LFS/$link"
-        fi
-    done
-
-    if [ -d "$LFS/usr/lib32" ] && [ ! -e "$LFS/lib32" ]; then
-        ln -s usr/lib32 "$LFS/lib32"
-    fi
-
-    if [ -d "$LFS/usr/libx32" ] && [ ! -e "$LFS/libx32" ]; then
-        ln -s usr/libx32 "$LFS/libx32"
-    fi
-
-    mkdir -p         "$LFS/dev/pts"         "$LFS/proc"         "$LFS/run"         "$LFS/sys"         "$LFS/tmp"
-
-    if [ -d "${LFS}${TOOLS}" ]; then
-        rm -f "$TOOLS"
-        ln -s "${LFS}${TOOLS}" "$TOOLS"
-    fi
-
-    if [ ! -x "$LFS/usr/bin/bash" ] ||
-        [ ! -x "$LFS/usr/bin/gcc" ] ||
-        [ ! -f "$LFS/var/lib/pkg/db" ]
-    then
-        echo "ERROR: Restored base rootfs failed verification." >&2
-        exit 1
-    fi
-
-    echo
-    echo "Base rootfs restored successfully."
-    echo "Continue with:"
-    echo "  $0 3"
-}
-
 _buildtoolchain() {
-    _ensure_archive_dirs
-
     if [ "$(id -u)" = 0 ]; then
         echo "temporary toolchain need to build as regular user"
         exit 1
     fi
-
-    _clean_start
 
     export PATCH=~/bfs-linux-install/sources/
     export BOOTSTRAP=1
@@ -310,57 +92,140 @@ EOF
 
     rm -f /tmp/bootstrap.conf
 
-    local toolchain_archive
+    TMPPWD=$PWD
 
-    _ensure_archive_dirs
+    cd "$LFS"
 
-    toolchain_archive="$TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
+    rm -f "$TMPPWD/toolchain.tar.xz"
 
-    rm -f "$toolchain_archive"
+    XZ_DEFAULTS='-T0' tar -cvJpf "$TMPPWD/toolchain.tar.xz" *
 
-    (
-        cd "$LFS"
-        XZ_DEFAULTS='-T0' tar -cvJpf "$toolchain_archive" .
-    )
-
-    tar -tJf "$toolchain_archive" >/dev/null
+    cd "$TMPPWD"
 
     echo
-    echo "Toolchain build completed."
-    echo "Archive created:"
-    echo "  $toolchain_archive"
+    echo "toolchain build completed"
 }
 
 _compressrootfs() {
-    local rootfs_archive
+    TMPPWD=$PWD
 
-    _ensure_archive_dirs
+    cd "$LFS"
 
-    rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
+    rm -f "$TMPPWD/lfs-rootfs.tar.xz"
 
-    rm -f "$rootfs_archive"
+    XZ_DEFAULTS='-T0' tar \
+        --exclude='./var/lib/pkg/rejected' \
+        --exclude=".$TOOLS" \
+        --exclude='./tmp/*' \
+        --exclude='./dev/*' \
+        --exclude='./sys/*' \
+        --exclude='./proc/*' \
+        --exclude='./run/*' \
+        --exclude='./root/.cache' \
+        -cvJpf "$TMPPWD/lfs-rootfs.tar.xz" .
 
-    (
-        cd "$LFS"
-
-        XZ_DEFAULTS='-T0' tar \
-            --exclude='./var/lib/pkg/rejected' \
-            --exclude=".$TOOLS" \
-            --exclude='./tmp/*' \
-            --exclude='./dev/*' \
-            --exclude='./sys/*' \
-            --exclude='./proc/*' \
-            --exclude='./run/*' \
-            --exclude='./root/.cache' \
-            -cvJpf "$rootfs_archive" .
-    )
-
-    tar -tJf "$rootfs_archive" >/dev/null
+    cd "$TMPPWD"
 
     echo
-    echo "Base rootfs compressed successfully."
-    echo "Archive created:"
-    echo "  $rootfs_archive"
+    echo "base rootfs is compressed: $TMPPWD/lfs-rootfs.tar.xz"
+}
+
+_finalize_base_system() {
+    echo
+    echo "finalizing base system"
+
+    # Systemd installs a compatibility link from
+    # /usr/lib/environment.d/99-environment.conf to /etc/environment.
+    # Ensure its target exists even when the package was built before the
+    # corrected Systemd port was installed.
+    install -d -m 0755 "$LFS/etc"
+    touch "$LFS/etc/environment"
+    chmod 0644 "$LFS/etc/environment"
+
+    # Add the Systemd PAM session modules after both linux-pam and systemd
+    # have been installed.
+    install -d -m 0755 "$LFS/etc/pam.d"
+
+    if [ ! -f "$LFS/etc/pam.d/system-session" ]; then
+        echo "ERROR: missing /etc/pam.d/system-session" >&2
+        return 1
+    fi
+
+    if ! grep -q '^[[:space:]]*session[[:space:]].*pam_systemd\.so' \
+        "$LFS/etc/pam.d/system-session"
+    then
+        cat >> "$LFS/etc/pam.d/system-session" <<'EOF'
+
+# Begin Systemd addition
+
+session  required    pam_loginuid.so
+session  optional    pam_systemd.so
+
+# End Systemd addition
+EOF
+    fi
+
+    # Create users and groups declared by packages before generating the
+    # shadow and gshadow databases.
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /usr/bin/systemd-sysusers
+
+    # Shadow database conversion must operate on the completed target root,
+    # not on the live environment used to build the package.
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /usr/sbin/pwconv
+
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /usr/sbin/grpconv
+
+    chmod 0600 "$LFS/etc/shadow" "$LFS/etc/gshadow"
+    chown 0:0 "$LFS/etc/shadow" "$LFS/etc/gshadow"
+
+    # Initialize the machine ID in the target system and apply the installed
+    # unit preset policy. These commands need /proc, /sys, /dev, and /run,
+    # so they run before mountfs is torn down.
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /usr/bin/systemd-machine-id-setup
+
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /usr/bin/systemctl preset-all
+
+    echo "base system finalization completed"
 }
 
 _buildbase() {
@@ -654,6 +519,13 @@ EOF
         fi
     done
 
+    if [ "${1:-}" != rebuild ]; then
+        _finalize_base_system || {
+            umountfs
+            exit 1
+        }
+    fi
+
     umountfs
 
     echo
@@ -791,7 +663,6 @@ inetutils
 perl
 perl-xml-parser
 intltool
-autoconf
 automake
 openssl
 ca-certificates
@@ -847,18 +718,13 @@ grub-efi
 vim
 nano
 python3-markupsafe
-python3-packaging
 python3-tomli
-python3-pyproject-hooks
-python3-build
-python3-installer
 python3-pytz
 python3-babel
 python3-jinja2
 systemd
 dbus
 procps-ng
-util-linux
 e2fsprogs
 libarchive
 pkgutils
@@ -886,8 +752,6 @@ Options:
   2  build base system (using temporary toolchain)
   3  rebuild base system (using final system toolchain itself)
   4  compress base rootfs
-  5  resume from newest toolchain archive
-  6  resume from newest base rootfs archive
 EOF
 
     exit 0
@@ -905,12 +769,6 @@ case $1 in
         ;;
     4)
         _compressrootfs
-        ;;
-    5)
-        _restore_toolchain
-        ;;
-    6)
-        _restore_rootfs
         ;;
     *)
         echo "Unknown option: $1" >&2

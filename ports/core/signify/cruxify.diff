@@ -1,27 +1,16 @@
-diff -Napru pfefferminzbonbon
---- src.orig/usr.bin/signify/signify.c	2020-08-22 20:11:21.055823405 +0200
-+++ src/usr.bin/signify/signify.c	2020-08-22 20:15:28.105818708 +0200
-@@ -49,6 +49,10 @@
- #define COMMENTMAXLEN 1024
- #define VERIFYWITH "verify with "
- 
-+#ifndef SIGNIFYROOT
-+# define SIGNIFYROOT "/etc/signify"
-+#endif
-+
- struct enckey {
- 	uint8_t pkalg[2];
- 	uint8_t kdfalg[2];
-@@ -411,7 +415,7 @@ createsig(const char *seckeyfile, const
- 		else
- 			keyname++;
+diff -Naur outils-0.14.orig/src/usr.bin/signify/signify.c outils-0.14/src/usr.bin/signify/signify.c
+--- outils-0.14.orig/src/usr.bin/signify/signify.c	2025-06-06 18:01:28.245710973 +0200
++++ outils-0.14/src/usr.bin/signify/signify.c	2025-06-06 18:05:24.018125846 +0200
+@@ -405,7 +405,7 @@
+ 		const char *keyname = check_keyname_compliance(NULL, 
+ 		    seckeyfile);
  		nr = snprintf(sigcomment, sizeof(sigcomment),
 -		    VERIFYWITH "%.*s.pub", (int)strlen(keyname) - 4, keyname);
 +		    VERIFYWITH "%s/%.*s.pub", SIGNIFYROOT, (int)strlen(keyname) - 4, keyname);
- 		if (nr == -1 || nr >= sizeof(sigcomment))
- 			errx(1, "comment too long");
- 	} else {
-@@ -518,13 +522,20 @@ static void
+ 	}
+ 	if (nr < 0 || nr >= sizeof(sigcomment))
+ 		errx(1, "comment too long");
+@@ -507,13 +507,19 @@
  readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
      const char *sigcomment, const char *keytype)
  {
@@ -31,7 +20,6 @@ diff -Napru pfefferminzbonbon
  
  	if (!pubkeyfile) {
 +		size_t spl;
-+
  		pubkeyfile = strstr(sigcomment, VERIFYWITH);
 -		if (pubkeyfile && strchr(pubkeyfile, '/') == NULL) {
 -			pubkeyfile += strlen(VERIFYWITH);

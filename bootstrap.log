@@ -1,0 +1,151 @@
+/usr/ports/core/signify
+/bin/pkgmk: line 963: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+=======> Building '/var/cache/pkg/packages/signify#0.14-1.pkg.tar.xz'.
+bsdtar -p -o -C /tmp/pkgmk-signify/src -xf /var/cache/pkg/sources/outils-0.14.tar.gz
+bsdtar: Failed to set default locale
+cp cruxify.diff /tmp/pkgmk-signify/src
++ build
++ export DESTDIR=/tmp/pkgmk-signify/pkg
++ DESTDIR=/tmp/pkgmk-signify/pkg
++ export DEST_DIR=/tmp/pkgmk-signify/pkg
++ DEST_DIR=/tmp/pkgmk-signify/pkg
++ export INSTALLROOT=/tmp/pkgmk-signify/pkg
++ INSTALLROOT=/tmp/pkgmk-signify/pkg
++ export install_root=/tmp/pkgmk-signify/pkg
++ install_root=/tmp/pkgmk-signify/pkg
++ export INSTALL_ROOT=/tmp/pkgmk-signify/pkg
++ INSTALL_ROOT=/tmp/pkgmk-signify/pkg
++ export CARGO_HOME=/tmp
++ CARGO_HOME=/tmp
++ '[' https://github.com/leahneukirchen/outils/archive/v0.14/outils-0.14.tar.gz ']'
++ for s in source
++ case $s in
++ s=https://github.com/leahneukirchen/outils/archive/v0.14/outils-0.14.tar.gz
++ '[' '' ']'
++ srcdir=signify-0.14
++ '[' '!' -d signify-0.14 ']'
++ case $s in
+++ bsdtar -tf /var/cache/pkg/sources/outils-0.14.tar.gz
+++ cut -d / -f1
+++ head -n1
+bsdtar: Failed to set default locale
++ srcdir=outils-0.14
++ '[' outils-0.14 ']'
++ '[' -d outils-0.14 ']'
++ cd outils-0.14
++ _patch
++ '[' '' ']'
++ n=0
++ for i in ${source[@]}
++ '[' '' ']'
++ case $i in
++ n=1
++ for i in ${source[@]}
++ '[' '' ']'
++ case $i in
++ patch -t -p1 -i /tmp/pkgmk-signify/src/cruxify.diff
+patching file src/usr.bin/signify/signify.c
++ n=2
+++ command -v pkg_build
++ '[' pkg_build ']'
++ pkg_build
++ export 'CFLAGS+= -DSIGNIFYROOT=\"/etc/ports\"'
++ CFLAGS+=' -DSIGNIFYROOT=\"/etc/ports\"'
++ make PREFIX=/usr src/usr.bin/signify/signify
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/signify.o src/usr.bin/signify/signify.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/crypto_api.o src/usr.bin/signify/crypto_api.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/fe25519.o src/usr.bin/signify/fe25519.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/mod_ed25519.o src/usr.bin/signify/mod_ed25519.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/mod_ge25519.o src/usr.bin/signify/mod_ge25519.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/sc25519.o src/usr.bin/signify/sc25519.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/usr.bin/signify/zsig.o src/usr.bin/signify/zsig.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/pledge.o src/liboutils/pledge.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/strlcpy.o src/liboutils/strlcpy.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/base64.o src/liboutils/base64.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/explicit_bzero.o src/liboutils/explicit_bzero.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/ohash.o src/liboutils/ohash.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/arc4random.o src/liboutils/arc4random.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/getentropy_linux.o src/liboutils/getentropy_linux.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/readpassphrase.o src/liboutils/readpassphrase.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/sha2.o src/liboutils/sha2.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/sha256hl.o src/liboutils/sha256hl.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/sha512_256hl.o src/liboutils/sha512_256hl.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/sha512hl.o src/liboutils/sha512hl.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/timingsafe_bcmp.o src/liboutils/timingsafe_bcmp.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/bcrypt_pbkdf.o src/liboutils/bcrypt_pbkdf.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/blowfish.o src/liboutils/blowfish.c
+cc -O2 -march=x86-64 -pipe -DSIGNIFYROOT=\"/etc/ports\" -include src/liboutils/outils.h -isystem src/liboutils/include -Isrc/bin/md5 -D_GNU_SOURCE -D_DEFAULT_SOURCE -DNO_UTIL -D_PATH_INCLUDE="\"-I/usr/share/calendar\""  -c -o src/liboutils/freezero.o src/liboutils/freezero.c
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C): No such file or directory
+src/liboutils/getentropy_linux.c:23:9: warning: '_POSIX_C_SOURCE' redefined
+   23 | #define _POSIX_C_SOURCE 199309L
+      |         ^~~~~~~~~~~~~~~
+In file included from /usr/include/bits/libc-header-start.h:33,
+                 from /usr/include/stdio.h:28,
+                 from ./src/liboutils/outils.h:47,
+                 from <command-line>:
+/usr/include/features.h:319:10: note: this is the location of the previous definition
+  319 | # define _POSIX_C_SOURCE        202405L
+      |          ^~~~~~~~~~~~~~~
+src/liboutils/base64.c: In function '__b64_pton':
+src/liboutils/base64.c:211:21: warning: assignment discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  211 |                 pos = strchr(Base64, ch);
+      |                     ^
+cc -o src/usr.bin/signify/signify src/usr.bin/signify/signify.o src/usr.bin/signify/crypto_api.o src/usr.bin/signify/fe25519.o src/usr.bin/signify/mod_ed25519.o src/usr.bin/signify/mod_ge25519.o src/usr.bin/signify/sc25519.o src/usr.bin/signify/zsig.o src/liboutils/pledge.o src/liboutils/strlcpy.o src/liboutils/base64.o src/liboutils/explicit_bzero.o src/liboutils/ohash.o src/liboutils/arc4random.o src/liboutils/getentropy_linux.o src/liboutils/readpassphrase.o src/liboutils/sha2.o src/liboutils/sha256hl.o src/liboutils/sha512_256hl.o src/liboutils/sha512hl.o src/liboutils/timingsafe_bcmp.o src/liboutils/bcrypt_pbkdf.o src/liboutils/blowfish.o src/liboutils/freezero.o -Wl,--as-needed -lm
++ install -d /tmp/pkgmk-signify/pkg/usr/bin /tmp/pkgmk-signify/pkg/usr/share/man/man1
++ install -m 0755 src/usr.bin/signify/signify /tmp/pkgmk-signify/pkg/usr/bin/signify
++ install -m 0644 src/usr.bin/signify/signify.1 /tmp/pkgmk-signify/pkg/usr/share/man/man1/signify.1
++ '[' -d /tmp/pkgmk-signify/pkg/usr/share/info ']'
++ find /tmp/pkgmk-signify/pkg -name fonts.dir -exec rm '{}' ';'
++ find /tmp/pkgmk-signify/pkg -name fonts.scale -exec rm '{}' ';'
++ find /tmp/pkgmk-signify/pkg -name perllocal.pod -exec rm '{}' ';'
++ find /tmp/pkgmk-signify/pkg -name charset.alias -exec rm '{}' ';'
++ '[' -d /tmp/pkgmk-signify/pkg/usr/share/man ']'
++ for m in $PKG/usr/share/man/*
++ case ${m##*/} in
++ continue
++ '[' '!' '' ']'
++ find /tmp/pkgmk-signify/pkg -name '*.a' -exec rm '{}' ';'
++ '[' '!' '' ']'
++ find /tmp/pkgmk-signify/pkg -name '*.la' -exec rm '{}' ';'
++ '[' '!' '' ']'
++ rm -rf /tmp/pkgmk-signify/pkg/usr/share/locale
++ rm -rf /tmp/pkgmk-signify/pkg/usr/lib/locale
++ '[' '!' '' ']'
++ rm -rf /tmp/pkgmk-signify/pkg/usr/share/doc
++ rm -rf /tmp/pkgmk-signify/pkg/usr/doc
+=======> Build result:
+bsdtar: Failed to set default locale
+bsdtar: Failed to set default locale
+drwxr-xr-x  0 root   root        0 Jul 22 21:17 usr/
+drwxr-xr-x  0 root   root        0 Jul 22 21:17 usr/share/
+drwxr-xr-x  0 root   root        0 Jul 22 21:17 usr/bin/
+-rwxr-xr-x  0 root   root   203584 Jul 22 21:17 usr/bin/signify
+drwxr-xr-x  0 root   root        0 Jul 22 21:17 usr/share/man/
+drwxr-xr-x  0 root   root        0 Jul 22 21:17 usr/share/man/man1/
+-rw-r--r--  0 root   root     2299 Jul 22 21:17 usr/share/man/man1/signify.1.gz
+=======> WARNING: Footprint ignored.
+=======> Building '/var/cache/pkg/packages/signify#0.14-1.pkg.tar.xz' succeeded.
+
+base system build completed

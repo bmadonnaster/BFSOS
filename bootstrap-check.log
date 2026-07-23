@@ -1,0 +1,117 @@
+./bootstrap-check.sh: line 2: otstrap-check.sh: command not found
+
+=== Bootstrap checker configuration ===
+Check mode        : 2
+Project directory : /home/gentoo/bfs-linux-install
+Temporary tools   : /tmp/lfs-tools
+Root filesystem   : /tmp/lfs-rootfs
+Toolchain archive : /home/gentoo/bfs-linux-install/toolchain.tar.xz
+Running as UID    : 0
+
+=== Host prerequisites ===
+[PASS] Host command available: bash
+[PASS] Host command available: file
+[PASS] Host command available: find
+[PASS] Host command available: readelf
+[PASS] Host command available: tar
+[PASS] Host command available: xz
+[PASS] Host command available: chroot
+
+=== Stage 2 root filesystem ===
+[PASS] Directory exists: /tmp/lfs-rootfs
+
+=== Stage 2 filesystem hierarchy ===
+[PASS] Directory exists: /tmp/lfs-rootfs/bin
+[PASS] Directory exists: /tmp/lfs-rootfs/boot
+[PASS] Directory exists: /tmp/lfs-rootfs/dev
+[PASS] Directory exists: /tmp/lfs-rootfs/etc
+[PASS] Directory exists: /tmp/lfs-rootfs/home
+[PASS] Directory exists: /tmp/lfs-rootfs/lib
+[PASS] Directory exists: /tmp/lfs-rootfs/proc
+[PASS] Directory exists: /tmp/lfs-rootfs/root
+[PASS] Directory exists: /tmp/lfs-rootfs/run
+[PASS] Directory exists: /tmp/lfs-rootfs/sbin
+[PASS] Directory exists: /tmp/lfs-rootfs/sys
+[PASS] Directory exists: /tmp/lfs-rootfs/tmp
+[PASS] Directory exists: /tmp/lfs-rootfs/usr
+[PASS] Directory exists: /tmp/lfs-rootfs/var
+
+=== Stage 2 essential executables ===
+[PASS] Executable exists: /tmp/lfs-rootfs/bin/bash
+[PASS] Executable exists: /tmp/lfs-rootfs/bin/sh
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/env
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/gcc
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/g++
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/ld
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/as
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/make
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/sed
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/grep
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/awk
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/find
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/tar
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/python3
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/openssl
+[PASS] Executable exists: /tmp/lfs-rootfs/usr/bin/pkgmk
+
+=== Stage 2 essential configuration ===
+[PASS] File exists: /tmp/lfs-rootfs/etc/passwd
+[PASS] File exists: /tmp/lfs-rootfs/etc/group
+[PASS] File exists: /tmp/lfs-rootfs/etc/shadow
+[PASS] File exists: /tmp/lfs-rootfs/etc/gshadow
+[PASS] File exists: /tmp/lfs-rootfs/etc/nsswitch.conf
+[PASS] File exists: /tmp/lfs-rootfs/etc/hosts
+[PASS] File exists: /tmp/lfs-rootfs/etc/os-release
+[PASS] File exists: /tmp/lfs-rootfs/etc/profile
+[PASS] Root account exists in /etc/passwd
+[PASS] Root group exists in /etc/group
+[PASS] /etc/shadow permissions are restricted
+
+=== Stage 2 libraries and dynamic linker ===
+[PASS] Dynamic linker found
+[PASS] C library found
+[PASS] C++ runtime library found
+[PASS] No dangling symlinks under /tmp/lfs-rootfs/usr
+
+=== Stage 2 chroot availability ===
+[PASS] Entered root filesystem with chroot
+
+=== Stage 2 chroot commands ===
+[PASS] Chroot command available: bash (/usr/bin/bash)
+[PASS] Chroot command available: gcc (/usr/bin/gcc)
+[PASS] Chroot command available: g++ (/usr/bin/g++)
+[PASS] Chroot command available: ld (/usr/bin/ld)
+[PASS] Chroot command available: make (/usr/bin/make)
+[PASS] Chroot command available: pkgmk (/usr/bin/pkgmk)
+[PASS] Chroot command available: python3 (/usr/bin/python3)
+[PASS] Chroot command available: openssl (/usr/bin/openssl)
+[PASS] Chroot command available: tar (/usr/bin/tar)
+[PASS] Chroot command available: sed (/usr/bin/sed)
+[PASS] Chroot command available: grep (/usr/bin/grep)
+[PASS] Chroot command available: awk (/usr/bin/awk)
+
+=== Stage 2 compiler test inside chroot ===
+[PASS] Chroot GCC compiled and linked a test program
+[PASS] Stage 2 test program is an ELF executable
+[PASS] ELF interpreter: /lib/ld-linux-x86-64.so.2
+[PASS] Stage 2 test program executed inside chroot
+
+=== Stage 2 Python checks ===
+[PASS] Python runs inside chroot: 3.14.6
+[PASS] Python SSL module works: OpenSSL 4.0.1 9 Jun 2026
+[PASS] Python hashlib module works
+[PASS] Python pip works: pip 26.1.2 from /usr/lib/python3.14/site-packages/pip (python 3.14)
+
+=== Stage 2 OpenSSL checks ===
+[PASS] OpenSSL 4.0.1 9 Jun 2026 (Library: OpenSSL 4.0.1 9 Jun 2026)
+
+=== Stage 2 package database ===
+[PASS] CRUX package database exists
+[PASS] Package database contains entries: 43677
+
+=== Summary ===
+PASS: 77
+WARN: 0
+FAIL: 0
+
+Requested bootstrap checks passed.

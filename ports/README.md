@@ -115,7 +115,7 @@ Setting user, root  and password
 Setting locales
 ```
 # vim /etc/locales
-# echo "C.UTF-8 UTF-8" >> /etc/locales
+# echo "C UTF-8" >> /etc/locales
 # genlocales
 # echo "LANG=xx_YY.UTF-8" > /etc/locale.conf
 

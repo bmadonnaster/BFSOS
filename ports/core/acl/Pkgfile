@@ -5,3 +5,18 @@ version=2.4.0
 release=1
 source=(https://download.savannah.gnu.org/releases/$name/$name-$version.tar.xz)
 keep_static=1
+pkg_build() {
+    export CPPFLAGS="-I/usr/include"
+    export LDFLAGS="-L/usr/lib"
+
+    ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc \
+        --libexecdir=/usr/lib \
+        --localstatedir=/var \
+        --mandir=/usr/share/man \
+        --libdir=/usr/lib
+
+    make
+    make DESTDIR=$PKG install
+}

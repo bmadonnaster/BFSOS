@@ -1,17 +1,34 @@
-# Add your top line text here
-# Your line to add at the top here
+cription: Mozilla CA certificate bundle
+# URL: https://curl.se/docs/caextract.html
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+
 name=ca-certificates
 version=20260716
-release=1
-source=(cacert.pem)
+release=2
+
+source=(
+    cacert.pem
+)
 
 bootstrap_build() {
-	install -Dm644 $SRC/cacert.pem  $TOOLS/etc/ssl/cert.pem
+    install -D -m 0644 \
+        "$SRC/cacert.pem" \
+        "$TOOLS/etc/ssl/cert.pem"
 }
 
 pkg_build() {
-	install -Dm644 $SRC/cacert.pem  $PKG/etc/ssl/cert.pem
-	install -d $PKG/etc/ssl/certs
-	ln -s /etc/ssl/cert.pem $PKG/etc/ssl/certs/ca-certificates.crt
-	ln -s /etc/ssl/cert.pem $PKG/etc/ssl/ca-bundle.crt
+    install -D -m 0644 \
+        "$SRC/cacert.pem" \
+        "$PKG/etc/ssl/cert.pem"
+
+    install -d -m 0755 \
+        "$PKG/etc/ssl/certs"
+
+    ln -sfn \
+        /etc/ssl/cert.pem \
+        "$PKG/etc/ssl/certs/ca-certificates.crt"
+
+    ln -sfn \
+        /etc/ssl/cert.pem \
+        "$PKG/etc/ssl/ca-bundle.crt"
 }

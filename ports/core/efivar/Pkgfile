@@ -1,17 +1,24 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: Tools and library to manipulate EFI variables
-# URL:         
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  popt mandoc
+cription: Tools and libraries to manipulate EFI variables
+# URL: https://github.com/rhboot/efivar
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: popt
 
 name=efivar
 version=39
-release=1
-source=(https://github.com/rhboot/efivar/releases/download/$version/$name-$version.tar.bz2)
+release=2
+
+source=(
+    https://github.com/rhboot/$name/archive/$version/$name-$version.tar.gz
+)
 
 pkg_build() {
-	sed 's/docs//' -i Makefile
-	make -j1
-	make libdir=/usr/lib DESTDIR=$PKG install
+    make -j1 \
+        ENABLE_DOCS=0 \
+        libdir=/usr/lib
+
+    make \
+        ENABLE_DOCS=0 \
+        libdir=/usr/lib \
+        DESTDIR="$PKG" \
+        install
 }

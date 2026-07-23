@@ -4,3 +4,16 @@ name=attr
 version=2.6.0
 release=1
 source=(https://download.savannah.gnu.org/releases/$name/$name-$version.tar.gz)
+pkg_build() {
+    ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc \
+        --libexecdir=/usr/lib \
+        --localstatedir=/var \
+        --mandir=/usr/share/man \
+        --libdir=/usr/lib
+
+    make
+
+    make DESTDIR="$DESTDIR" install
+}

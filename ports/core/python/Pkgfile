@@ -4,6 +4,7 @@ name=python
 version=3.14.6
 release=1
 source=(https://www.$name.org/ftp/$name/$version/Python-$version.tar.xz
+	 Python-3.14.6-consolidated_fixes-1.patch
 	pyconfig.h)
 build_opt="--without-ensurepip
 	--enable-shared

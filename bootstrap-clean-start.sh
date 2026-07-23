@@ -42,7 +42,8 @@ _clean_start() {
     echo "Start a completely clean BFS build?"
     echo
     echo "This will permanently delete:"
-    echo "  /tmp/lfs*"
+    echo "  $LFS"
+    echo "  $TOOLS"
     echo "  $packagedir/*"
     echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
     echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
@@ -77,37 +78,30 @@ _clean_start() {
     echo
     echo "Removing old BFS build files..."
 
-    find /tmp \
+    sudo rm -rf -- "$LFS"
+    sudo rm -rf -- "$TOOLS"
+
+    mkdir -p "$packagedir"
+
+    find "$packagedir" \
         -mindepth 1 \
         -maxdepth 1 \
-        -name 'lfs*' \
-        -print \
-        -exec sudo rm -rf -- {} +
-
-    sudo mkdir -p "$packagedir"
-
-    sudo find "$packagedir" \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -print \
         -exec rm -rf -- {} +
 
     _ensure_archive_dirs
 
-    sudo find "$TOOLCHAIN_ARCHIVE_DIR" \
+    find "$TOOLCHAIN_ARCHIVE_DIR" \
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
         -name 'bfs-toolchain-*.tar.xz' \
-        -print \
         -delete
 
-    sudo find "$BASE_ARCHIVE_DIR" \
+    find "$BASE_ARCHIVE_DIR" \
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
         -name 'bfs-rootfs-*.tar.xz' \
-        -print \
         -delete
 
     echo
