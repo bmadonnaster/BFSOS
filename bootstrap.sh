@@ -1,4 +1,3 @@
-livecd /home/gentoo/bfs-linux-install # cat bootstrap.sh
 #!/bin/bash -e
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
@@ -17,6 +16,93 @@ export LANGUAGE=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
+
+PID_FILE="$SCRIPT_DIR/.bootstrap.pid"
+
+_stop_bootstrap() {
+    local pid=""
+    local pgid=""
+
+    if [ -f "$PID_FILE" ]; then
+        read -r pid pgid < "$PID_FILE" || true
+    fi
+
+    if [ -z "$pid" ] || [ -z "$pgid" ]; then
+        echo "No recorded BFS bootstrap process is running."
+        rm -f "$PID_FILE"
+        return 0
+    fi
+
+    if ! kill -0 "$pid" 2>/dev/null; then
+        echo "Recorded BFS bootstrap process is no longer running."
+        rm -f "$PID_FILE"
+        return 0
+    fi
+
+    echo "Stopping BFS bootstrap process group $pgid..."
+
+    kill -TERM -- "-$pgid" 2>/dev/null || true
+
+    for _ in 1 2 3 4 5; do
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 1
+    done
+
+    if kill -0 "$pid" 2>/dev/null; then
+        echo "Processes did not stop normally; forcing termination..."
+        kill -KILL -- "-$pgid" 2>/dev/null || true
+    fi
+
+    rm -f "$PID_FILE"
+    echo "BFS bootstrap stopped."
+}
+
+# The stop command must run outside the build's process group.
+case "${1:-}" in
+    0|stop|kill)
+        _stop_bootstrap
+        exit 0
+        ;;
+esac
+
+# Run every bootstrap stage in its own process group. This makes Ctrl+C and
+# the stop command terminate pkgmk, make, gcc, tar, and other descendants too.
+CURRENT_PGID="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"
+
+if [ "$$" != "$CURRENT_PGID" ]; then
+    exec setsid "$0" "$@"
+fi
+
+printf '%s %s\n' "$$" "$CURRENT_PGID" > "$PID_FILE"
+
+_cleanup_on_exit() {
+    local status=$?
+
+    trap - EXIT INT TERM HUP
+
+    if declare -F umountfs >/dev/null 2>&1; then
+        umountfs 2>/dev/null || true
+    fi
+
+    rm -f "$PID_FILE"
+    exit "$status"
+}
+
+_interrupt_bootstrap() {
+    echo
+    echo "Bootstrap interrupted. Stopping all child processes..."
+
+    trap - INT TERM HUP
+
+    # Kill every remaining process in this bootstrap process group except
+    # this shell, which will exit through the EXIT cleanup trap.
+    kill -TERM -- "-$$" 2>/dev/null || true
+    sleep 1
+    kill -KILL -- "-$$" 2>/dev/null || true
+}
+
+trap _interrupt_bootstrap INT TERM HUP
+trap _cleanup_on_exit EXIT
 
 # BFS release. The VERSION file is authoritative when present.
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
@@ -888,6 +974,8 @@ Options:
   4  compress base rootfs
   5  resume from newest toolchain archive
   6  resume from newest base rootfs archive
+  0  stop a running bootstrap and all child processes
+     aliases: stop, kill
 EOF
 
     exit 0
