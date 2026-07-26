@@ -34,13 +34,15 @@ bootstrap_build() {
     make
     make install
 
-    ln -sf libncursesw.so "$TOOLS/lib/libncurses.so"
+    ln -sf libncursesw.so \
+        "$TOOLS/lib/libncurses.so"
 
     popd
 }
 
-post_build () {
+post_build() {
     local real_lib
+    local abi
 
     mkdir -p "$PKG/lib"
 
@@ -50,7 +52,8 @@ post_build () {
             -type f \
             -name 'libncursesw.so.*' \
             -printf '%f\n' |
-        head -n 1
+        sort -V |
+        tail -n 1
     )
 
     if [ -z "$real_lib" ]; then
@@ -58,39 +61,59 @@ post_build () {
         return 1
     fi
 
-    mv "$PKG/usr/lib/$real_lib" "$PKG/lib/"
+    # Derive ABI major from the actual installed library name.
+    #
+    # Example:
+    #   libncursesw.so.6.6
+    # becomes:
+    #   6
+    abi="${real_lib#libncursesw.so.}"
+    abi="${abi%%.*}"
+
+    if [ -z "$abi" ] || [ "$abi" = "$real_lib" ]; then
+        echo "ERROR: Could not determine ncurses ABI from: $real_lib"
+        return 1
+    fi
+
+    mv "$PKG/usr/lib/$real_lib" \
+        "$PKG/lib/"
 
     # Wide ncurses linker and runtime links.
     ln -sf "../../lib/$real_lib" \
         "$PKG/usr/lib/libncursesw.so"
 
     ln -sf "$real_lib" \
-        "$PKG/lib/libncursesw.so.${version%%.*}"
+        "$PKG/lib/libncursesw.so.$abi"
 
     # Compatibility ncurses runtime library.
     ln -sf "$real_lib" \
-        "$PKG/lib/libncurses.so.${version%%.*}"
+        "$PKG/lib/libncurses.so.$abi"
 
     # libtinfo compatibility links.
     ln -sf "../../lib/$real_lib" \
         "$PKG/usr/lib/libtinfo.so"
 
     ln -sf "../../lib/$real_lib" \
-        "$PKG/usr/lib/libtinfo.so.${version%%.*}"
+        "$PKG/usr/lib/libtinfo.so.$abi"
 
     ln -sf ncursesw.pc \
         "$PKG/usr/lib/pkgconfig/tinfo.pc"
 
+    # Compatibility linker scripts and pkg-config files.
     for lib in ncurses form panel menu; do
         rm -f "$PKG/usr/lib/lib${lib}.so"
-        echo "INPUT(-l${lib}w)" >"$PKG/usr/lib/lib${lib}.so"
+
+        echo "INPUT(-l${lib}w)" \
+            >"$PKG/usr/lib/lib${lib}.so"
 
         ln -sf "${lib}w.pc" \
             "$PKG/usr/lib/pkgconfig/${lib}.pc"
     done
 
     rm -f "$PKG/usr/lib/libcursesw.so"
-    echo "INPUT(-lncursesw)" >"$PKG/usr/lib/libcursesw.so"
+
+    echo "INPUT(-lncursesw)" \
+        >"$PKG/usr/lib/libcursesw.so"
 
     ln -sf libncurses.so \
         "$PKG/usr/lib/libcurses.so"

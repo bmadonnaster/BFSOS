@@ -30,3 +30,25 @@ build_opt="
     --docdir=/usr/share/doc/$name-$version
     ADJTIME_PATH=/var/lib/hwclock/adjtime
 "
+
+# Temporary Stage-1 build used to break the util-linux <-> systemd
+# dependency cycle. The normal build remains the final BFS util-linux build.
+bootstrap_build() {
+    ./configure \
+        --prefix="$TOOLS" \
+        --libdir="$TOOLS/lib" \
+        --disable-static \
+        --disable-all-programs \
+        --enable-libuuid \
+        --enable-libblkid \
+        --enable-libmount \
+        --without-systemd \
+        --without-systemdsystemunitdir \
+        --disable-makeinstall-chown \
+        --disable-makeinstall-setuid \
+        --disable-makeinstall-tty-setgid
+
+    make -j"${JOBS:-$(nproc)}"
+    make install
+}
+

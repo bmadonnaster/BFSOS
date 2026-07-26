@@ -1,18 +1,13 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: A tool to display dialog boxes from shell scripts
-# URL: https://invisible-island.net/dialog/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: ncurses
+# URL:         https://invisible-island.net/dialog/
+# Maintainer:  Brian Madonna <bmadonnaster@gmail.com>
+# Depends on:  ncurses
 
 name=dialog
 version=1.3-20260107
 release=1
+
 source=(https://invisible-mirror.net/archives/$name/$name-$version.tgz)
 
-build () {
-	cd $name-$version
-	./configure --prefix=/usr --with-ncursesw
-	make
-	make DESTDIR=$PKG install
-}
+build_opt="--prefix=/usr
+           --with-ncursesw"

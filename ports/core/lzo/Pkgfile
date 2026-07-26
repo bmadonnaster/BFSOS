@@ -1,20 +1,9 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: Data compression library
-# URL:         
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  
-
 name=lzo
 version=2.10
 release=1
 source=(https://www.oberhumer.com/opensource/lzo/download/lzo-$version.tar.gz)
 
-build() {
-	cd $name-$version
-	./configure --prefix=/usr \
-                    --enable-shared \
-                    --disable-static
-        make
-        make DESTDIR=$PKG install
-}
+keep_static=0
+
+build_opt="--prefix=/usr
+           --enable-shared"

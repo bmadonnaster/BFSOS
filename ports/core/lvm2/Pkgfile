@@ -1,0 +1,16 @@
+# Description: Tools for managing logical volumes and device mappings
+# URL:         https://sourceware.org/lvm2/
+# Maintainer:  Brian Madonna <bmadonnaster@gmail.com>
+# Depends on:  libaio mdadm
+
+name=lvm2
+version=2.03.41
+release=1
+source=(https://sourceware.org/pub/lvm2/LVM2.$version.tgz)
+
+build_opt="--prefix=/usr
+           --enable-cmdlib
+           --enable-pkgconfig
+           --enable-systemd
+           --enable-dmeventd
+           --enable-udev_sync"

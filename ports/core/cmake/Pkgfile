@@ -1,26 +1,29 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: libuv ninja 
+# Description: Cross-platform build system
+# URL: https://cmake.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: curl expat libarchive ncurses openssl xz zlib
 
 name=cmake
-version=4.0.3
+version=4.4.0
 release=1
+
 source=(https://$name.org/files/v${version%.*}/$name-$version.tar.gz)
 
-build() {
-cd $name-$version
-export LC_ALL=C
-unset LANGUAGE
+pkg_build() {
+        export LC_ALL=C
+        unset LANGUAGE
 
-sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake &&
+        sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake
 
-./bootstrap --prefix=/usr        \
-            --system-libs        \
-            --mandir=/share/man  \
-            --no-system-jsoncpp  \
-            --no-system-cppdap   \
-            --no-system-librhash \
-            --docdir=/share/doc/$name-$version &&
-	make
-	make DESTDIR=$PKG install
+        ./bootstrap \
+                --prefix=/usr \
+                --system-libs \
+                --mandir=/share/man \
+                --docdir=/share/doc/$name-$version \
+                --no-system-jsoncpp \
+                --no-system-cppdap \
+                --no-system-librhash
+
+        make
+        make DESTDIR=$PKG install
 }

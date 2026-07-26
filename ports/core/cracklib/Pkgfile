@@ -22,13 +22,13 @@ PYTHON=python3               \
             --with-default-dict=/usr/lib/cracklib/pw_dict &&
 make
 make DESTDIR=$PKG install
-install -v -m644 -D    ../cracklib-words-2.9.11.xz \
+install -v -m644 -D    ../cracklib-words-$version.xz \
                          $PKG/usr/share/dict/cracklib-words.xz    &&
 
 unxz -v                  $PKG/usr/share/dict/cracklib-words.xz    &&
 ln -v -sf cracklib-words $PKG/usr/share/dict/words                &&
 echo $(hostname) >>      $PKG/usr/share/dict/cracklib-extra-words &&
-install -v -m755 -d      $PKG/usr/lib/cracklib                    &&
+install -v -m755 -d      $PKG/usr/lib/cracklib
 }
 
 

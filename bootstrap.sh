@@ -226,14 +226,21 @@ _clear_rootfs() {
             ;;
     esac
 
-    mkdir -p "$LFS"
-    find "$LFS" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+    /usr/bin/mkdir -p "$LFS"
+    /usr/bin/find "$LFS" -mindepth 1 -maxdepth 1 -exec /usr/bin/rm -rf -- {} +
 }
 
 _restore_toolchain() {
     local archive
+    local restored_tools="${LFS}${TOOLS}"
+    local listing_file
+    local toolchain_member=""
 
-    archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR"         'bfs-toolchain-*.tar.xz')" || {
+    archive="$(
+        _latest_archive \
+            "$TOOLCHAIN_ARCHIVE_DIR" \
+            'bfs-toolchain-*.tar.xz'
+    )" || {
         echo "ERROR: No toolchain archive found in:" >&2
         echo "  $TOOLCHAIN_ARCHIVE_DIR" >&2
         exit 1
@@ -241,33 +248,120 @@ _restore_toolchain() {
 
     echo "Restoring newest toolchain archive:"
     echo "  $archive"
+    echo
 
-    tar -tJf "$archive" >/dev/null
+    case "$restored_tools" in
+        /tmp/lfs-rootfs/tmp/lfs-tools)
+            ;;
+        *)
+            echo "ERROR: Refusing to replace unexpected toolchain path:" >&2
+            echo "  $restored_tools" >&2
+            exit 1
+            ;;
+    esac
 
-    _clear_rootfs
-    tar -xJpf "$archive" -C "$LFS"
+    # List the archive once. Some tar versions print members with a leading
+    # "./" and others do not, so stage 7 must accept either representation.
+    listing_file="$(/usr/bin/mktemp /tmp/bfs-toolchain-list.XXXXXX)"
 
-    rm -f "$TOOLS"
-    ln -s "${LFS}${TOOLS}" "$TOOLS"
+    if ! /usr/bin/nice -n 19 /bin/tar -tJf "$archive" > "$listing_file"; then
+        /usr/bin/rm -f "$listing_file"
+        echo "ERROR: Toolchain archive is unreadable or damaged." >&2
+        exit 1
+    fi
+
+    if grep -qx './tmp/lfs-tools' "$listing_file"; then
+        toolchain_member='./tmp/lfs-tools'
+    elif grep -qx 'tmp/lfs-tools' "$listing_file"; then
+        toolchain_member='tmp/lfs-tools'
+    elif grep -q '^\./tmp/lfs-tools/' "$listing_file"; then
+        toolchain_member='./tmp/lfs-tools'
+    elif grep -q '^tmp/lfs-tools/' "$listing_file"; then
+        toolchain_member='tmp/lfs-tools'
+    fi
+
+    if [ -z "$toolchain_member" ]; then
+        echo "ERROR: Toolchain archive does not contain the temporary toolchain:" >&2
+        echo "  tmp/lfs-tools" >&2
+        echo >&2
+        echo "Toolchain-like entries found:" >&2
+        grep -E '(^|/)lfs-tools(/|$)' "$listing_file" | head -20 >&2 || true
+        /usr/bin/rm -f "$listing_file"
+        exit 1
+    fi
+
+    # Do not require one exact archive spelling for gcc. Verify that the
+    # archive contains the toolchain tree, extract it, and then test the
+    # restored executable paths directly.
+    /usr/bin/rm -f "$listing_file"
+
+    # Stage 7 preserves an existing base rootfs and replaces only its
+    # temporary toolchain.
+    #
+    # PATH begins with /tmp/lfs-tools/bin. Once that symlink or directory is
+    # removed, unqualified commands may disappear mid-restore. Use the live
+    # system's absolute command paths during replacement and extraction.
+    /usr/bin/mkdir -p "$LFS/tmp"
+
+    # Remove the host-side convenience symlink before replacing its target.
+    /usr/bin/rm -f "$TOOLS"
+    /usr/bin/rm -rf "$restored_tools"
+
+    if ! /usr/bin/nice -n 19 /bin/tar -xJpf "$archive" \
+        -C "$LFS" \
+        "$toolchain_member"
+    then
+        echo "ERROR: Failed to extract the temporary toolchain." >&2
+        exit 1
+    fi
+
+    # Recreate:
+    # /tmp/lfs-tools -> /tmp/lfs-rootfs/tmp/lfs-tools
+    /usr/bin/ln -s "$restored_tools" "$TOOLS"
 
     if [ ! -x "$TOOLS/bin/gcc" ] ||
         [ ! -x "$TOOLS/bin/ld" ] ||
         [ ! -x "$TOOLS/bin/pkgmk" ]
     then
         echo "ERROR: Restored toolchain failed verification." >&2
+        echo >&2
+        echo "Expected executable files:" >&2
+        echo "  $TOOLS/bin/gcc" >&2
+        echo "  $TOOLS/bin/ld" >&2
+        echo "  $TOOLS/bin/pkgmk" >&2
+        echo >&2
+        echo "Available compiler/linker entries:" >&2
+        /usr/bin/find "$TOOLS/bin" -maxdepth 1 \
+            \( -name '*gcc*' -o -name 'cc' -o -name 'ld*' -o -name 'pkgmk' \) \
+            -printf '  %f -> %l\n' 2>/dev/null | /usr/bin/sort >&2 || true
         exit 1
     fi
 
-    echo
     echo "Toolchain restored successfully."
-    echo "Continue with:"
-    echo "  $0 2"
+    echo
+
+    if [ -x "$LFS/usr/bin/bash" ] &&
+        [ -x "$LFS/usr/bin/pkgmk" ] &&
+        [ -f "$LFS/var/lib/pkg/db" ]
+    then
+        echo "Existing base rootfs was preserved."
+        echo "Continue with:"
+        echo "  sudo $0 3"
+    else
+        echo "No completed base rootfs was detected."
+        echo "Continue with:"
+        echo "  sudo $0 2"
+    fi
 }
 
 _restore_rootfs() {
     local archive
 
-    archive="$(_latest_archive "$BASE_ARCHIVE_DIR"         'bfs-rootfs-*.tar.xz')" || {
+    archive="$(
+        _latest_archive \
+            "$BASE_ARCHIVE_DIR" \
+            'bfs-rootfs-*.tar.xz'
+    )" || {
         echo "ERROR: No base rootfs archive found in:" >&2
         echo "  $BASE_ARCHIVE_DIR" >&2
         exit 1
@@ -276,46 +370,59 @@ _restore_rootfs() {
     echo "Restoring newest base rootfs archive:"
     echo "  $archive"
 
-    tar -tJf "$archive" >/dev/null
+    # Stage 6 destroys the current rootfs, including any temporary toolchain
+    # living below it. Never use commands resolved through $TOOLS during this
+    # operation; use the live system's absolute command paths throughout.
+    if ! /bin/tar -tJf "$archive" >/dev/null; then
+        echo "ERROR: Base rootfs archive is unreadable or damaged." >&2
+        exit 1
+    fi
 
     _clear_rootfs
-    tar -xJpf "$archive" -C "$LFS"
+
+    if ! /bin/tar -xJpf "$archive" -C "$LFS"; then
+        echo "ERROR: Failed to extract base rootfs archive." >&2
+        exit 1
+    fi
 
     for link in bin lib sbin; do
         if [ ! -e "$LFS/$link" ]; then
-            ln -s "usr/$link" "$LFS/$link"
+            /usr/bin/ln -s "usr/$link" "$LFS/$link"
         fi
     done
 
     if [ -d "$LFS/usr/lib32" ] && [ ! -e "$LFS/lib32" ]; then
-        ln -s usr/lib32 "$LFS/lib32"
+        /usr/bin/ln -s usr/lib32 "$LFS/lib32"
     fi
 
     if [ -d "$LFS/usr/libx32" ] && [ ! -e "$LFS/libx32" ]; then
-        ln -s usr/libx32 "$LFS/libx32"
+        /usr/bin/ln -s usr/libx32 "$LFS/libx32"
     fi
 
-    mkdir -p         "$LFS/dev/pts"         "$LFS/proc"         "$LFS/run"         "$LFS/sys"         "$LFS/tmp"
+    /usr/bin/mkdir -p \
+        "$LFS/dev/pts" \
+        "$LFS/proc" \
+        "$LFS/run" \
+        "$LFS/sys" \
+        "$LFS/tmp"
 
-    if [ -d "${LFS}${TOOLS}" ]; then
-        rm -f "$TOOLS"
-        ln -s "${LFS}${TOOLS}" "$TOOLS"
-    fi
+    # A base-rootfs archive intentionally does not require the temporary
+    # bootstrap toolchain. Remove any stale host-side convenience symlink.
+    /usr/bin/rm -f "$TOOLS"
 
     if [ ! -x "$LFS/usr/bin/bash" ] ||
         [ ! -x "$LFS/usr/bin/gcc" ] ||
         [ ! -f "$LFS/var/lib/pkg/db" ]
     then
-        echo "ERROR: Restored base rootfs failed verification." >&2
+        echo "ERROR: Restored base rootfs failed basic verification." >&2
         exit 1
     fi
 
     echo
     echo "Base rootfs restored successfully."
-    echo "Continue with:"
-    echo "  $0 3"
+    echo "Verify the restored system with:"
+    echo "  sudo $0 4"
 }
-
 _buildtoolchain() {
     _ensure_archive_dirs
 
@@ -417,8 +524,183 @@ EOF
     echo "  $toolchain_archive"
 }
 
+_verifybase() {
+    local marker="$LFS/.bfs-verified"
+    local failed=0
+
+    if [ "$(id -u)" != 0 ]; then
+        echo "ERROR: Base verification must be run as root." >&2
+        exit 1
+    fi
+
+    echo
+    echo "========================================"
+    echo " BFS BASE SYSTEM VERIFICATION"
+    echo "========================================"
+    echo
+
+    # Never leave a stale success marker behind after a failed verification.
+    rm -f "$marker"
+
+    _verify_path() {
+        if [ -e "$1" ] || [ -L "$1" ]; then
+            printf '  [PASS] %s\n' "$1"
+        else
+            printf '  [FAIL] %s is missing\n' "$1" >&2
+            failed=1
+        fi
+    }
+
+    echo "Checking base filesystem..."
+    _verify_path "$LFS/usr/bin/bash"
+    _verify_path "$LFS/usr/bin/gcc"
+    _verify_path "$LFS/usr/bin/g++"
+    _verify_path "$LFS/usr/bin/ld"
+    _verify_path "$LFS/usr/bin/make"
+    _verify_path "$LFS/usr/bin/pkgmk"
+    _verify_path "$LFS/var/lib/pkg/db"
+    _verify_path "$LFS/etc"
+    _verify_path "$LFS/var"
+    _verify_path "$LFS/usr"
+
+    if [ "$failed" -ne 0 ]; then
+        echo
+        echo "ERROR: Base filesystem verification failed." >&2
+        return 1
+    fi
+
+    echo
+    echo "Mounting virtual filesystems for chroot tests..."
+    mountfs
+
+    if ! chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-dumb}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -c '
+            set -eu
+
+            pass() {
+                printf "  [PASS] %s\\n" "$1"
+            }
+
+            fail() {
+                printf "  [FAIL] %s\\n" "$1" >&2
+                exit 1
+            }
+
+            echo "Checking final toolchain..."
+            for cmd in gcc g++ ld make pkg-config pkgmk pkgadd pkginfo; do
+                command -v "$cmd" >/dev/null 2>&1 || fail "$cmd is not available"
+                pass "$cmd"
+            done
+
+            echo
+            echo "Checking shell and runtime linker..."
+            [ -x /bin/bash ] || fail "/bin/bash is not executable"
+            [ -e /bin/sh ] || fail "/bin/sh is missing"
+            readlink -e /bin/sh >/dev/null 2>&1 || fail "/bin/sh is a broken link"
+            pass "/bin/sh"
+
+            command -v ldconfig >/dev/null 2>&1 || fail "ldconfig is not available"
+            ldconfig -p >/dev/null 2>&1 || fail "ldconfig cache cannot be read"
+            pass "ldconfig"
+
+            ldd /bin/bash >/dev/null 2>&1 || fail "/bin/bash dynamic libraries cannot be resolved"
+            pass "/bin/bash dynamic libraries"
+
+            echo
+            echo "Checking for temporary-toolchain leakage..."
+            if gcc -dumpspecs | grep -Fq /tmp/lfs-tools; then
+                fail "GCC specs still reference /tmp/lfs-tools"
+            fi
+            pass "GCC specs contain no /tmp/lfs-tools references"
+
+            if gcc -print-search-dirs | grep -Fq /tmp/lfs-tools; then
+                fail "GCC search paths still reference /tmp/lfs-tools"
+            fi
+            pass "GCC search paths contain no /tmp/lfs-tools references"
+
+            echo
+            echo "Checking package database..."
+            pkginfo -i >/dev/null 2>&1 || fail "package database is not readable"
+            pass "package database"
+
+            echo
+            echo "Compiling and running a C test..."
+            cat > /tmp/bfs-verify.c <<"EOF_C"
+#include <stdio.h>
+int main(void) {
+    puts("BFS C compiler test passed");
+    return 0;
+}
+EOF_C
+            gcc /tmp/bfs-verify.c -o /tmp/bfs-verify-c || fail "C compilation failed"
+            /tmp/bfs-verify-c >/dev/null || fail "compiled C program failed to run"
+            pass "C compile and run"
+
+            echo
+            echo "Compiling and running a C++ test..."
+            cat > /tmp/bfs-verify.cpp <<"EOF_CPP"
+#include <iostream>
+int main() {
+    std::cout << "BFS C++ compiler test passed\\n";
+    return 0;
+}
+EOF_CPP
+            g++ /tmp/bfs-verify.cpp -o /tmp/bfs-verify-cpp || fail "C++ compilation failed"
+            /tmp/bfs-verify-cpp >/dev/null || fail "compiled C++ program failed to run"
+            pass "C++ compile and run"
+
+            rm -f \
+                /tmp/bfs-verify.c \
+                /tmp/bfs-verify.cpp \
+                /tmp/bfs-verify-c \
+                /tmp/bfs-verify-cpp
+        '
+    then
+        failed=1
+    fi
+
+    umountfs
+
+    if [ "$failed" -ne 0 ]; then
+        rm -f "$marker"
+        echo
+        echo "========================================" >&2
+        echo " BFS BASE SYSTEM VERIFICATION FAILED" >&2
+        echo "========================================" >&2
+        return 1
+    fi
+
+    cat > "$marker" << EOF
+BFS_VERSION=$BFS_VERSION
+BUILD_DATE=$BUILD_DATE
+VERIFIED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+EOF
+
+    echo
+    echo "Verification marker created:"
+    echo "  $marker"
+    echo
+    echo "========================================"
+    echo " BFS BASE SYSTEM VERIFICATION PASSED"
+    echo "========================================"
+}
+
 _compressrootfs() {
     local rootfs_archive
+
+    if [ ! -f "$LFS/.bfs-verified" ]; then
+        echo "ERROR: Base system has not passed stage 4 verification." >&2
+        echo "Run:" >&2
+        echo "  sudo $0 4" >&2
+        exit 1
+    fi
 
     _ensure_archive_dirs
 
@@ -451,9 +733,13 @@ _compressrootfs() {
 
 _buildbase() {
     if [ "$(id -u)" != 0 ]; then
-        echo "base need to build as root"
+        echo "ERROR: Stages 2 and 3 must be run as root." >&2
         exit 1
     fi
+
+    # Any Stage 2/3 build changes the rootfs. Require Stage 4 to verify it again
+    # before a new release archive can be created.
+    rm -f "$LFS/.bfs-verified"
 
     if [ ! -f "$LFS/var/lib/pkg/db" ]; then
         mkdir -pv "$LFS"/{etc,var} "$LFS"/usr/{bin,lib,sbin} "$LFS/dev"
@@ -511,8 +797,9 @@ _buildbase() {
 
     cp -r ports/ "$LFS/usr/"
 
-    cp files/pkgin "$TOOLS/bin/pkgin"
-    chmod +x "$TOOLS/bin/pkgin"
+    mkdir -p "$LFS/tmp/lfs-tools/bin"
+    cp files/pkgin "$LFS/tmp/lfs-tools/bin/pkgin"
+    chmod +x "$LFS/tmp/lfs-tools/bin/pkgin"
 
     mkdir -p "$LFS/var/lib/pkgmk"
 
@@ -543,6 +830,38 @@ PKGMK_WORK_DIR="/tmp/pkgmk-\$name"
 . /var/lib/pkgmk/extension
 EOF
 
+    cat > "$LFS/tmp/pkgmk.systemd-bootstrap.conf" <<EOF
+export LANG=C
+export LC_ALL=C
+export LANGUAGE=C
+
+# systemd needs these before final util-linux exists.
+export CFLAGS="-O2 -march=x86-64 -pipe"
+export CXXFLAGS="\${CFLAGS}"
+export LDFLAGS="-L/usr/lib -Wl,-rpath-link,/usr/lib"
+
+# Expose only the temporary util-linux libraries to systemd.
+# All other dependencies must come from the Stage-2 BFS system.
+export PKG_CONFIG_PATH="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
+export PKG_CONFIG_LIBDIR="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
+
+export JOBS=$(nproc)
+export MAKEFLAGS="-j \$JOBS"
+
+PKGMK_SOURCE_DIR="/$pkgmksrc"
+PKGMK_PACKAGE_DIR="/$pkgmkpkg"
+PKGMK_WORK_DIR="/tmp/pkgmk-\$name"
+
+. /var/lib/pkgmk/extension
+EOF
+
+    # Provide systemd with only the temporary util-linux pkg-config files.
+    mkdir -p "$LFS/tmp/systemd-util-linux-pc"
+
+    for pc in uuid blkid mount; do
+        cp "$LFS/tmp/lfs-tools/lib/pkgconfig/$pc.pc"             "$LFS/tmp/systemd-util-linux-pc/$pc.pc"
+    done
+
     LFSPATH=/bin:/usr/bin:/sbin:/usr/sbin
 
     if [ "${1:-}" != rebuild ]; then
@@ -566,6 +885,13 @@ EOF
                     ;;
             esac
 
+            pkgmk_conf=/tmp/pkgmk.conf
+
+            if [ "${1:-}" != rebuild ] && [ "$i" = systemd ]; then
+                pkgmk_conf=/tmp/pkgmk.systemd-bootstrap.conf
+                echo "Using temporary util-linux libraries for systemd bootstrap."
+            fi
+
             chroot "$LFS" \
                 env -i \
                 HOME=/root \
@@ -574,7 +900,7 @@ EOF
                 LC_ALL=C \
                 LANGUAGE=C \
                 PATH="$LFSPATH" \
-                pkgin -d "$i" -is -if -im -cf /tmp/pkgmk.conf \
+                pkgin -d "$i" -is -if -im -cf "$pkgmk_conf" \
                 || {
                     umountfs
                     exit 1
@@ -834,8 +1160,8 @@ openssl
 ca-certificates
 curl
 libarchive
+util-linux
 "
-
 basepkg="
 aaa_filesystem
 linux-headers
@@ -877,7 +1203,6 @@ inetutils
 perl
 perl-xml-parser
 intltool
-autoconf
 automake
 openssl
 ca-certificates
@@ -914,7 +1239,6 @@ python3-installer
 python3-build
 python3-pyproject-hooks
 python3-wheel
-util-linux
 meson
 ninja
 kmod
@@ -933,18 +1257,14 @@ grub-efi
 vim
 nano
 python3-markupsafe
-python3-packaging
 python3-tomli
-python3-pyproject-hooks
-python3-build
-python3-installer
 python3-pytz
 python3-babel
 python3-jinja2
 systemd
+util-linux
 dbus
 procps-ng
-util-linux
 e2fsprogs
 libarchive
 pkgutils
@@ -953,9 +1273,21 @@ prt-get
 httpup
 ports
 prt-utils
+lzo
+btrfs-progs
+dosfstools
+exfatprogs
+f2fs-tools
+mdadm
+libaio
+lvm2
+inih
+liburcu
+xfsprogs
+openssh
+genfstab
 signify
 "
-
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"
 
@@ -971,9 +1303,10 @@ Options:
   1  build temporary toolchain
   2  build base system (using temporary toolchain)
   3  rebuild base system (using final system toolchain itself)
-  4  compress base rootfs
-  5  resume from newest toolchain archive
-  6  resume from newest base rootfs archive
+  4  verify completed base system
+  5  create base rootfs archive
+  6  restore newest base rootfs archive
+  7  restore newest temporary toolchain archive (optional)
   0  stop a running bootstrap and all child processes
      aliases: stop, kill
 EOF
@@ -992,13 +1325,16 @@ case $1 in
         _buildbase rebuild
         ;;
     4)
-        _compressrootfs
+        _verifybase
         ;;
     5)
-        _restore_toolchain
+        _compressrootfs
         ;;
     6)
         _restore_rootfs
+        ;;
+    7)
+        _restore_toolchain
         ;;
     *)
         echo "Unknown option: $1" >&2
