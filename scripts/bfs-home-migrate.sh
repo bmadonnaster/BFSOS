@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bfs-home-migrate.sh
+# bfs-home-migrate-v7.sh
 #
 # Interactive BFS-Linux home-folder migration utility.
 #
@@ -36,6 +36,12 @@ TEMP_LISTS=()
 VERBOSE_TAR="no"
 SHOW_PROGRESS="yes"
 EXCLUDE_VOLATILE="yes"
+EXCLUDE_GIT="no"
+BACKUP_MODE="normal"
+CUSTOM_EXCLUSION_LABELS=()
+CUSTOM_EXCLUSION_PATTERNS=()
+SSH_CONTROL_DIR=""
+SSH_CONTROL_PATH=""
 
 die() {
     printf 'ERROR: %s\n' "$*" >&2
@@ -48,6 +54,15 @@ warn() {
 
 cleanup() {
     local file
+
+    if [[ -n "$SSH_CONTROL_PATH" && -n "${SCP_HOST:-}" ]]; then
+        ssh -o ControlPath="$SSH_CONTROL_PATH" -O exit "$SCP_HOST" \
+            >/dev/null 2>&1 || true
+    fi
+
+    if [[ -n "$SSH_CONTROL_DIR" && -d "$SSH_CONTROL_DIR" ]]; then
+        rm -rf -- "$SSH_CONTROL_DIR"
+    fi
 
     for file in "${TEMP_LISTS[@]:-}"; do
         [[ -n "$file" ]] && rm -f -- "$file"
@@ -443,6 +458,22 @@ split_scp_destination() {
         die "Invalid SSH destination: $destination"
 }
 
+start_ssh_master() {
+    SSH_CONTROL_DIR="$(mktemp -d /tmp/bfs-home-ssh.XXXXXX)"
+    SSH_CONTROL_PATH="$SSH_CONTROL_DIR/control"
+
+    ssh \
+        -o ControlMaster=yes \
+        -o ControlPersist=600 \
+        -o ControlPath="$SSH_CONTROL_PATH" \
+        -Nf \
+        "$SCP_HOST"
+}
+
+remote_ssh() {
+    ssh -o ControlPath="$SSH_CONTROL_PATH" "$SCP_HOST" "$@"
+}
+
 ensure_remote_space() {
     local destination="$1"
     local required_bytes="$2"
@@ -452,7 +483,7 @@ ensure_remote_space() {
     split_scp_destination "$destination"
 
     available_bytes="$(
-        ssh "$SCP_HOST" \
+        remote_ssh \
             "mkdir -p -- $(printf '%q' "$SCP_PATH") &&
              df -PB1 -- $(printf '%q' "$SCP_PATH") |
              awk 'NR == 2 {print \$4}'"
@@ -518,6 +549,18 @@ EOF
     done
 }
 
+append_git_excludes() {
+    local exclude_file="$1"
+    shift
+    local home_dir
+    local home_name
+
+    for home_dir in "$@"; do
+        home_name="${home_dir##*/}"
+        printf '%s\n' "$home_name/**/.git" "$home_name/**/.git/**" >> "$exclude_file"
+    done
+}
+
 normalize_tar_status() {
     local status="$1"
 
@@ -547,6 +590,8 @@ run_tar_command() {
         --xattrs
         --numeric-owner
         --one-file-system
+        --wildcards
+        --wildcards-match-slash
     )
     local status
 
@@ -580,13 +625,254 @@ unique_archive_path() {
     printf '%s\n' "$path"
 }
 
-configure_backup_display() {
-    if ask_yes_no "Exclude volatile cache and runtime files?" "y"; then
-        EXCLUDE_VOLATILE="yes"
-    else
-        EXCLUDE_VOLATILE="no"
+add_custom_exclusion() {
+    local label="$1"
+    shift
+    local pattern
+
+    CUSTOM_EXCLUSION_LABELS+=("$label")
+    for pattern in "$@"; do
+        CUSTOM_EXCLUSION_PATTERNS+=("$pattern")
+    done
+}
+
+custom_exclusion_selected() {
+    local label="$1"
+    local current
+
+    for current in "${CUSTOM_EXCLUSION_LABELS[@]:-}"; do
+        [[ "$current" == "$label" ]] && return 0
+    done
+
+    return 1
+}
+
+append_custom_excludes() {
+    local exclude_file="$1"
+    shift
+    local home_dir
+    local home_name
+    local pattern
+
+    for home_dir in "$@"; do
+        home_name="${home_dir##*/}"
+
+        for pattern in "${CUSTOM_EXCLUSION_PATTERNS[@]:-}"; do
+            printf '%s\n' "$home_name/$pattern" >> "$exclude_file"
+        done
+    done
+}
+
+show_custom_exclusion_review() {
+    local label
+
+    echo
+    echo "Selected exclusions:"
+
+    if (( ${#CUSTOM_EXCLUSION_LABELS[@]} == 0 )); then
+        echo "  None"
+        return
     fi
 
+    for label in "${CUSTOM_EXCLUSION_LABELS[@]}"; do
+        echo "  - $label"
+    done
+}
+
+configure_custom_exclusions() {
+    local selections
+    local selection
+    local custom_pattern
+    local done_selecting="no"
+    local -a requested=()
+
+    CUSTOM_EXCLUSION_LABELS=()
+    CUSTOM_EXCLUSION_PATTERNS=()
+
+    while [[ "$done_selecting" == "no" ]]; do
+        echo
+        echo "Custom backup exclusions"
+        echo
+        echo "1) Cache directories"
+        echo "   .cache, thumbnails, Flatpak application caches"
+        echo "2) Trash"
+        echo "   .local/share/Trash"
+        echo "3) Git metadata"
+        echo "   .git directories"
+        echo "4) Downloads folder"
+        echo "5) Virtual machines"
+        echo "   VirtualBox VMs, libvirt images"
+        echo "6) Steam and game installations"
+        echo "7) Common build output"
+        echo "   build, pkg, src, packages"
+        echo "8) node_modules"
+        echo "9) Browser caches"
+        echo "10) Add a custom path or tar pattern"
+        echo "11) Review exclusions"
+        echo "12) Clear all selections"
+        echo "13) Continue backup"
+        echo
+        read -r -p "Choose one or more numbers separated by spaces: " selections
+
+        read -r -a requested <<< "$selections"
+
+        for selection in "${requested[@]}"; do
+            case "$selection" in
+                1)
+                    if ! custom_exclusion_selected "Cache directories"; then
+                        add_custom_exclusion "Cache directories" \
+                            ".cache" ".cache/**" \
+                            ".thumbnails" ".thumbnails/**" \
+                            ".var/app/*/cache" ".var/app/*/cache/**" \
+                            ".var/app/*/.cache" ".var/app/*/.cache/**"
+                    fi
+                    ;;
+                2)
+                    if ! custom_exclusion_selected "Trash"; then
+                        add_custom_exclusion "Trash" \
+                            ".local/share/Trash" ".local/share/Trash/**"
+                    fi
+                    ;;
+                3)
+                    if ! custom_exclusion_selected "Git metadata"; then
+                        add_custom_exclusion "Git metadata" \
+                            "**/.git" "**/.git/**"
+                    fi
+                    ;;
+                4)
+                    if ! custom_exclusion_selected "Downloads folder"; then
+                        add_custom_exclusion "Downloads folder" \
+                            "Downloads" "Downloads/**"
+                    fi
+                    ;;
+                5)
+                    if ! custom_exclusion_selected "Virtual machines"; then
+                        add_custom_exclusion "Virtual machines" \
+                            "VirtualBox VMs" "VirtualBox VMs/**" \
+                            ".VirtualBox" ".VirtualBox/**" \
+                            ".local/share/libvirt/images" \
+                            ".local/share/libvirt/images/**"
+                    fi
+                    ;;
+                6)
+                    if ! custom_exclusion_selected "Steam and game installations"; then
+                        add_custom_exclusion "Steam and game installations" \
+                            ".steam" ".steam/**" \
+                            ".local/share/Steam" ".local/share/Steam/**" \
+                            ".var/app/com.valvesoftware.Steam" \
+                            ".var/app/com.valvesoftware.Steam/**"
+                    fi
+                    ;;
+                7)
+                    if ! custom_exclusion_selected "Common build output"; then
+                        add_custom_exclusion "Common build output" \
+                            "**/build" "**/build/**" \
+                            "**/pkg" "**/pkg/**" \
+                            "**/src" "**/src/**" \
+                            "**/packages" "**/packages/**"
+                    fi
+                    ;;
+                8)
+                    if ! custom_exclusion_selected "node_modules"; then
+                        add_custom_exclusion "node_modules" \
+                            "**/node_modules" "**/node_modules/**"
+                    fi
+                    ;;
+                9)
+                    if ! custom_exclusion_selected "Browser caches"; then
+                        add_custom_exclusion "Browser caches" \
+                            ".mozilla/firefox/*/cache2" \
+                            ".mozilla/firefox/*/cache2/**" \
+                            ".config/google-chrome/*/Cache" \
+                            ".config/google-chrome/*/Cache/**" \
+                            ".config/chromium/*/Cache" \
+                            ".config/chromium/*/Cache/**" \
+                            ".cache/mozilla" ".cache/mozilla/**" \
+                            ".cache/google-chrome" ".cache/google-chrome/**" \
+                            ".cache/chromium" ".cache/chromium/**"
+                    fi
+                    ;;
+                10)
+                    echo
+                    echo "Enter a path or GNU tar exclusion pattern relative to each home folder."
+                    echo "Examples:"
+                    echo "  Videos"
+                    echo "  bfs-linux-install/archives"
+                    echo "  **/*.iso"
+                    read -r -p "Custom path or pattern: " custom_pattern
+
+                    if [[ -z "$custom_pattern" ]]; then
+                        echo "No custom pattern added."
+                    elif [[ "$custom_pattern" == /* || "$custom_pattern" == ../* ]]; then
+                        echo "Use a path relative to the home folder, not an absolute path."
+                    else
+                        custom_pattern="${custom_pattern#./}"
+                        add_custom_exclusion "Custom: $custom_pattern" "$custom_pattern"
+                    fi
+                    ;;
+                11) show_custom_exclusion_review ;;
+                12)
+                    CUSTOM_EXCLUSION_LABELS=()
+                    CUSTOM_EXCLUSION_PATTERNS=()
+                    echo "All custom exclusions were cleared."
+                    ;;
+                13) done_selecting="yes" ;;
+                *) echo "Ignoring invalid selection: $selection" ;;
+            esac
+        done
+    done
+
+    show_custom_exclusion_review
+}
+
+select_backup_mode() {
+    local choice
+
+    echo
+    echo "Backup mode:"
+    echo "1) Full"
+    echo "   Include everything."
+    echo "2) Normal (recommended)"
+    echo "   Exclude volatile cache and runtime files."
+    echo "3) Compact"
+    echo "   Exclude volatile files and Git metadata directories (.git)."
+    echo "4) Custom"
+    echo "   Choose exactly which categories or paths to exclude."
+
+    while true; do
+        read -r -p "Choose [1-4]: " choice
+        case "$choice" in
+            1)
+                BACKUP_MODE="full"
+                EXCLUDE_VOLATILE="no"
+                EXCLUDE_GIT="no"
+                return
+                ;;
+            2)
+                BACKUP_MODE="normal"
+                EXCLUDE_VOLATILE="yes"
+                EXCLUDE_GIT="no"
+                return
+                ;;
+            3)
+                BACKUP_MODE="compact"
+                EXCLUDE_VOLATILE="yes"
+                EXCLUDE_GIT="yes"
+                return
+                ;;
+            4)
+                BACKUP_MODE="custom"
+                EXCLUDE_VOLATILE="no"
+                EXCLUDE_GIT="no"
+                configure_custom_exclusions
+                return
+                ;;
+            *) echo "Please choose 1, 2, 3, or 4." ;;
+        esac
+    done
+}
+
+configure_backup_display() {
     if ask_yes_no "Show each file as it is added to the archive?" "n"; then
         VERBOSE_TAR="yes"
     else
@@ -646,10 +932,16 @@ operation_backup() {
     local remote_archive
     local remote_temp
     local home_dir
+    local start_epoch
+    local end_epoch
+    local elapsed
+    local final_size
+    local checksum
+    local average_rate
     local -a tar_items=()
 
     require_root
-    require_commands tar xz du df find realpath awk sort ssh scp
+    require_commands tar xz du df find realpath awk sort ssh scp sha256sum stat
 
     home_root="$(read_path_with_default \
         "Location containing the user home folders" \
@@ -667,6 +959,7 @@ operation_backup() {
             "$home_root" "$skel_list" "${SELECTED_HOMES[@]}")"
     fi
 
+    select_backup_mode
     configure_backup_display
 
     if [[ "$EXCLUDE_VOLATILE" == "yes" ]]; then
@@ -676,6 +969,24 @@ operation_backup() {
         fi
 
         append_volatile_excludes "$exclude_file" "${SELECTED_HOMES[@]}"
+    fi
+
+    if [[ "$EXCLUDE_GIT" == "yes" ]]; then
+        if [[ -z "$exclude_file" ]]; then
+            exclude_file="$(mktemp)"
+            TEMP_LISTS+=("$exclude_file")
+        fi
+
+        append_git_excludes "$exclude_file" "${SELECTED_HOMES[@]}"
+    fi
+
+    if [[ "$BACKUP_MODE" == "custom" && ${#CUSTOM_EXCLUSION_PATTERNS[@]} -gt 0 ]]; then
+        if [[ -z "$exclude_file" ]]; then
+            exclude_file="$(mktemp)"
+            TEMP_LISTS+=("$exclude_file")
+        fi
+
+        append_custom_excludes "$exclude_file" "${SELECTED_HOMES[@]}"
     fi
 
     choose_backup_destination
@@ -688,6 +999,9 @@ operation_backup() {
     if [[ "$BACKUP_DEST_TYPE" == "local" ]]; then
         ensure_local_space "$BACKUP_DEST" "$source_size"
     else
+        split_scp_destination "$BACKUP_DEST"
+        echo "Opening shared SSH connection..."
+        start_ssh_master
         ensure_remote_space "$BACKUP_DEST" "$source_size"
     fi
 
@@ -708,7 +1022,12 @@ operation_backup() {
     echo "Included folders:"
     printf '  %s\n' "${SELECTED_HOMES[@]}"
     echo "Include skel files: $include_skel"
+    echo "Backup mode:        $BACKUP_MODE"
     echo "Exclude volatile:   $EXCLUDE_VOLATILE"
+    echo "Exclude .git:       $EXCLUDE_GIT"
+    if [[ "$BACKUP_MODE" == "custom" ]]; then
+        show_custom_exclusion_review
+    fi
     echo "Verbose file list:  $VERBOSE_TAR"
     echo "Progress meter:     $SHOW_PROGRESS"
     echo "Archive name:       $archive_name"
@@ -721,6 +1040,8 @@ operation_backup() {
         echo "Cancelled."
         return
     }
+
+    start_epoch="$(date +%s)"
 
     if [[ "$BACKUP_DEST_TYPE" == "local" ]]; then
         archive_path="$(unique_archive_path "$BACKUP_DEST" "$archive_name")"
@@ -747,12 +1068,26 @@ operation_backup() {
         echo "Finalizing archive..."
         mv -- "$partial_archive" "$archive_path"
 
-        echo "Backup completed successfully:"
-        echo "  $archive_path"
-    else
-        split_scp_destination "$BACKUP_DEST"
+        end_epoch="$(date +%s)"
+        elapsed=$((end_epoch - start_epoch))
+        final_size="$(stat -c '%s' "$archive_path")"
+        checksum="$(sha256sum "$archive_path" | awk '{print $1}')"
+        average_rate=$((elapsed > 0 ? final_size / elapsed : final_size))
 
-        ssh "$SCP_HOST" \
+        echo
+        echo "Backup completed successfully."
+        echo
+        echo "Archive:"
+        echo "  $archive_path"
+        echo
+        echo "Original size:      $(human_size "$source_size")"
+        echo "Compressed size:    $(human_size "$final_size")"
+        echo "Elapsed time:       ${elapsed}s"
+        echo "Average write rate: $(human_size "$average_rate")/s"
+        echo "SHA256:"
+        echo "  $checksum"
+    else
+        remote_ssh \
             "mkdir -p -- $(printf '%q' "$SCP_PATH")"
 
         remote_archive="$SCP_PATH/$archive_name"
@@ -763,7 +1098,7 @@ operation_backup() {
         echo "  $SCP_HOST:$remote_temp"
         echo "No temporary local archive will be created."
 
-        ssh "$SCP_HOST" \
+        remote_ssh \
             "rm -f -- $(printf '%q' "$remote_temp")"
 
         run_tar_stream \
@@ -772,18 +1107,34 @@ operation_backup() {
             "$source_size" \
             "${tar_items[@]}" |
         xz -9e -T0 |
-        ssh "$SCP_HOST" \
+        remote_ssh \
             "cat > $(printf '%q' "$remote_temp")"
 
         echo
         echo "Verifying and finalizing remote archive..."
-        ssh "$SCP_HOST" \
+        remote_ssh \
             "xz -t -- $(printf '%q' "$remote_temp") &&
              tar -tJf $(printf '%q' "$remote_temp") >/dev/null &&
              mv -- $(printf '%q' "$remote_temp") $(printf '%q' "$remote_archive")"
 
-        echo "Backup completed successfully:"
+        end_epoch="$(date +%s)"
+        elapsed=$((end_epoch - start_epoch))
+        final_size="$(remote_ssh "stat -c '%s' $(printf '%q' "$remote_archive")")"
+        checksum="$(remote_ssh "sha256sum $(printf '%q' "$remote_archive") | awk '{print \$1}'")"
+        average_rate=$((elapsed > 0 ? final_size / elapsed : final_size))
+
+        echo
+        echo "Backup completed successfully."
+        echo
+        echo "Archive:"
         echo "  $SCP_HOST:$remote_archive"
+        echo
+        echo "Original size:      $(human_size "$source_size")"
+        echo "Compressed size:    $(human_size "$final_size")"
+        echo "Elapsed time:       ${elapsed}s"
+        echo "Average transfer:   $(human_size "$average_rate")/s"
+        echo "SHA256:"
+        echo "  $checksum"
     fi
 }
 
@@ -794,15 +1145,14 @@ choose_restore_source() {
     local remote_username
     local remote_host
     local remote_path
-    local remote
-    local local_copy
+    local remote_size
 
     echo
     echo "Backup source:"
     echo "1) Default BFS archive directory"
     echo "2) Local directory or archive file"
     echo "3) Block device mounted automatically"
-    echo "4) SCP from another machine"
+    echo "4) SSH stream from another machine (no local temporary file)"
 
     while true; do
         read -r -p "Choose [1-4]: " choice
@@ -851,15 +1201,37 @@ choose_restore_source() {
                     continue
                 }
 
-                remote="$remote_username@$remote_host:$remote_path"
-                local_copy="$(mktemp /tmp/bfs-home-restore.XXXXXX.tar.xz)"
+                [[ "$remote_path" == *.tar.xz ]] || {
+                    echo "Remote archive must end in .tar.xz"
+                    continue
+                }
 
-                echo "Downloading $remote"
-                scp -- "$remote" "$local_copy"
+                SCP_HOST="$remote_username@$remote_host"
+                SCP_PATH="$remote_path"
 
-                RESTORE_SOURCE_TYPE="local"
-                RESTORE_SOURCE="$local_copy"
-                TEMP_LISTS+=("$local_copy")
+                echo "Opening shared SSH connection..."
+                start_ssh_master
+
+                remote_size="$(
+                    remote_ssh \
+                        "test -f -- $(printf '%q' "$SCP_PATH") &&
+                         stat -c '%s' -- $(printf '%q' "$SCP_PATH")"
+                )"
+
+                [[ "$remote_size" =~ ^[0-9]+$ ]] || {
+                    echo "Remote archive does not exist or its size could not be determined:"
+                    echo "  $SCP_HOST:$SCP_PATH"
+                    continue
+                }
+
+                RESTORE_SOURCE_TYPE="ssh"
+                RESTORE_SOURCE="$SCP_HOST:$SCP_PATH"
+                REMOTE_ARCHIVE_SIZE="$remote_size"
+                SELECTED_ARCHIVE="$RESTORE_SOURCE"
+
+                echo "Remote archive detected:"
+                echo "  $RESTORE_SOURCE"
+                echo "No temporary local archive will be created."
                 return
                 ;;
             *)
@@ -918,40 +1290,125 @@ select_archive_file() {
     esac
 }
 
-validate_archive_paths() {
-    local archive="$1"
-    local entry
+stream_selected_archive() {
+    if [[ "$RESTORE_SOURCE_TYPE" == "ssh" ]]; then
+        remote_ssh "cat -- $(printf '%q' "$SCP_PATH")"
+    else
+        cat -- "$SELECTED_ARCHIVE"
+    fi
+}
 
-    while IFS= read -r entry; do
-        [[ -z "$entry" ]] && continue
+verify_archive_and_collect_top_levels() {
+    local top_level_file="$1"
+    local stream_status
+    local tar_status
+    local awk_status
 
-        case "$entry" in
-            /*)
-                die "Archive contains an absolute path: $entry"
-                ;;
-            ../*|*/../*|*/..)
-                die "Archive contains a parent-directory traversal: $entry"
-                ;;
-        esac
-    done < <(tar -tJf "$archive")
+    : > "$top_level_file"
+
+    set +e
+    stream_selected_archive |
+        tar -tJf - |
+        awk -F/ '
+            function unsafe_path(path) {
+                return (
+                    path ~ /^\// ||
+                    path ~ /^\.\.\// ||
+                    path ~ /\/\.\.\// ||
+                    path ~ /\/\.\.$/
+                )
+            }
+
+            NF {
+                if (unsafe_path($0)) {
+                    printf "ERROR: Archive contains an unsafe path: %s\n", $0 > "/dev/stderr"
+                    exit 2
+                }
+
+                if (!seen[$1]++ && top_count < 30) {
+                    print "  " $1
+                    top_count++
+                }
+            }
+        ' > "$top_level_file"
+
+    stream_status=${PIPESTATUS[0]}
+    tar_status=${PIPESTATUS[1]}
+    awk_status=${PIPESTATUS[2]}
+    set -e
+
+    if (( awk_status != 0 )); then
+        rm -f -- "$top_level_file"
+        die "Archive path validation failed."
+    fi
+
+    if (( stream_status != 0 )); then
+        rm -f -- "$top_level_file"
+        die "Could not read the selected archive."
+    fi
+
+    if (( tar_status != 0 )); then
+        rm -f -- "$top_level_file"
+        die "Archive integrity or tar readability test failed."
+    fi
+
+    if [[ ! -s "$top_level_file" ]]; then
+        rm -f -- "$top_level_file"
+        die "Archive contains no restorable entries."
+    fi
 }
 
 operation_restore() {
     local restore_root
     local archive_size
     local existing_policy
+    local verify_choice
+    local verification_performed="no"
+    local top_level_file=""
     local -a tar_options=()
 
     require_root
     require_commands tar xz df find realpath awk sort ssh scp
 
     choose_restore_source
-    select_archive_file "$RESTORE_SOURCE"
 
-    echo "Testing archive integrity..."
-    xz -t -- "$SELECTED_ARCHIVE"
-    tar -tJf "$SELECTED_ARCHIVE" >/dev/null
-    validate_archive_paths "$SELECTED_ARCHIVE"
+    if [[ "$RESTORE_SOURCE_TYPE" == "local" ]]; then
+        select_archive_file "$RESTORE_SOURCE"
+    fi
+
+    echo
+    echo "Archive verification:"
+    echo "1) Verify archive integrity before restoring (recommended)"
+    echo "2) Skip integrity test and restore immediately"
+    echo "3) Cancel"
+
+    while true; do
+        read -r -p "Choose [1-3]: " verify_choice
+        case "$verify_choice" in
+            1)
+                echo "Testing archive integrity and validating paths..."
+                top_level_file="$(mktemp)"
+                TEMP_LISTS+=("$top_level_file")
+                verify_archive_and_collect_top_levels \
+                    "$SELECTED_ARCHIVE" \
+                    "$top_level_file"
+                verification_performed="yes"
+                echo "Archive verification completed successfully."
+                break
+                ;;
+            2)
+                echo "Skipping archive integrity and path-safety tests."
+                break
+                ;;
+            3)
+                echo "Cancelled."
+                return
+                ;;
+            *)
+                echo "Please choose 1, 2, or 3."
+                ;;
+        esac
+    done
 
     restore_root="$(read_path_with_default \
         "Restore home folders into" \
@@ -960,7 +1417,11 @@ operation_restore() {
     mkdir -p -- "$restore_root"
     restore_root="$(realpath -- "$restore_root")"
 
-    archive_size="$(stat -c '%s' "$SELECTED_ARCHIVE")"
+    if [[ "$RESTORE_SOURCE_TYPE" == "ssh" ]]; then
+        archive_size="$REMOTE_ARCHIVE_SIZE"
+    else
+        archive_size="$(stat -c '%s' "$SELECTED_ARCHIVE")"
+    fi
     ensure_local_space "$restore_root" "$archive_size"
 
     echo
@@ -968,9 +1429,11 @@ operation_restore() {
     echo "Restore root: $restore_root"
     echo
     echo "Top-level archive contents:"
-    tar -tJf "$SELECTED_ARCHIVE" |
-        awk -F/ 'NF && !seen[$1]++ {print "  " $1}' |
-        head -n 30
+    if [[ "$verification_performed" == "yes" ]]; then
+        cat -- "$top_level_file"
+    else
+        echo "  Not inspected because archive verification was skipped."
+    fi
 
     echo
     echo "Existing-file behavior:"
@@ -1006,15 +1469,33 @@ operation_restore() {
         return
     }
 
-    tar \
-        --acls \
-        --xattrs \
-        --numeric-owner \
-        --same-owner \
-        --same-permissions \
-        "${tar_options[@]}" \
-        -C "$restore_root" \
-        -xJf "$SELECTED_ARCHIVE"
+    if [[ "$RESTORE_SOURCE_TYPE" == "ssh" ]]; then
+        echo
+        echo "Streaming archive directly from:"
+        echo "  $RESTORE_SOURCE"
+        echo "No temporary local archive will be created."
+
+        stream_selected_archive |
+            tar \
+                --acls \
+                --xattrs \
+                --numeric-owner \
+                --same-owner \
+                --same-permissions \
+                "${tar_options[@]}" \
+                -C "$restore_root" \
+                -xJf -
+    else
+        tar \
+            --acls \
+            --xattrs \
+            --numeric-owner \
+            --same-owner \
+            --same-permissions \
+            "${tar_options[@]}" \
+            -C "$restore_root" \
+            -xJf "$SELECTED_ARCHIVE"
+    fi
 
     echo
     echo "Restore completed successfully into:"

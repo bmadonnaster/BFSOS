@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# git-update-bfs-linux-install.sh
+# git-update-bfs-linux-install-v2.sh
 #
 # Locate ~/bfs-linux-install, configure and verify Codeberg SSH access,
 # stage all changes, commit them with today's date, and push.
@@ -67,6 +67,21 @@ require_commands() {
     (( missing == 0 )) || die "Install the missing commands and try again."
 }
 
+get_local_hostname() {
+    local host_name=""
+
+    if command -v uname >/dev/null 2>&1; then
+        host_name="$(uname -n 2>/dev/null || true)"
+    fi
+
+    if [[ -z "$host_name" && -r /proc/sys/kernel/hostname ]]; then
+        read -r host_name < /proc/sys/kernel/hostname || true
+    fi
+
+    [[ -n "$host_name" ]] || host_name="unknown-host"
+    printf '%s\n' "$host_name"
+}
+
 ensure_ssh_directory() {
     mkdir -p -- "$SSH_DIR"
     chmod 700 "$SSH_DIR"
@@ -94,7 +109,7 @@ ensure_codeberg_key() {
     }
 
     local comment
-    comment="${USER:-user}@$(hostname)-codeberg"
+    comment="${USER:-user}@$(get_local_hostname)-codeberg"
 
     echo
     echo "ssh-keygen will ask for an optional key passphrase."
@@ -257,7 +272,7 @@ main() {
     local commit_date
     local commit_message
 
-    require_commands git ssh ssh-keygen getent hostname grep
+    require_commands git ssh ssh-keygen getent grep
 
     user_home="$(find_user_home)"
     [[ -n "$user_home" ]] || die "Could not determine the current user's home directory."
