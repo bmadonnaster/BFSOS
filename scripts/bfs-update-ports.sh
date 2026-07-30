@@ -11,12 +11,75 @@ set -Eeuo pipefail
 INSTALL_DIR="$HOME/bfs-linux-install"
 SOURCE_PORTS="$INSTALL_DIR/ports"
 
-REPO_URL="https://codeberg.org/bmadonnaster/BFS-Linux.git"
+REPO_URL="git@codeberg.org:bmadonnaster/BFS-Linux.git"
 REPO_DIR="$HOME/BFS-Linux"
 
 die() {
     printf 'ERROR: %s\n' "$*" >&2
     exit 1
+}
+
+
+PROGRAM_NAME="${0##*/}"
+CODEBERG_HOST="codeberg.org"
+CODEBERG_SSH_USER="git"
+CODEBERG_KEY_NAME="id_ed25519_codeberg"
+
+get_local_hostname() {
+    if command -v uname >/dev/null 2>&1; then
+        uname -n 2>/dev/null && return
+    fi
+    if [[ -r /proc/sys/kernel/hostname ]]; then
+        cat /proc/sys/kernel/hostname
+        return
+    fi
+    echo unknown-host
+}
+
+ensure_codeberg_ssh() {
+    local ssh_dir="$HOME/.ssh"
+    local priv="$ssh_dir/$CODEBERG_KEY_NAME"
+    local pub="$priv.pub"
+    mkdir -p "$ssh_dir"
+    chmod 700 "$ssh_dir"
+
+    if [[ ! -f "$priv" ]]; then
+        echo "Creating dedicated Codeberg SSH key..."
+        ssh-keygen -t ed25519 -a 100 \
+            -C "${USER:-user}@$(get_local_hostname)-codeberg" \
+            -f "$priv"
+        chmod 600 "$priv"
+        chmod 644 "$pub"
+        echo
+        echo "Add this public key to Codeberg:"
+        cat "$pub"
+        echo
+        echo "Then rerun this script."
+        exit 1
+    fi
+
+    touch "$ssh_dir/config"
+    chmod 600 "$ssh_dir/config"
+    if ! grep -q '^Host codeberg\.org$' "$ssh_dir/config"; then
+cat >>"$ssh_dir/config" <<EOF
+
+Host codeberg.org
+    HostName codeberg.org
+    User git
+    IdentityFile $priv
+    IdentitiesOnly yes
+EOF
+    fi
+
+    ssh -o BatchMode=yes -o ConnectTimeout=10 -T git@codeberg.org >/tmp/bfs-codeberg-test.$$ 2>&1 || true
+    if ! grep -qi "successfully authenticated" /tmp/bfs-codeberg-test.$$; then
+        cat /tmp/bfs-codeberg-test.$$
+        rm -f /tmp/bfs-codeberg-test.$$
+        echo
+        echo "Add the SSH key above to Codeberg, then rerun."
+        exit 1
+    fi
+    rm -f /tmp/bfs-codeberg-test.$$
 }
 
 cleanup_repo() {
@@ -26,8 +89,9 @@ cleanup_repo() {
     fi
 }
 
-command -v git >/dev/null 2>&1 ||
-    die "git is not installed or is not available in PATH."
+for c in git ssh ssh-keygen grep; do command -v "$c" >/dev/null 2>&1 || die "$c is not installed."; done
+
+ensure_codeberg_ssh()
 
 # 1. Verify ~/bfs-linux-install exists.
 [[ -d "$INSTALL_DIR" ]] ||
