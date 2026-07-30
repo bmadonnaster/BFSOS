@@ -4,17 +4,19 @@
 
 name=aaa_filesystem
 version=1
-release=3
+release=4
+
+# BFS Linux distribution release. Change this value when preparing a new
+# BFS release; the aaa_filesystem package version remains independent.
+bfs_version=0.9.0
 
 source=(
     fstab
     group
     hostname
     hosts
-    issue
     locale.conf
     locale.sh
-    os-release
     passwd
     resolv.conf
     shells
@@ -180,7 +182,6 @@ pkg_build() {
     install -m 0644 fstab "$PKG/etc/fstab"
     install -m 0644 profile "$PKG/etc/profile"
     install -m 0644 bashrc "$PKG/etc/bashrc"
-    install -m 0644 issue "$PKG/etc/issue"
 
     install -d -m 0755 \
         "$PKG/etc/profile.d" \
@@ -236,7 +237,27 @@ pkg_build() {
     #
     dircolors -p > "$PKG/etc/dircolors"
 
-    printf '%s\n' rolling > "$PKG/etc/lfs-release"
+    printf '%s\n' "$bfs_version" > "$PKG/etc/bfs-release"
 
-    install -m 0644 os-release "$PKG/etc/os-release"
+    # Retain this compatibility file for software that checks for an
+    # LFS-derived system.
+    printf '%s\n' "$bfs_version" > "$PKG/etc/lfs-release"
+
+    cat > "$PKG/etc/os-release" <<EOF
+NAME="BFS Linux"
+PRETTY_NAME="BFS Linux $bfs_version"
+ID=bfs
+VERSION="$bfs_version"
+VERSION_ID="$bfs_version"
+HOME_URL="https://codeberg.org/bmadonnaster/BFS-Linux"
+SUPPORT_URL="https://codeberg.org/bmadonnaster/BFS-Linux/issues"
+BUG_REPORT_URL="https://codeberg.org/bmadonnaster/BFS-Linux/issues"
+EOF
+
+    cat > "$PKG/etc/issue" <<EOF
+BFS Linux $bfs_version \\n \\l
+
+EOF
+
+    chmod 0644         "$PKG/etc/bfs-release"         "$PKG/etc/lfs-release"         "$PKG/etc/os-release"         "$PKG/etc/issue"
 }
