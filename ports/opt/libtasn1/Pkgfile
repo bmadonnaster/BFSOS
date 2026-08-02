@@ -7,16 +7,24 @@
 # Optional: gtk-doc valgrind
 
 name=libtasn1
-version=4.20.0
+version=4.21.0
 release=1
 source=(https://ftp.gnu.org/gnu/libtasn1/libtasn1-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
+./configure
+--prefix=/usr
+--disable-static
 
-	./configure --prefix=/usr --disable-static
-	make
-	make DESTDIR=$PKG install
-	make -C doc/reference DESTDIR=$PKG install-data-local
-	rm -rf $PKG/usr/share/info/dir
+make
+make DESTDIR="$PKG" install
+
+if [ -d doc/reference ]; then
+    make -C doc/reference \
+        DESTDIR="$PKG" \
+        install-data-local
+fi
+
+rm -f "$PKG/usr/share/info/dir"
+
 }

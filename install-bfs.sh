@@ -107,7 +107,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-fixed-v12.sh [options]
+Usage: install-bfs-locale-fixed.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -812,22 +812,58 @@ printf '%s\n' "$HOSTNAME_VALUE" > /etc/hostname
 [[ -e "/usr/share/zoneinfo/$TIMEZONE_VALUE" ]] || { echo "Missing timezone: $TIMEZONE_VALUE" >&2; exit 1; }
 ln -sfn "/usr/share/zoneinfo/$TIMEZONE_VALUE" /etc/localtime
 
-log "Configuring locale"
+log "Configuring locales"
 mkdir -p /etc
-LOCALE_BASE="$LOCALE_VALUE"
-LOCALE_BASE="${LOCALE_BASE%.UTF-8}"
-LOCALE_BASE="${LOCALE_BASE%.utf8}"
-LOCALE_ENTRY="$LOCALE_BASE UTF-8"
-if [[ -f /etc/locales ]]; then
-        grep -qxF "$LOCALE_ENTRY" /etc/locales || printf '%s\n' "$LOCALE_ENTRY" >> /etc/locales
-else
-        printf '%s\n' "$LOCALE_ENTRY" > /etc/locales
-fi
+
+normalize_locale_entry() {
+        local locale_name="$1"
+        local locale_base="$locale_name"
+
+        case "$locale_name" in
+                C.UTF-8|C.utf8)
+                        printf '%s\n' 'C.UTF-8 UTF-8'
+                        return 0
+                        ;;
+        esac
+
+        locale_base="${locale_base%.UTF-8}"
+        locale_base="${locale_base%.utf8}"
+        printf '%s UTF-8\n' "$locale_base"
+}
+
+add_locale_entry() {
+        local entry="$1"
+
+        touch /etc/locales
+        grep -qxF "$entry" /etc/locales ||
+                printf '%s\n' "$entry" >> /etc/locales
+}
+
+SELECTED_LOCALE_ENTRY="$(normalize_locale_entry "$LOCALE_VALUE")"
+C_UTF8_ENTRY="$(normalize_locale_entry C.UTF-8)"
+
+add_locale_entry "$C_UTF8_ENTRY"
+add_locale_entry "$SELECTED_LOCALE_ENTRY"
+
 if command -v genlocales >/dev/null 2>&1; then
-        genlocales
+        genlocales || {
+                echo "Locale generation failed with genlocales." >&2
+                echo "Contents of /etc/locales:" >&2
+                cat /etc/locales >&2
+                exit 1
+        }
 elif command -v locale-gen >/dev/null 2>&1; then
-        locale-gen
+        locale-gen || {
+                echo "Locale generation failed with locale-gen." >&2
+                echo "Contents of /etc/locales:" >&2
+                cat /etc/locales >&2
+                exit 1
+        }
+else
+        echo "No locale generation command was found." >&2
+        exit 1
 fi
+
 printf 'LANG=%s\n' "$LOCALE_VALUE" > /etc/locale.conf
 
 log "Writing hosts and console configuration"
