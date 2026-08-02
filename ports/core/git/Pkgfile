@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: Directory content manager
+# Description: Distributed version control system
 # URL: https://git-scm.com/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: curl expat
@@ -12,11 +10,16 @@ release=1
 source=(https://www.kernel.org/pub/software/scm/$name/$name-$version.tar.xz)
 
 pkg_build() {
+    ./configure \
+        --prefix=/usr \
+        --with-gitconfig=/etc/gitconfig \
+        --with-python=/usr/bin/python3
 
+    make \
+        NO_RUST=YesPlease
 
-	./configure --prefix=/usr \
-            --with-gitconfig=/etc/gitconfig \
-            --with-python=python3 &&
-		make
-		make DESTDIR=$PKG install
+    make \
+        DESTDIR="$PKG" \
+        NO_RUST=YesPlease \
+        install
 }
