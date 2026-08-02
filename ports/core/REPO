@@ -470,7 +470,7 @@ f:6362b0bfc92504b3f8aec8ed3cd7b861:linux-pam/common-account
 f:7e323c31aaf5e4c54bdb0e4d0c55d910:linux-pam/Pkgfile
 f:3c60f809241218d02077cf10133f1c95:linux-headers/Pkgfile
 f:c7b9472ac7ca89f19f973736db183cfd:linux-headers/.md5sum
-f:09b802e0b83ef8f8d9d5e33dba8c30f1:linux-firmware/Pkgfile
+f:5cf1d44d0c127646d041be175381ac99:linux-firmware/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:linux-firmware/.nostrip
 f:4168f0036f843fb1938d33be67d84b22:linux-api-headers/Pkgfile
 f:8c85e4a0232762d476c398d32c5fd597:libxcrypt/Pkgfile
