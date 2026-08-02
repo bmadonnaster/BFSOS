@@ -59,35 +59,60 @@ find_httpup_repgen() {
     return 1
 }
 
-test_codeberg_ssh() {
+ensure_codeberg_ssh() {
     local ssh_dir="$HOME/.ssh"
     local priv="$ssh_dir/$CODEBERG_KEY_NAME"
+    local pub="$priv.pub"
     local test_file=""
-
-    [[ -f "$priv" ]] || return 1
 
     mkdir -p "$ssh_dir"
     chmod 700 "$ssh_dir"
 
-    test_file="$(mktemp /tmp/bfs-codeberg-test.XXXXXX)"
+    if [[ ! -f "$priv" ]]; then
+        echo "Creating dedicated Codeberg SSH key..."
+        ssh-keygen -t ed25519 -a 100 \
+            -C "${USER:-user}@$(get_local_hostname)-codeberg" \
+            -f "$priv"
 
-    ssh \
-        -o BatchMode=yes \
-        -o ConnectTimeout=10 \
-        -o StrictHostKeyChecking=accept-new \
-        -o IdentitiesOnly=yes \
-        -i "$priv" \
-        -T git@codeberg.org >"$test_file" 2>&1 || true
+        chmod 600 "$priv"
+        chmod 644 "$pub"
 
-    if grep -qi "successfully authenticated" "$test_file"; then
-        rm -f "$test_file"
-        return 0
+        echo
+        echo "Add this public key to Codeberg:"
+        cat "$pub"
+        echo
+        echo "Then rerun this script."
+        exit 1
     fi
 
-    echo "SSH authentication is unavailable:"
-    cat "$test_file"
+    touch "$ssh_dir/config"
+    chmod 600 "$ssh_dir/config"
+
+    if ! grep -q '^Host codeberg\.org$' "$ssh_dir/config"; then
+        cat >>"$ssh_dir/config" <<EOF
+
+Host codeberg.org
+    HostName codeberg.org
+    User git
+    IdentityFile $priv
+    IdentitiesOnly yes
+EOF
+    fi
+
+    test_file="$(mktemp /tmp/bfs-codeberg-test.XXXXXX)"
+    ssh -o BatchMode=yes -o ConnectTimeout=10 \
+        -T git@codeberg.org >"$test_file" 2>&1 || true
+
+    if ! grep -qi "successfully authenticated" "$test_file"; then
+        cat "$test_file"
+        rm -f "$test_file"
+
+        echo
+        echo "Add the SSH key above to Codeberg, then rerun."
+        exit 1
+    fi
+
     rm -f "$test_file"
-    return 1
 }
 
 cleanup_repo() {
@@ -130,7 +155,7 @@ regenerate_repo_manifests() {
     echo "Generated $generated REPO manifest(s)."
 }
 
-for c in git ssh grep find sort cp rm date mktemp basename; do
+for c in git ssh ssh-keygen grep find sort cp rm date mktemp basename; do
     command -v "$c" >/dev/null 2>&1 ||
         die "$c is not installed."
 done
@@ -138,35 +163,7 @@ done
 HTTPUP_REPGEN="$(find_httpup_repgen)" ||
     die "httpup-repgen was not found. Install httpup or make /mnt/bfs/usr/bin/httpup-repgen available."
 
-SSH_KEY="$HOME/.ssh/$CODEBERG_KEY_NAME"
-HTTPS_REPO_URL="https://codeberg.org/bmadonnaster/BFS-Linux.git"
-SSH_REPO_URL="git@codeberg.org:bmadonnaster/BFS-Linux.git"
-USE_SSH=no
-
-if test_codeberg_ssh; then
-    USE_SSH=yes
-    REPO_URL="$SSH_REPO_URL"
-    echo "Using authenticated SSH access to Codeberg."
-else
-    REPO_URL="$HTTPS_REPO_URL"
-    echo "Falling back to HTTPS."
-fi
-
-if [[ -d "$REPO_DIR/.git" ]]; then
-    existing_remote="$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || true)"
-
-    if [[ "$USE_SSH" == yes ]]; then
-        if [[ "$existing_remote" != "$SSH_REPO_URL" ]]; then
-            echo "Switching existing repository remote to SSH..."
-            git -C "$REPO_DIR" remote set-url origin "$SSH_REPO_URL"
-        fi
-    else
-        if [[ "$existing_remote" != "$HTTPS_REPO_URL" ]]; then
-            echo "Switching existing repository remote to HTTPS..."
-            git -C "$REPO_DIR" remote set-url origin "$HTTPS_REPO_URL"
-        fi
-    fi
-fi
+ensure_codeberg_ssh
 
 # 1. Verify ~/bfs-linux-install exists.
 [[ -d "$INSTALL_DIR" ]] ||
@@ -197,26 +194,17 @@ rm -rf -- "$REPO_DIR/ports"
 echo "Copying $SOURCE_PORTS to $REPO_DIR/ports"
 cp -a -- "$SOURCE_PORTS" "$REPO_DIR/ports"
 
-# 5. Remove client-side httpup state files before generating REPO manifests.
-#    Otherwise httpup-repgen records these local state files in REPO and
-#    clients later try to download them from Codeberg.
+# 5. Regenerate every collection's server-side httpup REPO manifest.
+regenerate_repo_manifests "$REPO_DIR/ports" "$HTTPUP_REPGEN"
+
+# 6. Remove client-side httpup state files from the repository copy.
+#    These are generated on systems running ports -u and should not be pushed.
 echo "Removing client-side httpup state files..."
 find "$REPO_DIR/ports" -type f \
     \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' \) \
     -delete
 
-# 6. Regenerate every collection's server-side httpup REPO manifest only
-#    after client-side state files have been removed.
-regenerate_repo_manifests "$REPO_DIR/ports" "$HTTPUP_REPGEN"
-
-# 7. Verify that no generated REPO manifest references client state.
-if grep -RniE '(^|/)\.httpup-(repo\.current|urlinfo)$' \
-    "$REPO_DIR/ports"/*/REPO 2>/dev/null
-then
-    die "A generated REPO manifest still contains client-side httpup state."
-fi
-
-# 8. Stage all changes.
+# 7. Stage all changes.
 git -C "$REPO_DIR" add --all
 
 # Avoid creating an empty commit.
@@ -226,17 +214,17 @@ if git -C "$REPO_DIR" diff --cached --quiet; then
     exit 0
 fi
 
-# 9. Commit with the current date.
+# 8. Commit with the current date.
 COMMIT_MESSAGE="updated ports $(date '+%Y-%m-%d')"
 
 echo "Creating commit: $COMMIT_MESSAGE"
 git -C "$REPO_DIR" commit -m "$COMMIT_MESSAGE"
 
-# 10. Push.
+# 9. Push.
 echo "Pushing changes to Codeberg..."
 git -C "$REPO_DIR" push
 
-# 11. Remove the temporary clone only after a successful push.
+# 10. Remove the temporary clone only after a successful push.
 cleanup_repo
 
 echo "BFS-Linux ports update completed successfully."

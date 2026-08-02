@@ -62,5 +62,3 @@ f:fbe63c1cb46b2f83b04d90b885578fc9:libfm-qt/Pkgfile
 f:d6fca53ea4557ccad0782b30afbe3d98:libfm-extra/Pkgfile
 f:bd18417d1430623d728902b3cdf8dad2:libdbusmenu-lxqt/Pkgfile
 f:d6870a27d43f21e44b2cb3e9f9064e82:gentemplate.sh
-f:b9c50759391bdd4814f13a156bc60b43:.httpup-urlinfo
-f:1d31f3e88672b019011442b04f885a2f:.httpup-repo.current

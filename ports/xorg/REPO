@@ -413,5 +413,3 @@ f:4dffd9b9526399197976574410661347:brian@192.168.68.66/xorg-abi.patch
 f:775ef610e010b645d73a88c2ba5c5af9:brian@192.168.68.66/Pkgfile
 f:9daa4d9913c9764ef8847a7e9a6a12ab:bdftopcf/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:.placeyourportshere
-f:dce4ba3059dbeab8a38f5940b32796a4:.httpup-urlinfo
-f:18499951da7559ec57b2719c04042791:.httpup-repo.current

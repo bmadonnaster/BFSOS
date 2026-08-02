@@ -842,8 +842,6 @@ f:e1d134e7ea34736b6cbdfe52f1ac44ee:at-spi2-core/Pkgfile
 f:21f9c1af25aea98828ba20fbfea1cd18:aspell6-en/Pkgfile
 f:c5f5f5ad6955079f401298480cf47dcb:aspell/Pkgfile
 f:38b44df1bdacfa590b7b3d7024ac5c59:argyllcms/Pkgfile
-f:2e7fa2fb97a64bd9a96161c03519bded:argyllcms/.httpup-urlinfo
-f:d22891a300fc652a1cb5f9be5e134db1:argyllcms/.httpup-repo.current
 f:f6839e40a06e0be509b74843253c31a9:apr-util/Pkgfile
 f:3c3c3f67b6827790888f64fe6b105874:appstream-glib/Pkgfile
 f:c65b397d1bf42d42f217e96267232f8a:alsa-utils/post-install
@@ -865,5 +863,3 @@ f:dc468370c9be266cfcd68b427f193f7c:aalib/aalib-fix-aarender.patch
 f:726fba4b9be81497d43873166933bb5f:aalib/aalib-c99.patch
 f:517b2577b1062769769434c4fb97e245:aalib/aalib-aalinuxkbd-return.patch
 f:18c8379f157a22e25e053a549cfe2931:aalib/Pkgfile
-f:1140dab05d0a45f2f7ca77a7701b92ef:.httpup-urlinfo
-f:5b5bb1bf910aa4f9778f6b916252598c:.httpup-repo.current
