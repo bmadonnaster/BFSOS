@@ -542,8 +542,6 @@ f:5b1c626e73cfb02bef80710c9d29f1c2:newt/Pkgfile
 f:d85bd8021a1ffbf5b2e6bc8c49cc0a3b:networkmanager/post-install
 f:54db9d82e700fbcd06cd5d7694c1ce06:networkmanager/Pkgfile
 f:12d7c5dff245643c49f886f46fef7775:nettle/Pkgfile
-f:56bf17d554d04642ed4af6271bc2d5ab:nettle/.md5sum
-f:ced3c346d7bfc427cb4a37c48b112516:nettle/.footprint
 f:5ca85fa88c2d156c128321d2e699b9a5:neon/Pkgfile
 f:8e19809446dda215c4b2cc77bee13da8:ndctl/Pkgfile
 f:e0118e0eb9c8bffaf04b3a79784d87e2:mupdf/Pkgfile
@@ -843,8 +841,6 @@ f:14cd8d8ebad3f6f1dfe5783a039ad44b:cracklib/Pkgfile
 f:3ba0eddfd5bb00dfcf6d5ad98a43a874:cracklib-words/post-install
 f:864b45aeb44611e9499fd83320ea973e:cracklib-words/Pkgfile
 f:2c76b2b09d1f816a682d6e54ad846766:cpio/Pkgfile
-f:ed00a5dae1e67429aacbd8b0f143d6c5:cpio/.md5sum
-f:91d8c20c6a130e29009a69c5aed2c361:cpio/.footprint
 f:a85d64e2232a336981f337c4482200bf:colord-gtk/Pkgfile
 f:8156030af2421d9cfba25ba7de88819e:cdrdao/Pkgfile
 f:3a379c80fee44b776161f80b407f181b:cdparanoia/Pkgfile

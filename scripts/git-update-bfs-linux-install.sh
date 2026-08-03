@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #
-# git-update-bfs-linux-install-v3.sh
+# git-update-bfs-linux-install-v4.sh
 #
-# Locate ~/bfs-linux-install, clean and regenerate bundled httpup REPO
-# manifests, stage all changes, commit them with today's date, and push.
+# Locate ~/bfs-linux-install, clean generated port metadata and httpup
+# client-state files, regenerate bundled httpup REPO manifests, stage all
+# changes, commit them with today's date, and push.
+#
 # Uses Codeberg SSH when it works and automatically falls back to HTTPS.
 #
 
@@ -39,9 +41,15 @@ ask_yes_no() {
         fi
 
         case "${answer,,}" in
-            y|yes) return 0 ;;
-            n|no)  return 1 ;;
-            *) echo "Please answer yes or no." ;;
+            y|yes)
+                return 0
+                ;;
+            n|no)
+                return 1
+                ;;
+            *)
+                echo "Please answer yes or no."
+                ;;
         esac
     done
 }
@@ -55,7 +63,7 @@ find_user_home() {
 }
 
 require_commands() {
-    local command_name
+    local command_name=""
     local missing=0
 
     for command_name in "$@"; do
@@ -65,7 +73,8 @@ require_commands() {
         fi
     done
 
-    ((missing == 0)) || die "Install the missing commands and try again."
+    ((missing == 0)) ||
+        die "Install the missing commands and try again."
 }
 
 find_httpup_repgen() {
@@ -149,7 +158,8 @@ configure_origin_transport() {
     esac
 
     repo_path="${repo_path#/}"
-    [[ -n "$repo_path" ]] || die "Could not determine the Codeberg repository path."
+    [[ -n "$repo_path" ]] ||
+        die "Could not determine the Codeberg repository path."
 
     ssh_url="git@codeberg.org:$repo_path"
     https_url="https://codeberg.org/$repo_path"
@@ -175,6 +185,8 @@ configure_origin_transport() {
 
 clean_httpup_client_state() {
     local ports_dir="$1"
+    local removed=0
+    local state_file=""
 
     [[ -d "$ports_dir" ]] || {
         warn "Bundled ports directory not found: $ports_dir"
@@ -183,9 +195,52 @@ clean_httpup_client_state() {
 
     echo
     echo "Removing client-side httpup state files..."
-    find "$ports_dir" -type f \
-        \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' \) \
-        -print -delete
+
+    while IFS= read -r -d '' state_file; do
+        echo "  Removing ${state_file#"$ports_dir"/}"
+        rm -f -- "$state_file"
+        removed=$((removed + 1))
+    done < <(
+        find "$ports_dir" \
+            -type f \
+            \( \
+                -name '.httpup-repo.current' \
+                -o -name '.httpup-urlinfo' \
+            \) \
+            -print0
+    )
+
+    echo "Removed $removed httpup client-state file(s)."
+}
+
+clean_port_metadata() {
+    local ports_dir="$1"
+    local removed=0
+    local metadata_file=""
+
+    [[ -d "$ports_dir" ]] || {
+        warn "Bundled ports directory not found: $ports_dir"
+        return 0
+    }
+
+    echo
+    echo "Removing port .footprint and .md5sum files..."
+
+    while IFS= read -r -d '' metadata_file; do
+        echo "  Removing ${metadata_file#"$ports_dir"/}"
+        rm -f -- "$metadata_file"
+        removed=$((removed + 1))
+    done < <(
+        find "$ports_dir" \
+            -type f \
+            \( \
+                -name '.footprint' \
+                -o -name '.md5sum' \
+            \) \
+            -print0
+    )
+
+    echo "Removed $removed port metadata file(s)."
 }
 
 regenerate_repo_manifests() {
@@ -206,6 +261,7 @@ regenerate_repo_manifests() {
         [[ -d "$collection" ]] || continue
 
         echo "  Generating $(basename "$collection")/REPO"
+
         (
             cd "$collection"
             "$repgen"
@@ -256,7 +312,16 @@ main() {
     local commit_message=""
     local httpup_repgen=""
 
-    require_commands git ssh getent grep find sort basename date
+    require_commands \
+        git \
+        ssh \
+        getent \
+        grep \
+        find \
+        sort \
+        basename \
+        date \
+        rm
 
     user_home="$(find_user_home)"
     [[ -n "$user_home" ]] ||
@@ -288,8 +353,13 @@ main() {
         httpup_repgen="$(find_httpup_repgen)" ||
             die "httpup-repgen was not found. Install httpup or make /mnt/bfs/usr/bin/httpup-repgen available."
 
-        # Order matters: remove client state before generating REPO.
+        # Order matters:
+        #   1. Remove client-side httpup state.
+        #   2. Remove .footprint and .md5sum files.
+        #   3. Generate fresh REPO manifests.
+        #   4. Validate the generated manifests.
         clean_httpup_client_state "$ports_dir"
+        clean_port_metadata "$ports_dir"
         regenerate_repo_manifests "$ports_dir" "$httpup_repgen"
         validate_repo_manifests "$ports_dir"
     else

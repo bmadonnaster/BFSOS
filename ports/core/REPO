@@ -243,9 +243,7 @@ f:e4d8382acd6c01ed9f8f4022c82edf04:syslinux/Pkgfile
 f:6394ad7343ee2bccb1bb268c9f66bc81:sysklogd/sysklogd.run
 f:e3592693a54e9fc5f2768c536fd036ab:sysklogd/Pkgfile
 f:39e65caf258a38aebfe847a89ac5822f:sudo/sudo.pam
-f:36033642b24d7adee995787c80a0d1f2:sudo/.md5sum
 f:aa827c7868c818afdeb9f2b1ff9eb9f6:sudo/Pkgfile
-f:a9b25067d41e35f01da7e3a6ef368880:sudo/.footprint
 f:db09442c289465e594255e94cc6404b7:stripping/stripping.sh
 f:98ce4fee336d080f0366d1e7d5efc76b:stripping/cleanup.sh
 f:dd99c75402d43b7a1208c57164166380:stripping/Pkgfile
@@ -300,8 +298,6 @@ f:9ae31fd693d89d587288d29c338b21cc:rsync/Pkgfile
 f:dd1764b84cfca6b677f44978218a75da:readline/readline-8.2-upstream_fix-1.patch
 f:9cbbfd6dd0c7be8525d3df3ea27c3f8c:readline/Pkgfile
 f:8acd3be096d23ef8ecd82397b7f1d65d:rdfind/Pkgfile
-f:f8afb566f1e05c8029beec970c6f8a59:rdfind/.md5sum
-f:198263d6e5c112c633907784cc183103:rdfind/.footprint
 f:e382efccae7aec7379bcd7b6be462870:python3-wheel/Pkgfile
 f:2cccf9e8c13c670a166da32a76f8abb8:python3-webencodings/Pkgfile
 f:8db1b6e3a3c9213a4d8e8ea42677965b:python3-urllib3/Pkgfile
@@ -457,11 +453,7 @@ f:af79dbf9b6a82ea8fcbafa1a405bcbd6:linux-pam/common-auth
 f:6362b0bfc92504b3f8aec8ed3cd7b861:linux-pam/common-account
 f:7e323c31aaf5e4c54bdb0e4d0c55d910:linux-pam/Pkgfile
 f:26c967896f6531d3d018fc74984dd6c5:linux-headers/Pkgfile
-f:ca34b47484b5d40a8bc55df702bd2545:linux-headers/.md5sum
-f:00d57967de642f24e78949b0f23550c9:linux-headers/.footprint
 f:d41d8cd98f00b204e9800998ecf8427e:linux-firmware/.nostrip
-f:ff40d57be6f297e8970f47f47f265e08:linux-firmware/.md5sum
-f:a4ea42d4e423d7d75b28bffb5989ee6b:linux-firmware/.footprint
 f:2ff2f808c92bb1a98648fd15b9590270:linux-firmware/Pkgfile
 f:4168f0036f843fb1938d33be67d84b22:linux-api-headers/Pkgfile
 f:8c85e4a0232762d476c398d32c5fd597:libxcrypt/Pkgfile
@@ -522,11 +514,7 @@ f:cabf312a0adc98de9d52a411b2c14baa:glibc/genlocales
 f:9a5997c3452909b1769918c759eff8a2:glibc/glibc-fhs-1.patch
 f:1f5074a1dce85a72d2ea465ca76e420b:glibc/glibc-2.43-upstream_fixes-1.patch
 f:2e3dce2c6f38fac06638643543b02a79:glibc/Pkgfile
-f:eebdb41702b6acec4611bf080f273e2d:glibc/.md5sum
-f:c1d81e1fa7e8a66687b09dbddc64d5b4:glibc/.footprint
 f:72547cec10180b915479692ccf81b3ef:git/Pkgfile
-f:9d12cff27b9c5b4e0188474106e4fa1f:git/.md5sum
-f:15c3e0d9f94253d54e834c81af4ffccc:git/.footprint
 f:594315917bd3936258f9fb981967e224:gettext/gettext-0.22-disable-libtextstyle.patch.bak
 f:793bfba0ac5bf91b0668ee69ac65d563:gettext/gettext-0.22-disable-libtextstyle.patch
 f:d914e42e7e484829e142583cd5827d61:gettext/Pkgfile
@@ -589,8 +577,6 @@ f:758f6c47901d8e9cf92c3f654957cd6c:efibootmgr/Pkgfile
 f:bf5c1710a978b8629b20c4f30796b409:e2fsprogs/Pkgfile
 f:e55440c881cb30ed1476ad9abfd12561:dracut/Pkgfile
 f:b1a5f0a421b9f01837bc6e238635cf41:dracut/bfs.conf
-f:4fbc93f1cf3caab76e2b1412f4b762e4:dracut/.md5sum
-f:cd83705e4d192d4bb9a6665c5f3a6917:dracut/.footprint
 f:a4a2df080fb5f625888eb0830c9fe25f:dosfstools/Pkgfile
 f:4d4c8b1885e8f00b27ebddfeb26b0c29:diffutils/Pkgfile
 f:9913c7910e34eb5c589125e257e2f66a:dialog/Pkgfile
@@ -671,8 +657,6 @@ f:7a9dcf4e4b24dbbe1064b16db851fe65:aaa_filesystem/.bash_profile
 f:f70bbec388eac3b99a99718b96b6d4c6:aaa_filesystem/.bash_logout
 f:810298bc4e6cf0e920fd763507242b7f:aaa_filesystem/i18n.sh
 f:0c64fdeda0e19d4ed4abc7ce158b6b54:aaa_filesystem/Pkgfile
-f:cf5fcda44b00d8719a0ee9da2f0d634b:aaa_filesystem/.md5sum
-f:8a549d10cd33a1ed15068e1f797b2e9c:aaa_filesystem/.footprint
 f:6c3aedfa800755b4f7df5c4ed7134f7f:lvm2/post-install
 f:100e63c415f52ea8945beb22caa56e32:lvm2/Pkgfile
 f:7c729a50a9f339091dce14fd11bfd872:liburcu/Pkgfile
