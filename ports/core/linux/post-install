@@ -1,10 +1,40 @@
 #!/bin/sh
+set -eu
 
-if [ -f /lib/modules/KERNELVERSION ]; then
-	kver=$(cat /lib/modules/KERNELVERSION)
-else
-	kver=$(file /boot/vmlinuz-BFS-Linux-6.15.8 | cut -d ' ' -f9)
+version_file=/lib/modules/KERNELVERSION
+
+if [ ! -r "$version_file" ]; then
+    echo "linux post-install: missing $version_file" >&2
+    exit 1
 fi
 
-dracut -f /boot/initrd-6.15.8.img $kver
-depmod $kver
+kver=$(cat "$version_file")
+
+if [ -z "$kver" ]; then
+    echo "linux post-install: kernel version is empty" >&2
+    exit 1
+fi
+
+base_version=${kver%-BFS-Linux}
+kernel_image="/boot/vmlinuz-BFS-Linux-$base_version"
+initramfs_image="/boot/initramfs-$kver.img"
+
+echo "Updating module dependencies for $kver"
+depmod -a "$kver"
+
+if command -v dracut >/dev/null 2>&1; then
+    echo "Generating $initramfs_image"
+    dracut --force "$initramfs_image" "$kver"
+else
+    echo "WARNING: dracut is not installed; no initramfs was generated." >&2
+fi
+
+if [ -f "$kernel_image" ]; then
+    ln -sfn "$(basename "$kernel_image")" /boot/vmlinuz-BFS-Linux
+fi
+
+if [ -f "$initramfs_image" ]; then
+    ln -sfn "$(basename "$initramfs_image")" /boot/initramfs-BFS-Linux.img
+fi
+
+echo "Linux $kver post-install completed."

@@ -87,11 +87,11 @@ d:xf86-video-ati
 d:xf86-video-ast
 d:xf86-video-amdgpu
 d:xf86-input-wacom
+d:xf86-input-evdev
 d:xf86-input-vmmouse
 d:xf86-input-synaptics
 d:xf86-input-libinput
 d:xf86-input-joystick
-d:xf86-input-evdev
 d:xf86-input-elographics
 d:xev
 d:xdriinfo
@@ -308,11 +308,11 @@ f:106c62fa769e793d33a25da083642117:xf86-video-ati/Pkgfile
 f:7006a5a99868ad72d250917daa4e058b:xf86-video-ast/Pkgfile
 f:5af73c5e31166c2f752a3965830121cd:xf86-video-amdgpu/Pkgfile
 f:7cbbeffe7e8b2cb80ad440e7c2528f6f:xf86-input-wacom/Pkgfile
+f:e4b60af492fb81de3b25ce0f47054dd3:xf86-input-evdev/Pkgfile
 f:e86422ff6a5ca200a2357b48fc7d523d:xf86-input-vmmouse/Pkgfile
 f:ad662c4a6664a8421fc5aa4cbdba248d:xf86-input-synaptics/Pkgfile
 f:49135aa74733e0637873275fa77948d5:xf86-input-libinput/Pkgfile
 f:6a3dd7e5a05df1f0f20bd3646853f1f0:xf86-input-joystick/Pkgfile
-f:e4b60af492fb81de3b25ce0f47054dd3:xf86-input-evdev/Pkgfile
 f:41364fbae14c3db0cd37a08d9345180d:xf86-input-elographics/Pkgfile
 f:45106e3034e1a48e8d8633e5860272ad:xev/Pkgfile
 f:90150a886677326f5e3d851e90e5f046:xdriinfo/Pkgfile
@@ -346,9 +346,9 @@ f:a663cb250a7d58c06ddae04ba5af6755:pixman/Pkgfile
 f:4f8b72915c1f46bc2f93d5003dbd54a3:nvidia/pre-install
 f:9039b819cb09373c7ba1767514529f58:nvidia/nvidia-powerd.rc
 f:eca3f817d81e36af34009074aedad7d5:nvidia/README
-f:b2a1feac8d6d56dfd9df9c0fc958bc4c:nvidia/Pkgfile
 f:4511024cc556d0c6e7c467b6789524e2:nvidia/90-nvidia-uvm.rules
 f:2097834b5b5f1fca0b82dd5518e11cb6:nvidia/10-nvidia-drm-outputclass.conf
+f:b2a1feac8d6d56dfd9df9c0fc958bc4c:nvidia/Pkgfile
 f:beb4df7a373fc64dd1845d31122371ec:mtdev/Pkgfile
 f:c76a1ad3804de0016d516e968d3ced4e:mkfontscale/Pkgfile
 f:b4f8779303542471e8a279f27721e9b4:mesa/README.md
@@ -366,8 +366,8 @@ f:bb31567d15efd35c50e272781e7defa1:libvdpau-va-gl/post-install
 f:91cc908c3ad068ae5e7d21d5f36acb93:libvdpau-va-gl/Pkgfile
 f:8da3a59500b05074c4579f81a1fcbe75:libva/Pkgfile
 f:199104c43d1e89f90188c12e8d0d3b6d:libunwind/Pkgfile
-f:8559dea09c909ba73c8a67d7739bcf7c:libpthread-stubs/Pkgfile
 f:31240cf509bff3ff25e609f3831ca769:libpthread-stubs/.signature
+f:8559dea09c909ba73c8a67d7739bcf7c:libpthread-stubs/Pkgfile
 f:98818db8de479b2616f5c67a5efa29f5:libpciaccess/Pkgfile
 f:9eb5309c54dece3a4654db8c7ad9c3d2:libinput/Pkgfile
 f:7e9829afd28f46146be111510870e01b:libglvnd/Pkgfile

@@ -105,8 +105,8 @@ f:43dfbfb135f30827c41e6989eca0a40b:polkit-gnome/Pkgfile
 f:5d987ba0082cdb35e6a93d3ea328f90b:nautilus/post-install
 f:55b73de1acc923f79e35371f607657e2:nautilus/Pkgfile
 f:48475457470bc9671d05361a4e6763c7:mutter/Pkgfile
-f:a123764163407702dc62ab8a3e8a6bb2:metacity/Pkgfile
 f:9a8bb3fcc2ee91b71085f0d3ae404f5c:metacity/0001-frames-Add-basic-color-scheme-support.patch
+f:a123764163407702dc62ab8a3e8a6bb2:metacity/Pkgfile
 f:1e7ec1a9a51bb321e7cf24f961b098de:localsearch/Pkgfile
 f:950d79921d7d66a7cd7083bb6bcd0440:libwnck2/WindowActionMenu-unset-window-and-stop-async-events-on-dispose.patch
 f:2d4ed369e45bb29fc2350567af8cbc5c:libwnck2/Pkgfile

@@ -1,7 +1,7 @@
 # Add your top line text here
 # Your line to add at the top here
 name=linux-headers
-version=7.1.2
+version=7.1.5
 release=1
 source=(https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz)
 

@@ -9,7 +9,7 @@ release=1
 source=(https://www.kernel.org/pub/linux/kernel/firmware/$name-$version.tar.xz)
 
 pkg_build() {
-    make \
+    make -j1 \
         DESTDIR="$PKG" \
         FIRMWAREDIR=/lib/firmware \
         install
