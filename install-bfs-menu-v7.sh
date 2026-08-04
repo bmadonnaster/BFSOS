@@ -47,6 +47,9 @@ SUDO_MODE="${BFS_SUDO_MODE:-password}"
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
 INSTALL_NETWORKMANAGER="${BFS_INSTALL_NETWORKMANAGER:-no}"
 INSTALL_CRYPTSETUP="${BFS_INSTALL_CRYPTSETUP:-no}"
+AUTO_CRYPTSETUP=no
+AUTO_LVM2=no
+AUTO_MDADM=no
 KEEP_MOUNTS="${BFS_KEEP_MOUNTS:-no}"
 FINAL_CHROOT="${BFS_FINAL_CHROOT:-no}"
 GRUB_FALLBACK="${BFS_GRUB_FALLBACK:-no}"
@@ -60,6 +63,7 @@ NETWORK_CONFIGURED=no
 PACKAGES_CONFIGURED=no
 SUDO_CONFIGURED=no
 BOOTLOADER_CONFIGURED=no
+PARTITIONING_VISITED=no
 
 LOG_ENABLED="${BFS_LOG_ENABLED:-yes}"
 LOG_FILE="${BFS_LOG_FILE:-}"
@@ -73,6 +77,11 @@ USED_DEVICES=()
 EXTRA_DEVICES=()
 EXTRA_MOUNTPOINTS=()
 EXTRA_FORMATS=()
+BTRFS_DEVICES=()
+BTRFS_MOUNTPOINTS=()
+BTRFS_SUBVOLUMES=()
+BTRFS_SNAPSHOT_SUBVOLUMES=()
+BTRFS_CONFIG_NAMES=()
 AVAILABLE_PATHS=()
 AVAILABLE_TYPES=()
 AVAILABLE_SIZES=()
@@ -142,7 +151,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v2.sh [options]
+Usage: install-bfs-menu-v7.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -549,6 +558,694 @@ select_network_interface() {
         done
 }
 
+
+get_whole_disks() {
+        lsblk -dpno NAME,SIZE,MODEL,TYPE |
+        awk '$NF == "disk" {
+                type=$NF
+                $NF=""
+                sub(/[[:space:]]+$/, "")
+                print
+        }'
+}
+
+partition_disks() {
+        local choice="" disk="" index="" line=""
+        local -a disk_paths=()
+        local -a disk_descriptions=()
+
+        command -v cfdisk >/dev/null 2>&1 || {
+                warn "cfdisk is not available in this live environment."
+                pause_screen
+                return 0
+        }
+
+        while true; do
+                clear_screen
+                echo "Partition disks"
+                echo "==============="
+                echo
+
+                disk_paths=()
+                disk_descriptions=()
+
+                while IFS= read -r line; do
+                        [[ -n "$line" ]] || continue
+                        disk="${line%% *}"
+                        disk_paths+=("$disk")
+                        disk_descriptions+=("$line")
+                done < <(get_whole_disks)
+
+                ((${#disk_paths[@]} > 0)) || {
+                        warn "No whole disks were found."
+                        pause_screen
+                        return 0
+                }
+
+                for ((index=0; index<${#disk_paths[@]}; index++)); do
+                        printf '  %d) %s\n' "$((index + 1))" "${disk_descriptions[$index]}"
+                done
+                printf '  %d) Finished partitioning\n\n' "$(( ${#disk_paths[@]} + 1 ))"
+
+                read -r -p "Choose a disk [1-$(( ${#disk_paths[@]} + 1 ))]: " choice
+
+                [[ "$choice" =~ ^[0-9]+$ ]] || {
+                        warn "Enter a number from the list."
+                        sleep 1
+                        continue
+                }
+
+                if ((choice == ${#disk_paths[@]} + 1)); then
+                        PARTITIONING_VISITED=yes
+                        return 0
+                fi
+
+                ((choice >= 1 && choice <= ${#disk_paths[@]})) || {
+                        warn "That selection is outside the available range."
+                        sleep 1
+                        continue
+                }
+
+                disk="${disk_paths[$((choice - 1))]}"
+                echo
+                echo "Starting cfdisk for $disk..."
+                echo "Changes are written only when you choose Write in cfdisk."
+                echo
+
+                cfdisk "$disk"
+
+                command -v partprobe >/dev/null 2>&1 && partprobe "$disk" || true
+                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                sleep 1
+        done
+}
+
+
+list_raid_member_candidates() {
+        lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS |
+        awk '
+                ($2 == "disk" || $2 == "part" || $2 == "lvm" || $2 == "crypt") &&
+                $5 == "" {
+                        print
+                }
+        '
+}
+
+choose_raid_level() {
+        local variable="$1"
+        local choice=""
+
+        clear_screen
+        cat <<'EOF_RAID_LEVEL'
+Select RAID level
+=================
+
+  1) Linear (JBOD - combines disks, no redundancy)
+  2) RAID 0  (Striping - performance, no redundancy)
+  3) RAID 1  (Mirroring - redundancy)
+  4) RAID 4  (Striping + dedicated parity)
+  5) RAID 5  (Striping + distributed parity)
+  6) RAID 6  (Striping + dual distributed parity)
+  7) RAID 10 (Striping + Mirroring - performance + redundancy)
+  8) Cancel
+
+EOF_RAID_LEVEL
+
+        while true; do
+                read -r -p "Choose [1-8]: " choice
+
+                case "$choice" in
+                        1) printf -v "$variable" '%s' linear; return 0 ;;
+                        2) printf -v "$variable" '%s' 0; return 0 ;;
+                        3) printf -v "$variable" '%s' 1; return 0 ;;
+                        4) printf -v "$variable" '%s' 4; return 0 ;;
+                        5) printf -v "$variable" '%s' 5; return 0 ;;
+                        6) printf -v "$variable" '%s' 6; return 0 ;;
+                        7) printf -v "$variable" '%s' 10; return 0 ;;
+                        8) return 1 ;;
+                        *) warn "Choose a number from 1 through 8." ;;
+                esac
+        done
+}
+
+
+show_raid_level_summary() {
+        local raid_level="$1"
+
+        clear_screen
+        echo "RAID selection summary"
+        echo "======================"
+        echo
+
+        case "$raid_level" in
+                linear)
+                        cat <<'EOF_LINEAR'
+RAID type     : Linear / JBOD
+Minimum disks : 2
+Layout        : Concatenation
+Redundancy    : None
+Performance   : Similar to a single disk
+Usable space  : Sum of all member capacities
+EOF_LINEAR
+                        ;;
+                0)
+                        cat <<'EOF_RAID0'
+RAID type     : RAID 0
+Minimum disks : 2
+Layout        : Striping
+Redundancy    : None
+Performance   : Excellent read and write performance
+Usable space  : Sum of all member capacities
+EOF_RAID0
+                        ;;
+                1)
+                        cat <<'EOF_RAID1'
+RAID type     : RAID 1
+Minimum disks : 2
+Layout        : Mirroring
+Redundancy    : One complete mirrored copy
+Performance   : Fast reads; writes similar to one disk
+Usable space  : Capacity of the smallest member
+EOF_RAID1
+                        ;;
+                4)
+                        cat <<'EOF_RAID4'
+RAID type     : RAID 4
+Minimum disks : 3
+Layout        : Striping with dedicated parity
+Redundancy    : One drive may fail
+Performance   : Fast reads; parity disk may limit writes
+Usable space  : Capacity of N-1 members
+EOF_RAID4
+                        ;;
+                5)
+                        cat <<'EOF_RAID5'
+RAID type     : RAID 5
+Minimum disks : 3
+Layout        : Striping with distributed parity
+Redundancy    : One drive may fail
+Performance   : Fast reads; good general-purpose writes
+Usable space  : Capacity of N-1 members
+EOF_RAID5
+                        ;;
+                6)
+                        cat <<'EOF_RAID6'
+RAID type     : RAID 6
+Minimum disks : 4
+Layout        : Striping with dual distributed parity
+Redundancy    : Two drives may fail
+Performance   : Fast reads; slower writes than RAID 5
+Usable space  : Capacity of N-2 members
+EOF_RAID6
+                        ;;
+                10)
+                        cat <<'EOF_RAID10'
+RAID type     : RAID 10
+Minimum disks : 4
+Layout        : Striping across mirrored pairs
+Redundancy    : Multiple failures may be tolerated if mirrors remain intact
+Performance   : Excellent read and write performance
+Usable space  : Approximately 50% of total capacity
+EOF_RAID10
+                        ;;
+                *)
+                        warn "Unknown RAID level: $raid_level"
+                        ;;
+        esac
+
+        pause_screen
+}
+
+minimum_raid_members() {
+        case "$1" in
+                linear|0|1) printf '%s\n' 2 ;;
+                4|5)        printf '%s\n' 3 ;;
+                6)          printf '%s\n' 4 ;;
+                10)         printf '%s\n' 4 ;;
+                *)          return 1 ;;
+        esac
+}
+
+choose_raid_members() {
+        local result_variable="$1"
+        local minimum="$2"
+        local choice=""
+        local index=""
+        local selected=""
+        local candidate=""
+        local already_selected=no
+        local -a candidates=()
+        local -a descriptions=()
+        local -a selected_members=()
+
+        while IFS= read -r line; do
+                [[ -n "$line" ]] || continue
+                candidate="${line%% *}"
+                candidates+=("$candidate")
+                descriptions+=("$line")
+        done < <(list_raid_member_candidates)
+
+        ((${#candidates[@]} >= minimum)) || {
+                warn "At least $minimum unused block devices are required."
+                return 1
+        }
+
+        while true; do
+                clear_screen
+                echo "Select RAID member devices"
+                echo "=========================="
+                echo
+                echo "Selected: ${selected_members[*]:-none}"
+                echo
+
+                for ((index=0; index<${#candidates[@]}; index++)); do
+                        printf '  %d) %s\n' \
+                                "$((index + 1))" \
+                                "${descriptions[$index]}"
+                done
+
+                printf '  %d) Finished selecting members\n' \
+                        "$(( ${#candidates[@]} + 1 ))"
+                printf '  %d) Cancel\n\n' \
+                        "$(( ${#candidates[@]} + 2 ))"
+
+                read -r -p "Choose [1-$(( ${#candidates[@]} + 2 ))]: " choice
+
+                [[ "$choice" =~ ^[0-9]+$ ]] || {
+                        warn "Enter a number from the list."
+                        sleep 1
+                        continue
+                }
+
+                if ((choice == ${#candidates[@]} + 1)); then
+                        if ((${#selected_members[@]} < minimum)); then
+                                warn "This RAID level requires at least $minimum members."
+                                sleep 2
+                                continue
+                        fi
+
+                        printf -v "$result_variable" '%s' "${selected_members[*]}"
+                        return 0
+                fi
+
+                if ((choice == ${#candidates[@]} + 2)); then
+                        return 1
+                fi
+
+                ((choice >= 1 && choice <= ${#candidates[@]})) || {
+                        warn "That selection is outside the available range."
+                        sleep 1
+                        continue
+                }
+
+                selected="${candidates[$((choice - 1))]}"
+                already_selected=no
+
+                for candidate in "${selected_members[@]}"; do
+                        if [[ "$candidate" == "$selected" ]]; then
+                                already_selected=yes
+                                break
+                        fi
+                done
+
+                if [[ "$already_selected" == yes ]]; then
+                        warn "$selected is already selected."
+                        sleep 1
+                        continue
+                fi
+
+                selected_members+=("$selected")
+        done
+}
+
+assemble_raid_arrays() {
+        clear_screen
+        echo "Assemble existing RAID arrays"
+        echo "============================="
+        echo
+
+        command -v mdadm >/dev/null 2>&1 || {
+                warn "mdadm is not available in this live environment."
+                pause_screen
+                return 0
+        }
+
+        mdadm --assemble --scan ||
+                warn "One or more RAID arrays could not be assembled."
+
+        command -v udevadm >/dev/null 2>&1 &&
+                udevadm settle || true
+
+        echo
+        cat /proc/mdstat 2>/dev/null || true
+        pause_screen
+}
+
+create_raid_array() {
+        local raid_level=""
+        local minimum=""
+        local member_string=""
+        local array_device=""
+        local -a members=()
+
+        command -v mdadm >/dev/null 2>&1 || {
+                warn "mdadm is not available in this live environment."
+                pause_screen
+                return 0
+        }
+
+        choose_raid_level raid_level || return 0
+        minimum="$(minimum_raid_members "$raid_level")"
+
+        show_raid_level_summary "$raid_level"
+        choose_raid_members member_string "$minimum" || return 0
+        read -r -a members <<< "$member_string"
+
+        clear_screen
+        echo "Create software RAID array"
+        echo "=========================="
+        echo
+        echo "RAID level: $raid_level"
+        echo "Members:    ${members[*]}"
+        echo
+
+        read -r -p "Array device [/dev/md0]: " array_device
+        array_device="${array_device:-/dev/md0}"
+
+        [[ "$array_device" =~ ^/dev/md[0-9]+$ ]] || {
+                warn "Use an array device such as /dev/md0."
+                pause_screen
+                return 0
+        }
+
+        confirm "Create $array_device? Existing data on all selected members will be destroyed." || {
+                echo "RAID creation cancelled."
+                pause_screen
+                return 0
+        }
+
+        if [[ "$raid_level" == linear ]]; then
+                mdadm \
+                        --create "$array_device" \
+                        --level=linear \
+                        --raid-devices="${#members[@]}" \
+                        "${members[@]}"
+        else
+                mdadm \
+                        --create "$array_device" \
+                        --level="$raid_level" \
+                        --raid-devices="${#members[@]}" \
+                        "${members[@]}"
+        fi
+
+        command -v udevadm >/dev/null 2>&1 &&
+                udevadm settle || true
+
+        echo
+        cat /proc/mdstat 2>/dev/null || true
+        pause_screen
+}
+
+show_raid_details() {
+        local array=""
+
+        clear_screen
+        echo "Software RAID status"
+        echo "===================="
+        echo
+
+        cat /proc/mdstat 2>/dev/null || true
+
+        if command -v mdadm >/dev/null 2>&1; then
+                while IFS= read -r array; do
+                        [[ -n "$array" ]] || continue
+                        echo
+                        echo "------------------------------------------------------------"
+                        mdadm --detail "$array" 2>/dev/null || true
+                done < <(
+                        lsblk -prno PATH,TYPE |
+                        awk '$2 ~ /^raid/ { print $1 }'
+                )
+        fi
+
+        pause_screen
+}
+
+raid_menu() {
+        local choice=""
+
+        while true; do
+                clear_screen
+                cat <<'EOF_RAID'
+Software RAID
+=============
+
+  1) Assemble existing arrays
+  2) Create a new array
+  3) Show array status and details
+  4) Return to Storage setup
+
+EOF_RAID
+                read -r -p "Choose [1-4]: " choice
+
+                case "$choice" in
+                        1) assemble_raid_arrays ;;
+                        2) create_raid_array ;;
+                        3) show_raid_details ;;
+                        4) return 0 ;;
+                        *) warn "Choose a number from 1 through 4."; sleep 1 ;;
+                esac
+        done
+}
+
+luks_menu() {
+        local choice=""
+        local device=""
+        local mapping=""
+
+        while true; do
+                clear_screen
+                cat <<'EOF_LUKS'
+LUKS encryption
+===============
+
+  1) Create a new LUKS container
+  2) Open an existing LUKS container
+  3) Close a mapped LUKS container
+  4) Return to Storage setup
+
+EOF_LUKS
+                read -r -p "Choose [1-4]: " choice
+
+                case "$choice" in
+                        1)
+                                command -v cryptsetup >/dev/null 2>&1 || {
+                                        warn "cryptsetup is unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                lsblk -fp
+                                echo
+                                read -r -p "Block device to encrypt: " device
+
+                                [[ -b "$device" ]] || {
+                                        warn "Not a block device: $device"
+                                        pause_screen
+                                        continue
+                                }
+
+                                confirm "Initialize $device as LUKS? Existing data will be destroyed." ||
+                                        continue
+
+                                cryptsetup luksFormat "$device"
+
+                                read -r -p "Mapping name to open now [leave blank to skip]: " mapping
+                                [[ -z "$mapping" ]] ||
+                                        cryptsetup open "$device" "$mapping"
+
+                                command -v udevadm >/dev/null 2>&1 &&
+                                        udevadm settle || true
+                                pause_screen
+                                ;;
+                        2)
+                                command -v cryptsetup >/dev/null 2>&1 || {
+                                        warn "cryptsetup is unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                lsblk -fp
+                                echo
+                                read -r -p "LUKS block device: " device
+                                read -r -p "Mapping name: " mapping
+                                cryptsetup open "$device" "$mapping"
+
+                                command -v udevadm >/dev/null 2>&1 &&
+                                        udevadm settle || true
+                                pause_screen
+                                ;;
+                        3)
+                                command -v cryptsetup >/dev/null 2>&1 || {
+                                        warn "cryptsetup is unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                read -r -p "Mapping name to close: " mapping
+                                cryptsetup close "$mapping"
+                                pause_screen
+                                ;;
+                        4)
+                                return 0
+                                ;;
+                        *)
+                                warn "Choose a number from 1 through 4."
+                                sleep 1
+                                ;;
+                esac
+        done
+}
+
+lvm_menu() {
+        local choice=""
+        local device=""
+        local pv_list=""
+        local vg_name=""
+        local lv_name=""
+        local lv_size=""
+
+        while true; do
+                clear_screen
+                cat <<'EOF_LVM'
+LVM storage
+===========
+
+  1) Create a physical volume
+  2) Create a volume group
+  3) Create a logical volume
+  4) Show LVM devices
+  5) Return to Storage setup
+
+EOF_LVM
+                read -r -p "Choose [1-5]: " choice
+
+                case "$choice" in
+                        1)
+                                command -v pvcreate >/dev/null 2>&1 || {
+                                        warn "LVM tools are unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                lsblk -fp
+                                echo
+                                read -r -p "Block device for the physical volume: " device
+
+                                [[ -b "$device" ]] || {
+                                        warn "Not a block device: $device"
+                                        pause_screen
+                                        continue
+                                }
+
+                                confirm "Initialize $device as an LVM physical volume?" ||
+                                        continue
+
+                                pvcreate "$device"
+                                pause_screen
+                                ;;
+                        2)
+                                command -v vgcreate >/dev/null 2>&1 || {
+                                        warn "LVM tools are unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                pvs
+                                echo
+                                read -r -p "New volume-group name: " vg_name
+                                read -r -p "Physical volume device(s), separated by spaces: " pv_list
+                                read -r -a pv_array <<< "$pv_list"
+                                vgcreate "$vg_name" "${pv_array[@]}"
+                                pause_screen
+                                ;;
+                        3)
+                                command -v lvcreate >/dev/null 2>&1 || {
+                                        warn "LVM tools are unavailable."
+                                        pause_screen
+                                        continue
+                                }
+
+                                vgs
+                                echo
+                                read -r -p "Volume-group name: " vg_name
+                                read -r -p "Logical-volume name: " lv_name
+                                read -r -p "Size, for example 100G or 100%FREE: " lv_size
+
+                                if [[ "$lv_size" == *%* ]]; then
+                                        lvcreate -l "$lv_size" -n "$lv_name" "$vg_name"
+                                else
+                                        lvcreate -L "$lv_size" -n "$lv_name" "$vg_name"
+                                fi
+
+                                command -v udevadm >/dev/null 2>&1 &&
+                                        udevadm settle || true
+                                pause_screen
+                                ;;
+                        4)
+                                pvs 2>/dev/null || true
+                                echo
+                                vgs 2>/dev/null || true
+                                echo
+                                lvs 2>/dev/null || true
+                                pause_screen
+                                ;;
+                        5)
+                                return 0
+                                ;;
+                        *)
+                                warn "Choose a number from 1 through 5."
+                                sleep 1
+                                ;;
+                esac
+        done
+}
+
+storage_menu() {
+        local choice=""
+
+        while true; do
+                clear_screen
+                cat <<'EOF_STORAGE'
+Storage setup
+=============
+
+Recommended order:
+
+  1) Partition disks with cfdisk
+  2) Create or assemble software RAID
+  3) Configure LUKS encryption
+  4) Configure LVM
+  5) Assign filesystems and mount points
+  6) Show current storage devices
+  7) Return to main menu
+
+EOF_STORAGE
+                read -r -p "Choose [1-7]: " choice
+
+                case "$choice" in
+                        1) partition_disks ;;
+                        2) raid_menu ;;
+                        3) luks_menu ;;
+                        4) lvm_menu ;;
+                        5) configure_disks ;;
+                        6) clear_screen; lsblk -fp; pause_screen ;;
+                        7) return 0 ;;
+                        *) warn "Choose a number from 1 through 7."; sleep 1 ;;
+                esac
+        done
+}
+
 configure_disks() {
         clear_screen
         echo "Disk and filesystem setup"
@@ -884,15 +1581,15 @@ show_main_menu() {
 
 Configure each section, then select Install BFS.
 
-  1) Disk and filesystem setup [$(menu_status "$DISKS_CONFIGURED")]
-  2) Base archive              [$(menu_status "$ARCHIVE_CONFIGURED")]
-  3) System settings           [$(menu_status "$SYSTEM_CONFIGURED")]
-  4) User accounts             [$(menu_status "$USERS_CONFIGURED")]
-  5) Kernel selection          [$(menu_status "$KERNEL_CONFIGURED")]
-  6) Networking                [$(menu_status "$NETWORK_CONFIGURED")]
-  7) Optional software         [$(menu_status "$PACKAGES_CONFIGURED")]
-  8) Sudo configuration        [$(menu_status "$SUDO_CONFIGURED")]
-  9) Bootloader                [$(menu_status "$BOOTLOADER_CONFIGURED")]
+  1) Storage setup              [$(menu_status "$DISKS_CONFIGURED")]
+  2) Base archive               [$(menu_status "$ARCHIVE_CONFIGURED")]
+  3) System settings            [$(menu_status "$SYSTEM_CONFIGURED")]
+  4) User accounts              [$(menu_status "$USERS_CONFIGURED")]
+  5) Kernel selection           [$(menu_status "$KERNEL_CONFIGURED")]
+  6) Networking                 [$(menu_status "$NETWORK_CONFIGURED")]
+  7) Optional software          [$(menu_status "$PACKAGES_CONFIGURED")]
+  8) Sudo configuration         [$(menu_status "$SUDO_CONFIGURED")]
+  9) Bootloader                 [$(menu_status "$BOOTLOADER_CONFIGURED")]
  10) Review selections
  11) Install BFS
  12) Chroot into target
@@ -954,7 +1651,7 @@ installer_menu() {
                 read -r -p "Choose [1-13]: " choice
 
                 case "$choice" in
-                        1)  configure_disks ;;
+                        1)  storage_menu ;;
                         2)  configure_archive ;;
                         3)  configure_system ;;
                         4)  configure_users ;;
@@ -994,7 +1691,151 @@ validate_format_command() {
         command -v "$command" >/dev/null 2>&1 || die "Required formatting command is missing: $command"
 }
 
+
+selected_target_devices() {
+        local device=""
+        local index=""
+
+        for device in \
+                "$ROOT_DEV" \
+                "$BOOT_DEV" \
+                "$EFI_DEV" \
+                "$SWAP_DEV" \
+                "$HOME_DEV"
+        do
+                [[ -n "$device" ]] && printf '%s\n' "$device"
+        done
+
+        for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
+                [[ -n "${EXTRA_DEVICES[$index]}" ]] &&
+                        printf '%s\n' "${EXTRA_DEVICES[$index]}"
+        done
+}
+
+device_ancestry_has_type() {
+        local device="$1"
+        local wanted="$2"
+        local type=""
+
+        [[ -b "$device" ]] || return 1
+
+        while IFS= read -r type; do
+                case "$wanted" in
+                        raid)
+                                [[ "$type" == raid* ]] && return 0
+                                ;;
+                        *)
+                                [[ "$type" == "$wanted" ]] && return 0
+                                ;;
+                esac
+        done < <(
+                lsblk -s -nro TYPE "$device" 2>/dev/null || true
+        )
+
+        return 1
+}
+
+detect_storage_requirements() {
+        local device=""
+
+        AUTO_CRYPTSETUP=no
+        AUTO_LVM2=no
+        AUTO_MDADM=no
+
+        while IFS= read -r device; do
+                [[ -n "$device" ]] || continue
+
+                if device_ancestry_has_type "$device" crypt; then
+                        AUTO_CRYPTSETUP=yes
+                        INSTALL_CRYPTSETUP=yes
+                fi
+
+                if device_ancestry_has_type "$device" lvm; then
+                        AUTO_LVM2=yes
+                fi
+
+                if device_ancestry_has_type "$device" raid; then
+                        AUTO_MDADM=yes
+                fi
+        done < <(selected_target_devices)
+}
+
+crypt_mapping_records() {
+        local selected_device=""
+        local path=""
+        local type=""
+        local mapping_name=""
+        local parent_name=""
+        local parent_device=""
+        local luks_uuid=""
+        local record=""
+        local -a seen=()
+
+        while IFS= read -r selected_device; do
+                [[ -n "$selected_device" ]] || continue
+
+                while read -r path type; do
+                        [[ "$type" == crypt ]] || continue
+
+                        mapping_name="$(basename "$path")"
+                        parent_name="$(lsblk -dnro PKNAME "$path" 2>/dev/null || true)"
+                        [[ -n "$parent_name" ]] || continue
+
+                        parent_device="/dev/$parent_name"
+                        luks_uuid="$(blkid -s UUID -o value "$parent_device" 2>/dev/null || true)"
+                        [[ -n "$luks_uuid" ]] || continue
+
+                        record="$mapping_name|$parent_device|$luks_uuid"
+
+                        if printf '%s\n' "${seen[@]}" | grep -qxF "$record"; then
+                                continue
+                        fi
+
+                        seen+=("$record")
+                        printf '%s\n' "$record"
+                done < <(
+                        lsblk -s -prno PATH,TYPE "$selected_device" 2>/dev/null || true
+                )
+        done < <(selected_target_devices)
+}
+
+generate_crypttab() {
+        local crypttab="$TARGET/etc/crypttab"
+        local record=""
+        local mapping_name=""
+        local parent_device=""
+        local luks_uuid=""
+        local generated=0
+
+        detect_storage_requirements
+
+        if [[ "$AUTO_CRYPTSETUP" != yes ]]; then
+                rm -f "$crypttab"
+                return 0
+        fi
+
+        log "Generating /etc/crypttab"
+
+        mkdir -p "$TARGET/etc"
+        : > "$crypttab"
+
+        while IFS='|' read -r mapping_name parent_device luks_uuid; do
+                [[ -n "$mapping_name" && -n "$luks_uuid" ]] || continue
+
+                printf '# %s\n' "$parent_device" >> "$crypttab"
+                printf '%-24s UUID=%-36s none luks\n\n' \
+                        "$mapping_name" "$luks_uuid" >> "$crypttab"
+                generated=$((generated + 1))
+        done < <(crypt_mapping_records)
+
+        ((generated > 0)) ||
+                die "Encrypted storage was detected, but no crypttab entries could be generated."
+
+        chmod 0600 "$crypttab"
+}
+
 validate_settings() {
+        detect_storage_requirements
         [[ "$DISKS_CONFIGURED" == yes ]] || die "Disk and filesystem setup is incomplete."
         [[ "$ARCHIVE_CONFIGURED" == yes ]] || die "Base archive selection is incomplete."
         [[ "$SYSTEM_CONFIGURED" == yes ]] || die "System settings are incomplete."
@@ -1048,6 +1889,7 @@ show_additional_partitions() {
 }
 
 show_summary() {
+        detect_storage_requirements
         cat <<SUMMARY
 
 BFS installation summary
@@ -1080,10 +1922,14 @@ Git:                 $INSTALL_GIT
 Sudo installed:      $INSTALL_SUDO
 Sudo mode:           $SUDO_MODE
 Wget:                $INSTALL_WGET
-LUKS:                $INSTALL_CRYPTSETUP
+LUKS package:        $INSTALL_CRYPTSETUP
+Encrypted targets:  $AUTO_CRYPTSETUP
+LVM detected:       $AUTO_LVM2
+mdraid detected:    $AUTO_MDADM
 Console clears:      yes
 Console blanking:    30 minutes
 Coredump MaxUse:     5G
+Btrfs snapshots:     automatic when formatted as Btrfs
 SUMMARY
         local formatting_requested=no format
         for format in "$ROOT_FORMAT" "$BOOT_FORMAT" "$EFI_FORMAT" "$SWAP_FORMAT" "$HOME_FORMAT" "${EXTRA_FORMATS[@]}"; do
@@ -1094,7 +1940,7 @@ SUMMARY
         else
                 printf '\nNo selected partition will be formatted.\n'
         fi
-        [[ "$INSTALL_GRUB" == yes && "$INSTALL_KERNEL" != yes ]] && \
+        [[ "$INSTALL_GRUB" == yes && "$KERNEL_PACKAGE" == none ]] && \
                 warn "GRUB will be written and configured, but BFS will not install a kernel."
         confirm "Continue?" || die "Installation cancelled."
 }
@@ -1129,6 +1975,125 @@ format_device() {
         esac
 }
 
+
+sanitize_btrfs_name() {
+        local mountpoint="$1"
+        local name="${mountpoint#/}"
+
+        [[ -n "$name" ]] || {
+                printf '%s\n' root
+                return 0
+        }
+
+        name="${name//\//-}"
+        name="${name//[^a-zA-Z0-9_.-]/-}"
+        printf '%s\n' "$name"
+}
+
+register_btrfs_layout() {
+        local device="$1" mountpoint="$2"
+        local name="" data_subvol="" snapshot_subvol=""
+
+        name="$(sanitize_btrfs_name "$mountpoint")"
+
+        case "$mountpoint" in
+                /)
+                        data_subvol="@"
+                        snapshot_subvol="@snapshots"
+                        name=root
+                        ;;
+                /home)
+                        data_subvol="@home"
+                        snapshot_subvol="@home-snapshots"
+                        name=home
+                        ;;
+                *)
+                        data_subvol="@$name"
+                        snapshot_subvol="@$name-snapshots"
+                        ;;
+        esac
+
+        BTRFS_DEVICES+=("$device")
+        BTRFS_MOUNTPOINTS+=("$mountpoint")
+        BTRFS_SUBVOLUMES+=("$data_subvol")
+        BTRFS_SNAPSHOT_SUBVOLUMES+=("$snapshot_subvol")
+        BTRFS_CONFIG_NAMES+=("$name")
+}
+
+prepare_btrfs_subvolumes() {
+        local index="" device="" data_subvol="" snapshot_subvol="" temp_mount=""
+
+        BTRFS_DEVICES=()
+        BTRFS_MOUNTPOINTS=()
+        BTRFS_SUBVOLUMES=()
+        BTRFS_SNAPSHOT_SUBVOLUMES=()
+        BTRFS_CONFIG_NAMES=()
+
+        [[ "$ROOT_FORMAT" == btrfs ]] && register_btrfs_layout "$ROOT_DEV" /
+        [[ "$HOME_FORMAT" == btrfs ]] && register_btrfs_layout "$HOME_DEV" /home
+
+        for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
+                [[ "${EXTRA_FORMATS[$index]}" == btrfs ]] || continue
+                register_btrfs_layout \
+                        "${EXTRA_DEVICES[$index]}" \
+                        "${EXTRA_MOUNTPOINTS[$index]}"
+        done
+
+        ((${#BTRFS_DEVICES[@]} > 0)) || return 0
+        command -v btrfs >/dev/null 2>&1 ||
+                die "The btrfs command is required for automatic snapshots."
+
+        log "Creating Btrfs data and snapshot subvolumes"
+
+        for ((index=0; index<${#BTRFS_DEVICES[@]}; index++)); do
+                device="${BTRFS_DEVICES[$index]}"
+                data_subvol="${BTRFS_SUBVOLUMES[$index]}"
+                snapshot_subvol="${BTRFS_SNAPSHOT_SUBVOLUMES[$index]}"
+                temp_mount="$(mktemp -d /tmp/bfs-btrfs.XXXXXX)"
+
+                mount "$device" "$temp_mount"
+                [[ -e "$temp_mount/$data_subvol" ]] ||
+                        btrfs subvolume create "$temp_mount/$data_subvol"
+                [[ -e "$temp_mount/$snapshot_subvol" ]] ||
+                        btrfs subvolume create "$temp_mount/$snapshot_subvol"
+                umount "$temp_mount"
+                rmdir "$temp_mount"
+        done
+}
+
+btrfs_layout_index_for_mountpoint() {
+        local wanted="$1" index=""
+
+        for ((index=0; index<${#BTRFS_MOUNTPOINTS[@]}; index++)); do
+                if [[ "${BTRFS_MOUNTPOINTS[$index]}" == "$wanted" ]]; then
+                        printf '%s\n' "$index"
+                        return 0
+                fi
+        done
+
+        return 1
+}
+
+mount_btrfs_layout() {
+        local device="$1" destination="$2" mountpoint_name="$3"
+        local index="" snapshot_destination=""
+
+        index="$(btrfs_layout_index_for_mountpoint "$mountpoint_name")" ||
+                return 1
+
+        mkdir -p "$destination"
+        mount -o "subvol=${BTRFS_SUBVOLUMES[$index]}" "$device" "$destination"
+        record_mount "$destination"
+
+        snapshot_destination="$destination/.snapshots"
+        mkdir -p "$snapshot_destination"
+        mount -o "subvol=${BTRFS_SNAPSHOT_SUBVOLUMES[$index]}" \
+                "$device" "$snapshot_destination"
+        record_mount "$snapshot_destination"
+
+        return 0
+}
+
 format_selected_partitions() {
         local index
         format_device "$ROOT_DEV" "$ROOT_FORMAT" / 
@@ -1139,6 +2104,8 @@ format_selected_partitions() {
         for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
                 format_device "${EXTRA_DEVICES[$index]}" "${EXTRA_FORMATS[$index]}" "${EXTRA_MOUNTPOINTS[$index]}"
         done
+
+        prepare_btrfs_subvolumes
 }
 
 record_mount() { MOUNTED_BY_SCRIPT+=("$1"); }
@@ -1153,23 +2120,40 @@ mount_device() {
 }
 
 mount_target_filesystems() {
-        local index device
+        local index="" device="" mountpoint_name=""
+
         log "Mounting target filesystems"
 
-        # Even when formatting is skipped, selected partitions must not remain
-        # mounted elsewhere in the live environment.
         for device in "$ROOT_DEV" "$BOOT_DEV" "$EFI_DEV" "$HOME_DEV" "${EXTRA_DEVICES[@]}"; do
                 [[ -n "$device" ]] && unmount_device_everywhere "$device"
         done
 
         mkdir -p "$TARGET"
-        mount_device "$ROOT_DEV" "$TARGET"
+
+        if ! mount_btrfs_layout "$ROOT_DEV" "$TARGET" /; then
+                mount_device "$ROOT_DEV" "$TARGET"
+        fi
+
         [[ -z "$BOOT_DEV" ]] || mount_device "$BOOT_DEV" "$TARGET/boot"
         [[ "$BOOT_MODE" != uefi ]] || mount_device "$EFI_DEV" "$TARGET/boot/efi"
-        [[ -z "$HOME_DEV" ]] || mount_device "$HOME_DEV" "$TARGET/home"
+
+        if [[ -n "$HOME_DEV" ]]; then
+                if ! mount_btrfs_layout "$HOME_DEV" "$TARGET/home" /home; then
+                        mount_device "$HOME_DEV" "$TARGET/home"
+                fi
+        fi
+
         for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
-                mount_device "${EXTRA_DEVICES[$index]}" "$TARGET${EXTRA_MOUNTPOINTS[$index]}"
+                device="${EXTRA_DEVICES[$index]}"
+                mountpoint_name="${EXTRA_MOUNTPOINTS[$index]}"
+
+                if ! mount_btrfs_layout \
+                        "$device" "$TARGET$mountpoint_name" "$mountpoint_name"
+                then
+                        mount_device "$device" "$TARGET$mountpoint_name"
+                fi
         done
+
         [[ -z "$SWAP_DEV" ]] || swapon "$SWAP_DEV"
 }
 
@@ -1290,11 +2274,8 @@ fstab_mount_options() {
 }
 
 write_fstab_entry() {
-        local fstab="$1"
-        local device="$2"
-        local mountpoint="$3"
-        local pass="$4"
-        local uuid="" fstype="" options=""
+        local fstab="$1" device="$2" mountpoint="$3" pass="$4"
+        local subvol="${5:-}" uuid="" fstype="" options=""
 
         [[ -n "$device" ]] || return 0
 
@@ -1305,10 +2286,32 @@ write_fstab_entry() {
         [[ -n "$fstype" ]] || die "Could not determine filesystem type for $device."
 
         options="$(fstab_mount_options "$device" "$fstype")"
+        [[ -z "$subvol" ]] || options="$options,subvol=$subvol"
 
         printf '# %s\n' "$device" >> "$fstab"
-        printf 'UUID=%-36s %-16s %-8s %-20s 0 %s\n\n' \
+        printf 'UUID=%-36s %-20s %-8s %-36s 0 %s\n\n' \
                 "$uuid" "$mountpoint" "$fstype" "$options" "$pass" >> "$fstab"
+}
+
+write_btrfs_fstab_layout() {
+        local fstab="$1" mountpoint_name="$2"
+        local index="" device="" snapshot_mountpoint=""
+
+        index="$(btrfs_layout_index_for_mountpoint "$mountpoint_name")" ||
+                return 1
+
+        device="${BTRFS_DEVICES[$index]}"
+        snapshot_mountpoint="$mountpoint_name/.snapshots"
+        [[ "$mountpoint_name" == / ]] && snapshot_mountpoint="/.snapshots"
+
+        write_fstab_entry \
+                "$fstab" "$device" "$mountpoint_name" 0 \
+                "${BTRFS_SUBVOLUMES[$index]}"
+        write_fstab_entry \
+                "$fstab" "$device" "$snapshot_mountpoint" 0 \
+                "${BTRFS_SNAPSHOT_SUBVOLUMES[$index]}"
+
+        return 0
 }
 
 generate_fstab() {
@@ -1319,56 +2322,71 @@ generate_fstab() {
         mkdir -p "$TARGET/etc"
         : > "$fstab"
 
-        write_fstab_entry "$fstab" "$ROOT_DEV" / 1
+        if ! write_btrfs_fstab_layout "$fstab" /; then
+                write_fstab_entry "$fstab" "$ROOT_DEV" / 1
+        fi
+
         write_fstab_entry "$fstab" "$BOOT_DEV" /boot 2
 
         if [[ "$BOOT_MODE" == uefi ]]; then
                 write_fstab_entry "$fstab" "$EFI_DEV" /boot/efi 2
         fi
 
-        write_fstab_entry "$fstab" "$HOME_DEV" /home 2
+        if [[ -n "$HOME_DEV" ]]; then
+                if ! write_btrfs_fstab_layout "$fstab" /home; then
+                        write_fstab_entry "$fstab" "$HOME_DEV" /home 2
+                fi
+        fi
 
         for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
-                write_fstab_entry \
-                        "$fstab" \
-                        "${EXTRA_DEVICES[$index]}" \
-                        "${EXTRA_MOUNTPOINTS[$index]}" \
-                        2
+                if ! write_btrfs_fstab_layout "$fstab" "${EXTRA_MOUNTPOINTS[$index]}"; then
+                        write_fstab_entry \
+                                "$fstab" \
+                                "${EXTRA_DEVICES[$index]}" \
+                                "${EXTRA_MOUNTPOINTS[$index]}" \
+                                2
+                fi
         done
 
         if [[ -n "$SWAP_DEV" ]]; then
                 uuid="$(blkid -s UUID -o value "$SWAP_DEV" 2>/dev/null || true)"
                 [[ -n "$uuid" ]] || die "Could not determine swap UUID for $SWAP_DEV."
-
                 printf '# %s\n' "$SWAP_DEV" >> "$fstab"
                 printf 'UUID=%-36s %-16s %-8s %-20s 0 0\n' \
                         "$uuid" none swap sw >> "$fstab"
         fi
 
-        if command -v findmnt >/dev/null 2>&1; then
-                findmnt --verify --tab-file "$fstab" >/dev/null ||
-                        die "Generated fstab failed validation."
-        fi
+        findmnt --verify --tab-file "$fstab" >/dev/null ||
+                die "Generated fstab failed validation."
 }
+
 
 build_package_list() {
         local packages=()
 
         [[ "$KERNEL_PACKAGE" != none ]] && packages+=("$KERNEL_PACKAGE")
         [[ "$INSTALL_NETWORKMANAGER" == yes ]] && packages+=(networkmanager)
-        [[ "$INSTALL_CRYPTSETUP" == yes ]] && packages+=(cryptsetup)
+        [[ "$INSTALL_CRYPTSETUP" == yes || "$AUTO_CRYPTSETUP" == yes ]] && packages+=(cryptsetup)
+        [[ "$AUTO_LVM2" == yes ]] && packages+=(lvm2)
+        [[ "$AUTO_MDADM" == yes ]] && packages+=(mdadm)
         [[ "$INSTALL_GIT" == yes ]] && packages+=(git)
         [[ "$INSTALL_SUDO" == yes ]] && packages+=(sudo)
         [[ "$INSTALL_WGET" == yes ]] && packages+=(wget)
         [[ "$ENABLE_OPENSSH" == yes ]] && packages+=(openssh)
+        ((${#BTRFS_DEVICES[@]} > 0)) && packages+=(snapper)
 
         if ((${#packages[@]} > 0)); then
-                printf '%s ' "${packages[@]}"
+                printf '%s
+' "${packages[@]}" |
+                        awk '!seen[$0]++' |
+                        tr '
+' ' '
         fi
 }
 
 write_chroot_installer() {
         local package_list
+        detect_storage_requirements
         package_list="$(build_package_list)"
         log "Preparing chroot configuration"
         install -d -m 0755 "$TARGET/root"
@@ -1398,6 +2416,11 @@ INSTALL_SUDO_VALUE="__INSTALL_SUDO__"
 SUDO_MODE_VALUE="__SUDO_MODE__"
 INSTALL_NETWORKMANAGER_VALUE="__INSTALL_NETWORKMANAGER__"
 INSTALL_CRYPTSETUP_VALUE="__INSTALL_CRYPTSETUP__"
+AUTO_CRYPTSETUP_VALUE="__AUTO_CRYPTSETUP__"
+AUTO_LVM2_VALUE="__AUTO_LVM2__"
+AUTO_MDADM_VALUE="__AUTO_MDADM__"
+BTRFS_CONFIG_NAMES_VALUE="__BTRFS_CONFIG_NAMES__"
+BTRFS_MOUNTPOINTS_VALUE="__BTRFS_MOUNTPOINTS__"
 
 log() { printf '\n==> %s\n' "$*"; }
 
@@ -1632,16 +2655,37 @@ if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
                 ports -u
         fi
 
-        command -v prt-get >/dev/null 2>&1 || { echo "prt-get is missing" >&2; exit 1; }
-        log "Installing selected packages: $PACKAGE_LIST_VALUE"
+        command -v prt-get >/dev/null 2>&1 || {
+                echo "prt-get is missing" >&2
+                exit 1
+        }
 
         read -r -a PACKAGE_LIST_ARRAY <<< "$PACKAGE_LIST_VALUE"
+
         ((${#PACKAGE_LIST_ARRAY[@]} > 0)) || {
                 echo "Internal error: package selection was empty." >&2
                 exit 1
         }
 
-        prt-get depinst "${PACKAGE_LIST_ARRAY[@]}"
+        MISSING_PACKAGES=()
+
+        log "Checking selected package installation status"
+
+        for package in "${PACKAGE_LIST_ARRAY[@]}"; do
+                if prt-get isinst "$package" >/dev/null 2>&1; then
+                        printf 'Already installed: %s\n' "$package"
+                else
+                        printf 'Will install:      %s\n' "$package"
+                        MISSING_PACKAGES+=("$package")
+                fi
+        done
+
+        if ((${#MISSING_PACKAGES[@]} > 0)); then
+                log "Installing missing packages: ${MISSING_PACKAGES[*]}"
+                prt-get depinst "${MISSING_PACKAGES[@]}"
+        else
+                log "All selected packages are already installed"
+        fi
 else
         log "No optional packages were selected; skipping ports synchronization and package installation"
 fi
@@ -1707,7 +2751,8 @@ if [[ "$ENABLE_OPENSSH_VALUE" == yes ]]; then
         fi
 fi
 
-if command -v lvmconfig >/dev/null 2>&1; then
+if [[ "$AUTO_LVM2_VALUE" == yes ]] &&
+   command -v lvmconfig >/dev/null 2>&1; then
         if [[ ! -f /etc/lvm/lvm.conf ]]; then
                 mkdir -p /etc/lvm
                 lvmconfig --type full --withcomments > /etc/lvm/lvm.conf
@@ -1715,14 +2760,78 @@ if command -v lvmconfig >/dev/null 2>&1; then
         systemctl enable lvm2-monitor.service 2>/dev/null || true
 fi
 
-if command -v mdadm >/dev/null 2>&1; then
+if [[ "$AUTO_MDADM_VALUE" == yes ]] &&
+   command -v mdadm >/dev/null 2>&1; then
         mdadm --detail --scan > /etc/mdadm.conf || true
 fi
 
-if [[ "$INSTALL_CRYPTSETUP_VALUE" == yes ]]; then
+if [[ "$INSTALL_CRYPTSETUP_VALUE" == yes ||
+      "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
         mkdir -p /etc/cryptsetup-keys.d
         chmod 0700 /etc/cryptsetup-keys.d
 fi
+
+configure_btrfs_snapshots() {
+        local -a config_names=()
+        local -a mountpoints=()
+        local index="" config_name="" mountpoint_name="" config_file=""
+
+        read -r -a config_names <<< "$BTRFS_CONFIG_NAMES_VALUE"
+        read -r -a mountpoints <<< "$BTRFS_MOUNTPOINTS_VALUE"
+
+        ((${#config_names[@]} > 0)) || return 0
+
+        command -v snapper >/dev/null 2>&1 || {
+                echo "Btrfs was selected but snapper is not installed." >&2
+                exit 1
+        }
+
+        mkdir -p /etc/snapper/configs /etc/default
+
+        for ((index=0; index<${#config_names[@]}; index++)); do
+                config_name="${config_names[$index]}"
+                mountpoint_name="${mountpoints[$index]}"
+                config_file="/etc/snapper/configs/$config_name"
+
+                cat > "$config_file" <<EOF_SNAPPER
+SUBVOLUME="$mountpoint_name"
+FSTYPE="btrfs"
+QGROUP=""
+SPACE_LIMIT="0.5"
+FREE_LIMIT="0.2"
+ALLOW_USERS=""
+ALLOW_GROUPS="wheel"
+SYNC_ACL="yes"
+BACKGROUND_COMPARISON="yes"
+NUMBER_CLEANUP="yes"
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="10"
+TIMELINE_CREATE="yes"
+TIMELINE_CLEANUP="yes"
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="10"
+TIMELINE_LIMIT_DAILY="10"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="10"
+TIMELINE_LIMIT_YEARLY="10"
+EMPTY_PRE_POST_CLEANUP="yes"
+EMPTY_PRE_POST_MIN_AGE="1800"
+EOF_SNAPPER
+        done
+
+        printf 'SNAPPER_CONFIGS="%s"\n' "${config_names[*]}" > /etc/default/snapper
+
+        systemctl enable snapper-timeline.timer 2>/dev/null || true
+        systemctl enable snapper-cleanup.timer 2>/dev/null || true
+
+        for config_name in "${config_names[@]}"; do
+                snapper -c "$config_name" create \
+                        --description "Initial BFS installation" || true
+        done
+}
+
+configure_btrfs_snapshots
 
 # Blank the Linux virtual console after 30 minutes.
 mkdir -p /etc/default
@@ -1748,6 +2857,47 @@ else
                 'GRUB_CMDLINE_LINUX_DEFAULT="consoleblank=1800"' \
                 >> /etc/default/grub
 fi
+
+
+rebuild_storage_initramfs() {
+        local kernel_image=""
+        local kernel_release=""
+        local initramfs_image=""
+
+        [[ "$KERNEL_PACKAGE_VALUE" != none ]] || return 0
+
+        if [[ "$AUTO_CRYPTSETUP_VALUE" != yes &&
+              "$AUTO_LVM2_VALUE" != yes &&
+              "$AUTO_MDADM_VALUE" != yes ]]; then
+                return 0
+        fi
+
+        command -v dracut >/dev/null 2>&1 || {
+                echo "Storage stacking was detected, but dracut is unavailable." >&2
+                exit 1
+        }
+
+        kernel_image="$(
+                find /boot -maxdepth 1 -type f -name 'vmlinuz-*' \
+                        -printf '%T@ %p\n' |
+                sort -nr |
+                head -n1 |
+                cut -d' ' -f2-
+        )"
+
+        [[ -n "$kernel_image" ]] || {
+                echo "Could not find a kernel for initramfs regeneration." >&2
+                exit 1
+        }
+
+        kernel_release="${kernel_image#/boot/vmlinuz-}"
+        initramfs_image="/boot/initramfs-$kernel_release.img"
+
+        log "Rebuilding initramfs for detected storage stack"
+        dracut --force "$initramfs_image" "$kernel_release"
+}
+
+rebuild_storage_initramfs
 
 verify_kernel_installation() {
         local kernel_image=""
@@ -1866,6 +3016,18 @@ fi
 
 log "Running final checks"
 
+if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
+        [[ -s /etc/crypttab ]] || {
+                echo "Encrypted storage was detected, but /etc/crypttab is missing." >&2
+                exit 1
+        }
+
+        command -v cryptsetup >/dev/null 2>&1 || {
+                echo "Encrypted storage was detected, but cryptsetup is missing." >&2
+                exit 1
+        }
+fi
+
 [[ -s /etc/systemd/network/10-bfs-ethernet.link ]] ||
         { echo "Missing BFS network link file." >&2; exit 1; }
 
@@ -1930,6 +3092,11 @@ CHROOT
                 -e "s|__SUDO_MODE__|$SUDO_MODE|g" \
                 -e "s|__INSTALL_NETWORKMANAGER__|$INSTALL_NETWORKMANAGER|g" \
                 -e "s|__INSTALL_CRYPTSETUP__|$INSTALL_CRYPTSETUP|g" \
+                -e "s|__AUTO_CRYPTSETUP__|$AUTO_CRYPTSETUP|g" \
+                -e "s|__AUTO_LVM2__|$AUTO_LVM2|g" \
+                -e "s|__AUTO_MDADM__|$AUTO_MDADM|g" \
+                -e "s|__BTRFS_CONFIG_NAMES__|$(printf '%s' "${BTRFS_CONFIG_NAMES[*]}" | sed 's/[&|]/\\&/g')|g" \
+                -e "s|__BTRFS_MOUNTPOINTS__|$(printf '%s' "${BTRFS_MOUNTPOINTS[*]}" | sed 's/[&|]/\\&/g')|g" \
                 "$TARGET$CHROOT_INSTALLER"
         chmod 0700 "$TARGET$CHROOT_INSTALLER"
 }
@@ -1988,6 +3155,7 @@ main() {
         extract_rootfs
         save_base_archive
         generate_fstab
+        generate_crypttab
         mount_virtual_filesystems
         write_chroot_installer
         run_chroot_installer
