@@ -1,29 +1,35 @@
-# Description: Cross-platform build system
+# Description: Cross-platform build-system generator.
 # URL: https://cmake.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: curl expat libarchive ncurses openssl xz zlib
 
 name=cmake
-version=4.4.0
+version=4.4.2
 release=1
 
-source=(https://$name.org/files/v${version%.*}/$name-$version.tar.gz)
+source=(
+    https://cmake.org/files/v${version%.*}/$name-$version.tar.gz
+)
+
+build_opt=(
+    --prefix=/usr
+    --system-libs
+    --mandir=/share/man
+    --docdir=/share/doc/$name-$version
+    --no-system-jsoncpp
+    --no-system-cppdap
+    --no-system-librhash
+)
 
 pkg_build() {
-        export LC_ALL=C
-        unset LANGUAGE
+    export LC_ALL=C
+    unset LANGUAGE
 
-        sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake
+    # Keep libraries under /usr/lib instead of /usr/lib64.
+    sed -i '/"lib64"/s/64//' Modules/GNUInstallDirs.cmake
 
-        ./bootstrap \
-                --prefix=/usr \
-                --system-libs \
-                --mandir=/share/man \
-                --docdir=/share/doc/$name-$version \
-                --no-system-jsoncpp \
-                --no-system-cppdap \
-                --no-system-librhash
+    ./bootstrap "${build_opt[@]}"
 
-        make
-        make DESTDIR=$PKG install
+    make
+    make DESTDIR="$PKG" install
 }

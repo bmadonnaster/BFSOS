@@ -1239,6 +1239,7 @@ python3-installer
 python3-build
 python3-pyproject-hooks
 python3-wheel
+cmake
 meson
 ninja
 kmod
