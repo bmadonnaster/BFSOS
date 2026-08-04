@@ -658,8 +658,7 @@ f:7a9dcf4e4b24dbbe1064b16db851fe65:aaa_filesystem/.bash_profile
 f:f70bbec388eac3b99a99718b96b6d4c6:aaa_filesystem/.bash_logout
 f:810298bc4e6cf0e920fd763507242b7f:aaa_filesystem/i18n.sh
 f:0c64fdeda0e19d4ed4abc7ce158b6b54:aaa_filesystem/Pkgfile
-f:6c3aedfa800755b4f7df5c4ed7134f7f:lvm2/post-install
-f:100e63c415f52ea8945beb22caa56e32:lvm2/Pkgfile
+f:603a862cc8e51dc6b1dd505155287b70:lvm2/Pkgfile
 f:7c729a50a9f339091dce14fd11bfd872:liburcu/Pkgfile
 f:e7a90e43dfa49ae845dc80c6261abffa:libaio/Pkgfile
 f:5030992608b3d84f7624f52b1f1ec3f1:inih/Pkgfile
