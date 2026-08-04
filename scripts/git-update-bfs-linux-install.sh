@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# git-update-bfs-linux-install-v4.sh
+# git-update-bfs-linux-install-v5.sh
 #
 # Locate ~/bfs-linux-install, clean generated port metadata and httpup
 # client-state files, regenerate bundled httpup REPO manifests, stage all
@@ -350,18 +350,18 @@ main() {
     configure_origin_transport "$ssh_private_key"
 
     if [[ -d "$ports_dir" ]]; then
-        httpup_repgen="$(find_httpup_repgen)" ||
-            die "httpup-repgen was not found. Install httpup or make /mnt/bfs/usr/bin/httpup-repgen available."
-
-        # Order matters:
-        #   1. Remove client-side httpup state.
-        #   2. Remove .footprint and .md5sum files.
-        #   3. Generate fresh REPO manifests.
-        #   4. Validate the generated manifests.
+        # Always clean generated/client-side files before staging.
         clean_httpup_client_state "$ports_dir"
         clean_port_metadata "$ports_dir"
-        regenerate_repo_manifests "$ports_dir" "$httpup_repgen"
-        validate_repo_manifests "$ports_dir"
+
+        if httpup_repgen="$(find_httpup_repgen)"; then
+            # Generate and validate fresh REPO manifests when the tool exists.
+            regenerate_repo_manifests "$ports_dir" "$httpup_repgen"
+            validate_repo_manifests "$ports_dir"
+        else
+            warn "httpup-repgen was not found."
+            warn "Skipping REPO generation and continuing with the Git update."
+        fi
     else
         warn "No bundled ports directory found; skipping REPO maintenance."
     fi
