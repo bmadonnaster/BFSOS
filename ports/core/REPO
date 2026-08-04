@@ -219,6 +219,7 @@ d:liburcu
 d:libaio
 d:inih
 d:f2fs-tools
+d:argon2
 f:7255dfc6fd43a3295059436b5e01056b:zstd/Pkgfile
 f:b475b125e5481772887072d9a21d86b3:zlib/Pkgfile
 f:df1642eb4ff68e430b2dc1cd092c783a:xz/Pkgfile
@@ -576,7 +577,7 @@ f:7399e8786c9e25e7f99f8caf8c1e228b:efivar/Pkgfile
 f:758f6c47901d8e9cf92c3f654957cd6c:efibootmgr/Pkgfile
 f:bf5c1710a978b8629b20c4f30796b409:e2fsprogs/Pkgfile
 f:e55440c881cb30ed1476ad9abfd12561:dracut/Pkgfile
-f:b1a5f0a421b9f01837bc6e238635cf41:dracut/bfs.conf
+f:5624e9274f8cb71e6d0713e702271d1b:dracut/bfs.conf
 f:a4a2df080fb5f625888eb0830c9fe25f:dosfstools/Pkgfile
 f:4d4c8b1885e8f00b27ebddfeb26b0c29:diffutils/Pkgfile
 f:9913c7910e34eb5c589125e257e2f66a:dialog/Pkgfile
@@ -595,7 +596,7 @@ f:6836bda6c0a2082653ccec1f8c4ae9b0:cracklib/Pkgfile
 f:6cc582a474ec9e4c89638b419ddcaac9:coreutils/coreutils-i18n-1.patch
 f:96382a5aa85d6651a74f94ffb61785d9:coreutils/coreutils-9.7-upstream_fix-1.patch
 f:c36cab6554f935adceee0919ebb8ea28:coreutils/Pkgfile
-f:8d5cc83b86244f32d89db65e49e56037:cmake/Pkgfile
+f:9612b9d26ead8cc011cbb19886579c05:cmake/Pkgfile
 f:e1284822294cd42898e01158f563b667:check/Pkgfile
 f:b67d1a873190276bd0e51e7df20f5168:certs/Pkgfile
 f:f29e5da4a7ba1ac595e4b894c9243897:ca-certificates/cacert.pem
@@ -664,3 +665,4 @@ f:e7a90e43dfa49ae845dc80c6261abffa:libaio/Pkgfile
 f:5030992608b3d84f7624f52b1f1ec3f1:inih/Pkgfile
 f:b7c140b3e810341fdb6ac117c897889e:f2fs-tools/Pkgfile
 f:eec260b9ef8da0d5d6d39f76bd7680bd:f2fs-tools/0001-f2fs-tools-use-stdbool.h-instead-of-bool.patch
+f:f405083e721d9176d4e671197986194f:argon2/Pkgfile

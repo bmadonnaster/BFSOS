@@ -639,9 +639,9 @@ f:bc4c860da95a27fe5d5ee7bb6b069e0d:libgxps/Pkgfile
 f:8b4373f974aa8e0eb47540fd1f8ae8c7:libgusb/Pkgfile
 f:7c3a8b3938120e4defb2a2da42d04a3a:libgudev/Pkgfile
 f:2d9d0e2bf5309a2f92953600f07b6e02:libgsf/Pkgfile
-f:92f0ea88a9278490435572e9a3bd8915:libgpg-error/Pkgfile
+f:a77e5b7b8cd583bd7c47662eb0d04fc3:libgpg-error/Pkgfile
 f:604bdf76e3d4c9f15d6f95b11166538b:libglade/Pkgfile
-f:6ccc700bb482bfff6ed5344d3e958375:libgcrypt/Pkgfile
+f:550b53c390ff71ea9a8c15818393aa92:libgcrypt/Pkgfile
 f:ab0096619db4cb5b3e4efc187ad73731:libexif/Pkgfile
 f:02df5c48f30b5337a80cb3f0c47665c8:libei/Pkgfile
 f:4686560406eacb0c81c8bbaaf62ef4ab:libedit/Pkgfile
@@ -675,14 +675,14 @@ f:a3c6453c8e098f9aeb3866e477654fd3:liba52/Pkgfile
 f:2a36cf23f9c6c6d5db816ce58fd455b5:lcms2/Pkgfile
 f:09df9126181a8e614429945d5e19cd56:lapack/Pkgfile
 f:0cb6a70b6fffdfcedb91d7f8cbb35947:lame/Pkgfile
-f:2fa490b85431ffb83ec9b8c567760a2f:keyutils/Pkgfile
+f:e5c278a765c45a70ee87cc4dd5c9aa7c:keyutils/Pkgfile
 f:3ce50e8bf03c18fed382ac73d905a160:keybinder-3.0/Pkgfile
 f:f599d05372b9ad840c1c9ab10acfdb1e:kerberos/Pkgfile
 f:455a5822fea991b9c59cb34c8963c66e:kdsoap/Pkgfile
 f:5a73ea90b8b10678c9facc38f57709b3:kImageAnnotator/Pkgfile
 f:71a3a3155465c6f3c86660c046dda104:kColorPicker/Pkgfile
 f:434afc3818e234baff88a939e9e3e802:json-glib/Pkgfile
-f:53f8d87d3304716056decdd6e7ddb218:json-c/Pkgfile
+f:6553a17486c5ca5ede045cfe035cf76a:json-c/Pkgfile
 f:81b7642a4f1a4983fe785a9bf90804ab:jq/Pkgfile
 f:1c1b29af2216d191b6cb69ce15bb612b:jasper/Pkgfile
 f:1085ce72e6743da07f08eb68f5f74618:jansson/Pkgfile
@@ -836,7 +836,7 @@ f:42b3c8db20893d421f7a826702f3a836:cyrus-sasl/Pkgfile
 f:2041c56a6266081150b90c6d8675f023:cups/pre-install
 f:c87336739a92077b6a6700e915819d26:cups/Pkgfile
 f:15115ebc1caa6ec470e90a6a00d960ad:cups-filters/Pkgfile
-f:c594100d83e662747cbe81c3e7efe409:cryptsetup/Pkgfile
+f:f9177263fa21c96321ffb902000ef62d:cryptsetup/Pkgfile
 f:14cd8d8ebad3f6f1dfe5783a039ad44b:cracklib/Pkgfile
 f:3ba0eddfd5bb00dfcf6d5ad98a43a874:cracklib-words/post-install
 f:864b45aeb44611e9499fd83320ea973e:cracklib-words/Pkgfile
