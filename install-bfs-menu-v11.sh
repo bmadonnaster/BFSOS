@@ -170,7 +170,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v10-fixed.sh [options]
+Usage: install-bfs-menu-v11.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -2399,6 +2399,47 @@ write_btrfs_fstab_layout() {
         return 0
 }
 
+
+validate_fstab_syntax() {
+        local fstab="$1"
+
+        awk '
+                /^[[:space:]]*($|#)/ {
+                        next
+                }
+
+                NF != 6 {
+                        printf "Invalid fstab field count on line %d: %s\n", NR, $0 > "/dev/stderr"
+                        failed=1
+                        next
+                }
+
+                $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+                        printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
+                        failed=1
+                }
+
+                $2 != "none" && $2 !~ /^\// {
+                        printf "Invalid fstab target on line %d: %s\n", NR, $2 > "/dev/stderr"
+                        failed=1
+                }
+
+                $3 == "" || $4 == "" {
+                        printf "Missing filesystem type or options on line %d\n", NR > "/dev/stderr"
+                        failed=1
+                }
+
+                $5 !~ /^[0-9]+$/ || $6 !~ /^[0-9]+$/ {
+                        printf "Invalid dump/pass fields on line %d: %s %s\n", NR, $5, $6 > "/dev/stderr"
+                        failed=1
+                }
+
+                END {
+                        exit failed
+                }
+        ' "$fstab"
+}
+
 generate_fstab() {
         local fstab="$TARGET/etc/fstab"
         local index="" uuid=""
@@ -2441,8 +2482,10 @@ generate_fstab() {
                         "$uuid" none swap sw >> "$fstab"
         fi
 
-        findmnt --verify --tab-file "$fstab" >/dev/null ||
-                die "Generated fstab failed validation."
+        validate_fstab_syntax "$fstab" ||
+                die "Generated fstab failed syntax validation."
+
+        log "Generated /etc/fstab passed syntax validation"
 }
 
 
@@ -3131,8 +3174,37 @@ else
                 { echo "BFS DHCP file has the wrong interface name." >&2; exit 1; }
 fi
 
-findmnt --verify --tab-file /etc/fstab ||
-        { echo "Generated /etc/fstab failed validation." >&2; exit 1; }
+awk '
+        /^[[:space:]]*($|#)/ {
+                next
+        }
+
+        NF != 6 {
+                printf "Invalid fstab field count on line %d: %s\n", NR, $0 > "/dev/stderr"
+                failed=1
+                next
+        }
+
+        $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+                printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
+                failed=1
+        }
+
+        $2 != "none" && $2 !~ /^\// {
+                printf "Invalid fstab target on line %d: %s\n", NR, $2 > "/dev/stderr"
+                failed=1
+        }
+
+        $5 !~ /^[0-9]+$/ || $6 !~ /^[0-9]+$/ {
+                printf "Invalid dump/pass fields on line %d\n", NR > "/dev/stderr"
+                failed=1
+        }
+
+        END {
+                exit failed
+        }
+' /etc/fstab ||
+        { echo "Generated /etc/fstab failed syntax validation." >&2; exit 1; }
 
 for command in bash sh env sed grep awk find tar gzip xz make gcc g++ ld ar nm strip readelf mount umount ls cp mv rm chmod chown pkgmk pkgadd pkginfo; do
         command -v "$command" >/dev/null 2>&1 || printf 'MISSING COMMAND: %s\n' "$command" >&2
