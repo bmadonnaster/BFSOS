@@ -1,0 +1,29 @@
+# Description: Filesystem snapshot management tool for Btrfs
+# URL: https://github.com/openSUSE/snapper
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Depends on: acl boost btrfs-progs dbus libxml2
+# Optional: linux-pam
+
+name=snapper
+version=0.12.1
+release=1
+
+source=(
+    https://github.com/openSUSE/snapper/archive/refs/tags/v$version.tar.gz
+)
+
+pkg_build() {
+    cmake -B build \
+        -S snapper-$version \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_PAM=OFF \
+        -DENABLE_XATTRS=ON
+
+    cmake --build build
+
+    DESTDIR="$PKG" cmake --install build
+
+    rm -rf "$PKG/usr/share/doc"
+    rm -rf "$PKG/usr/share/man"
+}
