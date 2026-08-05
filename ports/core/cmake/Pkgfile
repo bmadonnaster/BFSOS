@@ -1,7 +1,7 @@
 # Description: Cross-platform build-system generator.
 # URL: https://cmake.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: curl expat libarchive ncurses openssl xz zlib
+# Depends on: curl expat libarchive ncurses openssl xz zlib libuv
 
 name=cmake
 version=4.4.2
