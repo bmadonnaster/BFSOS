@@ -1,7 +1,7 @@
 # Description: Support library with a focus on asynchronous I/O
 # URL: https://libuv.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:
+# Depends on: autoconf automake libtool
 
 name=libuv
 version=1.51.0
@@ -12,6 +12,8 @@ source=(
 )
 
 pkg_build() {
+    sh autogen.sh
+
     ./configure \
         --prefix=/usr \
         --disable-static

@@ -425,7 +425,7 @@ f:1eef1ddd6def88814d1a65ce1f4dceb9:libpng/libpng-1.6.58-apng.patch.gz
 f:338b863834de16663f9d0b48992965b8:libtirpc/Pkgfile
 f:7bf8f2b23b3da310d4cb5d64b1a394fe:libtool/Pkgfile
 f:7c729a50a9f339091dce14fd11bfd872:liburcu/Pkgfile
-f:9f96673e5f64a6f90bca79385ec2a080:libuv/Pkgfile
+f:c6d7b941ddd66fa68abf6371f2385afc:libuv/Pkgfile
 f:8c85e4a0232762d476c398d32c5fd597:libxcrypt/Pkgfile
 f:4168f0036f843fb1938d33be67d84b22:linux-api-headers/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:linux-firmware/.nostrip
