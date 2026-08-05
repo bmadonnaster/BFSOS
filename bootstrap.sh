@@ -1239,7 +1239,9 @@ python3-installer
 python3-build
 python3-pyproject-hooks
 python3-wheel
+libuv
 cmake
+boost
 meson
 ninja
 kmod
