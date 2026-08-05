@@ -1,7 +1,7 @@
 # Description: Filesystem snapshot management tool for Btrfs
 # URL: https://github.com/openSUSE/snapper
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: acl boost btrfs-progs dbus libxml2
+# Depends on: acl btrfs-progs dbus json-c libxml2 util-linux zlib
 # Optional: linux-pam
 
 name=snapper
@@ -12,24 +12,33 @@ source=(
     https://github.com/openSUSE/snapper/archive/refs/tags/v$version.tar.gz
 )
 
+build_opt=(
+    --sysconfdir=/etc
+    --disable-static
+    --disable-pam
+    --disable-zypp
+    --disable-doc
+    --disable-bcachefs
+    --disable-ext4
+    --disable-lvm
+    --enable-btrfs
+    --enable-xattrs
+    --enable-systemd
+)
+
 pkg_build() {
-    cmake \
-        -S . \
-        -B build \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DENABLE_PAM=OFF \
-        -DENABLE_XATTRS=ON
+    autoreconf -fi
 
-    cmake --build build -j "${JOBS:-1}"
+    ./configure "${build_opt[@]}"
 
-    DESTDIR="$PKG" cmake --install build
+    make
+    make DESTDIR="$PKG" install
 }
 
 post_build() {
+    find "$PKG" -type f -name '*.la' -delete
+
     rm -rf \
         "$PKG/usr/share/doc" \
         "$PKG/usr/share/info"
-
-    find "$PKG" -type f -name '*.la' -delete
 }
