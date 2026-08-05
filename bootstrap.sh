@@ -121,6 +121,51 @@ _ensure_archive_dirs() {
     mkdir -p "$TOOLCHAIN_ARCHIVE_DIR" "$BASE_ARCHIVE_DIR"
 }
 
+_find_port_dir() {
+    local package="$1"
+    local normalized="${package%-pass*}"
+    local match=""
+    local -a matches=()
+
+    while IFS= read -r match; do
+        [ -n "$match" ] && matches+=("$match")
+    done < <(
+        find "$SCRIPT_DIR/ports" \
+            -mindepth 2 \
+            -maxdepth 2 \
+            -type d \
+            -name "$normalized" \
+            -exec test -f '{}/Pkgfile' ';' \
+            -print 2>/dev/null |
+        sort
+    )
+
+    case "${#matches[@]}" in
+        0)
+            echo "ERROR: Port not found in any collection: $normalized" >&2
+            return 1
+            ;;
+        1)
+            printf '%s\n' "${matches[0]}"
+            ;;
+        *)
+            echo "ERROR: Port exists in more than one collection: $normalized" >&2
+            printf '  %s\n' "${matches[@]}" >&2
+            return 1
+            ;;
+    esac
+}
+
+_validate_package_ports() {
+    local package=""
+    local port_dir=""
+
+    for package in "$@"; do
+        port_dir="$(_find_port_dir "$package")" || return 1
+        printf '  %-28s %s\n' "$package" "${port_dir#$SCRIPT_DIR/}"
+    done
+}
+
 _clean_start() {
     local answer
 
@@ -481,12 +526,21 @@ EOF
         rm -rf /tmp/pkgutils-5.40.12
     fi
 
+    echo
+    echo "Resolving temporary-toolchain ports across all collections..."
+    # shellcheck disable=SC2086
+    _validate_package_ports $toolchainpkg
+    echo
+
     for i in $toolchainpkg; do
+        local port_dir=""
+
         [ -f "$TOOLS/$i" ] && continue
 
         export tcpkg="$i"
+        port_dir="$(_find_port_dir "$i")"
 
-        cd "ports/core/${i%-pass*}"
+        cd "$port_dir"
 
         mkdir -p /tmp/lfs-pkg
 
@@ -494,7 +548,7 @@ EOF
 
         rm -rf /tmp/lfs-pkg
 
-        cd - >/dev/null 2>&1
+        cd "$SCRIPT_DIR"
 
         touch "$TOOLS/$i"
 
@@ -740,6 +794,12 @@ _buildbase() {
     # Any Stage 2/3 build changes the rootfs. Require Stage 4 to verify it again
     # before a new release archive can be created.
     rm -f "$LFS/.bfs-verified"
+
+    echo
+    echo "Resolving base-system ports across all collections..."
+    # shellcheck disable=SC2086
+    _validate_package_ports $basepkg
+    echo
 
     if [ ! -f "$LFS/var/lib/pkg/db" ]; then
         mkdir -pv "$LFS"/{etc,var} "$LFS"/usr/{bin,lib,sbin} "$LFS/dev"
