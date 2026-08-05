@@ -1,22 +1,42 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: Utility useful for non-interactive downloading of files from the Web
-# URL:         
+# Description: Modern multi-threaded file and website downloader based on GNU Wget2.
+# URL: https://gitlab.com/gnuwget/wget2
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  libpsl make-ca
+# Depends on: gnutls libidn2 libpsl libunistring pcre2 zlib
 
 name=wget
-version=1.25.0
+version=2.2.1
 release=1
-source=(https://ftp.gnu.org/gnu/$name/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+source=(
+    https://ftp.gnu.org/gnu/wget/wget2-$version.tar.gz
+)
 
-	./configure --prefix=/usr      \
-	            --sysconfdir=/etc  \
-	            --with-ssl=openssl
-	make
-	make DESTDIR=$PKG install
-rm -rf $PKG/usr/share/info/dir
+build_opt=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-doc
+)
+
+pkg_build() {
+    ./configure "${build_opt[@]}"
+
+    make
+    make DESTDIR="$PKG" install
+
+    # BFS packages Wget2 under the traditional wget port name.
+    # Preserve wget2 while also providing /usr/bin/wget.
+    if [[ -x "$PKG/usr/bin/wget2" ]]; then
+        ln -sf wget2 "$PKG/usr/bin/wget"
+    else
+        echo "ERROR: wget2 binary was not installed." >&2
+        return 1
+    fi
+}
+
+post_build() {
+    rm -rf \
+        "$PKG/usr/share/info" \
+        "$PKG/usr/share/doc"
+
+    find "$PKG" -type f -name '*.la' -delete
 }

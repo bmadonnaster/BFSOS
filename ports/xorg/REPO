@@ -87,11 +87,11 @@ d:xf86-video-ati
 d:xf86-video-ast
 d:xf86-video-amdgpu
 d:xf86-input-wacom
-d:xf86-input-evdev
 d:xf86-input-vmmouse
 d:xf86-input-synaptics
 d:xf86-input-libinput
 d:xf86-input-joystick
+d:xf86-input-evdev
 d:xf86-input-elographics
 d:xev
 d:xdriinfo
@@ -308,11 +308,11 @@ f:106c62fa769e793d33a25da083642117:xf86-video-ati/Pkgfile
 f:7006a5a99868ad72d250917daa4e058b:xf86-video-ast/Pkgfile
 f:5af73c5e31166c2f752a3965830121cd:xf86-video-amdgpu/Pkgfile
 f:7cbbeffe7e8b2cb80ad440e7c2528f6f:xf86-input-wacom/Pkgfile
-f:e4b60af492fb81de3b25ce0f47054dd3:xf86-input-evdev/Pkgfile
 f:e86422ff6a5ca200a2357b48fc7d523d:xf86-input-vmmouse/Pkgfile
 f:ad662c4a6664a8421fc5aa4cbdba248d:xf86-input-synaptics/Pkgfile
 f:49135aa74733e0637873275fa77948d5:xf86-input-libinput/Pkgfile
 f:6a3dd7e5a05df1f0f20bd3646853f1f0:xf86-input-joystick/Pkgfile
+f:e4b60af492fb81de3b25ce0f47054dd3:xf86-input-evdev/Pkgfile
 f:41364fbae14c3db0cd37a08d9345180d:xf86-input-elographics/Pkgfile
 f:45106e3034e1a48e8d8633e5860272ad:xev/Pkgfile
 f:90150a886677326f5e3d851e90e5f046:xdriinfo/Pkgfile

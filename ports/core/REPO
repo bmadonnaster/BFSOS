@@ -113,8 +113,8 @@ d:mpdecimal
 d:mpc
 d:mkinitramfs
 d:mkinitcpio
-d:meson
 d:mkinitcpio-busybox
+d:meson
 d:mdadm
 d:mandoc
 d:man-pages
@@ -228,7 +228,7 @@ f:dace26d9323391e9bc9f647964536f4a:wpa_supplicant/wpa_supplicant.conf
 f:3b8575e3d46dcae6178a03305cd2679b:wpa_supplicant/Pkgfile
 f:c5b7b889fabb1a3a98f475109d3d88fe:which/Pkgfile
 f:c94c90d75b0cc933fd1d659a013d399f:wgetpaste/Pkgfile
-f:1657d9c006ff745d1d95e48e69e4ce99:wget/Pkgfile
+f:5b29d52648bd302ee221de954c8d7e15:wget/Pkgfile
 f:e5590010f204c76d764683c7013876ed:vim/Pkgfile
 f:274f3a3fc15d7a3a3b40615749f50c7f:util-linux/Pkgfile
 f:46202d06aad0c2ffb1f4755f51b57d0d:tzdata/Pkgfile
@@ -423,11 +423,11 @@ f:5b3547d628b574c4d48d041ef07b21b8:mkinitramfs/Pkgfile
 f:42e783e4fe5e2109894eb18bb6e50765:mkinitcpio/wget-log
 f:8bd059b662776575214e61ab100560a4:mkinitcpio/0001-trigger.patch
 f:b23c2f209d41280d46d5725cfed91bd3:mkinitcpio/Pkgfile
-f:6b3eb6d611d7b570b6c3b3ae11b5a5e7:meson/Pkgfile
 f:c1d597637497b22c7908d85581629d75:mkinitcpio-busybox/config
 f:2ace7b315454cccee0da17ec1e40114e:mkinitcpio-busybox/busybox.patch
 f:04c8a329d64319bf8342230c80236498:mkinitcpio-busybox/0001-ash-fix-unset_var-pattern-repl.patch
 f:85feb163052688ed71de7d88283eee58:mkinitcpio-busybox/Pkgfile
+f:6b3eb6d611d7b570b6c3b3ae11b5a5e7:meson/Pkgfile
 f:3e1bbdb1148e2ccdd4e14088c29702bd:mdadm/Pkgfile
 f:2db0ee4a306c9ee104c89fb5fd618c36:mandoc/Pkgfile
 f:de21fcf42bcef791c928f73d5c68299e:man-pages/Pkgfile
