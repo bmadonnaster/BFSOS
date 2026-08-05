@@ -807,7 +807,7 @@ f:a95be8418081d4cbc6402a8dd6671a97:slang/Pkgfile
 f:da8178aeefc2739bd066a527c800f861:smartmontools/Pkgfile
 f:75bbd34f9d43d4c8a0c2f83ae9b6b63e:smartmontools/post-install
 f:badcc21a86e4801b22d8bd3845abfd50:smartypants/Pkgfile
-f:5f639abe6af57346723c6650743d664e:snapper/Pkgfile
+f:4c35208d5e972e6ba07ba8813fd50f61:snapper/Pkgfile
 f:81eeb5c318ac405ed5d2d100de4f59cd:snapper/snapper-boost-system-header-only.patch
 f:6a5ce1e56e19403d198d242fca155d18:socat/Pkgfile
 f:2029419382f3682572a10821916f0c21:soundtouch/Pkgfile
