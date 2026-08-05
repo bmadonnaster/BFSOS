@@ -1,6 +1,7 @@
 # Description: Libraries and utilities used for parsing XML files.
 # URL: https://gitlab.gnome.org/GNOME/libxml2
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Depends on:
 
 name=libxml2
 version=2.15.3
@@ -11,15 +12,16 @@ source=(
 )
 
 build_opt=(
+    --prefix=/usr
     --sysconfdir=/etc
     --with-history
     --without-python
     --without-docbook
+    --disable-static
 )
 
 pkg_build() {
     ./configure "${build_opt[@]}"
-
     make
     make DESTDIR="$PKG" install
 }
