@@ -399,9 +399,7 @@ f:f6075109c8bfd3c0e933e3ea3f934be7:avahi/pre-install
 f:aeb22d1749e9cdbee5e5848cc1af546e:bluez/Pkgfile
 f:427d3a136eb6a5a6ba4b586f56d7e68b:bluez/post-install
 f:af18c5f7aa48acaa89ed315b6a02d53c:bogofilter/Pkgfile
-f:f51613ae6204ab24aaadfa1c12471f07:boost/boost-1.85.0-python-numpy-2.patch
-f:326826bf610c63c23247e70e648ff104:boost/boost-ublas-c++20-iterator.patch
-f:608332aa82d1755630f821e4f7549ce7:boost/Pkgfile
+f:99c9f2b9fb6083037daff9ccd374703b:boost/Pkgfile
 f:1140dfa1d93a709b2759fce1e68d8cad:brotli/Pkgfile
 f:f85a0569eba19576c401191d935e7b1e:bubblewrap/Pkgfile
 f:8236a7a74b34ad876194a6d1537e7b4a:c-ares/Pkgfile

@@ -63,26 +63,16 @@ pkg_build() {
         "cflags=$CPPFLAGS $CFLAGS -fPIC" \
         "cxxflags=$CPPFLAGS $CXXFLAGS -fPIC" \
         "linkflags=$LDFLAGS"
-
-    # Install Boost.Build for packages that invoke b2 directly.
-    pushd tools/build
-
-    ./bootstrap.sh \
-        --cxxflags="$CXXFLAGS" \
-        --ldflags="$LDFLAGS"
-
-    ./b2 install \
-        --prefix="$PKG/usr"
-
-    popd
-
-    ln -sfn b2 "$PKG/usr/bin/bjam"
 }
 
 post_build() {
     if ! prt-get isinst python3-numpy >/dev/null 2>&1; then
         rm -rf "$PKG/usr/include/boost/python/numpy"
         rm -f "$PKG/usr/include/boost/python/numpy.hpp"
+
+        # The build may still install NumPy CMake metadata even when its
+        # headers and extension are disabled.
+        rm -rf "$PKG/usr/lib/cmake/boost_numpy-"*
     fi
 
     if ! prt-get isinst openmpi >/dev/null 2>&1; then
