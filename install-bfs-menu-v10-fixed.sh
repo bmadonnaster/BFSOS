@@ -170,7 +170,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v9.sh [options]
+Usage: install-bfs-menu-v10-fixed.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -1307,29 +1307,92 @@ configure_disks() {
 }
 
 configure_archive() {
-        local script_dir=""
+        local installer_dir=""
+        local project_dir=""
+        local archive_dir=""
         local default_archive=""
+        local entered_archive=""
 
         clear_screen
         echo "Base archive"
         echo "============"
         echo
 
-        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+        installer_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-        default_archive="$(
-                find "$script_dir/archives/base" -maxdepth 1 -type f \
-                        \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
-                        -printf '%T@ %p
+        # Support the installer being stored either in:
+        #   bfs-linux-install/
+        # or:
+        #   bfs-linux-install/scripts/
+        if [[ -d "$installer_dir/archives/base" ]]; then
+                project_dir="$installer_dir"
+        elif [[ -d "$installer_dir/../archives/base" ]]; then
+                project_dir="$(cd "$installer_dir/.." && pwd)"
+        elif [[ -n "${HOME:-}" &&
+                -d "$HOME/bfs-linux-install/archives/base" ]]; then
+                project_dir="$HOME/bfs-linux-install"
+        else
+                project_dir="$installer_dir"
+        fi
+
+        archive_dir="$project_dir/archives/base"
+
+        if [[ -d "$archive_dir" ]]; then
+                default_archive="$(
+                        find "$archive_dir" \
+                                -maxdepth 1 \
+                                -type f \
+                                \( \
+                                        -name 'bfs-rootfs-*.tar.xz' -o \
+                                        -name 'bfs-rootfs-*.tar.zst' -o \
+                                        -name 'bfs-rootfs-*.tar.gz' \
+                                \) \
+                                -printf '%T@ %p
 ' 2>/dev/null |
-                sort -nr |
-                head -n1 |
-                cut -d' ' -f2-
-        )"
+                        sort -nr |
+                        head -n1 |
+                        cut -d' ' -f2-
+                )" || true
+        else
+                warn "Base archive directory was not found:"
+                warn "  $archive_dir"
+        fi
 
         [[ -n "$ARCHIVE" ]] && default_archive="$ARCHIVE"
 
-        ask_default ARCHIVE "Path to BFS rootfs archive" "$default_archive"
+        while true; do
+                if [[ -n "$default_archive" ]]; then
+                        read -r -p \
+                                "Path to BFS rootfs archive [$default_archive]: " \
+                                entered_archive
+                        ARCHIVE="${entered_archive:-$default_archive}"
+                else
+                        read -r -p \
+                                "Path to BFS rootfs archive: " \
+                                ARCHIVE
+                fi
+
+                [[ -n "$ARCHIVE" ]] || {
+                        warn "Enter the path to a BFS rootfs archive."
+                        continue
+                }
+
+                [[ -f "$ARCHIVE" ]] || {
+                        warn "Archive file not found:"
+                        warn "  $ARCHIVE"
+                        continue
+                }
+
+                case "$ARCHIVE" in
+                        *.tar.xz|*.tar.zst|*.tar.gz)
+                                break
+                                ;;
+                        *)
+                                warn "Expected a .tar.xz, .tar.zst, or .tar.gz archive."
+                                ;;
+                esac
+        done
+
         ask_yes_no SAVE_BASE_ARCHIVE \
                 "Save a copy of the BFS base archive on the installed system?" \
                 "$SAVE_BASE_ARCHIVE"
@@ -1337,7 +1400,6 @@ configure_archive() {
         ARCHIVE_CONFIGURED=yes
         pause_screen
 }
-
 configure_system() {
         clear_screen
         echo "System settings"
