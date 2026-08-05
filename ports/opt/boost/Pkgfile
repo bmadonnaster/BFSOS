@@ -15,17 +15,15 @@ source=(
 pkg_build() {
     local -a b2_options=()
 
-    # Prevent Boost.Python from automatically enabling NumPy support when the
-    # optional NumPy package is not installed.
+    # Prevent Boost.Python from automatically enabling NumPy support when
+    # python3-numpy is not installed.
     if ! prt-get isinst python3-numpy >/dev/null 2>&1; then
         sed -i \
             's/\[ unless \[ python\.numpy \] : <build>no \]/<build>no/g' \
             libs/python/build/Jamfile
-
-        b2_options+=(--without-numpy)
     fi
 
-    # Build MPI components only when OpenMPI is installed.
+    # Enable MPI support only when OpenMPI is installed.
     if prt-get isinst openmpi >/dev/null 2>&1; then
         printf '%s\n' 'using mpi ;' >> project-config.jam
     else
