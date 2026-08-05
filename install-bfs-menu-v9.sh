@@ -111,6 +111,25 @@ pause_screen() {
         read -r -p 'Press Enter to continue...' _
 }
 
+run_on_tty() {
+        local status=0
+
+        clear
+        reset
+        stty sane </dev/tty
+
+        set +e
+        "$@" </dev/tty >/dev/tty 2>/dev/tty
+        status=$?
+        set -e
+
+        clear
+        reset
+        stty sane </dev/tty
+
+        return "$status"
+}
+
 ask() {
         local variable="$1" prompt="$2" default="${3:-}" answer=""
         [[ -n "${!variable:-}" ]] && return 0
@@ -151,7 +170,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v7.sh [options]
+Usage: install-bfs-menu-v9.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -632,7 +651,10 @@ partition_disks() {
                 echo "Changes are written only when you choose Write in cfdisk."
                 echo
 
-                cfdisk "$disk"
+                if ! run_on_tty cfdisk "$disk"; then
+                        warn "cfdisk exited with an error for $disk."
+                        pause_screen
+                fi
 
                 command -v partprobe >/dev/null 2>&1 && partprobe "$disk" || true
                 command -v udevadm >/dev/null 2>&1 && udevadm settle || true
@@ -1058,11 +1080,11 @@ EOF_LUKS
                                 confirm "Initialize $device as LUKS? Existing data will be destroyed." ||
                                         continue
 
-                                cryptsetup luksFormat "$device"
+                                run_on_tty cryptsetup luksFormat "$device"
 
                                 read -r -p "Mapping name to open now [leave blank to skip]: " mapping
                                 [[ -z "$mapping" ]] ||
-                                        cryptsetup open "$device" "$mapping"
+                                        run_on_tty cryptsetup open "$device" "$mapping"
 
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
@@ -1079,7 +1101,7 @@ EOF_LUKS
                                 echo
                                 read -r -p "LUKS block device: " device
                                 read -r -p "Mapping name: " mapping
-                                cryptsetup open "$device" "$mapping"
+                                run_on_tty cryptsetup open "$device" "$mapping"
 
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
@@ -1629,7 +1651,8 @@ chroot_into_target() {
         echo "Entering $TARGET. Type exit to return to the installer."
         echo
 
-        chroot "$TARGET" /usr/bin/env -i \
+        run_on_tty \
+                chroot "$TARGET" /usr/bin/env -i \
                 HOME=/root \
                 TERM="${TERM:-linux}" \
                 PATH=/usr/bin:/usr/sbin:/bin:/sbin \
@@ -3125,7 +3148,8 @@ offer_final_chroot() {
         KEEP_MOUNTS=yes
 
         printf '\nEntering the installed BFS system. Type exit to return to the live environment.\n'
-        chroot "$TARGET" /usr/bin/env -i \
+        run_on_tty \
+                chroot "$TARGET" /usr/bin/env -i \
                 HOME=/root \
                 TERM="${TERM:-linux}" \
                 PATH=/usr/bin:/usr/sbin:/bin:/sbin \
