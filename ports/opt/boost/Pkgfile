@@ -2,7 +2,7 @@
 # URL: https://www.boost.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: bzip2 zstd
-# Optional: icu
+# Optional: icu openmpi python3-numpy
 
 name=boost
 version=1.91.0
@@ -15,6 +15,24 @@ source=(
 pkg_build() {
     local -a b2_options=()
 
+    # Prevent Boost.Python from automatically enabling NumPy support when
+    # python3-numpy is not installed.
+    if ! prt-get isinst python3-numpy >/dev/null 2>&1; then
+        sed -i \
+            's/\[ unless \[ python\.numpy \] : <build>no \]/<build>no/g' \
+            libs/python/build/Jamfile
+    fi
+
+    # Enable MPI support only when OpenMPI is installed.
+    if prt-get isinst openmpi >/dev/null 2>&1; then
+        printf '%s\n' 'using mpi ;' >> project-config.jam
+    else
+        b2_options+=(
+            --without-mpi
+            --without-graph_parallel
+        )
+    fi
+
     # Disable ICU-backed Boost.Locale support when ICU is unavailable.
     if ! prt-get isinst icu >/dev/null 2>&1; then
         b2_options+=(
@@ -24,13 +42,11 @@ pkg_build() {
     fi
 
     ./bootstrap.sh \
-        --with-toolset=gcc
+        --with-toolset=gcc \
+        --with-python=/usr/bin/python3
 
     ./b2 install \
         "${b2_options[@]}" \
-        --with-system \
-        --with-filesystem \
-        --with-thread \
         --prefix="$PKG/usr" \
         --layout=system \
         -j "${JOBS:-1}" \
@@ -40,12 +56,26 @@ pkg_build() {
         runtime-link=shared \
         link=shared \
         toolset=gcc \
+        "python=$(
+            /usr/bin/python3 -c \
+                'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
+        )" \
         "cflags=$CPPFLAGS $CFLAGS -fPIC" \
         "cxxflags=$CPPFLAGS $CXXFLAGS -fPIC" \
         "linkflags=$LDFLAGS"
 }
 
 post_build() {
+    if ! prt-get isinst python3-numpy >/dev/null 2>&1; then
+        rm -rf "$PKG/usr/include/boost/python/numpy"
+        rm -f "$PKG/usr/include/boost/python/numpy.hpp"
+        rm -rf "$PKG/usr/lib/cmake/boost_numpy-"*
+    fi
+
+    if ! prt-get isinst openmpi >/dev/null 2>&1; then
+        rm -rf "$PKG/usr/include/boost/mpi/python"
+    fi
+
     find "$PKG" -type f -name '*.la' -delete
 
     rm -rf \
