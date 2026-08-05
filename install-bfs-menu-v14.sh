@@ -170,7 +170,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v13.sh [options]
+Usage: install-bfs-menu-v14.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -1705,6 +1705,7 @@ chroot_into_target() {
         mount_virtual_filesystems
 
         if [[ -e /etc/resolv.conf ]]; then
+                rm -f "$TARGET/etc/resolv.conf"
                 cp -L /etc/resolv.conf "$TARGET/etc/resolv.conf"
         fi
 
@@ -2502,9 +2503,7 @@ build_package_list() {
         [[ "$INSTALL_WGET" == yes ]] && packages+=(wget)
         [[ "$ENABLE_OPENSSH" == yes ]] && packages+=(openssh)
         if ((${#BTRFS_DEVICES[@]} > 0)); then
-                # Snapper is built with CMake. Install CMake first when a
-                # Btrfs filesystem was selected, then install Snapper.
-                packages+=(cmake snapper)
+                packages+=(snapper)
         fi
 
         if ((${#packages[@]} > 0)); then
@@ -2843,15 +2842,6 @@ if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
         }
 
         MISSING_PACKAGES=()
-
-        # Snapper is built with CMake. For Btrfs installations, explicitly
-        # ensure CMake is present before the general package installation
-        # reaches Snapper. prt-get will still resolve CMake's dependencies.
-        if [[ -n "$BTRFS_CONFIG_NAMES_VALUE" ]] &&
-           ! prt-get isinst cmake >/dev/null 2>&1; then
-                log "Btrfs selected: installing CMake before Snapper"
-                prt-get depinst cmake
-        fi
 
         log "Checking selected package installation status"
 
