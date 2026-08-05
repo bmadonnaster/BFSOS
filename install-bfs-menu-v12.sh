@@ -170,7 +170,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v11.sh [options]
+Usage: install-bfs-menu-v12.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -2715,23 +2715,66 @@ chmod 0600 /etc/shadow /etc/gshadow
 
 log "Creating users"
 
+DEFAULT_USER_GROUPS="users,wheel,audio,video,optical,cdrom,plugdev,storage,input,render"
+
+ensure_default_user_groups() {
+        local group_name=""
+
+        command -v groupadd >/dev/null 2>&1 || {
+                echo "groupadd is missing" >&2
+                exit 1
+        }
+
+        for group_name in ${DEFAULT_USER_GROUPS//,/ }; do
+                getent group "$group_name" >/dev/null 2>&1 ||
+                        groupadd -r "$group_name"
+        done
+}
+
+verify_regular_user_groups() {
+        local user_name="$1"
+        local group_name=""
+        local user_groups=""
+
+        user_groups="$(id -nG "$user_name")"
+
+        for group_name in ${DEFAULT_USER_GROUPS//,/ }; do
+                if ! grep -qw "$group_name" <<< "$user_groups"; then
+                        echo "User $user_name was not added to group $group_name." >&2
+                        exit 1
+                fi
+        done
+
+        printf 'Groups for %s: %s\n' "$user_name" "$user_groups"
+}
+
 create_regular_user() {
         local user_name="$1"
 
         if ! id "$user_name" >/dev/null 2>&1; then
                 if [[ -d "/home/$user_name" ]]; then
-                        useradd -M -d "/home/$user_name" \
-                                -G users,wheel,audio,video \
-                                -s /bin/bash "$user_name"
+                        useradd -M \
+                                -d "/home/$user_name" \
+                                -s /bin/bash \
+                                "$user_name"
                 else
                         useradd -m \
-                                -G users,wheel,audio,video \
-                                -s /bin/bash "$user_name"
+                                -s /bin/bash \
+                                "$user_name"
                 fi
         fi
 
-        chown -R "$user_name:$user_name" "/home/$user_name" 2>/dev/null || true
+        # Apply the standard BFS groups to both newly-created accounts and
+        # accounts that were already present in the base archive.
+        usermod -aG "$DEFAULT_USER_GROUPS" "$user_name"
+
+        mkdir -p "/home/$user_name"
+        chown -R "$user_name:$user_name" "/home/$user_name"
+
+        verify_regular_user_groups "$user_name"
 }
+
+ensure_default_user_groups
 
 set_account_password() {
         local account="$1"
