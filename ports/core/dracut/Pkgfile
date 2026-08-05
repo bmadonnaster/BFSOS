@@ -1,30 +1,43 @@
 # Description: Generates an initramfs image for booting Linux systems
 # URL: https://github.com/dracut-ng/dracut-ng
-# Maintainer: Brian Madonna email [bmadonnaster@gmail.com](mailto:bmadonnaster@gmail.com)
+# Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: bash cpio kmod util-linux
 # Optional: cryptsetup lvm2 mdadm
 
 name=dracut
 version=111
 release=1
+
 source=(
-https://github.com/dracut-ng/dracut-ng/archive/refs/tags/$version.tar.gz
-bfs.conf
+    https://github.com/dracut-ng/dracut-ng/archive/refs/tags/$version.tar.gz
+    bfs.conf
+)
+
+build_opt=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --disable-documentation
 )
 
 pkg_build() {
-./configure 
---prefix=/usr 
---sysconfdir=/etc 
---disable-documentation
-sed -i 's,-arx modules,-rx modules,' Makefile
-make
-make DESTDIR="$PKG" install
-find "$PKG/usr/lib/dracut/modules.d" \
-    -type f \
-    -name 'README*' \
-    -delete
-chmod -R g-w "$PKG/usr/lib/dracut/modules.d"
-install -Dm644 "$SRC/config.conf" \
-    "$PKG/etc/dracut.conf.d/bfs.conf"
+    ./configure "${build_opt[@]}"
+
+    sed -i \
+        's,-arx modules,-rx modules,' \
+        Makefile
+
+    make
+    make DESTDIR="$PKG" install
+
+    find "$PKG/usr/lib/dracut/modules.d" \
+        -type f \
+        -name 'README*' \
+        -delete
+
+    chmod -R g-w \
+        "$PKG/usr/lib/dracut/modules.d"
+
+    install -Dm644 \
+        "$SRC/bfs.conf" \
+        "$PKG/etc/dracut.conf.d/bfs.conf"
 }
