@@ -8,9 +8,8 @@ name=snapper
 version=0.12.1
 release=1
 
-source=(
-    https://github.com/openSUSE/snapper/archive/refs/tags/v$version.tar.gz
-)
+source=(https://github.com/openSUSE/snapper/archive/refs/tags/v$version.tar.gz
+snapper-boost-system-header-only.patch)
 
 build_opt=(
     --sysconfdir=/etc
