@@ -13,17 +13,23 @@ source=(
 )
 
 pkg_build() {
-    cmake -B build \
-        -S snapper-$version \
+    cmake \
+        -S . \
+        -B build \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_PAM=OFF \
         -DENABLE_XATTRS=ON
 
-    cmake --build build
+    cmake --build build -j "${JOBS:-1}"
 
     DESTDIR="$PKG" cmake --install build
+}
 
-    rm -rf "$PKG/usr/share/doc"
-    rm -rf "$PKG/usr/share/man"
+post_build() {
+    rm -rf \
+        "$PKG/usr/share/doc" \
+        "$PKG/usr/share/info"
+
+    find "$PKG" -type f -name '*.la' -delete
 }
