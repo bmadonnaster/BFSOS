@@ -1,6 +1,33 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+
+# The live environment may advertise a UTF-8 locale that is not generated
+# inside the installer or target chroot. Use the guaranteed POSIX locale for
+# installer execution while keeping BFS_LOCALE as the locale selected for the
+# installed system.
+force_posix_locale() {
+        unset LC_ALL
+        unset LC_ADDRESS
+        unset LC_COLLATE
+        unset LC_CTYPE
+        unset LC_IDENTIFICATION
+        unset LC_MEASUREMENT
+        unset LC_MESSAGES
+        unset LC_MONETARY
+        unset LC_NAME
+        unset LC_NUMERIC
+        unset LC_PAPER
+        unset LC_TELEPHONE
+        unset LC_TIME
+
+        export LANG=C
+        export LC_ALL=C
+        export LANGUAGE=C
+}
+
+force_posix_locale
+
 # BFS Linux installer
 #
 # Assumptions:
@@ -377,7 +404,10 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v15.sh [options]
+Usage: install-bfs-menu-v16.sh [options]
+
+The installer may be started as a regular user. It authenticates with sudo
+once, then re-executes the full installer as root.
 
 Options:
   --log                  Enable automatic logging (default)
@@ -463,7 +493,28 @@ copy_log_to_installed_system() {
         printf 'Installed-system log: /var/log/%s\n' "$(basename "$LOG_FILE")"
 }
 
-require_root() { [[ $EUID -eq 0 ]] || die "Run this installer as root."; }
+require_root() {
+        if [[ $EUID -eq 0 ]]; then
+                force_posix_locale
+                return 0
+        fi
+
+        command -v sudo >/dev/null 2>&1 ||
+                die "This installer requires root privileges and sudo is unavailable."
+
+        printf '\nThis installer requires root privileges.\n'
+        printf 'Authenticating with sudo before the installer starts...\n\n'
+
+        sudo -v || die "sudo authentication failed."
+
+        exec sudo \
+                --preserve-env=TERM,BFS_INSTALLER_THEME,BFS_LOG_ENABLED,BFS_LOG_FILE \
+                env \
+                LANG=C \
+                LC_ALL=C \
+                LANGUAGE=C \
+                "$0" "$@"
+}
 
 require_commands() {
         local command
@@ -1890,6 +1941,7 @@ EOF_MENU
 }
 
 chroot_into_target() {
+        force_posix_locale
         clear_screen
         echo "Chroot into BFS target"
         echo "======================"
@@ -3680,7 +3732,8 @@ offer_final_chroot() {
 
 main() {
         parse_arguments "$@"
-        require_root
+        require_root "$@"
+        force_posix_locale
         load_installer_settings
         setup_installer_theme
         setup_logging
