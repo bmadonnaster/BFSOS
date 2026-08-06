@@ -48,7 +48,40 @@ fi
 
 DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
+SETTINGS_FILE="$SCRIPT_DIR/.bfs-build-settings"
+
 BFS_THEME="${BFS_THEME:-classic}"
+BFS_BUILD_JOBS="${BFS_BUILD_JOBS:-$(nproc)}"
+BFS_BUILD_OUTPUT="${BFS_BUILD_OUTPUT:-normal}"
+
+_load_build_settings() {
+    [ -f "$SETTINGS_FILE" ] || return 0
+
+    while IFS='=' read -r key value; do
+        case "$key" in
+            BFS_THEME)
+                BFS_THEME="$value"
+                ;;
+            BFS_BUILD_JOBS)
+                BFS_BUILD_JOBS="$value"
+                ;;
+            BFS_BUILD_OUTPUT)
+                BFS_BUILD_OUTPUT="$value"
+                ;;
+        esac
+    done < "$SETTINGS_FILE"
+}
+
+_save_build_settings() {
+    cat > "$SETTINGS_FILE" <<EOF_SETTINGS
+BFS_THEME=$BFS_THEME
+BFS_BUILD_JOBS=$BFS_BUILD_JOBS
+BFS_BUILD_OUTPUT=$BFS_BUILD_OUTPUT
+EOF_SETTINGS
+}
+
+_load_build_settings
+export BFS_THEME BFS_BUILD_JOBS BFS_BUILD_OUTPUT
 
 _write_dialog_theme_classic() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
@@ -173,6 +206,13 @@ darrow_color = (BLUE,WHITE,ON)
 EOF_DIALOGRC
 }
 
+_write_dialog_theme_monochrome() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = OFF
+use_shadow = OFF
+EOF_DIALOGRC
+}
+
 _setup_tui_theme() {
     DIALOGRC_FILE="$(mktemp /tmp/bfs-dialogrc.XXXXXX)"
 
@@ -261,6 +301,34 @@ actsellistbox=white,blue
 sellistbox=black,white
 '
             ;;
+        monochrome)
+            _write_dialog_theme_monochrome
+            export NEWT_COLORS='
+root=white,black
+border=white,black
+window=white,black
+shadow=black,black
+title=white,black
+button=black,white
+actbutton=black,white
+checkbox=white,black
+actcheckbox=black,white
+entry=white,black
+label=white,black
+listbox=white,black
+actlistbox=black,white
+textbox=white,black
+acttextbox=black,white
+helpline=white,black
+roottext=white,black
+emptyscale=white,black
+fullscale=black,white
+disentry=white,black
+compactbutton=white,black
+actsellistbox=black,white
+sellistbox=white,black
+'
+            ;;
         *)
             echo "WARNING: Unknown BFS_THEME '$BFS_THEME'; using classic." >&2
             BFS_THEME=classic
@@ -287,10 +355,11 @@ _select_theme() {
                 --title "Select Theme" \
                 --radiolist \
                 "Choose the interface theme." \
-                16 62 4 \
+                18 64 5 \
                 classic "Classic dark-blue installer theme" "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
                 light "Light theme with black text on white" "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
+                monochrome "Monochrome reverse-video theme" "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
                 3>&1 1>&2 2>&3 \
                 </dev/tty >/dev/tty
         )"
@@ -307,6 +376,7 @@ _select_theme() {
             rm -f "$DIALOGRC_FILE"
         fi
         _setup_tui_theme
+        _save_build_settings
         return 0
     fi
 
@@ -315,12 +385,14 @@ _select_theme() {
     echo "  1) Classic dark-blue installer"
     echo "  2) Midnight Commander"
     echo "  3) Light"
-    read -r -p "Choose [1-3, current: $BFS_THEME]: " choice
+    echo "  4) Monochrome"
+    read -r -p "Choose [1-4, current: $BFS_THEME]: " choice
 
     case "$choice" in
         1) BFS_THEME=classic ;;
         2) BFS_THEME=midnight ;;
         3) BFS_THEME=light ;;
+        4) BFS_THEME=monochrome ;;
         "") return 0 ;;
         *) echo "Invalid theme selection."; return 1 ;;
     esac
@@ -331,6 +403,7 @@ _select_theme() {
         rm -f "$DIALOGRC_FILE"
     fi
     _setup_tui_theme
+    _save_build_settings
 }
 
 _sanitize_log_name() {
@@ -384,12 +457,22 @@ _start_package_log() {
 
     safe_package="$(_sanitize_log_name "$package")"
     timestamp="$(date +%Y%m%d-%H%M%S)"
+
+    if [ "$BFS_BUILD_OUTPUT" = quiet ]; then
+        printf 'Building %-28s [%s]\n' "$package" "$phase"
+    fi
     ACTIVE_LOG_FILE="$directory/${safe_package}-${timestamp}.log"
     ACTIVE_LOG_FIFO="$(mktemp -u /tmp/bfs-build-log.XXXXXX)"
     mkfifo "$ACTIVE_LOG_FIFO"
 
     exec 7>&1 8>&2
-    tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >&7 &
+
+    if [ "$BFS_BUILD_OUTPUT" = quiet ]; then
+        tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >/dev/null &
+    else
+        tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >&7 &
+    fi
+
     ACTIVE_LOG_TEE_PID=$!
     exec > "$ACTIVE_LOG_FIFO" 2>&1
 
@@ -621,6 +704,137 @@ _dialog_menu_description() {
     printf '%-57s [%s]' "$label" "$status"
 }
 
+
+_select_build_jobs() {
+    local value=""
+
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
+    then
+        set +e
+        value="$(
+            dialog \
+                --clear \
+                --backtitle "BFS Build System" \
+                --title "Parallel Build Jobs" \
+                --inputbox \
+                "Enter the number of parallel build jobs.\n\nDetected processors: $(nproc)" \
+                12 56 "$BFS_BUILD_JOBS" \
+                3>&1 1>&2 2>&3 \
+                </dev/tty >/dev/tty
+        )"
+        local rc=$?
+        set -e
+        [ "$rc" -eq 0 ] || return 0
+    else
+        read -r -p "Parallel build jobs [$BFS_BUILD_JOBS]: " value
+        value="${value:-$BFS_BUILD_JOBS}"
+    fi
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "Invalid job count: $value" >&2
+        sleep 1
+        return 1
+    fi
+
+    BFS_BUILD_JOBS="$value"
+    export BFS_BUILD_JOBS
+    _save_build_settings
+}
+
+_select_build_output() {
+    local value=""
+
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
+    then
+        set +e
+        value="$(
+            dialog \
+                --clear \
+                --backtitle "BFS Build System" \
+                --title "Build Output" \
+                --radiolist \
+                "Choose how package build output is displayed.\n\nLogs are always written in both modes." \
+                14 66 3 \
+                normal "Show build output on screen and save logs" "$([ "$BFS_BUILD_OUTPUT" = normal ] && echo on || echo off)" \
+                quiet "Save full logs but show only package headings" "$([ "$BFS_BUILD_OUTPUT" = quiet ] && echo on || echo off)" \
+                3>&1 1>&2 2>&3 \
+                </dev/tty >/dev/tty
+        )"
+        local rc=$?
+        set -e
+        [ "$rc" -eq 0 ] || return 0
+    else
+        echo "  1) Normal"
+        echo "  2) Quiet"
+        read -r -p "Choose [1-2, current: $BFS_BUILD_OUTPUT]: " value
+        case "$value" in
+            1) value=normal ;;
+            2) value=quiet ;;
+            "") return 0 ;;
+            *) return 1 ;;
+        esac
+    fi
+
+    BFS_BUILD_OUTPUT="$value"
+    export BFS_BUILD_OUTPUT
+    _save_build_settings
+}
+
+_select_settings() {
+    local choice=""
+    local rc=0
+
+    while true; do
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] &&
+           [ -w /dev/tty ]
+        then
+            set +e
+            choice="$(
+                dialog \
+                    --clear \
+                    --backtitle "BFS Build System" \
+                    --title "Settings" \
+                    --cancel-label "Back" \
+                    --menu \
+                    "Configure the BFS build system." \
+                    17 72 6 \
+                    1 "Theme: $BFS_THEME" \
+                    2 "Parallel build jobs: $BFS_BUILD_JOBS" \
+                    3 "Build output: $BFS_BUILD_OUTPUT" \
+                    4 "Back to main menu" \
+                    3>&1 1>&2 2>&3 \
+                    </dev/tty >/dev/tty
+            )"
+            rc=$?
+            set -e
+            [ "$rc" -eq 0 ] || return 0
+        else
+            clear 2>/dev/null || true
+            echo "BFS Build System Settings"
+            echo
+            echo "  1) Theme: $BFS_THEME"
+            echo "  2) Parallel build jobs: $BFS_BUILD_JOBS"
+            echo "  3) Build output: $BFS_BUILD_OUTPUT"
+            echo "  4) Back"
+            echo
+            read -r -p "Choose [1-4]: " choice
+        fi
+
+        case "$choice" in
+            1) _select_theme ;;
+            2) _select_build_jobs ;;
+            3) _select_build_output ;;
+            4) return 0 ;;
+            *) ;;
+        esac
+    done
+}
+
 SELECTED_MENU_CHOICE=""
 
 _plain_menu_status() {
@@ -663,9 +877,9 @@ _select_bootstrap_menu_choice() {
                 --ok-label "Select" \
                 --cancel-label "Quit" \
                 --extra-button \
-                --extra-label "Theme Selection" \
+                --extra-label "Settings" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Theme Selection." \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
                 23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -713,7 +927,7 @@ _select_bootstrap_menu_choice() {
                 return 0
                 ;;
             3)
-                SELECTED_MENU_CHOICE=theme
+                SELECTED_MENU_CHOICE=settings
                 rm -f "$error_file"
                 return 0
                 ;;
@@ -809,9 +1023,9 @@ _bootstrap_menu() {
                 status=$?
                 set -e
                 ;;
-            theme)
+            settings)
                 set +e
-                _select_theme
+                _select_settings
                 status=$?
                 set -e
                 continue
@@ -1331,7 +1545,7 @@ _buildtoolchain() {
 export LANG=C
 export LC_ALL=C
 export LANGUAGE=C
-export MAKEFLAGS=-j$(nproc)
+export MAKEFLAGS=-j$BFS_BUILD_JOBS
 
 PKGMK_SOURCE_DIR=$sourcedir
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
@@ -1353,9 +1567,9 @@ EOF
             -e 's/ -static//' \
             /tmp/pkgutils-5.40.12/Makefile
 
-        make -j"$(nproc)" -C /tmp/pkgutils-5.40.12
+        make -j"$BFS_BUILD_JOBS" -C /tmp/pkgutils-5.40.12
 
-        make -j"$(nproc)" \
+        make -j"$BFS_BUILD_JOBS" \
             -C /tmp/pkgutils-5.40.12 \
             BINDIR="$TOOLS/bin" \
             MANDIR="$TOOLS/man" \
@@ -1733,7 +1947,7 @@ export LIBRARY_PATH="/usr/lib"
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
-export JOBS=$(nproc)
+export JOBS=$BFS_BUILD_JOBS
 export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
@@ -1758,7 +1972,7 @@ export LDFLAGS="-L/usr/lib -Wl,-rpath-link,/usr/lib"
 export PKG_CONFIG_PATH="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
-export JOBS=$(nproc)
+export JOBS=$BFS_BUILD_JOBS
 export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
@@ -2134,6 +2348,9 @@ case "${1:-menu}" in
     theme)
         _select_theme
         ;;
+    settings)
+        _select_settings
+        ;;
     0|stop|kill)
         _stop_bootstrap
         ;;
@@ -2145,6 +2362,7 @@ Usage:
   $0 1-7         Run a bootstrap stage directly
   $0 8|chroot    Enter the BFS chroot
   $0 theme       Change interface theme
+  $0 settings    Open build-system settings
   $0 0|stop|kill Stop a running bootstrap process group
 EOF
         ;;
