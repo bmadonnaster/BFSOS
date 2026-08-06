@@ -19,6 +19,310 @@ cd "$SCRIPT_DIR"
 
 PID_FILE="$SCRIPT_DIR/.bootstrap.pid"
 
+LOG_DIR="$SCRIPT_DIR/logs"
+TOOLCHAIN_LOG_DIR="$LOG_DIR/toolchain"
+BASE_LOG_DIR="$LOG_DIR/base"
+
+ACTIVE_LOG_FILE=""
+ACTIVE_LOG_FIFO=""
+ACTIVE_LOG_TEE_PID=""
+ACTIVE_LOG_STDOUT_FD=7
+ACTIVE_LOG_STDERR_FD=8
+CURRENT_BASE_LOGS=()
+
+mkdir -p "$TOOLCHAIN_LOG_DIR" "$BASE_LOG_DIR"
+
+_sanitize_log_name() {
+    local name="$1"
+
+    name="${name//[^a-zA-Z0-9_.+-]/-}"
+    printf '%s\n' "$name"
+}
+
+_close_active_package_log() {
+    local status="${1:-0}"
+
+    [ -n "$ACTIVE_LOG_FILE" ] || return 0
+
+    printf '\nBuild finished: %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
+    printf 'Exit status: %s\n' "$status"
+
+    exec 1>&"$ACTIVE_LOG_STDOUT_FD" 2>&"$ACTIVE_LOG_STDERR_FD"
+    exec 7>&- 8>&-
+
+    if [ -n "$ACTIVE_LOG_TEE_PID" ]; then
+        wait "$ACTIVE_LOG_TEE_PID" 2>/dev/null || true
+    fi
+
+    [ -z "$ACTIVE_LOG_FIFO" ] || rm -f "$ACTIVE_LOG_FIFO"
+
+    ACTIVE_LOG_FILE=""
+    ACTIVE_LOG_FIFO=""
+    ACTIVE_LOG_TEE_PID=""
+}
+
+_start_package_log() {
+    local phase="$1"
+    local package="$2"
+    local directory=""
+    local safe_package=""
+    local timestamp=""
+
+    _close_active_package_log 0
+
+    case "$phase" in
+        toolchain) directory="$TOOLCHAIN_LOG_DIR" ;;
+        base) directory="$BASE_LOG_DIR" ;;
+        *)
+            echo "ERROR: Unknown build-log phase: $phase" >&2
+            return 1
+            ;;
+    esac
+
+    mkdir -p "$directory"
+
+    safe_package="$(_sanitize_log_name "$package")"
+    timestamp="$(date +%Y%m%d-%H%M%S)"
+    ACTIVE_LOG_FILE="$directory/${safe_package}-${timestamp}.log"
+    ACTIVE_LOG_FIFO="$(mktemp -u /tmp/bfs-build-log.XXXXXX)"
+    mkfifo "$ACTIVE_LOG_FIFO"
+
+    exec 7>&1 8>&2
+    tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >&7 &
+    ACTIVE_LOG_TEE_PID=$!
+    exec > "$ACTIVE_LOG_FIFO" 2>&1
+
+    if [ "$phase" = base ]; then
+        CURRENT_BASE_LOGS+=("$ACTIVE_LOG_FILE")
+    fi
+
+    printf '============================================================\n'
+    printf 'BFS build phase: %s\n' "$phase"
+    printf 'Package:         %s\n' "$package"
+    printf 'Started:         %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
+    printf 'Port:            %s\n' "$PWD"
+    printf 'Log:             %s\n' "$ACTIVE_LOG_FILE"
+    printf '============================================================\n\n'
+}
+
+_copy_base_logs_into_rootfs() {
+    local destination="$LFS/var/logs/bfs-build"
+    local log_file=""
+
+    mkdir -p "$destination"
+
+    for log_file in "${CURRENT_BASE_LOGS[@]}"; do
+        [ -f "$log_file" ] || continue
+        install -m 0644 "$log_file" "$destination/"
+    done
+
+    echo
+    echo "Base package logs copied to:"
+    echo "  $destination"
+}
+
+_stage_complete_text() {
+    if "$@"; then
+        printf '%s' "complete"
+    else
+        printf '%s' "pending"
+    fi
+}
+
+_toolchain_complete() {
+    _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' >/dev/null 2>&1
+}
+
+_base_stage2_complete() {
+    [ -f "$LFS/.bfs-stage2-complete" ]
+}
+
+_base_stage3_complete() {
+    [ -f "$LFS/.bfs-stage3-complete" ]
+}
+
+_verification_complete() {
+    [ -f "$LFS/.bfs-verified" ]
+}
+
+_rootfs_archive_complete() {
+    _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
+}
+
+_rootfs_restore_complete() {
+    [ -f "$LFS/.bfs-rootfs-restored" ]
+}
+
+_toolchain_restore_complete() {
+    [ -f "$LFS/.bfs-toolchain-restored" ]
+}
+
+_chroot_available() {
+    [ -x "$LFS/usr/bin/bash" ] || [ -x "$LFS/bin/bash" ]
+}
+
+_pause_menu() {
+    printf '\n'
+    read -r -p "Press Enter to return to the menu..." _
+}
+
+_enter_bfs_chroot() {
+    if [ "$(id -u)" != 0 ]; then
+        echo "ERROR: Chroot must be entered as root." >&2
+        return 1
+    fi
+
+    if ! _chroot_available; then
+        echo "ERROR: No usable BFS root filesystem exists at:" >&2
+        echo "  $LFS" >&2
+        return 1
+    fi
+
+    echo
+    echo "Mounting virtual filesystems..."
+    mountfs
+
+    echo
+    echo "Entering BFS chroot."
+    echo "Type exit to return to the bootstrap menu."
+    echo
+
+    set +e
+    chroot "$LFS" \
+        env -i \
+        HOME=/root \
+        TERM="${TERM:-linux}" \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash --login
+    local status=$?
+    set -e
+
+    umountfs
+    return "$status"
+}
+
+_show_bootstrap_menu() {
+    clear 2>/dev/null || printf '\033[2J\033[H'
+
+    cat <<EOF
+============================================================
+                  BFS Linux Bootstrap
+============================================================
+
+  1) Build temporary toolchain
+     [$( _stage_complete_text _toolchain_complete )]
+
+  2) Build base system with temporary toolchain
+     [$( _stage_complete_text _base_stage2_complete )]
+
+  3) Rebuild base system with final toolchain
+     [$( _stage_complete_text _base_stage3_complete )]
+
+  4) Verify completed base system
+     [$( _stage_complete_text _verification_complete )]
+
+  5) Create base rootfs archive
+     [$( _stage_complete_text _rootfs_archive_complete )]
+
+  6) Restore newest base rootfs archive
+     [$( _stage_complete_text _rootfs_restore_complete )]
+
+  7) Restore newest temporary toolchain archive
+     [$( _stage_complete_text _toolchain_restore_complete )]
+
+  8) Chroot into BFS rootfs
+     [$( _stage_complete_text _chroot_available )]
+
+  9) Quit
+
+EOF
+}
+
+_bootstrap_menu() {
+    local choice=""
+    local status=0
+
+    while true; do
+        _show_bootstrap_menu
+        read -r -p "Choose [1-9]: " choice
+
+        status=0
+
+        case "$choice" in
+            1)
+                set +e
+                _buildtoolchain
+                status=$?
+                set -e
+                ;;
+            2)
+                set +e
+                _buildbase
+                status=$?
+                set -e
+                ;;
+            3)
+                set +e
+                _buildbase rebuild
+                status=$?
+                set -e
+                ;;
+            4)
+                set +e
+                _verifybase
+                status=$?
+                set -e
+                ;;
+            5)
+                set +e
+                _compressrootfs
+                status=$?
+                set -e
+                ;;
+            6)
+                set +e
+                _restore_rootfs
+                status=$?
+                set -e
+                ;;
+            7)
+                set +e
+                _restore_toolchain
+                status=$?
+                set -e
+                ;;
+            8)
+                set +e
+                _enter_bfs_chroot
+                status=$?
+                set -e
+                ;;
+            9)
+                echo "BFS bootstrap exited."
+                return 0
+                ;;
+            *)
+                echo
+                echo "Invalid selection."
+                sleep 1
+                continue
+                ;;
+        esac
+
+        echo
+        if [ "$status" -eq 0 ]; then
+            echo "Operation completed successfully."
+        else
+            echo "Operation failed with exit status $status."
+        fi
+
+        _pause_menu
+    done
+}
+
 _stop_bootstrap() {
     local pid=""
     local pgid=""
@@ -79,6 +383,10 @@ _cleanup_on_exit() {
     local status=$?
 
     trap - EXIT INT TERM HUP
+
+    if declare -F _close_active_package_log >/dev/null 2>&1; then
+        _close_active_package_log "$status" 2>/dev/null || true
+    fi
 
     if declare -F umountfs >/dev/null 2>&1; then
         umountfs 2>/dev/null || true
@@ -382,6 +690,8 @@ _restore_toolchain() {
         exit 1
     fi
 
+    touch "$LFS/.bfs-toolchain-restored"
+
     echo "Toolchain restored successfully."
     echo
 
@@ -462,6 +772,8 @@ _restore_rootfs() {
         echo "ERROR: Restored base rootfs failed basic verification." >&2
         exit 1
     fi
+
+    touch "$LFS/.bfs-rootfs-restored"
 
     echo
     echo "Base rootfs restored successfully."
@@ -544,7 +856,21 @@ EOF
 
         mkdir -p /tmp/lfs-pkg
 
+        _start_package_log toolchain "$i"
+
+        set +e
         pkgmk -d -is -if -cf /tmp/bootstrap.conf
+        status=$?
+        set -e
+
+        _close_active_package_log "$status"
+
+        if [ "$status" -ne 0 ]; then
+            rm -rf /tmp/lfs-pkg
+            cd "$SCRIPT_DIR"
+            unset tcpkg
+            return "$status"
+        fi
 
         rm -rf /tmp/lfs-pkg
 
@@ -793,7 +1119,7 @@ _buildbase() {
 
     # Any Stage 2/3 build changes the rootfs. Require Stage 4 to verify it again
     # before a new release archive can be created.
-    rm -f "$LFS/.bfs-verified"
+    rm -f         "$LFS/.bfs-verified"         "$LFS/.bfs-rootfs-restored"
 
     echo
     echo "Resolving base-system ports across all collections..."
@@ -936,6 +1262,8 @@ EOF
                 awk '{print $1}' |
                 grep -qx "$i" &&
                 continue
+
+            _start_package_log base "$i"
 
             unset _force
 
@@ -1109,7 +1437,11 @@ EOF
                     rm -f "$LFS/tmp/glibc-postinstall"
                     ;;
             esac
+
+            _close_active_package_log 0
         else
+            _start_package_log base "$i"
+
             chroot "$LFS" \
                 env -i \
                 HOME=/root \
@@ -1123,10 +1455,23 @@ EOF
                     umountfs
                     exit 1
                 }
+
+            _close_active_package_log 0
         fi
     done
 
+    if [ "${1:-}" != rebuild ]; then
+        _copy_base_logs_into_rootfs
+    fi
+
     umountfs
+
+    if [ "${1:-}" = rebuild ]; then
+        touch "$LFS/.bfs-stage3-complete"
+    else
+        touch "$LFS/.bfs-stage2-complete"
+        rm -f "$LFS/.bfs-stage3-complete"
+    fi
 
     echo
     echo "base system build completed"
@@ -1357,27 +1702,10 @@ packagedir="$PWD/packages"
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
 
-if [ -z "${1:-}" ]; then
-    cat << EOF
-Usage:
-  $0 <options>
-
-Options:
-  1  build temporary toolchain
-  2  build base system (using temporary toolchain)
-  3  rebuild base system (using final system toolchain itself)
-  4  verify completed base system
-  5  create base rootfs archive
-  6  restore newest base rootfs archive
-  7  restore newest temporary toolchain archive (optional)
-  0  stop a running bootstrap and all child processes
-     aliases: stop, kill
-EOF
-
-    exit 0
-fi
-
-case $1 in
+case "${1:-menu}" in
+    menu|"")
+        _bootstrap_menu
+        ;;
     1)
         _buildtoolchain
         ;;
@@ -1398,6 +1726,22 @@ case $1 in
         ;;
     7)
         _restore_toolchain
+        ;;
+    8|chroot)
+        _enter_bfs_chroot
+        ;;
+    0|stop|kill)
+        _stop_bootstrap
+        ;;
+    -h|--help|help)
+        cat <<EOF
+Usage:
+  $0             Open the interactive bootstrap menu
+  $0 menu        Open the interactive bootstrap menu
+  $0 1-7         Run a bootstrap stage directly
+  $0 8|chroot    Enter the BFS chroot
+  $0 0|stop|kill Stop a running bootstrap process group
+EOF
         ;;
     *)
         echo "Unknown option: $1" >&2

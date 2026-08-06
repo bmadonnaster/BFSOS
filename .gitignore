@@ -9,6 +9,12 @@ target/
 /archives/*
 # Installer logs
 bfs-install*.log
+# Build logs
+logs/toolchain/*
+logs/base/*
+# Keep the directories
+!logs/toolchain/.gitkeep
+!logs/base/.gitkeep
 # You may want to ignore .wasm files, which are binary files.
 # We are commenting out the line below, which means that we are keeping a
 # binary file in the source control, because we want the .wasm file to appear
