@@ -104,6 +104,9 @@ USED_DEVICES=()
 EXTRA_DEVICES=()
 EXTRA_MOUNTPOINTS=()
 EXTRA_FORMATS=()
+STORAGE_DEVICES=()
+STORAGE_FORMATS=()
+STORAGE_MOUNTPOINTS=()
 BTRFS_DEVICES=()
 BTRFS_MOUNTPOINTS=()
 BTRFS_SUBVOLUMES=()
@@ -417,8 +420,7 @@ themed_menu() {
 
         if command -v dialog >/dev/null 2>&1 &&
            [[ -r /dev/tty && -w /dev/tty ]]; then
-                set +e
-                selected_value="$(
+                if selected_value="$(
                         dialog --stdout --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "$title" \
@@ -427,9 +429,11 @@ themed_menu() {
                                 "$height" "$width" "$menu_height" \
                                 "${items[@]}" \
                                 </dev/tty
-                )"
-                status=$?
-                set -e
+                )"; then
+                        status=0
+                else
+                        status=$?
+                fi
 
                 if ((status != 0)); then
                         printf -v "$result_variable" '%s' ""
@@ -540,7 +544,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v23.sh [options]
+Usage: install-bfs-menu-v24.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -1729,16 +1733,132 @@ storage_menu() {
         done
 }
 
-configure_disks() {
-        clear_screen
-        echo "Disk and filesystem setup"
-        echo "========================="
-        echo
 
-        USED_DEVICES=()
-        EXTRA_DEVICES=()
-        EXTRA_MOUNTPOINTS=()
-        EXTRA_FORMATS=()
+choose_storage_format() {
+        local result_variable="$1"
+        local device="$2"
+        local selection=""
+        local status=0
+
+        set +e
+        themed_menu selection \
+                "Filesystem action" \
+                "Choose whether to keep or format $device." \
+                20 82 11 \
+                1 "Do not format; keep the existing filesystem" \
+                2 "Format as ext2" \
+                3 "Format as ext4" \
+                4 "Format as XFS" \
+                5 "Format as Btrfs" \
+                6 "Format as F2FS" \
+                7 "Format as FAT32 (EFI or other VFAT use)" \
+                8 "Initialize as swap"
+        status=$?
+        set -e
+
+        ((status == 0)) || return 1
+
+        case "$selection" in
+                1) printf -v "$result_variable" '%s' keep ;;
+                2) printf -v "$result_variable" '%s' ext2 ;;
+                3) printf -v "$result_variable" '%s' ext4 ;;
+                4) printf -v "$result_variable" '%s' xfs ;;
+                5) printf -v "$result_variable" '%s' btrfs ;;
+                6) printf -v "$result_variable" '%s' f2fs ;;
+                7) printf -v "$result_variable" '%s' vfat ;;
+                8) printf -v "$result_variable" '%s' swap ;;
+                *) return 1 ;;
+        esac
+}
+
+ask_mountpoint_dialog() {
+        local result_variable="$1"
+        local device="$2"
+        local format="$3"
+        local value=""
+        local status=0
+        local default_value="/"
+
+        if [[ "$format" == swap ]]; then
+                printf -v "$result_variable" '%s' swap
+                return 0
+        fi
+
+        while true; do
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        if value="$(
+                                dialog --stdout --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Mount point" \
+                                        --cancel-label "Back" \
+                                        --inputbox \
+                                        "Enter where $device should be mounted.\n\nExamples: /, /boot, /boot/efi, /home, /var" \
+                                        14 76 "$default_value" \
+                                        </dev/tty
+                        )"; then
+                                status=0
+                        else
+                                status=$?
+                        fi
+                        ((status == 0)) || return 1
+                else
+                        read -r -p "Mount point for $device: " value
+                fi
+
+                value="$(
+                        printf '%s' "$value" |
+                                tr -d '\r\n' |
+                                sed -e 's/^[[:space:]]*//' \
+                                    -e 's/[[:space:]]*$//'
+                )"
+
+                if [[ "$value" == /* &&
+                      "$value" != *'..'* &&
+                      "$value" != *' '* ]]; then
+                        printf -v "$result_variable" '%s' "$value"
+                        return 0
+                fi
+
+                warn "Use an absolute mount point such as /, /home, or /var."
+                sleep 1
+        done
+}
+
+storage_mountpoint_in_use() {
+        local wanted="$1"
+        local existing=""
+
+        for existing in "${STORAGE_MOUNTPOINTS[@]}"; do
+                [[ "$existing" == "$wanted" ]] && return 0
+        done
+        return 1
+}
+
+show_storage_selection_summary() {
+        local index=0
+
+        clear_screen
+        echo "Selected filesystems and mount points"
+        echo "===================================="
+        echo
+        printf '  %-4s %-24s %-12s %s\n' NUM DEVICE ACTION MOUNTPOINT
+        printf '  %-4s %-24s %-12s %s\n' --- ------ ------ ----------
+        for ((index=0; index<${#STORAGE_DEVICES[@]}; index++)); do
+                printf '  %-4d %-24s %-12s %s\n' \
+                        "$((index + 1))" \
+                        "${STORAGE_DEVICES[$index]}" \
+                        "${STORAGE_FORMATS[$index]}" \
+                        "${STORAGE_MOUNTPOINTS[$index]}"
+        done
+        echo
+}
+
+apply_storage_selections() {
+        local index=0
+        local device=""
+        local format=""
+        local mountpoint=""
 
         ROOT_DEV=""
         BOOT_DEV=""
@@ -1746,25 +1866,169 @@ configure_disks() {
         SWAP_DEV=""
         HOME_DEV=""
 
-        select_partition ROOT_DEV "Root filesystem device"
-        choose_linux_format ROOT_FORMAT "$ROOT_DEV" "root filesystem (/)"
+        ROOT_FORMAT=keep
+        BOOT_FORMAT=keep
+        EFI_FORMAT=keep
+        SWAP_FORMAT=keep
+        HOME_FORMAT=keep
 
-        select_partition BOOT_DEV "Separate /boot device" yes
-        choose_linux_format BOOT_FORMAT "$BOOT_DEV" "/boot"
+        EXTRA_DEVICES=()
+        EXTRA_MOUNTPOINTS=()
+        EXTRA_FORMATS=()
 
-        select_partition EFI_DEV "EFI System Partition" yes
-        choose_efi_format
+        for ((index=0; index<${#STORAGE_DEVICES[@]}; index++)); do
+                device="${STORAGE_DEVICES[$index]}"
+                format="${STORAGE_FORMATS[$index]}"
+                mountpoint="${STORAGE_MOUNTPOINTS[$index]}"
 
-        select_partition SWAP_DEV "Swap device" yes
-        choose_swap_format
+                case "$mountpoint" in
+                        /)
+                                ROOT_DEV="$device"
+                                ROOT_FORMAT="$format"
+                                ;;
+                        /boot)
+                                BOOT_DEV="$device"
+                                BOOT_FORMAT="$format"
+                                ;;
+                        /boot/efi)
+                                EFI_DEV="$device"
+                                EFI_FORMAT="$format"
+                                ;;
+                        /home)
+                                HOME_DEV="$device"
+                                HOME_FORMAT="$format"
+                                ;;
+                        swap)
+                                SWAP_DEV="$device"
+                                SWAP_FORMAT="$format"
+                                ;;
+                        *)
+                                EXTRA_DEVICES+=("$device")
+                                EXTRA_MOUNTPOINTS+=("$mountpoint")
+                                EXTRA_FORMATS+=("$format")
+                                ;;
+                esac
+        done
 
-        select_partition HOME_DEV "Separate /home device" yes
-        choose_linux_format HOME_FORMAT "$HOME_DEV" "/home"
-
-        collect_additional_partitions
+        [[ -n "$ROOT_DEV" ]] || {
+                warn "A root filesystem mounted at / is required."
+                return 1
+        }
 
         DISKS_CONFIGURED=yes
-        pause_screen
+        return 0
+}
+
+configure_disks() {
+        local device=""
+        local format=""
+        local mountpoint=""
+        local choice=""
+        local status=0
+        local confirmed=no
+        local index=0
+
+        while true; do
+                USED_DEVICES=()
+                STORAGE_DEVICES=()
+                STORAGE_FORMATS=()
+                STORAGE_MOUNTPOINTS=()
+
+                while true; do
+                        get_available_partitions
+
+                        if ((${#AVAILABLE_PATHS[@]} == 0)); then
+                                [[ ${#STORAGE_DEVICES[@]} -gt 0 ]] ||
+                                        die "No unassigned partitions are available."
+                                break
+                        fi
+
+                        device=""
+                        if ! select_partition device \
+                                "Select a partition, then choose its filesystem action and mount point" \
+                                yes; then
+                                break
+                        fi
+
+                        [[ -n "$device" ]] || break
+
+                        format=""
+                        if ! choose_storage_format format "$device"; then
+                                continue
+                        fi
+
+                        mountpoint=""
+                        if ! ask_mountpoint_dialog mountpoint "$device" "$format"; then
+                                continue
+                        fi
+
+                        if storage_mountpoint_in_use "$mountpoint"; then
+                                warn "The mount point $mountpoint has already been assigned."
+                                sleep 1
+                                continue
+                        fi
+
+                        STORAGE_DEVICES+=("$device")
+                        STORAGE_FORMATS+=("$format")
+                        STORAGE_MOUNTPOINTS+=("$mountpoint")
+
+                        if command -v dialog >/dev/null 2>&1 &&
+                           [[ -r /dev/tty && -w /dev/tty ]]; then
+                                if dialog --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Filesystem selection" \
+                                        --yesno \
+                                        "Add another partition?\n\nCurrent selections: ${#STORAGE_DEVICES[@]}" \
+                                        11 58 \
+                                        </dev/tty; then
+                                        continue
+                                fi
+                                break
+                        else
+                                read -r -p "Add another partition? [y/N]: " choice
+                                [[ "${choice,,}" == y || "${choice,,}" == yes ]] ||
+                                        break
+                        fi
+                done
+
+                if ((${#STORAGE_DEVICES[@]} == 0)); then
+                        warn "No filesystems were selected."
+                        pause_screen
+                        return 0
+                fi
+
+                show_storage_selection_summary
+
+                if ! apply_storage_selections; then
+                        pause_screen
+                        continue
+                fi
+
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        if dialog --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "Confirm storage assignments" \
+                                --yesno \
+                                "Use these filesystem and mount-point selections?\n\nSelect No to start the storage selection again." \
+                                12 68 \
+                                </dev/tty; then
+                                confirmed=yes
+                        else
+                                confirmed=no
+                        fi
+                else
+                        read -r -p "Use these selections? [Y/n]: " choice
+                        [[ -z "$choice" || "${choice,,}" == y || "${choice,,}" == yes ]] &&
+                                confirmed=yes || confirmed=no
+                fi
+
+                if [[ "$confirmed" == yes ]]; then
+                        DISKS_CONFIGURED=yes
+                        pause_screen
+                        return 0
+                fi
+        done
 }
 
 configure_archive() {
