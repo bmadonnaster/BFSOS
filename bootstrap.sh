@@ -132,6 +132,47 @@ darrow_color = (YELLOW,CYAN,ON)
 EOF_DIALOGRC
 }
 
+_write_dialog_theme_light() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+
+screen_color = (BLACK,WHITE,ON)
+shadow_color = (BLACK,BLACK,OFF)
+dialog_color = (BLACK,WHITE,ON)
+title_color = (BLUE,WHITE,ON)
+border_color = (BLUE,WHITE,ON)
+
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,WHITE,ON)
+button_key_active_color = (YELLOW,BLUE,ON)
+button_key_inactive_color = (BLUE,WHITE,ON)
+button_label_active_color = (WHITE,BLUE,ON)
+button_label_inactive_color = (BLACK,WHITE,ON)
+
+inputbox_color = (BLACK,WHITE,ON)
+inputbox_border_color = (BLUE,WHITE,ON)
+searchbox_color = (BLACK,WHITE,ON)
+searchbox_title_color = (BLUE,WHITE,ON)
+searchbox_border_color = (BLUE,WHITE,ON)
+
+position_indicator_color = (BLUE,WHITE,ON)
+menubox_color = (BLACK,WHITE,ON)
+menubox_border_color = (BLUE,WHITE,ON)
+item_color = (BLACK,WHITE,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (BLUE,WHITE,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+tag_key_color = (BLUE,WHITE,ON)
+tag_key_selected_color = (YELLOW,BLUE,ON)
+
+check_color = (BLACK,WHITE,ON)
+check_selected_color = (WHITE,BLUE,ON)
+uarrow_color = (BLUE,WHITE,ON)
+darrow_color = (BLUE,WHITE,ON)
+EOF_DIALOGRC
+}
+
 _setup_tui_theme() {
     DIALOGRC_FILE="$(mktemp /tmp/bfs-dialogrc.XXXXXX)"
 
@@ -192,6 +233,34 @@ actsellistbox=white,blue
 sellistbox=black,cyan
 '
             ;;
+        light)
+            _write_dialog_theme_light
+            export NEWT_COLORS='
+root=black,white
+border=blue,white
+window=black,white
+shadow=black,black
+title=blue,white
+button=black,white
+actbutton=white,blue
+checkbox=black,white
+actcheckbox=white,blue
+entry=black,white
+label=black,white
+listbox=black,white
+actlistbox=white,blue
+textbox=black,white
+acttextbox=white,blue
+helpline=black,white
+roottext=black,white
+emptyscale=black,white
+fullscale=white,blue
+disentry=black,white
+compactbutton=black,white
+actsellistbox=white,blue
+sellistbox=black,white
+'
+            ;;
         *)
             echo "WARNING: Unknown BFS_THEME '$BFS_THEME'; using classic." >&2
             BFS_THEME=classic
@@ -218,9 +287,10 @@ _select_theme() {
                 --title "Select Theme" \
                 --radiolist \
                 "Choose the interface theme." \
-                14 58 3 \
+                16 62 4 \
                 classic "Classic dark-blue installer theme" "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
+                light "Light theme with black text on white" "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                 3>&1 1>&2 2>&3 \
                 </dev/tty >/dev/tty
         )"
@@ -244,11 +314,13 @@ _select_theme() {
     echo "Available themes:"
     echo "  1) Classic dark-blue installer"
     echo "  2) Midnight Commander"
-    read -r -p "Choose [1-2, current: $BFS_THEME]: " choice
+    echo "  3) Light"
+    read -r -p "Choose [1-3, current: $BFS_THEME]: " choice
 
     case "$choice" in
         1) BFS_THEME=classic ;;
         2) BFS_THEME=midnight ;;
+        3) BFS_THEME=light ;;
         "") return 0 ;;
         *) echo "Invalid theme selection."; return 1 ;;
     esac
@@ -584,9 +656,11 @@ _select_bootstrap_menu_choice() {
                 --title "BFS Build System" \
                 --ok-button "Select" \
                 --cancel-button "Quit" \
+                --extra-button \
+                --extra-button-text "Theme Selection" \
                 --menu \
                 "Use Up/Down arrows and Enter, or type an option number.\n\nOptions 2 and 3 automatically run with sudo/root privileges." \
-                24 92 13 \
+                23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
                     "$(_plain_menu_status _toolchain_complete)")" \
@@ -620,9 +694,16 @@ _select_bootstrap_menu_choice() {
 
         clear </dev/tty >/dev/tty 2>/dev/null || true
 
-        if [ "$menu_status" -ne 0 ]; then
-            SELECTED_MENU_CHOICE=10
-        fi
+        case "$menu_status" in
+            0)
+                ;;
+            3)
+                SELECTED_MENU_CHOICE=theme
+                ;;
+            *)
+                SELECTED_MENU_CHOICE=9
+                ;;
+        esac
 
         return 0
     fi
@@ -641,9 +722,11 @@ _select_bootstrap_menu_choice() {
                 --title "BFS Build System" \
                 --ok-label "Select" \
                 --cancel-label "Quit" \
+                --extra-button \
+                --extra-label "Theme Selection" \
                 --menu \
                 "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
-                24 92 13 \
+                23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
                     "$(_dialog_stage_status _toolchain_complete)")" \
@@ -679,9 +762,16 @@ _select_bootstrap_menu_choice() {
 
         clear </dev/tty >/dev/tty 2>/dev/null || true
 
-        if [ "$menu_status" -ne 0 ]; then
-            SELECTED_MENU_CHOICE=10
-        fi
+        case "$menu_status" in
+            0)
+                ;;
+            3)
+                SELECTED_MENU_CHOICE=theme
+                ;;
+            *)
+                SELECTED_MENU_CHOICE=9
+                ;;
+        esac
 
         return 0
     fi
@@ -701,7 +791,15 @@ _bootstrap_menu() {
 
         status=0
 
-        if [[ "$choice" =~ ^([1-9]|10)$ ]]; then
+        if [ "$choice" = 10 ]; then
+            choice=9
+        elif [ "$choice" = 9 ] &&
+             ! command -v dialog >/dev/null 2>&1 &&
+             ! command -v whiptail >/dev/null 2>&1; then
+            choice=theme
+        fi
+
+        if [[ "$choice" =~ ^[1-9]$ ]]; then
             printf '\n%sSelected option %s%s\n' \
                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
         fi
@@ -755,14 +853,14 @@ _bootstrap_menu() {
                 status=$?
                 set -e
                 ;;
-            9)
+            theme)
                 set +e
                 _select_theme
                 status=$?
                 set -e
                 continue
                 ;;
-            10)
+            9)
                 echo "BFS bootstrap exited."
                 return 0
                 ;;
