@@ -94,6 +94,213 @@ AVAILABLE_NIC_STATES=()
 AVAILABLE_NIC_DRIVERS=()
 CHROOT_INSTALLER="/root/.bfs-install-chroot.sh"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALLER_SETTINGS_FILE="$SCRIPT_DIR/.bfs-installer-settings"
+DIALOGRC_FILE=""
+ORIGINAL_DIALOGRC="${DIALOGRC-}"
+BFS_THEME="${BFS_INSTALLER_THEME:-monochrome}"
+SELECTED_MENU_CHOICE=""
+
+load_installer_settings() {
+        [[ -f "$INSTALLER_SETTINGS_FILE" ]] || return 0
+
+        while IFS='=' read -r key value; do
+                case "$key" in
+                        BFS_THEME) BFS_THEME="$value" ;;
+                        LOG_ENABLED) LOG_ENABLED="$value" ;;
+                esac
+        done < "$INSTALLER_SETTINGS_FILE"
+}
+
+save_installer_settings() {
+        cat > "$INSTALLER_SETTINGS_FILE" <<EOF_SETTINGS
+BFS_THEME=$BFS_THEME
+LOG_ENABLED=$LOG_ENABLED
+EOF_SETTINGS
+}
+
+write_dialog_theme_classic() {
+        cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (WHITE,BLACK,ON)
+dialog_color = (WHITE,BLUE,ON)
+title_color = (YELLOW,BLUE,ON)
+border_color = (WHITE,BLUE,ON)
+button_active_color = (BLACK,WHITE,ON)
+button_inactive_color = (WHITE,BLUE,ON)
+menubox_color = (WHITE,BLUE,ON)
+menubox_border_color = (WHITE,BLUE,ON)
+item_color = (WHITE,BLUE,ON)
+item_selected_color = (BLACK,CYAN,ON)
+tag_color = (YELLOW,BLUE,ON)
+tag_selected_color = (BLACK,CYAN,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_midnight() {
+        cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (WHITE,BLACK,ON)
+dialog_color = (BLACK,CYAN,ON)
+title_color = (YELLOW,CYAN,ON)
+border_color = (WHITE,CYAN,ON)
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,CYAN,ON)
+menubox_color = (BLACK,CYAN,ON)
+menubox_border_color = (WHITE,CYAN,ON)
+item_color = (BLACK,CYAN,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (YELLOW,CYAN,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_light() {
+        cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (BLACK,WHITE,ON)
+dialog_color = (BLACK,WHITE,ON)
+title_color = (BLUE,WHITE,ON)
+border_color = (BLUE,WHITE,ON)
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,WHITE,ON)
+menubox_color = (BLACK,WHITE,ON)
+menubox_border_color = (BLUE,WHITE,ON)
+item_color = (BLACK,WHITE,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (BLUE,WHITE,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_monochrome() {
+        cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = OFF
+use_shadow = OFF
+EOF_DIALOGRC
+}
+
+setup_installer_theme() {
+        [[ -z "$DIALOGRC_FILE" ]] || rm -f "$DIALOGRC_FILE"
+        DIALOGRC_FILE="$(mktemp /tmp/bfs-installer-dialogrc.XXXXXX)"
+
+        case "$BFS_THEME" in
+                classic) write_dialog_theme_classic ;;
+                midnight) write_dialog_theme_midnight ;;
+                light) write_dialog_theme_light ;;
+                monochrome) write_dialog_theme_monochrome ;;
+                *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
+        esac
+
+        export DIALOGRC="$DIALOGRC_FILE"
+}
+
+select_installer_theme() {
+        local choice="" status=0
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                set +e
+                choice="$(
+                        dialog --stdout --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "Interface Theme" \
+                                --radiolist \
+                                "Choose the installer theme." \
+                                17 66 5 \
+                                monochrome "Best compatibility for SSH and unusual palettes" \
+                                        "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
+                                classic "Classic dark-blue installer theme" \
+                                        "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
+                                midnight "Midnight Commander-style theme" \
+                                        "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
+                                light "Black text on a light background" \
+                                        "$([[ "$BFS_THEME" == light ]] && echo on || echo off)" \
+                                </dev/tty
+                )"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
+        else
+                echo "  1) Monochrome"
+                echo "  2) Classic"
+                echo "  3) Midnight"
+                echo "  4) Light"
+                read -r -p "Choose [1-4, current: $BFS_THEME]: " choice
+                case "$choice" in
+                        1) choice=monochrome ;;
+                        2) choice=classic ;;
+                        3) choice=midnight ;;
+                        4) choice=light ;;
+                        "") return 0 ;;
+                        *) warn "Invalid theme selection."; return 1 ;;
+                esac
+        fi
+
+        [[ -n "$choice" ]] || return 0
+        BFS_THEME="$choice"
+        setup_installer_theme
+        save_installer_settings
+}
+
+installer_settings_menu() {
+        local choice="" status=0
+
+        while true; do
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        set +e
+                        choice="$(
+                                dialog --stdout --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Installer Settings" \
+                                        --cancel-label "Back" \
+                                        --menu \
+                                        "Configure the installer interface and logging." \
+                                        16 72 5 \
+                                        1 "Theme: $BFS_THEME" \
+                                        2 "Logging: $LOG_ENABLED" \
+                                        3 "Back to main menu" \
+                                        </dev/tty
+                        )"
+                        status=$?
+                        set -e
+                        ((status == 0)) || return 0
+                else
+                        clear_screen
+                        echo "Installer Settings"
+                        echo "=================="
+                        echo
+                        echo "  1) Theme: $BFS_THEME"
+                        echo "  2) Logging: $LOG_ENABLED"
+                        echo "  3) Back"
+                        read -r -p "Choose [1-3]: " choice
+                fi
+
+                case "$choice" in
+                        1) select_installer_theme ;;
+                        2)
+                                [[ "$LOG_ENABLED" == yes ]] &&
+                                        LOG_ENABLED=no || LOG_ENABLED=yes
+                                save_installer_settings
+                                ;;
+                        3) return 0 ;;
+                        *) warn "Invalid settings selection."; sleep 1 ;;
+                esac
+        done
+}
+
+dialog_status() {
+        [[ "$1" == yes ]] && printf '%s' "CONFIGURED" || printf '%s' "PENDING"
+}
+
+dialog_menu_description() {
+        printf '%-45s [%s]' "$1" "$2"
+}
+
 log() { printf '\n==> %s\n' "$*"; }
 warn() { printf '\nWARNING: %s\n' "$*" >&2; }
 die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
@@ -170,7 +377,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v14.sh [options]
+Usage: install-bfs-menu-v15.sh [options]
 
 Options:
   --log                  Enable automatic logging (default)
@@ -1730,11 +1937,115 @@ chroot_into_target() {
 }
 
 installer_menu() {
-        local choice=""
+        local choice="" status=0 error_file=""
 
         while true; do
-                show_main_menu
-                read -r -p "Choose [1-13]: " choice
+                SELECTED_MENU_CHOICE=""
+
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        error_file="$(mktemp /tmp/bfs-installer-dialog-error.XXXXXX)"
+
+                        set +e
+                        SELECTED_MENU_CHOICE="$(
+                                dialog --stdout --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "BFS Linux Installer" \
+                                        --ok-label "Select" \
+                                        --cancel-label "Quit" \
+                                        --extra-button \
+                                        --extra-label "Settings" \
+                                        --menu \
+                                        "Use Up/Down arrows and Enter, or type an option number.\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
+                                        26 92 15 \
+                                        1 "$(
+                                                dialog_menu_description \
+                                                        'Storage setup' \
+                                                        "$(dialog_status "$DISKS_CONFIGURED")"
+                                        )" \
+                                        2 "$(
+                                                dialog_menu_description \
+                                                        'Base archive' \
+                                                        "$(dialog_status "$ARCHIVE_CONFIGURED")"
+                                        )" \
+                                        3 "$(
+                                                dialog_menu_description \
+                                                        'System settings' \
+                                                        "$(dialog_status "$SYSTEM_CONFIGURED")"
+                                        )" \
+                                        4 "$(
+                                                dialog_menu_description \
+                                                        'User accounts' \
+                                                        "$(dialog_status "$USERS_CONFIGURED")"
+                                        )" \
+                                        5 "$(
+                                                dialog_menu_description \
+                                                        'Kernel selection' \
+                                                        "$(dialog_status "$KERNEL_CONFIGURED")"
+                                        )" \
+                                        6 "$(
+                                                dialog_menu_description \
+                                                        'Networking' \
+                                                        "$(dialog_status "$NETWORK_CONFIGURED")"
+                                        )" \
+                                        7 "$(
+                                                dialog_menu_description \
+                                                        'Optional software' \
+                                                        "$(dialog_status "$PACKAGES_CONFIGURED")"
+                                        )" \
+                                        8 "$(
+                                                dialog_menu_description \
+                                                        'Sudo configuration' \
+                                                        "$(dialog_status "$SUDO_CONFIGURED")"
+                                        )" \
+                                        9 "$(
+                                                dialog_menu_description \
+                                                        'Bootloader' \
+                                                        "$(dialog_status "$BOOTLOADER_CONFIGURED")"
+                                        )" \
+                                        10 "Review selections" \
+                                        11 "Install BFS" \
+                                        12 "Chroot into target" \
+                                        13 "Quit" \
+                                        </dev/tty 2>"$error_file"
+                        )"
+                        status=$?
+                        set -e
+
+                        case "$status" in
+                                0)
+                                        choice="$SELECTED_MENU_CHOICE"
+                                        ;;
+                                1|255)
+                                        choice=13
+                                        ;;
+                                3)
+                                        choice=settings
+                                        ;;
+                                *)
+                                        warn "Dialog failed; switching to the text menu."
+                                        [[ ! -s "$error_file" ]] || cat "$error_file" >&2
+                                        choice=""
+                                        ;;
+                        esac
+
+                        rm -f "$error_file"
+                fi
+
+                if [[ -z "$choice" ]]; then
+                        show_main_menu
+                        read -r -p "Choose [1-14; 14=Settings]: " choice
+                        [[ "$choice" == 14 ]] && choice=settings
+                fi
+
+                choice="$(
+                        printf '%s' "$choice" |
+                                tr -d '\r\n' |
+                                sed -e 's/^[[:space:]]*//' \
+                                    -e 's/[[:space:]]*$//' \
+                                    -e 's/^"//' \
+                                    -e 's/"$//'
+                )"
 
                 case "$choice" in
                         1)  storage_menu ;;
@@ -1753,11 +2064,16 @@ installer_menu() {
                                 echo "Installer exited."
                                 exit 0
                                 ;;
+                        settings)
+                                installer_settings_menu
+                                ;;
                         *)
-                                warn "Choose a number from 1 through 13."
+                                warn "Choose a valid installer option."
                                 sleep 1
                                 ;;
                 esac
+
+                choice=""
         done
 }
 
@@ -2264,6 +2580,14 @@ mount_virtual_filesystems() {
 cleanup() {
         local index destination
         rm -f "$TARGET$CHROOT_INSTALLER" 2>/dev/null || true
+
+        [[ -z "$DIALOGRC_FILE" ]] || rm -f "$DIALOGRC_FILE"
+
+        if [[ -n "$ORIGINAL_DIALOGRC" ]]; then
+                export DIALOGRC="$ORIGINAL_DIALOGRC"
+        else
+                unset DIALOGRC
+        fi
         [[ "$KEEP_MOUNTS" == yes ]] && return 0
         for ((index=${#MOUNTED_BY_SCRIPT[@]}-1; index>=0; index--)); do
                 destination="${MOUNTED_BY_SCRIPT[$index]}"
@@ -3357,6 +3681,8 @@ offer_final_chroot() {
 main() {
         parse_arguments "$@"
         require_root
+        load_installer_settings
+        setup_installer_theme
         setup_logging
         require_commands
         prepare_target_environment
