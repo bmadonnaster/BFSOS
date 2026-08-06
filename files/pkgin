@@ -56,10 +56,10 @@ find_port_matches() {
     find "$PORTS_ROOT" \
         -mindepth 2 \
         -maxdepth 2 \
-        -type f \
-        -path "*/$port_name/Pkgfile" \
+        -type d \
+        -name "$port_name" \
+        -exec test -f '{}/Pkgfile' ';' \
         -print 2>/dev/null |
-        sed 's:/Pkgfile$::' |
         sort
 }
 
