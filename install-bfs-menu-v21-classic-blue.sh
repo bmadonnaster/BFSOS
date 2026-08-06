@@ -164,18 +164,40 @@ write_dialog_theme_classic() {
         cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
 use_shadow = OFF
+
 screen_color = (WHITE,BLACK,ON)
+shadow_color = (BLACK,BLACK,OFF)
 dialog_color = (WHITE,BLUE,ON)
 title_color = (YELLOW,BLUE,ON)
 border_color = (WHITE,BLUE,ON)
+
 button_active_color = (BLACK,WHITE,ON)
 button_inactive_color = (WHITE,BLUE,ON)
+button_key_active_color = (BLACK,WHITE,ON)
+button_key_inactive_color = (YELLOW,BLUE,ON)
+button_label_active_color = (BLACK,WHITE,ON)
+button_label_inactive_color = (WHITE,BLUE,ON)
+
+inputbox_color = (WHITE,BLUE,ON)
+inputbox_border_color = (WHITE,BLUE,ON)
+searchbox_color = (WHITE,BLUE,ON)
+searchbox_title_color = (YELLOW,BLUE,ON)
+searchbox_border_color = (WHITE,BLUE,ON)
+
+position_indicator_color = (YELLOW,BLUE,ON)
 menubox_color = (WHITE,BLUE,ON)
 menubox_border_color = (WHITE,BLUE,ON)
 item_color = (WHITE,BLUE,ON)
 item_selected_color = (BLACK,CYAN,ON)
 tag_color = (YELLOW,BLUE,ON)
 tag_selected_color = (BLACK,CYAN,ON)
+tag_key_color = (YELLOW,BLUE,ON)
+tag_key_selected_color = (BLACK,CYAN,ON)
+
+check_color = (WHITE,BLUE,ON)
+check_selected_color = (BLACK,CYAN,ON)
+uarrow_color = (YELLOW,BLUE,ON)
+darrow_color = (YELLOW,BLUE,ON)
 EOF_DIALOGRC
 }
 
@@ -224,6 +246,16 @@ use_shadow = OFF
 EOF_DIALOGRC
 }
 
+theme_display_name() {
+        case "$BFS_THEME" in
+                classic) printf '%s' "Classic Blue" ;;
+                midnight) printf '%s' "Midnight" ;;
+                light) printf '%s' "Light" ;;
+                monochrome) printf '%s' "Monochrome" ;;
+                *) printf '%s' "$BFS_THEME" ;;
+        esac
+}
+
 setup_installer_theme() {
         [[ -z "$DIALOGRC_FILE" ]] || rm -f "$DIALOGRC_FILE"
         DIALOGRC_FILE="$(mktemp /tmp/bfs-installer-dialogrc.XXXXXX)"
@@ -254,7 +286,7 @@ select_installer_theme() {
                                 17 66 5 \
                                 monochrome "Best compatibility for SSH and unusual palettes" \
                                         "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
-                                classic "Classic dark-blue installer theme" \
+                                classic "Classic Blue — bootstrap-style dark-blue theme" \
                                         "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
                                 midnight "Midnight Commander-style theme" \
                                         "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
@@ -267,10 +299,10 @@ select_installer_theme() {
                 ((status == 0)) || return 0
         else
                 echo "  1) Monochrome"
-                echo "  2) Classic"
+                echo "  2) Classic Blue"
                 echo "  3) Midnight"
                 echo "  4) Light"
-                read -r -p "Choose [1-4, current: $BFS_THEME]: " choice
+                read -r -p "Choose [1-4, current: $(theme_display_name)]: " choice
                 case "$choice" in
                         1) choice=monochrome ;;
                         2) choice=classic ;;
@@ -302,7 +334,7 @@ installer_settings_menu() {
                                         --menu \
                                         "Configure the installer interface and logging." \
                                         16 72 5 \
-                                        1 "Theme: $BFS_THEME" \
+                                        1 "Theme: $(theme_display_name)" \
                                         2 "Logging: $LOG_ENABLED" \
                                         3 "Back to main menu" \
                                         </dev/tty
@@ -315,7 +347,7 @@ installer_settings_menu() {
                         echo "Installer Settings"
                         echo "=================="
                         echo
-                        echo "  1) Theme: $BFS_THEME"
+                        echo "  1) Theme: $(theme_display_name)"
                         echo "  2) Logging: $LOG_ENABLED"
                         echo "  3) Back"
                         read -r -p "Choose [1-3]: " choice
@@ -366,6 +398,65 @@ available_status() {
 
 dialog_menu_description() {
         printf '%-45s [%s]' "$1" "$2"
+}
+
+themed_menu() {
+        local result_variable="$1"
+        local title="$2"
+        local prompt="$3"
+        local height="$4"
+        local width="$5"
+        local menu_height="$6"
+        shift 6
+
+        local choice="" status=0
+        local -a items=("$@")
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                set +e
+                choice="$(
+                        dialog --stdout --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "$title" \
+                                --cancel-label "Back" \
+                                --menu "$prompt" \
+                                "$height" "$width" "$menu_height" \
+                                "${items[@]}" \
+                                </dev/tty
+                )"
+                status=$?
+                set -e
+
+                if ((status != 0)); then
+                        printf -v "$result_variable" '%s' ""
+                        return 1
+                fi
+        else
+                clear_screen
+                printf '%s\n' "$title"
+                printf '%*s\n\n' "${#title}" '' | tr ' ' '='
+                printf '%s\n\n' "$prompt"
+
+                local index=0
+                for ((index=0; index<${#items[@]}; index+=2)); do
+                        printf '  %s) %s\n' "${items[$index]}" "${items[$((index + 1))]}"
+                done
+                printf '\n'
+                read -r -p "Choose: " choice
+        fi
+
+        choice="$(
+                printf '%s' "$choice" |
+                        tr -d '\r\n' |
+                        sed -e 's/^[[:space:]]*//' \
+                            -e 's/[[:space:]]*$//' \
+                            -e 's/^"//' \
+                            -e 's/"$//'
+        )"
+
+        printf -v "$result_variable" '%s' "$choice"
+        [[ -n "$choice" ]]
 }
 
 log() { printf '\n==> %s\n' "$*"; }
@@ -444,7 +535,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v19.sh [options]
+Usage: install-bfs-menu-v21.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -935,9 +1026,10 @@ get_whole_disks() {
 }
 
 partition_disks() {
-        local choice="" disk="" index="" line=""
+        local choice="" disk="" index="" line="" status=0
         local -a disk_paths=()
         local -a disk_descriptions=()
+        local -a menu_items=()
 
         command -v cfdisk >/dev/null 2>&1 || {
                 warn "cfdisk is not available in this live environment."
@@ -946,13 +1038,9 @@ partition_disks() {
         }
 
         while true; do
-                clear_screen
-                echo "Partition disks"
-                echo "==============="
-                echo
-
                 disk_paths=()
                 disk_descriptions=()
+                menu_items=()
 
                 while IFS= read -r line; do
                         [[ -n "$line" ]] || continue
@@ -968,14 +1056,22 @@ partition_disks() {
                 }
 
                 for ((index=0; index<${#disk_paths[@]}; index++)); do
-                        printf '  %d) %s\n' "$((index + 1))" "${disk_descriptions[$index]}"
+                        menu_items+=("$((index + 1))" "${disk_descriptions[$index]}")
                 done
-                printf '  %d) Finished partitioning\n\n' "$(( ${#disk_paths[@]} + 1 ))"
+                menu_items+=("$(( ${#disk_paths[@]} + 1 ))" "Finished partitioning")
 
-                read -r -p "Choose a disk [1-$(( ${#disk_paths[@]} + 1 ))]: " choice
+                set +e
+                themed_menu choice \
+                        "Partition disks" \
+                        "Choose a disk to open with cfdisk, or finish without changing partitions." \
+                        20 88 12 \
+                        "${menu_items[@]}"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
 
                 [[ "$choice" =~ ^[0-9]+$ ]] || {
-                        warn "Enter a number from the list."
+                        warn "Choose a disk number from the menu."
                         sleep 1
                         continue
                 }
@@ -1020,39 +1116,36 @@ list_raid_member_candidates() {
 
 choose_raid_level() {
         local variable="$1"
-        local choice=""
+        local choice="" status=0
 
-        clear_screen
-        cat <<'EOF_RAID_LEVEL'
-Select RAID level
-=================
+        set +e
+        themed_menu choice \
+                "Select RAID level" \
+                "Choose the software RAID layout." \
+                20 76 10 \
+                1 "Linear / JBOD — combines disks, no redundancy" \
+                2 "RAID 0 — striping, performance, no redundancy" \
+                3 "RAID 1 — mirroring and redundancy" \
+                4 "RAID 4 — striping with dedicated parity" \
+                5 "RAID 5 — striping with distributed parity" \
+                6 "RAID 6 — striping with dual parity" \
+                7 "RAID 10 — striped mirrors" \
+                8 "Cancel"
+        status=$?
+        set -e
+        ((status == 0)) || return 1
 
-  1) Linear (JBOD - combines disks, no redundancy)
-  2) RAID 0  (Striping - performance, no redundancy)
-  3) RAID 1  (Mirroring - redundancy)
-  4) RAID 4  (Striping + dedicated parity)
-  5) RAID 5  (Striping + distributed parity)
-  6) RAID 6  (Striping + dual distributed parity)
-  7) RAID 10 (Striping + Mirroring - performance + redundancy)
-  8) Cancel
-
-EOF_RAID_LEVEL
-
-        while true; do
-                read -r -p "Choose [1-8]: " choice
-
-                case "$choice" in
-                        1) printf -v "$variable" '%s' linear; return 0 ;;
-                        2) printf -v "$variable" '%s' 0; return 0 ;;
-                        3) printf -v "$variable" '%s' 1; return 0 ;;
-                        4) printf -v "$variable" '%s' 4; return 0 ;;
-                        5) printf -v "$variable" '%s' 5; return 0 ;;
-                        6) printf -v "$variable" '%s' 6; return 0 ;;
-                        7) printf -v "$variable" '%s' 10; return 0 ;;
-                        8) return 1 ;;
-                        *) warn "Choose a number from 1 through 8." ;;
-                esac
-        done
+        case "$choice" in
+                1) printf -v "$variable" '%s' linear ;;
+                2) printf -v "$variable" '%s' 0 ;;
+                3) printf -v "$variable" '%s' 1 ;;
+                4) printf -v "$variable" '%s' 4 ;;
+                5) printf -v "$variable" '%s' 5 ;;
+                6) printf -v "$variable" '%s' 6 ;;
+                7) printf -v "$variable" '%s' 10 ;;
+                8) return 1 ;;
+                *) warn "Choose a RAID level from the menu."; return 1 ;;
+        esac
 }
 
 
@@ -1359,28 +1452,28 @@ show_raid_details() {
 }
 
 raid_menu() {
-        local choice=""
+        local choice="" status=0
 
         while true; do
-                clear_screen
-                cat <<'EOF_RAID'
-Software RAID
-=============
-
-  1) Assemble existing arrays
-  2) Create a new array
-  3) Show array status and details
-  4) Return to Storage setup
-
-EOF_RAID
-                read -r -p "Choose [1-4]: " choice
+                set +e
+                themed_menu choice \
+                        "Software RAID" \
+                        "Create, assemble, or inspect Linux software RAID arrays." \
+                        17 74 7 \
+                        1 "Assemble existing arrays" \
+                        2 "Create a new array" \
+                        3 "Show array status and details" \
+                        4 "Return to Storage setup"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
 
                 case "$choice" in
                         1) assemble_raid_arrays ;;
                         2) create_raid_array ;;
                         3) show_raid_details ;;
                         4) return 0 ;;
-                        *) warn "Choose a number from 1 through 4."; sleep 1 ;;
+                        *) warn "Choose a valid RAID option."; sleep 1 ;;
                 esac
         done
 }
@@ -1389,20 +1482,21 @@ luks_menu() {
         local choice=""
         local device=""
         local mapping=""
+        local status=0
 
         while true; do
-                clear_screen
-                cat <<'EOF_LUKS'
-LUKS encryption
-===============
-
-  1) Create a new LUKS container
-  2) Open an existing LUKS container
-  3) Close a mapped LUKS container
-  4) Return to Storage setup
-
-EOF_LUKS
-                read -r -p "Choose [1-4]: " choice
+                set +e
+                themed_menu choice \
+                        "LUKS encryption" \
+                        "Create, open, or close encrypted block-device mappings." \
+                        17 74 7 \
+                        1 "Create a new LUKS container" \
+                        2 "Open an existing LUKS container" \
+                        3 "Close a mapped LUKS container" \
+                        4 "Return to Storage setup"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
 
                 case "$choice" in
                         1)
@@ -1411,26 +1505,20 @@ EOF_LUKS
                                         pause_screen
                                         continue
                                 }
-
                                 lsblk -fp
                                 echo
                                 read -r -p "Block device to encrypt: " device
-
                                 [[ -b "$device" ]] || {
                                         warn "Not a block device: $device"
                                         pause_screen
                                         continue
                                 }
-
                                 confirm "Initialize $device as LUKS? Existing data will be destroyed." ||
                                         continue
-
                                 run_on_tty cryptsetup luksFormat "$device"
-
                                 read -r -p "Mapping name to open now [leave blank to skip]: " mapping
                                 [[ -z "$mapping" ]] ||
                                         run_on_tty cryptsetup open "$device" "$mapping"
-
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
                                 pause_screen
@@ -1441,13 +1529,11 @@ EOF_LUKS
                                         pause_screen
                                         continue
                                 }
-
                                 lsblk -fp
                                 echo
                                 read -r -p "LUKS block device: " device
                                 read -r -p "Mapping name: " mapping
                                 run_on_tty cryptsetup open "$device" "$mapping"
-
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
                                 pause_screen
@@ -1458,18 +1544,12 @@ EOF_LUKS
                                         pause_screen
                                         continue
                                 }
-
                                 read -r -p "Mapping name to close: " mapping
                                 cryptsetup close "$mapping"
                                 pause_screen
                                 ;;
-                        4)
-                                return 0
-                                ;;
-                        *)
-                                warn "Choose a number from 1 through 4."
-                                sleep 1
-                                ;;
+                        4) return 0 ;;
+                        *) warn "Choose a valid LUKS option."; sleep 1 ;;
                 esac
         done
 }
@@ -1481,21 +1561,23 @@ lvm_menu() {
         local vg_name=""
         local lv_name=""
         local lv_size=""
+        local status=0
+        local -a pv_array=()
 
         while true; do
-                clear_screen
-                cat <<'EOF_LVM'
-LVM storage
-===========
-
-  1) Create a physical volume
-  2) Create a volume group
-  3) Create a logical volume
-  4) Show LVM devices
-  5) Return to Storage setup
-
-EOF_LVM
-                read -r -p "Choose [1-5]: " choice
+                set +e
+                themed_menu choice \
+                        "LVM storage" \
+                        "Create or inspect Linux Logical Volume Manager objects." \
+                        18 74 8 \
+                        1 "Create a physical volume" \
+                        2 "Create a volume group" \
+                        3 "Create a logical volume" \
+                        4 "Show LVM devices" \
+                        5 "Return to Storage setup"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
 
                 case "$choice" in
                         1)
@@ -1504,20 +1586,16 @@ EOF_LVM
                                         pause_screen
                                         continue
                                 }
-
                                 lsblk -fp
                                 echo
                                 read -r -p "Block device for the physical volume: " device
-
                                 [[ -b "$device" ]] || {
                                         warn "Not a block device: $device"
                                         pause_screen
                                         continue
                                 }
-
                                 confirm "Initialize $device as an LVM physical volume?" ||
                                         continue
-
                                 pvcreate "$device"
                                 pause_screen
                                 ;;
@@ -1527,7 +1605,6 @@ EOF_LVM
                                         pause_screen
                                         continue
                                 }
-
                                 pvs
                                 echo
                                 read -r -p "New volume-group name: " vg_name
@@ -1542,19 +1619,16 @@ EOF_LVM
                                         pause_screen
                                         continue
                                 }
-
                                 vgs
                                 echo
                                 read -r -p "Volume-group name: " vg_name
                                 read -r -p "Logical-volume name: " lv_name
                                 read -r -p "Size, for example 100G or 100%FREE: " lv_size
-
                                 if [[ "$lv_size" == *%* ]]; then
                                         lvcreate -l "$lv_size" -n "$lv_name" "$vg_name"
                                 else
                                         lvcreate -L "$lv_size" -n "$lv_name" "$vg_name"
                                 fi
-
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
                                 pause_screen
@@ -1567,38 +1641,31 @@ EOF_LVM
                                 lvs 2>/dev/null || true
                                 pause_screen
                                 ;;
-                        5)
-                                return 0
-                                ;;
-                        *)
-                                warn "Choose a number from 1 through 5."
-                                sleep 1
-                                ;;
+                        5) return 0 ;;
+                        *) warn "Choose a valid LVM option."; sleep 1 ;;
                 esac
         done
 }
 
 storage_menu() {
-        local choice=""
+        local choice="" status=0
 
         while true; do
-                clear_screen
-                cat <<'EOF_STORAGE'
-Storage setup
-=============
-
-Use only the storage tools you need. Existing partitions may be used directly.
-
-  1) Partition disks with cfdisk (optional)
-  2) Create or assemble software RAID (optional)
-  3) Configure LUKS encryption (optional)
-  4) Configure LVM (optional)
-  5) Assign filesystems and mount points (required)
-  6) Show current storage devices
-  7) Return to main menu
-
-EOF_STORAGE
-                read -r -p "Choose [1-7]: " choice
+                set +e
+                themed_menu choice \
+                        "Storage setup" \
+                        "Use only the storage tools you need. Existing partitions may be assigned directly." \
+                        21 84 11 \
+                        1 "Partition disks with cfdisk (optional)" \
+                        2 "Create or assemble software RAID (optional)" \
+                        3 "Configure LUKS encryption (optional)" \
+                        4 "Configure LVM (optional)" \
+                        5 "Assign filesystems and mount points (required)" \
+                        6 "Show current storage devices" \
+                        7 "Return to main menu"
+                status=$?
+                set -e
+                ((status == 0)) || return 0
 
                 case "$choice" in
                         1) partition_disks ;;
@@ -1608,7 +1675,7 @@ EOF_STORAGE
                         5) configure_disks ;;
                         6) clear_screen; lsblk -fp; pause_screen ;;
                         7) return 0 ;;
-                        *) warn "Choose a number from 1 through 7."; sleep 1 ;;
+                        *) warn "Choose a valid storage option."; sleep 1 ;;
                 esac
         done
 }
