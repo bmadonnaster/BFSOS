@@ -544,12 +544,12 @@ _rootfs_archive_complete() {
     _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
 }
 
-_rootfs_restore_complete() {
-    [ -f "$LFS/.bfs-rootfs-restored" ]
+_rootfs_restore_available() {
+    _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
 }
 
-_toolchain_restore_complete() {
-    [ -f "$LFS/.bfs-toolchain-restored" ]
+_toolchain_restore_available() {
+    _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' >/dev/null 2>&1
 }
 
 _chroot_available() {
@@ -588,7 +588,13 @@ _run_root_stage() {
     echo "Running Stage $stage as root."
     echo
 
-    sudo         --preserve-env=TERM,BFS_THEME,BFS_BUILD_JOBS,BFS_BUILD_OUTPUT         env         LANG=C         LC_ALL=C         LANGUAGE=C         "$0" "$stage"
+    sudo \
+        --preserve-env=TERM,BFS_THEME,BFS_BUILD_JOBS,BFS_BUILD_OUTPUT \
+        env \
+        LANG=C \
+        LC_ALL=C \
+        LANGUAGE=C \
+        "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -663,32 +669,42 @@ _show_bootstrap_menu() {
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Verify completed base system' \
         "[$(_stage_complete_text _verification_complete)]"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
     printf '  %s5)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Create base rootfs archive' \
         "[$(_stage_complete_text _rootfs_archive_complete)]"
 
-    printf '  %s6)%s %-52s %s\n' \
+    printf '  %s6)%s %-52s [%s]\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Restore newest base rootfs archive' \
-        "[$(_stage_complete_text _rootfs_restore_complete)]"
+        "$(_plain_available_status _rootfs_restore_available)"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
-    printf '  %s7)%s %-52s %s\n' \
+    printf '  %s7)%s %-52s [%s]\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Restore newest temporary toolchain archive' \
-        "[$(_stage_complete_text _toolchain_restore_complete)]"
+        "$(_plain_available_status _toolchain_restore_available)"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
     if _chroot_available; then
         printf '  %s8)%s %-52s [%sAVAILABLE%s]\n' \
             "$COLOR_CYAN" "$COLOR_RESET" \
             'Chroot into BFS rootfs' \
             "$COLOR_GREEN" "$COLOR_RESET"
+        printf '     %sRuns automatically with sudo/root privileges%s\n' \
+            "$COLOR_YELLOW" "$COLOR_RESET"
     else
         printf '  %s8)%s %-52s [%sPENDING%s]\n' \
             "$COLOR_CYAN" "$COLOR_RESET" \
             'Chroot into BFS rootfs' \
             "$COLOR_RED" "$COLOR_RESET"
+        printf '     %sRuns automatically with sudo/root privileges%s\n' \
+            "$COLOR_YELLOW" "$COLOR_RESET"
     fi
 
     printf '  %s9)%s %-52s [%sTHEME%s]\n' \
@@ -704,6 +720,14 @@ _show_bootstrap_menu() {
 _dialog_stage_status() {
     if "$@"; then
         printf '%s' '\Z2COMPLETE\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
+    fi
+}
+
+_dialog_available_status() {
+    if "$@"; then
+        printf '%s' '\Z2AVAILABLE\Zn'
     else
         printf '%s' '\Z1PENDING\Zn'
     fi
@@ -871,6 +895,14 @@ _plain_menu_status() {
     fi
 }
 
+_plain_available_status() {
+    if "$@"; then
+        printf '%s' 'AVAILABLE'
+    else
+        printf '%s' 'PENDING'
+    fi
+}
+
 _plain_chroot_status() {
     if _chroot_available; then
         printf '%s' 'AVAILABLE'
@@ -905,7 +937,7 @@ _select_bootstrap_menu_choice() {
                 --extra-button \
                 --extra-label "Settings" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, 4, 6, 7, and 8 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
                 23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -917,19 +949,19 @@ _select_bootstrap_menu_choice() {
                     'Rebuild base system with final toolchain (sudo/root)' \
                     "$(_dialog_stage_status _base_stage3_complete)")" \
                 4 "$(_dialog_menu_description \
-                    'Verify completed base system' \
+                    'Verify completed base system (sudo/root)' \
                     "$(_dialog_stage_status _verification_complete)")" \
                 5 "$(_dialog_menu_description \
                     'Create base rootfs archive' \
                     "$(_dialog_stage_status _rootfs_archive_complete)")" \
                 6 "$(_dialog_menu_description \
-                    'Restore newest base rootfs archive' \
-                    "$(_dialog_stage_status _rootfs_restore_complete)")" \
+                    'Restore newest base rootfs archive (sudo/root)' \
+                    "$(_dialog_available_status _rootfs_restore_available)")" \
                 7 "$(_dialog_menu_description \
-                    'Restore newest temporary toolchain archive' \
-                    "$(_dialog_stage_status _toolchain_restore_complete)")" \
+                    'Restore newest temporary toolchain archive (sudo/root)' \
+                    "$(_dialog_available_status _toolchain_restore_available)")" \
                 8 "$(_dialog_menu_description \
-                    'Chroot into BFS rootfs' \
+                    'Chroot into BFS rootfs (sudo/root)' \
                     "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description \
                     'Quit' \
@@ -1035,7 +1067,7 @@ _bootstrap_menu() {
                 ;;
             4)
                 set +e
-                _verifybase
+                _run_root_stage 4
                 status=$?
                 set -e
                 ;;
@@ -1047,19 +1079,19 @@ _bootstrap_menu() {
                 ;;
             6)
                 set +e
-                _restore_rootfs
+                _run_root_stage 6
                 status=$?
                 set -e
                 ;;
             7)
                 set +e
-                _restore_toolchain
+                _run_root_stage 7
                 status=$?
                 set -e
                 ;;
             8)
                 set +e
-                _enter_bfs_chroot
+                _run_root_stage 8
                 status=$?
                 set -e
                 ;;
