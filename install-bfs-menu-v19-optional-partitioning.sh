@@ -90,7 +90,7 @@ NETWORK_CONFIGURED=no
 PACKAGES_CONFIGURED=no
 SUDO_CONFIGURED=no
 BOOTLOADER_CONFIGURED=no
-PARTITIONING_VISITED=no
+PARTITIONING_VISITED=optional
 
 LOG_ENABLED="${BFS_LOG_ENABLED:-yes}"
 LOG_FILE="${BFS_LOG_FILE:-}"
@@ -338,6 +338,32 @@ dialog_status() {
         [[ "$1" == yes ]] && printf '%s' "CONFIGURED" || printf '%s' "PENDING"
 }
 
+installer_ready() {
+        # Only filesystem/mount-point assignment is required for storage.
+        # Visiting cfdisk, RAID, LUKS, or LVM menus is never required.
+        [[ "$DISKS_CONFIGURED" == yes &&
+           "$ARCHIVE_CONFIGURED" == yes &&
+           "$SYSTEM_CONFIGURED" == yes &&
+           "$USERS_CONFIGURED" == yes &&
+           "$KERNEL_CONFIGURED" == yes &&
+           "$NETWORK_CONFIGURED" == yes &&
+           "$PACKAGES_CONFIGURED" == yes &&
+           "$SUDO_CONFIGURED" == yes &&
+           "$BOOTLOADER_CONFIGURED" == yes ]]
+}
+
+target_chroot_available() {
+        [[ -x "$TARGET/bin/bash" || -x "$TARGET/usr/bin/bash" ]]
+}
+
+available_status() {
+        if "$@"; then
+                printf '%s' "AVAILABLE"
+        else
+                printf '%s' "PENDING"
+        fi
+}
+
 dialog_menu_description() {
         printf '%-45s [%s]' "$1" "$2"
 }
@@ -418,7 +444,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v17.sh [options]
+Usage: install-bfs-menu-v19.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -564,7 +590,8 @@ require_root() {
                 die "This installer requires root privileges and sudo is unavailable."
 
         printf '\nThis installer requires root privileges.\n'
-        printf 'Authenticating with sudo before the installer starts...\n\n'
+        printf 'Authenticating with sudo before the installer starts...\n'
+        printf 'The complete installer session will then run as root.\n\n'
 
         sudo -v || die "sudo authentication failed."
 
@@ -954,7 +981,6 @@ partition_disks() {
                 }
 
                 if ((choice == ${#disk_paths[@]} + 1)); then
-                        PARTITIONING_VISITED=yes
                         return 0
                 fi
 
@@ -1561,13 +1587,13 @@ storage_menu() {
 Storage setup
 =============
 
-Recommended order:
+Use only the storage tools you need. Existing partitions may be used directly.
 
-  1) Partition disks with cfdisk
-  2) Create or assemble software RAID
-  3) Configure LUKS encryption
-  4) Configure LVM
-  5) Assign filesystems and mount points
+  1) Partition disks with cfdisk (optional)
+  2) Create or assemble software RAID (optional)
+  3) Configure LUKS encryption (optional)
+  4) Configure LVM (optional)
+  5) Assign filesystems and mount points (required)
   6) Show current storage devices
   7) Return to main menu
 
@@ -1983,8 +2009,9 @@ show_main_menu() {
 ============================================================
 
 Configure each section, then select Install BFS.
+The installer authenticates once and all installation actions run as root.
 
-  1) Storage setup              [$(menu_status "$DISKS_CONFIGURED")]
+  1) Storage assignment         [$(menu_status "$DISKS_CONFIGURED")]
   2) Base archive               [$(menu_status "$ARCHIVE_CONFIGURED")]
   3) System settings            [$(menu_status "$SYSTEM_CONFIGURED")]
   4) User accounts              [$(menu_status "$USERS_CONFIGURED")]
@@ -1993,10 +2020,10 @@ Configure each section, then select Install BFS.
   7) Optional software          [$(menu_status "$PACKAGES_CONFIGURED")]
   8) Sudo configuration         [$(menu_status "$SUDO_CONFIGURED")]
   9) Bootloader                 [$(menu_status "$BOOTLOADER_CONFIGURED")]
- 10) Review selections
- 11) Install BFS
- 12) Chroot into target
- 13) Quit
+ 10) Review selections          [AVAILABLE]
+ 11) Install BFS                 [$(available_status installer_ready)]
+ 12) Chroot into target          [$(available_status target_chroot_available)]
+ 13) Quit                        [EXIT]
 
 EOF_MENU
 }
@@ -2069,11 +2096,11 @@ installer_menu() {
                                         --extra-button \
                                         --extra-label "Settings" \
                                         --menu \
-                                        "Use Up/Down arrows and Enter, or type an option number.\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
+                                        "Use Up/Down arrows and Enter, or type an option number.\n\nThe installer authenticates once with sudo and all installation actions run as root.\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
                                         26 92 15 \
                                         1 "$(
                                                 dialog_menu_description \
-                                                        'Storage setup' \
+                                                        'Storage assignment' \
                                                         "$(dialog_status "$DISKS_CONFIGURED")"
                                         )" \
                                         2 "$(
@@ -2116,10 +2143,26 @@ installer_menu() {
                                                         'Bootloader' \
                                                         "$(dialog_status "$BOOTLOADER_CONFIGURED")"
                                         )" \
-                                        10 "Review selections" \
-                                        11 "Install BFS" \
-                                        12 "Chroot into target" \
-                                        13 "Quit" \
+                                        10 "$(
+                                                dialog_menu_description \
+                                                        'Review selections' \
+                                                        'AVAILABLE'
+                                        )" \
+                                        11 "$(
+                                                dialog_menu_description \
+                                                        'Install BFS (root)' \
+                                                        "$(available_status installer_ready)"
+                                        )" \
+                                        12 "$(
+                                                dialog_menu_description \
+                                                        'Chroot into target (root)' \
+                                                        "$(available_status target_chroot_available)"
+                                        )" \
+                                        13 "$(
+                                                dialog_menu_description \
+                                                        'Quit' \
+                                                        'EXIT'
+                                        )" \
                                         </dev/tty 2>"$error_file"
                         )"
                         status=$?
@@ -2171,7 +2214,14 @@ installer_menu() {
                         8)  configure_sudo ;;
                         9)  configure_bootloader ;;
                         10) show_summary; pause_screen ;;
-                        11) return 0 ;;
+                        11)
+                                if installer_ready; then
+                                        return 0
+                                fi
+
+                                warn "Complete every configuration section before installing BFS."
+                                pause_screen
+                                ;;
                         12) chroot_into_target ;;
                         13)
                                 echo "Installer exited."
