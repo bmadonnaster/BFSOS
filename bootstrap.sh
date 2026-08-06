@@ -32,6 +32,20 @@ CURRENT_BASE_LOGS=()
 
 mkdir -p "$TOOLCHAIN_LOG_DIR" "$BASE_LOG_DIR"
 
+if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]; then
+    COLOR_RED=$'\033[1;31m'
+    COLOR_GREEN=$'\033[1;32m'
+    COLOR_YELLOW=$'\033[1;33m'
+    COLOR_CYAN=$'\033[1;36m'
+    COLOR_RESET=$'\033[0m'
+else
+    COLOR_RED=""
+    COLOR_GREEN=""
+    COLOR_YELLOW=""
+    COLOR_CYAN=""
+    COLOR_RESET=""
+fi
+
 _sanitize_log_name() {
     local name="$1"
 
@@ -123,9 +137,9 @@ _copy_base_logs_into_rootfs() {
 
 _stage_complete_text() {
     if "$@"; then
-        printf '%s' "complete"
+        printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET"
     else
-        printf '%s' "pending"
+        printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"
     fi
 }
 
@@ -164,6 +178,27 @@ _chroot_available() {
 _pause_menu() {
     printf '\n'
     read -r -p "Press Enter to return to the menu..." _
+}
+
+_run_root_stage() {
+    local stage="$1"
+
+    if [ "$(id -u)" -eq 0 ]; then
+        "$0" "$stage"
+        return $?
+    fi
+
+    command -v sudo >/dev/null 2>&1 || {
+        echo "ERROR: sudo is required to run stage $stage." >&2
+        return 1
+    }
+
+    echo
+    echo "Stage $stage requires root privileges."
+    echo "Running: sudo $0 $stage"
+    echo
+
+    sudo -- "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -205,40 +240,163 @@ _enter_bfs_chroot() {
 }
 
 _show_bootstrap_menu() {
+    local status_column=62
+
     clear 2>/dev/null || printf '\033[2J\033[H'
 
-    cat <<EOF
-============================================================
-                  BFS Linux Bootstrap
-============================================================
+    printf '%s\n' \
+        '============================================================' \
+        '                  BFS Linux Bootstrap' \
+        '============================================================' \
+        ''
 
-  1) Build temporary toolchain
-     [$( _stage_complete_text _toolchain_complete )]
+    printf '  %s1)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Build temporary toolchain' \
+        "[$(_stage_complete_text _toolchain_complete)]"
 
-  2) Build base system with temporary toolchain
-     [$( _stage_complete_text _base_stage2_complete )]
+    printf '  %s2)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Build base system with temporary toolchain' \
+        "[$(_stage_complete_text _base_stage2_complete)]"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
-  3) Rebuild base system with final toolchain
-     [$( _stage_complete_text _base_stage3_complete )]
+    printf '  %s3)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Rebuild base system with final toolchain' \
+        "[$(_stage_complete_text _base_stage3_complete)]"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
-  4) Verify completed base system
-     [$( _stage_complete_text _verification_complete )]
+    printf '  %s4)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Verify completed base system' \
+        "[$(_stage_complete_text _verification_complete)]"
 
-  5) Create base rootfs archive
-     [$( _stage_complete_text _rootfs_archive_complete )]
+    printf '  %s5)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Create base rootfs archive' \
+        "[$(_stage_complete_text _rootfs_archive_complete)]"
 
-  6) Restore newest base rootfs archive
-     [$( _stage_complete_text _rootfs_restore_complete )]
+    printf '  %s6)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Restore newest base rootfs archive' \
+        "[$(_stage_complete_text _rootfs_restore_complete)]"
 
-  7) Restore newest temporary toolchain archive
-     [$( _stage_complete_text _toolchain_restore_complete )]
+    printf '  %s7)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Restore newest temporary toolchain archive' \
+        "[$(_stage_complete_text _toolchain_restore_complete)]"
 
-  8) Chroot into BFS rootfs
-     [$( _stage_complete_text _chroot_available )]
+    if _chroot_available; then
+        printf '  %s8)%s %-52s [%sAVAILABLE%s]\n' \
+            "$COLOR_CYAN" "$COLOR_RESET" \
+            'Chroot into BFS rootfs' \
+            "$COLOR_GREEN" "$COLOR_RESET"
+    else
+        printf '  %s8)%s %-52s [%sPENDING%s]\n' \
+            "$COLOR_CYAN" "$COLOR_RESET" \
+            'Chroot into BFS rootfs' \
+            "$COLOR_RED" "$COLOR_RESET"
+    fi
 
-  9) Quit
+    printf '  %s9)%s %s\n\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
+}
 
-EOF
+
+_dialog_stage_status() {
+    if "$@"; then
+        printf '%s' '\Z2COMPLETE\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
+    fi
+}
+
+_dialog_chroot_status() {
+    if _chroot_available; then
+        printf '%s' '\Z2AVAILABLE\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
+    fi
+}
+
+_dialog_menu_description() {
+    local label="$1"
+    local status="$2"
+
+    printf '%-57s [%s]' "$label" "$status"
+}
+
+_select_bootstrap_menu_choice() {
+    local choice=""
+    local dialog_status=0
+
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -t 0 ] &&
+       [ -t 1 ]
+    then
+        set +e
+        choice="$(
+            dialog \
+                --clear \
+                --colors \
+                --no-collapse \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Bootstrap menu" \
+                --ok-label "Select" \
+                --cancel-label "Quit" \
+                --menu \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
+                23 92 12 \
+                1 "$(_dialog_menu_description \
+                    'Build temporary toolchain' \
+                    "$(_dialog_stage_status _toolchain_complete)")" \
+                2 "$(_dialog_menu_description \
+                    'Build base system with temporary toolchain (sudo/root)' \
+                    "$(_dialog_stage_status _base_stage2_complete)")" \
+                3 "$(_dialog_menu_description \
+                    'Rebuild base system with final toolchain (sudo/root)' \
+                    "$(_dialog_stage_status _base_stage3_complete)")" \
+                4 "$(_dialog_menu_description \
+                    'Verify completed base system' \
+                    "$(_dialog_stage_status _verification_complete)")" \
+                5 "$(_dialog_menu_description \
+                    'Create base rootfs archive' \
+                    "$(_dialog_stage_status _rootfs_archive_complete)")" \
+                6 "$(_dialog_menu_description \
+                    'Restore newest base rootfs archive' \
+                    "$(_dialog_stage_status _rootfs_restore_complete)")" \
+                7 "$(_dialog_menu_description \
+                    'Restore newest temporary toolchain archive' \
+                    "$(_dialog_stage_status _toolchain_restore_complete)")" \
+                8 "$(_dialog_menu_description \
+                    'Chroot into BFS rootfs' \
+                    "$(_dialog_chroot_status)")" \
+                9 "$(_dialog_menu_description \
+                    'Quit' \
+                    '\Z3EXIT\Zn')" \
+                3>&1 1>&2 2>&3
+        )"
+        dialog_status=$?
+        set -e
+
+        clear 2>/dev/null || true
+
+        if [ "$dialog_status" -ne 0 ]; then
+            printf '%s\n' 9
+        else
+            printf '%s\n' "$choice"
+        fi
+
+        return 0
+    fi
+
+    _show_bootstrap_menu
+    printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    read -r choice
+    printf '%s\n' "$choice"
 }
 
 _bootstrap_menu() {
@@ -246,10 +404,13 @@ _bootstrap_menu() {
     local status=0
 
     while true; do
-        _show_bootstrap_menu
-        read -r -p "Choose [1-9]: " choice
+        choice="$(_select_bootstrap_menu_choice)"
 
         status=0
+
+        if [[ "$choice" =~ ^[1-9]$ ]]; then
+            printf '\n%sSelected option %s%s\n'                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
+        fi
 
         case "$choice" in
             1)
@@ -260,13 +421,13 @@ _bootstrap_menu() {
                 ;;
             2)
                 set +e
-                _buildbase
+                _run_root_stage 2
                 status=$?
                 set -e
                 ;;
             3)
                 set +e
-                _buildbase rebuild
+                _run_root_stage 3
                 status=$?
                 set -e
                 ;;
