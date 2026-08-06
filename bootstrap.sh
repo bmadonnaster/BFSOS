@@ -676,6 +676,8 @@ _show_bootstrap_menu() {
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Create base rootfs archive' \
         "[$(_stage_complete_text _rootfs_archive_complete)]"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
     printf '  %s6)%s %-52s [%s]\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
@@ -937,7 +939,7 @@ _select_bootstrap_menu_choice() {
                 --extra-button \
                 --extra-label "Settings" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, 4, 6, 7, and 8 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 through 8 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
                 23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -952,7 +954,7 @@ _select_bootstrap_menu_choice() {
                     'Verify completed base system (sudo/root)' \
                     "$(_dialog_stage_status _verification_complete)")" \
                 5 "$(_dialog_menu_description \
-                    'Create base rootfs archive' \
+                    'Create base rootfs archive (sudo/root)' \
                     "$(_dialog_stage_status _rootfs_archive_complete)")" \
                 6 "$(_dialog_menu_description \
                     'Restore newest base rootfs archive (sudo/root)' \
@@ -1073,7 +1075,7 @@ _bootstrap_menu() {
                 ;;
             5)
                 set +e
-                _compressrootfs
+                _run_root_stage 5
                 status=$?
                 set -e
                 ;;
@@ -1889,11 +1891,16 @@ EOF
 _compressrootfs() {
     local rootfs_archive
 
+    if [ "$(id -u)" != 0 ]; then
+        echo "ERROR: Rootfs archive creation must be run as root." >&2
+        return 1
+    fi
+
     if [ ! -f "$LFS/.bfs-verified" ]; then
         echo "ERROR: Base system has not passed stage 4 verification." >&2
         echo "Run:" >&2
         echo "  sudo $0 4" >&2
-        exit 1
+        return 1
     fi
 
     _ensure_archive_dirs
@@ -1902,9 +1909,13 @@ _compressrootfs() {
 
     rm -f "$rootfs_archive"
 
-    (
-        cd "$LFS"
+    echo
+    echo "Creating base rootfs archive:"
+    echo "  $rootfs_archive"
+    echo
 
+    if ! (
+        cd "$LFS" &&
         XZ_DEFAULTS='-T0' tar \
             --exclude='./var/lib/pkg/rejected' \
             --exclude=".$TOOLS" \
@@ -1915,9 +1926,20 @@ _compressrootfs() {
             --exclude='./run/*' \
             --exclude='./root/.cache' \
             -cvJpf "$rootfs_archive" .
-    )
+    ); then
+        echo >&2
+        echo "ERROR: Failed to create the base rootfs archive." >&2
+        echo "Removing incomplete archive:" >&2
+        echo "  $rootfs_archive" >&2
+        rm -f "$rootfs_archive"
+        return 1
+    fi
 
-    tar -tJf "$rootfs_archive" >/dev/null
+    if ! tar -tJf "$rootfs_archive" >/dev/null; then
+        echo "ERROR: Created rootfs archive failed integrity verification." >&2
+        rm -f "$rootfs_archive"
+        return 1
+    fi
 
     echo
     echo "Base rootfs compressed successfully."
