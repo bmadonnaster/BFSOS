@@ -639,7 +639,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v27.sh [options]
+Usage: install-bfs-menu-v28.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -1861,7 +1861,7 @@ choose_storage_format() {
         status=$?
         set -e
 
-        [[ -n "$choice" ]] || return 1
+        [[ -n "$selection" ]] || return 1
 
         case "$selection" in
                 1) printf -v "$result_variable" '%s' keep ;;
@@ -1906,7 +1906,7 @@ ask_mountpoint_dialog() {
                         else
                                 status=$?
                         fi
-                        [[ -n "$choice" ]] || return 1
+                        ((status == 0)) || return 1
                 else
                         read -r -p "Mount point for $device: " value
                 fi
