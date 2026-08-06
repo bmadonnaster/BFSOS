@@ -914,8 +914,8 @@ _select_bootstrap_menu_choice() {
                 9 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
-                3>&1 1>&2 2>"$error_file" \
-                </dev/tty >/dev/tty
+                --stdout \
+                </dev/tty 2>"$error_file"
         )"
         menu_status=$?
         set -e
@@ -925,7 +925,13 @@ _select_bootstrap_menu_choice() {
         case "$menu_status" in
             0)
                 rm -f "$error_file"
-                return 0
+
+                if [ -z "$SELECTED_MENU_CHOICE" ]; then
+                    echo "WARNING: dialog returned no menu selection; using the text menu." >&2
+                    sleep 1
+                else
+                    return 0
+                fi
                 ;;
             1|255)
                 SELECTED_MENU_CHOICE=9
