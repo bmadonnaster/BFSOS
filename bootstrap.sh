@@ -46,6 +46,82 @@ else
     COLOR_RESET=""
 fi
 
+DIALOGRC_FILE=""
+ORIGINAL_DIALOGRC="${DIALOGRC-}"
+
+_setup_tui_theme() {
+    DIALOGRC_FILE="$(mktemp /tmp/bfs-dialogrc.XXXXXX)"
+
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+
+screen_color = (WHITE,BLUE,ON)
+shadow_color = (BLACK,BLACK,OFF)
+dialog_color = (WHITE,BLUE,ON)
+title_color = (WHITE,BLUE,ON)
+border_color = (WHITE,BLUE,ON)
+
+button_active_color = (BLACK,WHITE,ON)
+button_inactive_color = (WHITE,BLUE,ON)
+button_key_active_color = (BLACK,WHITE,ON)
+button_key_inactive_color = (YELLOW,BLUE,ON)
+button_label_active_color = (BLACK,WHITE,ON)
+button_label_inactive_color = (WHITE,BLUE,ON)
+
+inputbox_color = (WHITE,BLUE,ON)
+inputbox_border_color = (WHITE,BLUE,ON)
+
+searchbox_color = (WHITE,BLUE,ON)
+searchbox_title_color = (WHITE,BLUE,ON)
+searchbox_border_color = (WHITE,BLUE,ON)
+
+position_indicator_color = (WHITE,BLUE,ON)
+menubox_color = (WHITE,BLUE,ON)
+menubox_border_color = (WHITE,BLUE,ON)
+item_color = (WHITE,BLUE,ON)
+item_selected_color = (BLACK,CYAN,ON)
+tag_color = (YELLOW,BLUE,ON)
+tag_selected_color = (BLACK,CYAN,ON)
+tag_key_color = (YELLOW,BLUE,ON)
+tag_key_selected_color = (BLACK,CYAN,ON)
+
+check_color = (WHITE,BLUE,ON)
+check_selected_color = (BLACK,CYAN,ON)
+uarrow_color = (YELLOW,BLUE,ON)
+darrow_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+
+    export DIALOGRC="$DIALOGRC_FILE"
+
+    # whiptail/newt theme: dark blue background with white text.
+    export NEWT_COLORS='
+root=white,blue
+border=white,blue
+window=white,blue
+shadow=black,black
+title=white,blue
+button=black,white
+actbutton=black,cyan
+checkbox=white,blue
+actcheckbox=black,cyan
+entry=white,blue
+label=white,blue
+listbox=white,blue
+actlistbox=black,cyan
+textbox=white,blue
+acttextbox=black,cyan
+helpline=white,blue
+roottext=white,blue
+emptyscale=white,blue
+fullscale=white,cyan
+disentry=white,blue
+compactbutton=white,blue
+actsellistbox=black,cyan
+sellistbox=white,blue
+'
+}
+
 _sanitize_log_name() {
     local name="$1"
 
@@ -246,7 +322,7 @@ _show_bootstrap_menu() {
 
     printf '%s\n' \
         '============================================================' \
-        '                  BFS Linux Bootstrap' \
+        '                  BFS Build System' \
         '============================================================' \
         ''
 
@@ -331,10 +407,81 @@ _dialog_menu_description() {
 
 SELECTED_MENU_CHOICE=""
 
+_plain_menu_status() {
+    if "$@"; then
+        printf '%s' 'COMPLETE'
+    else
+        printf '%s' 'PENDING'
+    fi
+}
+
+_plain_chroot_status() {
+    if _chroot_available; then
+        printf '%s' 'AVAILABLE'
+    else
+        printf '%s' 'PENDING'
+    fi
+}
+
 _select_bootstrap_menu_choice() {
-    local dialog_status=0
+    local menu_status=0
 
     SELECTED_MENU_CHOICE=""
+
+    if command -v whiptail >/dev/null 2>&1 &&
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
+    then
+        set +e
+        SELECTED_MENU_CHOICE="$(
+            whiptail \
+                --clear \
+                --backtitle "BFS Build System" \
+                --title "BFS Build System" \
+                --ok-button "Select" \
+                --cancel-button "Quit" \
+                --menu \
+                "Use Up/Down arrows and Enter, or type an option number.\n\nOptions 2 and 3 automatically run with sudo/root privileges." \
+                23 92 12 \
+                1 "$(_dialog_menu_description \
+                    'Build temporary toolchain' \
+                    "$(_plain_menu_status _toolchain_complete)")" \
+                2 "$(_dialog_menu_description \
+                    'Build base system with temporary toolchain (sudo/root)' \
+                    "$(_plain_menu_status _base_stage2_complete)")" \
+                3 "$(_dialog_menu_description \
+                    'Rebuild base system with final toolchain (sudo/root)' \
+                    "$(_plain_menu_status _base_stage3_complete)")" \
+                4 "$(_dialog_menu_description \
+                    'Verify completed base system' \
+                    "$(_plain_menu_status _verification_complete)")" \
+                5 "$(_dialog_menu_description \
+                    'Create base rootfs archive' \
+                    "$(_plain_menu_status _rootfs_archive_complete)")" \
+                6 "$(_dialog_menu_description \
+                    'Restore newest base rootfs archive' \
+                    "$(_plain_menu_status _rootfs_restore_complete)")" \
+                7 "$(_dialog_menu_description \
+                    'Restore newest temporary toolchain archive' \
+                    "$(_plain_menu_status _toolchain_restore_complete)")" \
+                8 "$(_dialog_menu_description \
+                    'Chroot into BFS rootfs' \
+                    "$(_plain_chroot_status)")" \
+                9 "$(_dialog_menu_description 'Quit' 'EXIT')" \
+                3>&1 1>&2 2>&3 \
+                </dev/tty >/dev/tty
+        )"
+        menu_status=$?
+        set -e
+
+        clear </dev/tty >/dev/tty 2>/dev/null || true
+
+        if [ "$menu_status" -ne 0 ]; then
+            SELECTED_MENU_CHOICE=9
+        fi
+
+        return 0
+    fi
 
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] &&
@@ -346,8 +493,8 @@ _select_bootstrap_menu_choice() {
                 --clear \
                 --colors \
                 --no-collapse \
-                --backtitle "BFS Linux Bootstrap" \
-                --title "Bootstrap menu" \
+                --backtitle "BFS Build System" \
+                --title "BFS Build System" \
                 --ok-label "Select" \
                 --cancel-label "Quit" \
                 --menu \
@@ -383,12 +530,12 @@ _select_bootstrap_menu_choice() {
                 3>&1 1>&2 2>&3 \
                 </dev/tty >/dev/tty
         )"
-        dialog_status=$?
+        menu_status=$?
         set -e
 
         clear </dev/tty >/dev/tty 2>/dev/null || true
 
-        if [ "$dialog_status" -ne 0 ]; then
+        if [ "$menu_status" -ne 0 ]; then
             SELECTED_MENU_CHOICE=9
         fi
 
@@ -557,6 +704,17 @@ _cleanup_on_exit() {
     fi
 
     rm -f "$PID_FILE"
+
+    if [ -n "$DIALOGRC_FILE" ]; then
+        rm -f "$DIALOGRC_FILE"
+    fi
+
+    if [ -n "$ORIGINAL_DIALOGRC" ]; then
+        export DIALOGRC="$ORIGINAL_DIALOGRC"
+    else
+        unset DIALOGRC
+    fi
+
     exit "$status"
 }
 
@@ -1731,140 +1889,14 @@ curl
 libarchive
 util-linux
 "
-basepkg="
-aaa_filesystem
-linux-headers
-man-pages
-glibc
-autoconf
-zlib
-bzip2
-xz
-file
-ncurses
-readline
-m4
-bc
-binutils
-pkgconf
-libxcrypt
-gmp
-mpfr
-mpc
-attr
-acl
-gcc
-libcap
-psmisc
-sed
-tzdata
-iana-etc
-bison
-flex
-pcre2
-grep
-bash
-libtool
-gdbm
-gperf
-expat
-inetutils
-perl
-perl-xml-parser
-intltool
-automake
-openssl
-ca-certificates
-curl
-gettext
-elfutils
-libffi
-sqlite
-python
-coreutils
-check
-diffutils
-gawk
-findutils
-groff
-less
-gzip
-zstd
-iptables
-libtirpc
-iproute2
-kbd
-libpipeline
-make
-patch
-man-db
-tar
-texinfo
-python3-setuptools
-python3-pip
-python3-flit-core
-python3-packaging
-python3-installer
-python3-build
-python3-pyproject-hooks
-python3-wheel
-libuv
-cmake
-boost
-meson
-ninja
-kmod
-linux-pam
-shadow
-libpng
-which
-freetype
-fuse
-grub
-popt
-mandoc
-efivar
-efibootmgr
-grub-efi
-vim
-nano
-python3-markupsafe
-python3-tomli
-python3-pytz
-python3-babel
-python3-jinja2
-systemd
-util-linux
-dbus
-procps-ng
-e2fsprogs
-libarchive
-pkgutils
-dialog
-prt-get
-httpup
-ports
-prt-utils
-lzo
-btrfs-progs
-dosfstools
-exfatprogs
-f2fs-tools
-mdadm
-libaio
-lvm2
-inih
-liburcu
-xfsprogs
-openssh
-genfstab
-signify
-"
+basepkg="aaa_filesystem linux-headers man-pages glibc autoconf zlib bzip2 xz file ncurses readline m4 bc binutils pkgconf libxcrypt gmp mpfr mpc attr acl gcc libcap psmisc sed tzdata iana-etc bison flex pcre2 grep bash libtool gdbm gperf expat inetutils perl perl-xml-parser intltool automake openssl ca-certificates curl gettext elfutils libffi sqlite python coreutils check diffutils gawk findutils groff less gzip zstd iptables libtirpc iproute2 kbd libpipeline make patch man-db tar texinfo python3-setuptools python3-pip python3-flit-core python3-packaging python3-installer python3-build python3-pyproject-hooks python3-wheel libuv cmake boost meson ninja kmod linux-pam shadow libpng which freetype fuse grub popt mandoc efivar efibootmgr grub-efi vim nano python3-markupsafe python3-tomli python3-pytz python3-babel python3-jinja2 systemd util-linux dbus procps-ng e2fsprogs libarchive pkgutils dialog prt-get httpup ports prt-utils lzo btrfs-progs dosfstools exfatprogs f2fs-tools mdadm libaio lvm2 inih liburcu xfsprogs openssh genfstab signify"
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"
 
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
+
+_setup_tui_theme
 
 case "${1:-menu}" in
     menu|"")
