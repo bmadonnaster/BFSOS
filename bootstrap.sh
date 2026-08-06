@@ -641,77 +641,17 @@ _plain_chroot_status() {
 
 _select_bootstrap_menu_choice() {
     local menu_status=0
+    local dialog_error=""
+    local error_file=""
 
     SELECTED_MENU_CHOICE=""
-
-    if command -v whiptail >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
-    then
-        set +e
-        SELECTED_MENU_CHOICE="$(
-            whiptail \
-                --clear \
-                --backtitle "BFS Build System" \
-                --title "BFS Build System" \
-                --ok-button "Select" \
-                --cancel-button "Quit" \
-                --extra-button \
-                --extra-button-text "Theme Selection" \
-                --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\nOptions 2 and 3 automatically run with sudo/root privileges." \
-                23 92 12 \
-                1 "$(_dialog_menu_description \
-                    'Build temporary toolchain' \
-                    "$(_plain_menu_status _toolchain_complete)")" \
-                2 "$(_dialog_menu_description \
-                    'Build base system with temporary toolchain (sudo/root)' \
-                    "$(_plain_menu_status _base_stage2_complete)")" \
-                3 "$(_dialog_menu_description \
-                    'Rebuild base system with final toolchain (sudo/root)' \
-                    "$(_plain_menu_status _base_stage3_complete)")" \
-                4 "$(_dialog_menu_description \
-                    'Verify completed base system' \
-                    "$(_plain_menu_status _verification_complete)")" \
-                5 "$(_dialog_menu_description \
-                    'Create base rootfs archive' \
-                    "$(_plain_menu_status _rootfs_archive_complete)")" \
-                6 "$(_dialog_menu_description \
-                    'Restore newest base rootfs archive' \
-                    "$(_plain_menu_status _rootfs_restore_complete)")" \
-                7 "$(_dialog_menu_description \
-                    'Restore newest temporary toolchain archive' \
-                    "$(_plain_menu_status _toolchain_restore_complete)")" \
-                8 "$(_dialog_menu_description \
-                    'Chroot into BFS rootfs' \
-                    "$(_plain_chroot_status)")" \
-                9 "$(_dialog_menu_description 'Change interface theme' 'THEME')"                 10 "$(_dialog_menu_description 'Quit' 'EXIT')" \
-                3>&1 1>&2 2>&3 \
-                </dev/tty >/dev/tty
-        )"
-        menu_status=$?
-        set -e
-
-        clear </dev/tty >/dev/tty 2>/dev/null || true
-
-        case "$menu_status" in
-            0)
-                ;;
-            3)
-                SELECTED_MENU_CHOICE=theme
-                ;;
-            *)
-                SELECTED_MENU_CHOICE=9
-                ;;
-        esac
-
-        return 0
-    fi
 
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] &&
        [ -w /dev/tty ]
     then
+        error_file="$(mktemp /tmp/bfs-dialog-error.XXXXXX)"
+
         set +e
         SELECTED_MENU_CHOICE="$(
             dialog \
@@ -725,7 +665,7 @@ _select_bootstrap_menu_choice() {
                 --extra-button \
                 --extra-label "Theme Selection" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Theme Selection." \
                 23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -754,7 +694,7 @@ _select_bootstrap_menu_choice() {
                 9 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
-                3>&1 1>&2 2>&3 \
+                3>&1 1>&2 2>"$error_file" \
                 </dev/tty >/dev/tty
         )"
         menu_status=$?
@@ -764,16 +704,31 @@ _select_bootstrap_menu_choice() {
 
         case "$menu_status" in
             0)
+                rm -f "$error_file"
+                return 0
+                ;;
+            1|255)
+                SELECTED_MENU_CHOICE=9
+                rm -f "$error_file"
+                return 0
                 ;;
             3)
                 SELECTED_MENU_CHOICE=theme
+                rm -f "$error_file"
+                return 0
                 ;;
             *)
-                SELECTED_MENU_CHOICE=9
+                dialog_error="$(cat "$error_file" 2>/dev/null || true)"
+                rm -f "$error_file"
+
+                echo
+                echo "WARNING: dialog could not open; using the text menu instead." >&2
+                if [ -n "$dialog_error" ]; then
+                    echo "$dialog_error" >&2
+                fi
+                sleep 1
                 ;;
         esac
-
-        return 0
     fi
 
     _show_bootstrap_menu
@@ -792,10 +747,11 @@ _bootstrap_menu() {
         status=0
 
         if [ "$choice" = 10 ]; then
-            choice=9
+            choice=quit
         elif [ "$choice" = 9 ] &&
-             ! command -v dialog >/dev/null 2>&1 &&
-             ! command -v whiptail >/dev/null 2>&1; then
+             { ! command -v dialog >/dev/null 2>&1 ||
+               [ ! -r /dev/tty ] ||
+               [ ! -w /dev/tty ]; }; then
             choice=theme
         fi
 
@@ -860,7 +816,7 @@ _bootstrap_menu() {
                 set -e
                 continue
                 ;;
-            9)
+            9|quit)
                 echo "BFS bootstrap exited."
                 return 0
                 ;;
