@@ -279,8 +279,7 @@ select_installer_theme() {
 
         if command -v dialog >/dev/null 2>&1 &&
            [[ -r /dev/tty && -w /dev/tty ]]; then
-                set +e
-                choice="$(
+                if choice="$(
                         dialog --stdout --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "Interface Theme" \
@@ -296,9 +295,11 @@ select_installer_theme() {
                                 light "Black text on a light background" \
                                         "$([[ "$BFS_THEME" == light ]] && echo on || echo off)" \
                                 </dev/tty
-                )"
-                status=$?
-                set -e
+                )"; then
+                        status=0
+                else
+                        status=$?
+                fi
                 [[ -n "$choice" ]] || return 0
         else
                 echo "  1) Monochrome"
@@ -328,8 +329,7 @@ installer_settings_menu() {
         while true; do
                 if command -v dialog >/dev/null 2>&1 &&
                    [[ -r /dev/tty && -w /dev/tty ]]; then
-                        set +e
-                        choice="$(
+                        if choice="$(
                                 dialog --stdout --clear \
                                         --backtitle "BFS Linux Installer" \
                                         --title "Installer Settings" \
@@ -341,9 +341,11 @@ installer_settings_menu() {
                                         2 "Logging: $LOG_ENABLED" \
                                         3 "Back to main menu" \
                                         </dev/tty
-                        )"
-                        status=$?
-                        set -e
+                        )"; then
+                                status=0
+                        else
+                                status=$?
+                        fi
                         [[ -n "$choice" ]] || return 0
                 else
                         clear_screen
@@ -505,46 +507,139 @@ run_on_tty() {
 }
 
 ask() {
-        local variable="$1" prompt="$2" default="${3:-}" answer=""
+        local variable="$1"
+        local prompt="$2"
+        local default="${3:-}"
+        local answer=""
+        local status=0
+
         [[ -n "${!variable:-}" ]] && return 0
-        if [[ -n "$default" ]]; then
-                read -r -p "$prompt [$default]: " answer
-                printf -v "$variable" '%s' "${answer:-$default}"
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                if answer="$(
+                        dialog --stdout --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "BFS configuration" \
+                                --cancel-label "Back" \
+                                --inputbox "$prompt" \
+                                12 72 "$default" \
+                                </dev/tty
+                )"; then
+                        status=0
+                else
+                        status=$?
+                fi
+                ((status == 0)) || return 1
         else
-                read -r -p "$prompt: " answer
-                printf -v "$variable" '%s' "$answer"
+                if [[ -n "$default" ]]; then
+                        read -r -p "$prompt [$default]: " answer
+                        answer="${answer:-$default}"
+                else
+                        read -r -p "$prompt: " answer
+                fi
         fi
+
+        printf -v "$variable" '%s' "$answer"
 }
 
 ask_default() {
-        local variable="$1" prompt="$2" default="$3" answer=""
-        read -r -p "$prompt [$default]: " answer
+        local variable="$1"
+        local prompt="$2"
+        local default="$3"
+        local answer=""
+        local status=0
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                if answer="$(
+                        dialog --stdout --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "BFS configuration" \
+                                --cancel-label "Back" \
+                                --inputbox "$prompt" \
+                                12 72 "$default" \
+                                </dev/tty
+                )"; then
+                        status=0
+                else
+                        status=$?
+                fi
+                ((status == 0)) || return 1
+        else
+                read -r -p "$prompt [$default]: " answer
+                answer="${answer:-$default}"
+        fi
+
         printf -v "$variable" '%s' "${answer:-$default}"
 }
 
 ask_yes_no() {
-        local variable="$1" prompt="$2" default="${3:-no}" answer="" suffix="[y/N]"
-        [[ "$default" == yes ]] && suffix="[Y/n]"
-        read -r -p "$prompt $suffix: " answer
-        answer="${answer,,}"
-        if [[ -z "$answer" ]]; then
-                printf -v "$variable" '%s' "$default"
-        elif [[ "$answer" == y || "$answer" == yes ]]; then
-                printf -v "$variable" '%s' yes
+        local variable="$1"
+        local prompt="$2"
+        local default="${3:-no}"
+        local answer=""
+        local status=0
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                local -a default_button=()
+                [[ "$default" == no ]] && default_button=(--defaultno)
+
+                if dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "BFS configuration" \
+                        "${default_button[@]}" \
+                        --yesno "$prompt" \
+                        11 72 \
+                        </dev/tty >/dev/tty 2>/dev/tty; then
+                        printf -v "$variable" '%s' yes
+                else
+                        status=$?
+                        case "$status" in
+                                1) printf -v "$variable" '%s' no ;;
+                                255) return 1 ;;
+                                *) return 1 ;;
+                        esac
+                fi
         else
-                printf -v "$variable" '%s' no
+                local suffix="[y/N]"
+                [[ "$default" == yes ]] && suffix="[Y/n]"
+                read -r -p "$prompt $suffix: " answer
+                answer="${answer,,}"
+                if [[ -z "$answer" ]]; then
+                        printf -v "$variable" '%s' "$default"
+                elif [[ "$answer" == y || "$answer" == yes ]]; then
+                        printf -v "$variable" '%s' yes
+                else
+                        printf -v "$variable" '%s' no
+                fi
         fi
 }
 
 confirm() {
+        local prompt="$1"
         local answer=""
-        read -r -p "$1 [y/N]: " answer
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "Confirm" \
+                        --defaultno \
+                        --yesno "$prompt" \
+                        11 76 \
+                        </dev/tty >/dev/tty 2>/dev/tty
+                return $?
+        fi
+
+        read -r -p "$prompt [y/N]: " answer
         [[ "${answer,,}" == y || "${answer,,}" == yes ]]
 }
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v25.sh [options]
+Usage: install-bfs-menu-v27.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -1034,7 +1129,11 @@ show_available_nics() {
 }
 
 select_network_interface() {
-        local answer="" selected_index=""
+        local answer=""
+        local selected_index=""
+        local status=0
+        local index=0
+        local -a menu_items=()
 
         if [[ -n "$NETWORK_IFACE" ]]; then
                 [[ -d "/sys/class/net/$NETWORK_IFACE" ]] ||
@@ -1044,28 +1143,31 @@ select_network_interface() {
         fi
 
         while true; do
-                show_available_nics
+                get_available_nics
                 ((${#AVAILABLE_NICS[@]} > 0)) ||
                         die "No usable network interfaces were found."
 
-                read -r -p "Select network interface [1-${#AVAILABLE_NICS[@]}]: " answer
+                menu_items=()
+                for ((index=0; index<${#AVAILABLE_NICS[@]}; index++)); do
+                        menu_items+=(
+                                "$((index + 1))"
+                                "${AVAILABLE_NICS[$index]}  ${AVAILABLE_NIC_MACS[$index]}  ${AVAILABLE_NIC_STATES[$index]}  ${AVAILABLE_NIC_DRIVERS[$index]}"
+                        )
+                done
 
-                [[ "$answer" =~ ^[0-9]+$ ]] || {
-                        warn "Enter a network-interface number from the list."
-                        continue
-                }
+                themed_menu answer \
+                        "Network interface" \
+                        "Select the interface BFS should configure." \
+                        20 92 12 \
+                        "${menu_items[@]}"
 
-                ((answer >= 1 && answer <= ${#AVAILABLE_NICS[@]})) || {
-                        warn "That selection is outside the available range."
-                        continue
-                }
+                [[ -n "$answer" ]] || return 1
+                [[ "$answer" =~ ^[0-9]+$ ]] || continue
+                ((answer >= 1 && answer <= ${#AVAILABLE_NICS[@]})) || continue
 
                 selected_index=$((answer - 1))
                 NETWORK_IFACE="${AVAILABLE_NICS[$selected_index]}"
                 NETWORK_MAC="${AVAILABLE_NIC_MACS[$selected_index]}"
-
-                printf 'Selected network interface: %s (%s)\n' \
-                        "$NETWORK_IFACE" "$NETWORK_MAC"
                 return 0
         done
 }
@@ -2129,17 +2231,11 @@ configure_archive() {
         pause_screen
 }
 configure_system() {
-        clear_screen
-        echo "System settings"
-        echo "==============="
-        echo
-
-        ask_default HOSTNAME "Hostname" "$HOSTNAME"
-        ask_default TIMEZONE "Timezone" "$TIMEZONE"
-        ask_default LOCALE "Locale (for example en_US.UTF-8)" "$LOCALE"
+        ask_default HOSTNAME "Hostname" "$HOSTNAME" || return 0
+        ask_default TIMEZONE "Timezone" "$TIMEZONE" || return 0
+        ask_default LOCALE "Locale, for example en_US.UTF-8" "$LOCALE" || return 0
 
         SYSTEM_CONFIGURED=yes
-        pause_screen
 }
 
 valid_username() {
@@ -2160,36 +2256,44 @@ username_selected() {
 }
 
 configure_users() {
-        local answer=""
+        local add_more=no
         local extra_user=""
 
-        clear_screen
-        echo "User accounts"
-        echo "============="
-        echo
-
         while true; do
-                ask_default USERNAME "Primary regular username" "${USERNAME:-user}"
+                if ! ask_default USERNAME \
+                        "Primary regular username" \
+                        "${USERNAME:-user}"; then
+                        return 0
+                fi
                 valid_username "$USERNAME" && break
                 warn "Invalid username."
+                sleep 1
         done
 
         ADDITIONAL_USERS=()
 
         while true; do
-                read -r -p "Add another regular user? [y/N]: " answer
-                [[ "${answer,,}" == y || "${answer,,}" == yes ]] || break
+                add_more=no
+                if ! ask_yes_no add_more "Add another regular user?" no; then
+                        return 0
+                fi
+                [[ "$add_more" == yes ]] || break
 
                 while true; do
-                        read -r -p "Additional username: " extra_user
+                        extra_user=""
+                        if ! ask_default extra_user "Additional username" user2; then
+                                return 0
+                        fi
 
                         if ! valid_username "$extra_user"; then
                                 warn "Invalid username."
+                                sleep 1
                                 continue
                         fi
 
                         if username_selected "$extra_user"; then
                                 warn "That username is already selected."
+                                sleep 1
                                 continue
                         fi
 
@@ -2199,52 +2303,41 @@ configure_users() {
         done
 
         USERS_CONFIGURED=yes
-        pause_screen
 }
 
 configure_kernel() {
         local choice=""
 
-        clear_screen
-        echo "Kernel selection"
-        echo "================"
-        echo
-        echo "  1) linux"
-        echo "  2) linux-lts"
-        echo "  3) Do not install a kernel"
-        echo
+        themed_menu choice \
+                "Kernel selection" \
+                "Choose the kernel package for the installed system." \
+                16 72 7 \
+                1 "linux" \
+                2 "linux-lts" \
+                3 "Do not install a kernel"
 
-        while true; do
-                read -r -p "Choose [1-3] [1]: " choice
+        [[ -n "$choice" ]] || return 0
 
-                case "${choice:-1}" in
-                        1) KERNEL_PACKAGE=linux; break ;;
-                        2) KERNEL_PACKAGE=linux-lts; break ;;
-                        3) KERNEL_PACKAGE=none; break ;;
-                        *) warn "Choose 1, 2, or 3." ;;
-                esac
-        done
+        case "$choice" in
+                1) KERNEL_PACKAGE=linux ;;
+                2) KERNEL_PACKAGE=linux-lts ;;
+                3) KERNEL_PACKAGE=none ;;
+                *) return 0 ;;
+        esac
 
         KERNEL_CONFIGURED=yes
-        pause_screen
 }
 
 configure_networking() {
-        clear_screen
-        echo "Networking"
-        echo "=========="
-        echo
-
-        select_network_interface
+        select_network_interface || return 0
         ask_yes_no INSTALL_NETWORKMANAGER \
                 "Use NetworkManager instead of systemd-networkd?" \
-                "$INSTALL_NETWORKMANAGER"
+                "$INSTALL_NETWORKMANAGER" || return 0
         ask_yes_no ENABLE_OPENSSH \
                 "Install and enable the OpenSSH server?" \
-                "$ENABLE_OPENSSH"
+                "$ENABLE_OPENSSH" || return 0
 
         NETWORK_CONFIGURED=yes
-        pause_screen
 }
 
 toggle_setting() {
@@ -2263,10 +2356,46 @@ selection_mark() {
 
 configure_packages() {
         local choice=""
+        local status=0
 
         while true; do
-                clear_screen
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        if choice="$(
+                                dialog --stdout --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Optional software" \
+                                        --cancel-label "Back" \
+                                        --checklist \
+                                        "Select optional software packages." \
+                                        18 74 8 \
+                                        git "Git version-control system" "$([[ "$INSTALL_GIT" == yes ]] && echo on || echo off)" \
+                                        wget "Wget download utility" "$([[ "$INSTALL_WGET" == yes ]] && echo on || echo off)" \
+                                        cryptsetup "LUKS encryption tools" "$([[ "$INSTALL_CRYPTSETUP" == yes ]] && echo on || echo off)" \
+                                        </dev/tty
+                        )"; then
+                                status=0
+                        else
+                                status=$?
+                        fi
+                        ((status == 0)) || return 0
 
+                        INSTALL_GIT=no
+                        INSTALL_WGET=no
+                        INSTALL_CRYPTSETUP=no
+
+                        [[ " $choice " == *' "git" '* || " $choice " == *' git '* ]] &&
+                                INSTALL_GIT=yes
+                        [[ " $choice " == *' "wget" '* || " $choice " == *' wget '* ]] &&
+                                INSTALL_WGET=yes
+                        [[ " $choice " == *' "cryptsetup" '* || " $choice " == *' cryptsetup '* ]] &&
+                                INSTALL_CRYPTSETUP=yes
+
+                        PACKAGES_CONFIGURED=yes
+                        return 0
+                fi
+
+                clear_screen
                 cat <<EOF_PACKAGES
 Optional software
 =================
@@ -2283,14 +2412,8 @@ EOF_PACKAGES
                         1) toggle_setting INSTALL_GIT ;;
                         2) toggle_setting INSTALL_WGET ;;
                         3) toggle_setting INSTALL_CRYPTSETUP ;;
-                        4)
-                                PACKAGES_CONFIGURED=yes
-                                return 0
-                                ;;
-                        *)
-                                warn "Choose a number from 1 through 4."
-                                sleep 1
-                                ;;
+                        4) PACKAGES_CONFIGURED=yes; return 0 ;;
+                        *) warn "Choose a number from 1 through 4."; sleep 1 ;;
                 esac
         done
 }
@@ -2298,77 +2421,59 @@ EOF_PACKAGES
 configure_sudo() {
         local choice=""
 
-        clear_screen
-        echo "Sudo configuration"
-        echo "=================="
-        echo
-        echo "  1) Do not install sudo"
-        echo "  2) Install sudo; wheel users must enter a password"
-        echo "  3) Install sudo; wheel users do not need a password"
-        echo
+        themed_menu choice \
+                "Sudo configuration" \
+                "Choose how sudo should be configured for wheel-group users." \
+                17 78 8 \
+                1 "Do not install sudo" \
+                2 "Install sudo; require the user's password" \
+                3 "Install sudo; allow wheel users without a password"
 
-        while true; do
-                read -r -p "Choose [1-3] [2]: " choice
+        [[ -n "$choice" ]] || return 0
 
-                case "${choice:-2}" in
-                        1)
-                                INSTALL_SUDO=no
-                                SUDO_MODE=disabled
-                                break
-                                ;;
-                        2)
-                                INSTALL_SUDO=yes
-                                SUDO_MODE=password
-                                break
-                                ;;
-                        3)
-                                INSTALL_SUDO=yes
-                                SUDO_MODE=nopasswd
-                                break
-                                ;;
-                        *)
-                                warn "Choose 1, 2, or 3."
-                                ;;
-                esac
-        done
+        case "$choice" in
+                1)
+                        INSTALL_SUDO=no
+                        SUDO_MODE=disabled
+                        ;;
+                2)
+                        INSTALL_SUDO=yes
+                        SUDO_MODE=password
+                        ;;
+                3)
+                        INSTALL_SUDO=yes
+                        SUDO_MODE=nopasswd
+                        ;;
+                *) return 0 ;;
+        esac
 
         SUDO_CONFIGURED=yes
-        pause_screen
 }
 
 configure_bootloader() {
-        clear_screen
-        echo "Bootloader"
-        echo "=========="
-        echo
-
         if [[ -n "$EFI_DEV" || -d /sys/firmware/efi ]]; then
                 BOOT_MODE=uefi
         else
                 BOOT_MODE=bios
         fi
 
-        echo "Detected boot mode: $BOOT_MODE"
-        echo
-
         ask_yes_no INSTALL_GRUB \
-                "Write and configure the GRUB bootloader?" \
-                "$INSTALL_GRUB"
+                "Detected boot mode: $BOOT_MODE\n\nWrite and configure the GRUB bootloader?" \
+                "$INSTALL_GRUB" || return 0
 
         if [[ "$INSTALL_GRUB" == yes && "$BOOT_MODE" == bios ]]; then
                 ask_default BOOT_DISK \
                         "Whole disk for BIOS GRUB, for example /dev/sda" \
-                        "$BOOT_DISK"
+                        "$BOOT_DISK" || return 0
         fi
 
         if [[ "$INSTALL_GRUB" == yes && "$BOOT_MODE" == uefi ]]; then
                 ask_yes_no GRUB_FALLBACK \
-                        "Also install the EFI fallback loader (recommended for some MSI boards)?" \
-                        "$GRUB_FALLBACK"
+                        "Also install the EFI fallback loader?\n\nThis is recommended for some MSI and other firmware implementations." \
+                        "$GRUB_FALLBACK" || return 0
         fi
 
         BOOTLOADER_CONFIGURED=yes
-        pause_screen
 }
 
 additional_users_text() {
@@ -2469,8 +2574,7 @@ installer_menu() {
                    [[ -r /dev/tty && -w /dev/tty ]]; then
                         error_file="$(mktemp /tmp/bfs-installer-dialog-error.XXXXXX)"
 
-                        set +e
-                        SELECTED_MENU_CHOICE="$(
+                        if SELECTED_MENU_CHOICE="$(
                                 dialog --stdout --clear \
                                         --backtitle "BFS Linux Installer" \
                                         --title "BFS Linux Installer" \
@@ -2547,9 +2651,11 @@ installer_menu() {
                                                         'EXIT'
                                         )" \
                                         </dev/tty 2>"$error_file"
-                        )"
-                        status=$?
-                        set -e
+                        )"; then
+                                status=0
+                        else
+                                status=$?
+                        fi
 
                         case "$status" in
                                 0)
