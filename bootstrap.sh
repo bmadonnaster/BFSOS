@@ -50,7 +50,7 @@ DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
 SETTINGS_FILE="$SCRIPT_DIR/.bfs-build-settings"
 
-BFS_THEME="${BFS_THEME:-classic}"
+BFS_THEME="${BFS_THEME:-monochrome}"
 BFS_BUILD_JOBS="${BFS_BUILD_JOBS:-$(nproc)}"
 BFS_BUILD_OUTPUT="${BFS_BUILD_OUTPUT:-normal}"
 
@@ -825,6 +825,12 @@ _select_settings() {
             read -r -p "Choose [1-4]: " choice
         fi
 
+        choice="$(
+            printf '%s' "$choice" |
+                tr -d '\r\n' |
+                sed -e 's/^[[:space:]]*//'                     -e 's/[[:space:]]*$//'                     -e 's/^"//'                     -e 's/"$//'
+        )"
+
         case "$choice" in
             1) _select_theme ;;
             2) _select_build_jobs ;;
@@ -956,7 +962,15 @@ _bootstrap_menu() {
 
     while true; do
         _select_bootstrap_menu_choice
-        choice="$SELECTED_MENU_CHOICE"
+
+        # dialog may return surrounding whitespace, a carriage return, or
+        # quoted tags on some terminals/builds. Normalize the result before
+        # dispatching it through the case statement.
+        choice="$(
+            printf '%s' "$SELECTED_MENU_CHOICE" |
+                tr -d '\r\n' |
+                sed -e 's/^[[:space:]]*//'                     -e 's/[[:space:]]*$//'                     -e 's/^"//'                     -e 's/"$//'
+        )"
 
         status=0
 
