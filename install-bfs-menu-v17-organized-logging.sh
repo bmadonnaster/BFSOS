@@ -122,7 +122,21 @@ AVAILABLE_NIC_DRIVERS=()
 CHROOT_INSTALLER="/root/.bfs-install-chroot.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Keep installer logs beside the bootstrap logs, even when this script is
+# stored in bfs-linux-install/scripts/.
+if [[ "$(basename "$SCRIPT_DIR")" == scripts ]]; then
+        PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+        PROJECT_DIR="$SCRIPT_DIR"
+fi
+
+INSTALLER_LOG_DIR="$PROJECT_DIR/logs/installer"
 INSTALLER_SETTINGS_FILE="$SCRIPT_DIR/.bfs-installer-settings"
+LOG_STARTED_EPOCH=""
+LOG_CLOSED=no
+
+mkdir -p "$INSTALLER_LOG_DIR"
 DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
 BFS_THEME="${BFS_INSTALLER_THEME:-monochrome}"
@@ -404,7 +418,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v16.sh [options]
+Usage: install-bfs-menu-v17.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -448,14 +462,19 @@ parse_arguments() {
 setup_logging() {
         [[ "$LOG_ENABLED" == yes ]] || return 0
 
+        mkdir -p "$INSTALLER_LOG_DIR"
+
         if [[ -z "$LOG_FILE" ]]; then
-                LOG_FILE="$PWD/bfs-install-$(date +%Y%m%d-%H%M%S).log"
+                LOG_FILE="$INSTALLER_LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
         elif [[ "$LOG_FILE" != /* ]]; then
-                LOG_FILE="$PWD/$LOG_FILE"
+                LOG_FILE="$INSTALLER_LOG_DIR/$LOG_FILE"
         fi
 
         mkdir -p "$(dirname "$LOG_FILE")"
         : > "$LOG_FILE"
+
+        LOG_STARTED_EPOCH="$(date +%s)"
+        LOG_CLOSED=no
 
         LOG_FIFO="$(mktemp -u /tmp/bfs-install-log.XXXXXX)"
         mkfifo "$LOG_FIFO"
@@ -465,32 +484,74 @@ setup_logging() {
         LOG_TEE_PID=$!
         exec > "$LOG_FIFO" 2>&1
 
-        printf '%s\n' '=================================================='
-        printf '%s\n' 'BFS Linux installer log'
-        printf 'Started:  %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
-        printf 'Script:   %s\n' "${BASH_SOURCE[0]}"
-        printf 'Log file: %s\n' "$LOG_FILE"
-        printf '%s\n' '=================================================='
+        printf '%s\n' '============================================================'
+        printf '%s\n' 'BFS Linux Installer'
+        printf 'Started:        %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
+        printf 'Script:         %s\n' "${BASH_SOURCE[0]}"
+        printf 'Script path:    %s\n' "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]}")"
+        printf 'Log file:       %s\n' "$LOG_FILE"
+        printf 'Host:           %s\n' "$(hostname 2>/dev/null || printf unknown)"
+        printf 'Kernel:         %s\n' "$(uname -r 2>/dev/null || printf unknown)"
+        printf 'Architecture:   %s\n' "$(uname -m 2>/dev/null || printf unknown)"
+        printf 'Installer PID:  %s\n' "$$"
+        printf 'Target:         %s\n' "$TARGET"
+        printf 'Locale runtime: LANG=%s LC_ALL=%s LANGUAGE=%s\n' \
+                "${LANG:-}" "${LC_ALL:-}" "${LANGUAGE:-}"
+        printf '%s\n' '============================================================'
 }
 
 close_logging() {
+        local status="${1:-0}"
+        local ended_epoch=""
+        local elapsed=0
+        local result="SUCCESS"
+
         [[ "$LOG_ENABLED" == yes ]] || return 0
+        [[ "$LOG_CLOSED" == no ]] || return 0
+        [[ -n "$LOG_TEE_PID" ]] || return 0
+
+        ended_epoch="$(date +%s)"
+        if [[ -n "$LOG_STARTED_EPOCH" ]]; then
+                elapsed=$((ended_epoch - LOG_STARTED_EPOCH))
+        fi
+
+        [[ "$status" -eq 0 ]] || result="FAILED"
+
+        printf '\n%s\n' '============================================================'
+        printf 'Finished:       %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
+        printf 'Result:         %s\n' "$result"
+        printf 'Exit status:    %s\n' "$status"
+        printf 'Elapsed:        %02d:%02d:%02d\n' \
+                "$((elapsed / 3600))" \
+                "$(((elapsed % 3600) / 60))" \
+                "$((elapsed % 60))"
+        printf '%s\n' '============================================================'
+
         exec 1>&3 2>&4
         wait "$LOG_TEE_PID" 2>/dev/null || true
         rm -f "$LOG_FIFO"
+
         LOG_FIFO=""
         LOG_TEE_PID=""
+        LOG_CLOSED=yes
 }
 
 copy_log_to_installed_system() {
+        local installed_dir=""
         local installed_log=""
-        [[ "$LOG_ENABLED" == yes && -f "$LOG_FILE" ]] || return 0
 
-        mkdir -p "$TARGET/var/log"
-        installed_log="$TARGET/var/log/$(basename "$LOG_FILE")"
+        [[ "$LOG_ENABLED" == yes && -f "$LOG_FILE" ]] || return 0
+        [[ -d "$TARGET" ]] || return 0
+
+        installed_dir="$TARGET/var/log/bfs/installer"
+        mkdir -p "$installed_dir"
+
+        installed_log="$installed_dir/$(basename "$LOG_FILE")"
         cp -f "$LOG_FILE" "$installed_log"
         chmod 0600 "$installed_log"
-        printf 'Installed-system log: /var/log/%s\n' "$(basename "$LOG_FILE")"
+
+        printf 'Installed-system log: /var/log/bfs/installer/%s\n' \
+                "$(basename "$LOG_FILE")"
 }
 
 require_root() {
@@ -2630,7 +2691,16 @@ mount_virtual_filesystems() {
 }
 
 cleanup() {
+        local status=$?
         local index destination
+
+        # Preserve a complete failure log before target filesystems are
+        # unmounted. Successful runs close and copy the log in main().
+        if [[ "$LOG_ENABLED" == yes && "$LOG_CLOSED" == no ]]; then
+                close_logging "$status" || true
+                copy_log_to_installed_system || true
+        fi
+
         rm -f "$TARGET$CHROOT_INSTALLER" 2>/dev/null || true
 
         [[ -z "$DIALOGRC_FILE" ]] || rm -f "$DIALOGRC_FILE"
@@ -2646,6 +2716,8 @@ cleanup() {
                 mountpoint -q "$destination" && umount "$destination" 2>/dev/null || true
         done
         [[ -z "$SWAP_DEV" ]] || swapoff "$SWAP_DEV" 2>/dev/null || true
+
+        return "$status"
 }
 
 trap cleanup EXIT
@@ -3780,13 +3852,7 @@ DONE
                 printf '
 Live-environment log: %s
 ' "$LOG_FILE"
-
-                exec 1>&3 2>&4
-                wait "$LOG_TEE_PID" 2>/dev/null || true
-                rm -f "$LOG_FIFO"
-                LOG_FIFO=""
-                LOG_TEE_PID=""
-
+                close_logging 0
                 copy_log_to_installed_system
         fi
 
