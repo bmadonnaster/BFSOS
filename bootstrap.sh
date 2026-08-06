@@ -3,16 +3,27 @@
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
 # deterministic.
-unset LC_CTYPE
-unset LC_COLLATE
-unset LC_MESSAGES
-unset LC_MONETARY
-unset LC_NUMERIC
-unset LC_TIME
+_force_posix_locale() {
+    unset LC_ALL
+    unset LC_ADDRESS
+    unset LC_COLLATE
+    unset LC_CTYPE
+    unset LC_IDENTIFICATION
+    unset LC_MEASUREMENT
+    unset LC_MESSAGES
+    unset LC_MONETARY
+    unset LC_NAME
+    unset LC_NUMERIC
+    unset LC_PAPER
+    unset LC_TELEPHONE
+    unset LC_TIME
 
-export LANG=C
-export LC_ALL=C
-export LANGUAGE=C
+    export LANG=C
+    export LC_ALL=C
+    export LANGUAGE=C
+}
+
+_force_posix_locale
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -554,6 +565,7 @@ _run_root_stage() {
     local stage="$1"
 
     if [ "$(id -u)" -eq 0 ]; then
+        _force_posix_locale
         "$0" "$stage"
         return $?
     fi
@@ -565,10 +577,18 @@ _run_root_stage() {
 
     echo
     echo "Stage $stage requires root privileges."
-    echo "Running: sudo $0 $stage"
+    echo "Authenticating with sudo before the build starts..."
     echo
 
-    sudo -- "$0" "$stage"
+    sudo -v || {
+        echo "ERROR: sudo authentication failed." >&2
+        return 1
+    }
+
+    echo "Running Stage $stage as root."
+    echo
+
+    sudo         --preserve-env=TERM,BFS_THEME,BFS_BUILD_JOBS,BFS_BUILD_OUTPUT         env         LANG=C         LC_ALL=C         LANGUAGE=C         "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -1542,6 +1562,7 @@ _restore_rootfs() {
     echo "  sudo $0 4"
 }
 _buildtoolchain() {
+    _force_posix_locale
     _ensure_archive_dirs
 
     if [ "$(id -u)" = 0 ]; then
@@ -1946,6 +1967,11 @@ _buildbase() {
 
     mkdir -p "$LFS/tmp/lfs-tools/bin"
     cp files/pkgin "$LFS/tmp/lfs-tools/bin/pkgin"
+
+    # Older copies of pkgin may force C.UTF-8, which is unavailable before
+    # glibc locales are generated. Stage 2 must use the guaranteed POSIX locale.
+    sed -i         -e 's/C\.UTF-8/C/g'         -e 's/C\.utf8/C/g'         "$LFS/tmp/lfs-tools/bin/pkgin"
+
     chmod +x "$LFS/tmp/lfs-tools/bin/pkgin"
 
     mkdir -p "$LFS/var/lib/pkgmk"
@@ -2331,6 +2357,8 @@ util-linux
 basepkg="aaa_filesystem linux-headers man-pages glibc autoconf zlib bzip2 xz file ncurses readline m4 bc binutils pkgconf libxcrypt gmp mpfr mpc attr acl gcc libcap psmisc sed tzdata iana-etc bison flex pcre2 grep bash libtool gdbm gperf expat inetutils perl perl-xml-parser intltool automake openssl ca-certificates curl gettext elfutils libffi sqlite python coreutils check diffutils gawk findutils groff less gzip zstd iptables libtirpc iproute2 kbd libpipeline make patch man-db tar texinfo python3-setuptools python3-pip python3-flit-core python3-packaging python3-installer python3-build python3-pyproject-hooks python3-wheel libuv cmake boost meson ninja kmod linux-pam shadow libpng which freetype fuse grub popt mandoc efivar efibootmgr grub-efi vim nano python3-markupsafe python3-tomli python3-pytz python3-babel python3-jinja2 systemd util-linux dbus procps-ng e2fsprogs libarchive pkgutils dialog prt-get httpup ports prt-utils lzo btrfs-progs dosfstools exfatprogs f2fs-tools mdadm libaio lvm2 inih liburcu xfsprogs openssh genfstab signify"
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"
+
+mkdir -p     "$sourcedir"     "$packagedir"     "$TOOLCHAIN_LOG_DIR"     "$BASE_LOG_DIR"
 
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
