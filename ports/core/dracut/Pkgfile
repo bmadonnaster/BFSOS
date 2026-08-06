@@ -6,7 +6,7 @@
 
 name=dracut
 version=111
-release=1
+release=2
 
 source=(
     https://github.com/dracut-ng/dracut-ng/archive/refs/tags/$version.tar.gz

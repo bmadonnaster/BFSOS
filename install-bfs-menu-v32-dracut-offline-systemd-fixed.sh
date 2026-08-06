@@ -639,7 +639,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v29.sh [options]
+Usage: install-bfs-menu-v30.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -2946,80 +2946,181 @@ show_summary() {
         local summary_file=""
         local formatting_requested=no
         local format=""
+        local index=0
+        local selected_count=0
+        local format_count=0
+        local preserve_count=0
+        local additional_user_count=0
+        local warning_count=0
 
         detect_storage_requirements
+
+        selected_count=1
+        [[ -n "$BOOT_DEV" ]] && selected_count=$((selected_count + 1))
+        [[ -n "$EFI_DEV" ]] && selected_count=$((selected_count + 1))
+        [[ -n "$SWAP_DEV" ]] && selected_count=$((selected_count + 1))
+        [[ -n "$HOME_DEV" ]] && selected_count=$((selected_count + 1))
+        selected_count=$((selected_count + ${#EXTRA_DEVICES[@]}))
+
+        for format in \
+                "$ROOT_FORMAT" \
+                "$BOOT_FORMAT" \
+                "$EFI_FORMAT" \
+                "$SWAP_FORMAT" \
+                "$HOME_FORMAT" \
+                "${EXTRA_FORMATS[@]}"; do
+                [[ -n "$format" ]] || continue
+                if [[ "$format" == keep ]]; then
+                        preserve_count=$((preserve_count + 1))
+                else
+                        formatting_requested=yes
+                        format_count=$((format_count + 1))
+                fi
+        done
+
+        additional_user_count=${#ADDITIONAL_USERS[@]}
 
         summary_file="$(mktemp /tmp/bfs-install-summary.XXXXXX)"
 
         {
+                cat <<'SUMMARY_HEADER'
+BFS Installation Review
+=======================
+
+Filesystem Layout
+-----------------
+Mount Point      Device                          Action
+-----------      ------------------------------  ------------
+SUMMARY_HEADER
+
+                printf '%-16s %-30s %s\n' \
+                        "/" "$ROOT_DEV" "$ROOT_FORMAT"
+
+                [[ -z "$BOOT_DEV" ]] || \
+                        printf '%-16s %-30s %s\n' \
+                                "/boot" "$BOOT_DEV" "$BOOT_FORMAT"
+
+                [[ -z "$EFI_DEV" ]] || \
+                        printf '%-16s %-30s %s\n' \
+                                "/boot/efi" "$EFI_DEV" "$EFI_FORMAT"
+
+                [[ -z "$HOME_DEV" ]] || \
+                        printf '%-16s %-30s %s\n' \
+                                "/home" "$HOME_DEV" "$HOME_FORMAT"
+
+                for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
+                        printf '%-16s %-30s %s\n' \
+                                "${EXTRA_MOUNTPOINTS[$index]}" \
+                                "${EXTRA_DEVICES[$index]}" \
+                                "${EXTRA_FORMATS[$index]}"
+                done
+
+                [[ -z "$SWAP_DEV" ]] || \
+                        printf '%-16s %-30s %s\n' \
+                                "swap" "$SWAP_DEV" "$SWAP_FORMAT"
+
                 cat <<SUMMARY
-BFS installation summary
-========================
 
-Target:               $TARGET
-Archive:              $ARCHIVE
-Root:                 $ROOT_DEV (format: $ROOT_FORMAT)
-Boot:                 ${BOOT_DEV:-inside root} (format: $BOOT_FORMAT)
-EFI:                  ${EFI_DEV:-not used} (format: $EFI_FORMAT)
-Swap:                 ${SWAP_DEV:-not configured} (format: $SWAP_FORMAT)
-Home:                 ${HOME_DEV:-inside root} (format: $HOME_FORMAT)
-SUMMARY
-
-                show_additional_partitions
-
-                cat <<SUMMARY
-
+System
+------
 Hostname:             $HOSTNAME
 Timezone:             $TIMEZONE
 Locale:               $LOCALE
+Target directory:     $TARGET
+Base archive:         $ARCHIVE
+
+Users
+-----
 Primary user:         $USERNAME
 Additional users:     $(additional_users_text)
-Boot mode:            $BOOT_MODE
-GRUB disk:            ${BOOT_DISK:-not applicable}
-Network interface:    $NETWORK_IFACE
-Network MAC:          $NETWORK_MAC
+
+Networking
+----------
+Interface:            $NETWORK_IFACE
+MAC address:          $NETWORK_MAC
 Installed NIC name:   $NETWORK_TARGET_NAME
+NetworkManager:       $INSTALL_NETWORKMANAGER
+OpenSSH server:       $ENABLE_OPENSSH
+
+Boot Loader
+-----------
+Boot mode:            $BOOT_MODE
+Install GRUB:         $INSTALL_GRUB
+GRUB disk:            ${BOOT_DISK:-not applicable}
+EFI fallback loader:  $GRUB_FALLBACK
+
+Packages
+--------
 Kernel package:       $KERNEL_PACKAGE
-Write/configure GRUB: $INSTALL_GRUB
+Git:                  $INSTALL_GIT
+Wget:                 $INSTALL_WGET
+Sudo:                 $INSTALL_SUDO
+Sudo mode:            $SUDO_MODE
+Cryptsetup:           $INSTALL_CRYPTSETUP
 Save base archive:    $SAVE_BASE_ARCHIVE
 Archive save dir:     $BASE_ARCHIVE_DIR
-Enable OpenSSH:       $ENABLE_OPENSSH
-NetworkManager:       $INSTALL_NETWORKMANAGER
-Git:                  $INSTALL_GIT
-Sudo installed:       $INSTALL_SUDO
-Sudo mode:            $SUDO_MODE
-Wget:                 $INSTALL_WGET
-LUKS package:         $INSTALL_CRYPTSETUP
+
+Detected Storage Features
+-------------------------
 Encrypted targets:    $AUTO_CRYPTSETUP
 LVM detected:         $AUTO_LVM2
 mdraid detected:      $AUTO_MDADM
-Console clears:       yes
-Console blanking:     30 minutes
-Coredump MaxUse:      5G
 Btrfs snapshots:      automatic when formatted as Btrfs
+
+
+RAID
+----
+Enabled:             ${AUTO_MDADM:-no}
+Level:               ${RAID_LEVEL:-not configured}
+Arrays:              ${MDADM_ARRAYS:-none}
+
+LUKS Encryption
+---------------
+Enabled:             ${AUTO_CRYPTSETUP:-no}
+Encrypted devices:   ${CRYPT_TARGETS:-none}
+
+LVM
+---
+Enabled:             ${AUTO_LVM2:-no}
+Volume Group:        ${LVM_VG_NAME:-none}
+Logical Volumes:     ${LVM_LOGICAL_VOLUMES:-none}
+
+Installation Totals
+-------------------
+Partitions selected:  $selected_count
+Will format/init:     $format_count
+Will preserve:        $preserve_count
+Additional users:     $additional_user_count
+Boot type:            $BOOT_MODE
+Kernel:               $KERNEL_PACKAGE
+RAID:                 ${AUTO_MDADM:-no}
+LUKS:                 ${AUTO_CRYPTSETUP:-no}
+LVM:                  ${AUTO_LVM2:-no}
+
+Warnings
+--------
 SUMMARY
 
-                for format in \
-                        "$ROOT_FORMAT" \
-                        "$BOOT_FORMAT" \
-                        "$EFI_FORMAT" \
-                        "$SWAP_FORMAT" \
-                        "$HOME_FORMAT" \
-                        "${EXTRA_FORMATS[@]}"; do
-                        [[ "$format" != keep ]] && formatting_requested=yes
-                done
-
-                echo
                 if [[ "$formatting_requested" == yes ]]; then
-                        echo "WARNING: Every partition marked for formatting will be erased."
-                else
-                        echo "No selected partition will be formatted."
+                        echo "- Every partition marked for formatting or initialization will be erased."
+                        warning_count=$((warning_count + 1))
                 fi
 
                 if [[ "$INSTALL_GRUB" == yes &&
                       "$KERNEL_PACKAGE" == none ]]; then
-                        echo
-                        echo "WARNING: GRUB will be configured, but BFS will not install a kernel."
+                        echo "- GRUB will be configured, but BFS will not install a kernel."
+                        warning_count=$((warning_count + 1))
+                fi
+
+                if [[ "$INSTALL_GRUB" == yes &&
+                      "$BOOT_MODE" == uefi &&
+                      -z "$EFI_DEV" ]]; then
+                        echo "- UEFI boot was selected, but no EFI System Partition is assigned."
+                        warning_count=$((warning_count + 1))
+                fi
+
+                if ((warning_count == 0)); then
+                        echo "None."
                 fi
         } > "$summary_file"
 
@@ -3030,7 +3131,7 @@ SUMMARY
                         --title "Review selections" \
                         --exit-label "Back" \
                         --textbox "$summary_file" \
-                        30 96 \
+                        32 100 \
                         </dev/tty >/dev/tty 2>/dev/tty || true
         else
                 clear_screen
@@ -3925,31 +4026,35 @@ else
         rm -f /etc/sudoers.d/10-wheel
 fi
 
+offline_systemctl() {
+        SYSTEMD_OFFLINE=1 systemctl --root=/ --no-reload "$@"
+}
+
 command -v ssh-keygen >/dev/null 2>&1 && ssh-keygen -A
 ldconfig
-systemctl preset-all || true
+offline_systemctl preset-all || true
 
-if [[ "$INSTALL_NETWORKMANAGER_VALUE" == yes ]] && systemctl list-unit-files NetworkManager.service >/dev/null 2>&1; then
+if [[ "$INSTALL_NETWORKMANAGER_VALUE" == yes ]] && offline_systemctl list-unit-files NetworkManager.service >/dev/null 2>&1; then
         log "Enabling NetworkManager and disabling systemd-networkd"
-        systemctl enable NetworkManager.service
-        systemctl disable systemd-networkd.service 2>/dev/null || true
-        systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
-elif systemctl list-unit-files systemd-networkd.service >/dev/null 2>&1; then
+        offline_systemctl enable NetworkManager.service
+        offline_systemctl disable systemd-networkd.service 2>/dev/null || true
+        offline_systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
+elif offline_systemctl list-unit-files systemd-networkd.service >/dev/null 2>&1; then
         log "Enabling systemd-networkd"
-        systemctl enable systemd-networkd.service
-        systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
+        offline_systemctl enable systemd-networkd.service
+        offline_systemctl disable systemd-networkd-wait-online.service 2>/dev/null || true
 fi
 
-if systemctl list-unit-files systemd-resolved.service >/dev/null 2>&1; then
-        systemctl enable systemd-resolved.service
+if offline_systemctl list-unit-files systemd-resolved.service >/dev/null 2>&1; then
+        offline_systemctl enable systemd-resolved.service
         ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 fi
 
 if [[ "$ENABLE_OPENSSH_VALUE" == yes ]]; then
-        if systemctl list-unit-files sshd.service >/dev/null 2>&1; then
-                systemctl enable sshd.service
-        elif systemctl list-unit-files ssh.service >/dev/null 2>&1; then
-                systemctl enable ssh.service
+        if offline_systemctl list-unit-files sshd.service >/dev/null 2>&1; then
+                offline_systemctl enable sshd.service
+        elif offline_systemctl list-unit-files ssh.service >/dev/null 2>&1; then
+                offline_systemctl enable ssh.service
         else
                 echo "WARNING: No OpenSSH service unit was found." >&2
         fi
@@ -3961,7 +4066,7 @@ if [[ "$AUTO_LVM2_VALUE" == yes ]] &&
                 mkdir -p /etc/lvm
                 lvmconfig --type full --withcomments > /etc/lvm/lvm.conf
         fi
-        systemctl enable lvm2-monitor.service 2>/dev/null || true
+        offline_systemctl enable lvm2-monitor.service 2>/dev/null || true
 fi
 
 if [[ "$AUTO_MDADM_VALUE" == yes ]] &&
@@ -4026,8 +4131,8 @@ EOF_SNAPPER
 
         printf 'SNAPPER_CONFIGS="%s"\n' "${config_names[*]}" > /etc/default/snapper
 
-        systemctl enable snapper-timeline.timer 2>/dev/null || true
-        systemctl enable snapper-cleanup.timer 2>/dev/null || true
+        offline_systemctl enable snapper-timeline.timer 2>/dev/null || true
+        offline_systemctl enable snapper-cleanup.timer 2>/dev/null || true
 
         for config_name in "${config_names[@]}"; do
                 snapper -c "$config_name" create \
@@ -4069,9 +4174,33 @@ configure_dracut_storage_modules() {
 
         mkdir -p /etc/dracut.conf.d
 
-        [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]] && modules+=(crypt)
-        [[ "$AUTO_LVM2_VALUE" == yes ]] && modules+=(lvm)
-        [[ "$AUTO_MDADM_VALUE" == yes ]] && modules+=(mdraid)
+        # Only request modules that the selected root-storage ancestry
+        # actually requires. Installing cryptsetup as an optional utility
+        # does not by itself require the crypt module in the initramfs.
+        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
+                command -v cryptsetup >/dev/null 2>&1 || {
+                        echo "Encrypted root storage was detected, but cryptsetup is missing." >&2
+                        return 1
+                }
+                modules+=(crypt)
+        fi
+
+        if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
+                command -v lvm >/dev/null 2>&1 ||
+                command -v vgchange >/dev/null 2>&1 || {
+                        echo "LVM root storage was detected, but LVM tools are missing." >&2
+                        return 1
+                }
+                modules+=(lvm)
+        fi
+
+        if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+                command -v mdadm >/dev/null 2>&1 || {
+                        echo "Software RAID root storage was detected, but mdadm is missing." >&2
+                        return 1
+                }
+                modules+=(mdraid)
+        fi
 
         if ((${#modules[@]} > 0)); then
                 printf '# Generated by the BFS installer.\n' > "$config_file"
@@ -4109,9 +4238,10 @@ rebuild_final_initramfs() {
         kernel_release="${kernel_image#/boot/vmlinuz-}"
         initramfs_image="/boot/initramfs-$kernel_release.img"
 
-        configure_dracut_storage_modules
+        configure_dracut_storage_modules || exit 1
 
         log "Generating final initramfs for $kernel_release"
+        log "Storage stack: RAID=$AUTO_MDADM_VALUE LUKS=$AUTO_CRYPTSETUP_VALUE LVM=$AUTO_LVM2_VALUE"
         dracut --force "$initramfs_image" "$kernel_release"
 }
 
