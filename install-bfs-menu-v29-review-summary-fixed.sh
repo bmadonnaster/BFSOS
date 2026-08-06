@@ -639,7 +639,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v28.sh [options]
+Usage: install-bfs-menu-v29.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -2702,7 +2702,7 @@ installer_menu() {
                         7)  configure_packages ;;
                         8)  configure_sudo ;;
                         9)  configure_bootloader ;;
-                        10) show_summary; pause_screen ;;
+                        10) show_summary ;;
                         11)
                                 if installer_ready; then
                                         return 0
@@ -2943,60 +2943,103 @@ show_additional_partitions() {
 }
 
 show_summary() {
-        detect_storage_requirements
-        cat <<SUMMARY
+        local summary_file=""
+        local formatting_requested=no
+        local format=""
 
+        detect_storage_requirements
+
+        summary_file="$(mktemp /tmp/bfs-install-summary.XXXXXX)"
+
+        {
+                cat <<SUMMARY
 BFS installation summary
-------------------------
-Target:              $TARGET
-Archive:             $ARCHIVE
-Root:                $ROOT_DEV (format: $ROOT_FORMAT)
-Boot:                ${BOOT_DEV:-inside root} (format: $BOOT_FORMAT)
-EFI:                 ${EFI_DEV:-not used} (format: $EFI_FORMAT)
-Swap:                ${SWAP_DEV:-not configured} (format: $SWAP_FORMAT)
-Home:                ${HOME_DEV:-inside root} (format: $HOME_FORMAT)
-$(show_additional_partitions)
-Hostname:            $HOSTNAME
-Timezone:            $TIMEZONE
-Locale:              $LOCALE
-Primary user:        $USERNAME
-Additional users:    $(additional_users_text)
-Boot mode:           $BOOT_MODE
-GRUB disk:           ${BOOT_DISK:-not applicable}
-Network interface:   $NETWORK_IFACE
-Network MAC:         $NETWORK_MAC
-Installed NIC name:  $NETWORK_TARGET_NAME
-Kernel package:      $KERNEL_PACKAGE
-Write/configure GRUB: $INSTALL_GRUB
-Save base archive:   $SAVE_BASE_ARCHIVE
-Archive save dir:    $BASE_ARCHIVE_DIR
-Enable OpenSSH:      $ENABLE_OPENSSH
-NetworkManager:      $INSTALL_NETWORKMANAGER
-Git:                 $INSTALL_GIT
-Sudo installed:      $INSTALL_SUDO
-Sudo mode:           $SUDO_MODE
-Wget:                $INSTALL_WGET
-LUKS package:        $INSTALL_CRYPTSETUP
-Encrypted targets:  $AUTO_CRYPTSETUP
-LVM detected:       $AUTO_LVM2
-mdraid detected:    $AUTO_MDADM
-Console clears:      yes
-Console blanking:    30 minutes
-Coredump MaxUse:     5G
-Btrfs snapshots:     automatic when formatted as Btrfs
+========================
+
+Target:               $TARGET
+Archive:              $ARCHIVE
+Root:                 $ROOT_DEV (format: $ROOT_FORMAT)
+Boot:                 ${BOOT_DEV:-inside root} (format: $BOOT_FORMAT)
+EFI:                  ${EFI_DEV:-not used} (format: $EFI_FORMAT)
+Swap:                 ${SWAP_DEV:-not configured} (format: $SWAP_FORMAT)
+Home:                 ${HOME_DEV:-inside root} (format: $HOME_FORMAT)
 SUMMARY
-        local formatting_requested=no format
-        for format in "$ROOT_FORMAT" "$BOOT_FORMAT" "$EFI_FORMAT" "$SWAP_FORMAT" "$HOME_FORMAT" "${EXTRA_FORMATS[@]}"; do
-                [[ "$format" != keep ]] && formatting_requested=yes
-        done
-        if [[ "$formatting_requested" == yes ]]; then
-                warn "Every partition marked for formatting will be erased."
+
+                show_additional_partitions
+
+                cat <<SUMMARY
+
+Hostname:             $HOSTNAME
+Timezone:             $TIMEZONE
+Locale:               $LOCALE
+Primary user:         $USERNAME
+Additional users:     $(additional_users_text)
+Boot mode:            $BOOT_MODE
+GRUB disk:            ${BOOT_DISK:-not applicable}
+Network interface:    $NETWORK_IFACE
+Network MAC:          $NETWORK_MAC
+Installed NIC name:   $NETWORK_TARGET_NAME
+Kernel package:       $KERNEL_PACKAGE
+Write/configure GRUB: $INSTALL_GRUB
+Save base archive:    $SAVE_BASE_ARCHIVE
+Archive save dir:     $BASE_ARCHIVE_DIR
+Enable OpenSSH:       $ENABLE_OPENSSH
+NetworkManager:       $INSTALL_NETWORKMANAGER
+Git:                  $INSTALL_GIT
+Sudo installed:       $INSTALL_SUDO
+Sudo mode:            $SUDO_MODE
+Wget:                 $INSTALL_WGET
+LUKS package:         $INSTALL_CRYPTSETUP
+Encrypted targets:    $AUTO_CRYPTSETUP
+LVM detected:         $AUTO_LVM2
+mdraid detected:      $AUTO_MDADM
+Console clears:       yes
+Console blanking:     30 minutes
+Coredump MaxUse:      5G
+Btrfs snapshots:      automatic when formatted as Btrfs
+SUMMARY
+
+                for format in \
+                        "$ROOT_FORMAT" \
+                        "$BOOT_FORMAT" \
+                        "$EFI_FORMAT" \
+                        "$SWAP_FORMAT" \
+                        "$HOME_FORMAT" \
+                        "${EXTRA_FORMATS[@]}"; do
+                        [[ "$format" != keep ]] && formatting_requested=yes
+                done
+
+                echo
+                if [[ "$formatting_requested" == yes ]]; then
+                        echo "WARNING: Every partition marked for formatting will be erased."
+                else
+                        echo "No selected partition will be formatted."
+                fi
+
+                if [[ "$INSTALL_GRUB" == yes &&
+                      "$KERNEL_PACKAGE" == none ]]; then
+                        echo
+                        echo "WARNING: GRUB will be configured, but BFS will not install a kernel."
+                fi
+        } > "$summary_file"
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "Review selections" \
+                        --exit-label "Back" \
+                        --textbox "$summary_file" \
+                        30 96 \
+                        </dev/tty >/dev/tty 2>/dev/tty || true
         else
-                printf '\nNo selected partition will be formatted.\n'
+                clear_screen
+                cat "$summary_file"
+                pause_screen
         fi
-        [[ "$INSTALL_GRUB" == yes && "$KERNEL_PACKAGE" == none ]] && \
-                warn "GRUB will be written and configured, but BFS will not install a kernel."
-        confirm "Continue?" || die "Installation cancelled."
+
+        rm -f "$summary_file"
+        return 0
 }
 
 unmount_device_everywhere() {
