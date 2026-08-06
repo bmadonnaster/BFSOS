@@ -540,7 +540,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v22.sh [options]
+Usage: install-bfs-menu-v23.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -789,7 +789,15 @@ show_available_partitions() {
 }
 
 select_partition() {
-        local variable="$1" prompt="$2" optional="${3:-no}" answer="" selected_index="" selected_device=""
+        local variable="$1"
+        local prompt="$2"
+        local optional="${3:-no}"
+        local answer=""
+        local selected_index=""
+        local selected_device=""
+        local status=0
+        local index=0
+        local -a menu_items=()
 
         if [[ -n "${!variable:-}" ]]; then
                 USED_DEVICES+=("${!variable}")
@@ -797,27 +805,56 @@ select_partition() {
         fi
 
         while true; do
-                show_available_partitions
-                ((${#AVAILABLE_PATHS[@]} > 0)) || die "No unassigned partitions are available."
+                get_available_partitions
+                ((${#AVAILABLE_PATHS[@]} > 0)) ||
+                        die "No unassigned partitions are available."
+
+                menu_items=()
 
                 if [[ "$optional" == yes ]]; then
-                        printf '  0) Skip this partition\n'
-                        read -r -p "$prompt [0-${#AVAILABLE_PATHS[@]}]: " answer
-                        [[ "${answer:-0}" == 0 ]] && {
+                        menu_items+=(0 "Skip this partition")
+                fi
+
+                for ((index=0; index<${#AVAILABLE_PATHS[@]}; index++)); do
+                        menu_items+=(
+                                "$((index + 1))"
+                                "${AVAILABLE_PATHS[$index]}  ${AVAILABLE_SIZES[$index]}  ${AVAILABLE_FSTYPES[$index]}  ${AVAILABLE_LABELS[$index]}"
+                        )
+                done
+
+                set +e
+                themed_menu answer \
+                        "Filesystem device selection" \
+                        "$prompt" \
+                        22 92 14 \
+                        "${menu_items[@]}"
+                status=$?
+                set -e
+
+                if ((status != 0)); then
+                        if [[ "$optional" == yes ]]; then
                                 printf -v "$variable" ''
                                 return 0
-                        }
-                else
-                        read -r -p "$prompt [1-${#AVAILABLE_PATHS[@]}]: " answer
+                        fi
+                        warn "A device must be selected for $prompt."
+                        sleep 1
+                        continue
+                fi
+
+                if [[ "$optional" == yes && "$answer" == 0 ]]; then
+                        printf -v "$variable" ''
+                        return 0
                 fi
 
                 [[ "$answer" =~ ^[0-9]+$ ]] || {
-                        warn "Enter a partition number from the list."
+                        warn "Choose a partition from the menu."
+                        sleep 1
                         continue
                 }
 
                 ((answer >= 1 && answer <= ${#AVAILABLE_PATHS[@]})) || {
                         warn "That selection is outside the available range."
+                        sleep 1
                         continue
                 }
 
@@ -825,102 +862,109 @@ select_partition() {
                 selected_device="${AVAILABLE_PATHS[$selected_index]}"
                 printf -v "$variable" '%s' "$selected_device"
                 USED_DEVICES+=("$selected_device")
-                printf 'Selected %s: %s\n' "$prompt" "$selected_device"
                 return 0
         done
 }
 
 choose_linux_format() {
-        local variable="$1" device="$2" role="$3" choice=""
+        local variable="$1"
+        local device="$2"
+        local role="$3"
+        local choice=""
+        local status=0
+
         [[ -n "$device" ]] || return 0
-        cat <<EOF
-Formatting choice for $role ($device):
-  1) Keep the existing filesystem
-  2) ext2
-  3) ext4
-  4) XFS
-  5) Btrfs
-  6) F2FS
-EOF
-        while true; do
-                read -r -p "Choose [1-6] [1]: " choice
-                case "${choice:-1}" in
-                        1) printf -v "$variable" '%s' keep; printf 'Selected format for %s: keep existing filesystem\n' "$role"; break ;;
-                        2) printf -v "$variable" '%s' ext2; printf 'Selected format for %s: ext2\n' "$role"; break ;;
-                        3) printf -v "$variable" '%s' ext4; printf 'Selected format for %s: ext4\n' "$role"; break ;;
-                        4) printf -v "$variable" '%s' xfs; printf 'Selected format for %s: XFS\n' "$role"; break ;;
-                        5) printf -v "$variable" '%s' btrfs; printf 'Selected format for %s: Btrfs\n' "$role"; break ;;
-                        6) printf -v "$variable" '%s' f2fs; printf 'Selected format for %s: F2FS\n' "$role"; break ;;
-                        *) warn "Enter a number from 1 through 6." ;;
-                esac
-        done
+
+        set +e
+        themed_menu choice \
+                "Filesystem format" \
+                "Choose how to prepare $role on $device." \
+                19 78 10 \
+                1 "Keep the existing filesystem" \
+                2 "Format as ext2" \
+                3 "Format as ext4" \
+                4 "Format as XFS" \
+                5 "Format as Btrfs" \
+                6 "Format as F2FS"
+        status=$?
+        set -e
+
+        ((status == 0)) || choice=1
+
+        case "$choice" in
+                1) printf -v "$variable" '%s' keep ;;
+                2) printf -v "$variable" '%s' ext2 ;;
+                3) printf -v "$variable" '%s' ext4 ;;
+                4) printf -v "$variable" '%s' xfs ;;
+                5) printf -v "$variable" '%s' btrfs ;;
+                6) printf -v "$variable" '%s' f2fs ;;
+                *) warn "Invalid filesystem selection; keeping the existing filesystem."
+                   printf -v "$variable" '%s' keep ;;
+        esac
 }
 
 choose_efi_format() {
-        [[ -n "$EFI_DEV" ]] || return 0
         local choice=""
+        local status=0
 
-        cat <<EOF
-EFI formatting choice for $EFI_DEV:
-  1) Keep the existing filesystem
-  2) Format as FAT32 with mkfs.fat -F 32
-EOF
+        [[ -n "$EFI_DEV" ]] || return 0
 
-        while true; do
-                read -r -p "Choose [1-2] [1]: " choice
-                case "${choice:-1}" in
-                        1)
-                                EFI_FORMAT=keep
-                                printf 'Selected EFI action: keep existing filesystem\n'
-                                break
-                                ;;
-                        2)
-                                EFI_FORMAT=vfat
-                                printf 'Selected EFI action: format as FAT32\n'
-                                break
-                                ;;
-                        *)
-                                warn "Enter 1 to keep the filesystem or 2 to format it as FAT32."
-                                ;;
-                esac
-        done
+        set +e
+        themed_menu choice \
+                "EFI System Partition" \
+                "Choose how to prepare $EFI_DEV." \
+                15 72 6 \
+                1 "Keep the existing filesystem" \
+                2 "Format as FAT32 with mkfs.fat -F 32"
+        status=$?
+        set -e
+
+        ((status == 0)) || choice=1
+
+        case "$choice" in
+                2) EFI_FORMAT=vfat ;;
+                *) EFI_FORMAT=keep ;;
+        esac
 }
 
 choose_swap_format() {
-        [[ -n "$SWAP_DEV" ]] || return 0
         local choice=""
+        local status=0
 
-        cat <<EOF
-Swap initialization choice for $SWAP_DEV:
-  1) Keep the existing swap signature
-  2) Reinitialize with mkswap
-EOF
+        [[ -n "$SWAP_DEV" ]] || return 0
 
-        while true; do
-                read -r -p "Choose [1-2] [1]: " choice
-                case "${choice:-1}" in
-                        1)
-                                SWAP_FORMAT=keep
-                                printf 'Selected swap action: keep existing swap signature\n'
-                                break
-                                ;;
-                        2)
-                                SWAP_FORMAT=swap
-                                printf 'Selected swap action: initialize with mkswap\n'
-                                break
-                                ;;
-                        *)
-                                warn "Enter 1 to keep the existing swap signature or 2 to run mkswap."
-                                ;;
-                esac
-        done
+        set +e
+        themed_menu choice \
+                "Swap partition" \
+                "Choose how to prepare $SWAP_DEV." \
+                15 72 6 \
+                1 "Keep the existing swap signature" \
+                2 "Reinitialize with mkswap"
+        status=$?
+        set -e
+
+        ((status == 0)) || choice=1
+
+        case "$choice" in
+                2) SWAP_FORMAT=swap ;;
+                *) SWAP_FORMAT=keep ;;
+        esac
 }
 
 collect_additional_partitions() {
-        local answer="" device="" mountpoint="" format=""
+        local answer="" device="" mountpoint="" format="" status=0
         while true; do
-                read -r -p "Add another filesystem partition? [y/N]: " answer
-                [[ "${answer,,}" == y || "${answer,,}" == yes ]] || break
+                if command -v dialog >/dev/null 2>&1 &&
+                   [[ -r /dev/tty && -w /dev/tty ]]; then
+                        set +e
+                        dialog --clear                                 --backtitle "BFS Linux Installer"                                 --title "Additional filesystem"                                 --yesno "Add another filesystem partition?"                                 9 54                                 </dev/tty
+                        status=$?
+                        set -e
+                        ((status == 0)) || break
+                else
+                        read -r -p "Add another filesystem partition? [y/N]: " answer
+                        [[ "${answer,,}" == y || "${answer,,}" == yes ]] || break
+                fi
                 device=""
                 select_partition device "Device for the additional partition" no
                 while true; do
