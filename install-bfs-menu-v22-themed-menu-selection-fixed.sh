@@ -409,13 +409,16 @@ themed_menu() {
         local menu_height="$6"
         shift 6
 
-        local choice="" status=0
+        # Do not call this local variable "choice". Bash uses dynamic scoping,
+        # so a local choice here would hide the caller's choice variable and
+        # prevent printf -v from returning the selected menu tag.
+        local selected_value="" status=0 index=0
         local -a items=("$@")
 
         if command -v dialog >/dev/null 2>&1 &&
            [[ -r /dev/tty && -w /dev/tty ]]; then
                 set +e
-                choice="$(
+                selected_value="$(
                         dialog --stdout --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "$title" \
@@ -438,16 +441,18 @@ themed_menu() {
                 printf '%*s\n\n' "${#title}" '' | tr ' ' '='
                 printf '%s\n\n' "$prompt"
 
-                local index=0
                 for ((index=0; index<${#items[@]}; index+=2)); do
-                        printf '  %s) %s\n' "${items[$index]}" "${items[$((index + 1))]}"
+                        printf '  %s) %s\n' \
+                                "${items[$index]}" \
+                                "${items[$((index + 1))]}"
                 done
+
                 printf '\n'
-                read -r -p "Choose: " choice
+                read -r -p "Choose: " selected_value
         fi
 
-        choice="$(
-                printf '%s' "$choice" |
+        selected_value="$(
+                printf '%s' "$selected_value" |
                         tr -d '\r\n' |
                         sed -e 's/^[[:space:]]*//' \
                             -e 's/[[:space:]]*$//' \
@@ -455,8 +460,8 @@ themed_menu() {
                             -e 's/"$//'
         )"
 
-        printf -v "$result_variable" '%s' "$choice"
-        [[ -n "$choice" ]]
+        printf -v "$result_variable" '%s' "$selected_value"
+        [[ -n "$selected_value" ]]
 }
 
 log() { printf '\n==> %s\n' "$*"; }
@@ -535,7 +540,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v21.sh [options]
+Usage: install-bfs-menu-v22.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
