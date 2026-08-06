@@ -299,7 +299,7 @@ select_installer_theme() {
                 )"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
         else
                 echo "  1) Monochrome"
                 echo "  2) Classic Blue"
@@ -344,7 +344,7 @@ installer_settings_menu() {
                         )"
                         status=$?
                         set -e
-                        ((status == 0)) || return 0
+                        [[ -n "$choice" ]] || return 0
                 else
                         clear_screen
                         echo "Installer Settings"
@@ -437,7 +437,7 @@ themed_menu() {
 
                 if ((status != 0)); then
                         printf -v "$result_variable" '%s' ""
-                        return 1
+                        return 0
                 fi
         else
                 clear_screen
@@ -465,7 +465,7 @@ themed_menu() {
         )"
 
         printf -v "$result_variable" '%s' "$selected_value"
-        [[ -n "$selected_value" ]]
+        return 0
 }
 
 log() { printf '\n==> %s\n' "$*"; }
@@ -544,7 +544,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v24.sh [options]
+Usage: install-bfs-menu-v25.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -835,14 +835,12 @@ select_partition() {
                 status=$?
                 set -e
 
-                if ((status != 0)); then
+                if [[ -z "$answer" ]]; then
                         if [[ "$optional" == yes ]]; then
                                 printf -v "$variable" ''
                                 return 0
                         fi
-                        warn "A device must be selected for $prompt."
-                        sleep 1
-                        continue
+                        return 1
                 fi
 
                 if [[ "$optional" == yes && "$answer" == 0 ]]; then
@@ -893,7 +891,7 @@ choose_linux_format() {
         status=$?
         set -e
 
-        ((status == 0)) || choice=1
+        [[ -n "$choice" ]] || choice=1
 
         case "$choice" in
                 1) printf -v "$variable" '%s' keep ;;
@@ -923,7 +921,7 @@ choose_efi_format() {
         status=$?
         set -e
 
-        ((status == 0)) || choice=1
+        [[ -n "$choice" ]] || choice=1
 
         case "$choice" in
                 2) EFI_FORMAT=vfat ;;
@@ -947,7 +945,7 @@ choose_swap_format() {
         status=$?
         set -e
 
-        ((status == 0)) || choice=1
+        [[ -n "$choice" ]] || choice=1
 
         case "$choice" in
                 2) SWAP_FORMAT=swap ;;
@@ -961,7 +959,12 @@ collect_additional_partitions() {
                 if command -v dialog >/dev/null 2>&1 &&
                    [[ -r /dev/tty && -w /dev/tty ]]; then
                         set +e
-                        dialog --clear                                 --backtitle "BFS Linux Installer"                                 --title "Additional filesystem"                                 --yesno "Add another filesystem partition?"                                 9 54                                 </dev/tty
+                        dialog --clear \
+                                --backtitle "BFS Linux Installer" \
+                                --title "Additional filesystem" \
+                                --yesno "Add another filesystem partition?" \
+                                9 54 \
+                                </dev/tty >/dev/tty 2>/dev/tty
                         status=$?
                         set -e
                         ((status == 0)) || break
@@ -1121,7 +1124,7 @@ partition_disks() {
                         "${menu_items[@]}"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
 
                 [[ "$choice" =~ ^[0-9]+$ ]] || {
                         warn "Choose a disk number from the menu."
@@ -1186,7 +1189,7 @@ choose_raid_level() {
                 8 "Cancel"
         status=$?
         set -e
-        ((status == 0)) || return 1
+        [[ -n "$choice" ]] || return 1
 
         case "$choice" in
                 1) printf -v "$variable" '%s' linear ;;
@@ -1519,7 +1522,7 @@ raid_menu() {
                         4 "Return to Storage setup"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
 
                 case "$choice" in
                         1) assemble_raid_arrays ;;
@@ -1549,7 +1552,7 @@ luks_menu() {
                         4 "Return to Storage setup"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
 
                 case "$choice" in
                         1)
@@ -1630,7 +1633,7 @@ lvm_menu() {
                         5 "Return to Storage setup"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
 
                 case "$choice" in
                         1)
@@ -1718,7 +1721,7 @@ storage_menu() {
                         7 "Return to main menu"
                 status=$?
                 set -e
-                ((status == 0)) || return 0
+                [[ -n "$choice" ]] || return 0
 
                 case "$choice" in
                         1) partition_disks ;;
@@ -1756,7 +1759,7 @@ choose_storage_format() {
         status=$?
         set -e
 
-        ((status == 0)) || return 1
+        [[ -n "$choice" ]] || return 1
 
         case "$selection" in
                 1) printf -v "$result_variable" '%s' keep ;;
@@ -1801,7 +1804,7 @@ ask_mountpoint_dialog() {
                         else
                                 status=$?
                         fi
-                        ((status == 0)) || return 1
+                        [[ -n "$choice" ]] || return 1
                 else
                         read -r -p "Mount point for $device: " value
                 fi
@@ -1980,7 +1983,7 @@ configure_disks() {
                                         --yesno \
                                         "Add another partition?\n\nCurrent selections: ${#STORAGE_DEVICES[@]}" \
                                         11 58 \
-                                        </dev/tty; then
+                                        </dev/tty >/dev/tty 2>/dev/tty; then
                                         continue
                                 fi
                                 break
@@ -2012,7 +2015,7 @@ configure_disks() {
                                 --yesno \
                                 "Use these filesystem and mount-point selections?\n\nSelect No to start the storage selection again." \
                                 12 68 \
-                                </dev/tty; then
+                                </dev/tty >/dev/tty 2>/dev/tty; then
                                 confirmed=yes
                         else
                                 confirmed=no
