@@ -329,16 +329,19 @@ _dialog_menu_description() {
     printf '%-57s [%s]' "$label" "$status"
 }
 
+SELECTED_MENU_CHOICE=""
+
 _select_bootstrap_menu_choice() {
-    local choice=""
     local dialog_status=0
 
+    SELECTED_MENU_CHOICE=""
+
     if command -v dialog >/dev/null 2>&1 &&
-       [ -t 0 ] &&
-       [ -t 1 ]
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
     then
         set +e
-        choice="$(
+        SELECTED_MENU_CHOICE="$(
             dialog \
                 --clear \
                 --colors \
@@ -377,26 +380,24 @@ _select_bootstrap_menu_choice() {
                 9 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
-                3>&1 1>&2 2>&3
+                3>&1 1>&2 2>&3 \
+                </dev/tty >/dev/tty
         )"
         dialog_status=$?
         set -e
 
-        clear 2>/dev/null || true
+        clear </dev/tty >/dev/tty 2>/dev/null || true
 
         if [ "$dialog_status" -ne 0 ]; then
-            printf '%s\n' 9
-        else
-            printf '%s\n' "$choice"
+            SELECTED_MENU_CHOICE=9
         fi
 
         return 0
     fi
 
     _show_bootstrap_menu
-    printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
-    read -r choice
-    printf '%s\n' "$choice"
+    printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET"
+    read -r SELECTED_MENU_CHOICE
 }
 
 _bootstrap_menu() {
@@ -404,12 +405,14 @@ _bootstrap_menu() {
     local status=0
 
     while true; do
-        choice="$(_select_bootstrap_menu_choice)"
+        _select_bootstrap_menu_choice
+        choice="$SELECTED_MENU_CHOICE"
 
         status=0
 
         if [[ "$choice" =~ ^[1-9]$ ]]; then
-            printf '\n%sSelected option %s%s\n'                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
+            printf '\n%sSelected option %s%s\n' \
+                "$COLOR_CYAN" "$choice" "$COLOR_RESET"
         fi
 
         case "$choice" in
