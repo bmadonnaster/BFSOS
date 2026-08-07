@@ -3526,6 +3526,23 @@ cleanup() {
                 done
         fi
 
+        # Leave a clean, empty mountpoint for the next installer run. Never
+        # remove TARGET unless recursive mount verification proves that neither
+        # TARGET nor anything below it is mounted. The path guards protect
+        # against an empty TARGET or an accidental request to remove /.
+        if [[ -n "$TARGET" && "$TARGET" == /* && "$TARGET" != / ]]; then
+                if findmnt -Rrn "$TARGET" 2>/dev/null | grep -q .; then
+                        warn "Not removing leftover directories because a mount still exists below $TARGET."
+                else
+                        rm -rf --one-file-system -- "$TARGET" 2>/dev/null ||
+                                warn "Could not remove leftover mountpoint directories below $TARGET."
+                        mkdir -p -- "$TARGET" 2>/dev/null ||
+                                warn "Could not recreate clean target mountpoint $TARGET."
+                fi
+        else
+                warn "Refusing to clean unsafe target path: ${TARGET:-<empty>}"
+        fi
+
         return "$status"
 }
 
