@@ -641,7 +641,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v30.sh [options]
+Usage: install-bfs-menu-v35-postinstall-menu-systemd-offline-fixed.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -4153,7 +4153,15 @@ else
 fi
 
 offline_systemctl() {
-        SYSTEMD_OFFLINE=1 systemctl --root=/ --no-reload "$@"
+        # /run is bind-mounted from the live environment while installing.
+        # Force systemctl to operate only on the target filesystem so it never
+        # attempts to contact the live system's D-Bus or systemd manager.
+        env -u DBUS_SESSION_BUS_ADDRESS \
+            -u DBUS_SYSTEM_BUS_ADDRESS \
+            -u SYSTEMD_EXEC_PID \
+            SYSTEMD_OFFLINE=1 \
+            SYSTEMD_IGNORE_CHROOT=1 \
+            systemctl --root=/ --no-reload --no-ask-password "$@"
 }
 
 command -v ssh-keygen >/dev/null 2>&1 && ssh-keygen -A
@@ -4615,29 +4623,76 @@ run_chroot_installer() {
                 /bin/bash "$CHROOT_INSTALLER"
 }
 
-offer_final_chroot() {
-        local answer=""
+show_installation_success_dialog() {
+        local root_fs="${ROOT_FORMAT:-unknown}"
+        local snapshot_status="Disabled"
+        local bootloader_status="Not installed"
+        local additional_count="${#ADDITIONAL_USERS[@]}"
+        local installed_log="disabled"
+        local message=""
 
-        read -r -p "Chroot into the installed BFS system now? [y/N]: " answer
-        if [[ "${answer,,}" != y && "${answer,,}" != yes ]]; then
-                printf '\nBFS installation completed. The installer will unmount the target filesystems.\n'
-                return 0
+        if [[ "$root_fs" == keep && -n "$ROOT_DEV" ]]; then
+                root_fs="$(blkid -s TYPE -o value "$ROOT_DEV" 2>/dev/null || printf '%s' existing)"
         fi
 
-        FINAL_CHROOT=yes
-        KEEP_MOUNTS=yes
+        ((${#BTRFS_CONFIG_NAMES[@]} > 0)) && snapshot_status="Enabled"
+        [[ "$INSTALL_GRUB" == yes ]] && bootloader_status="GRUB"
 
-        printf '\nEntering the installed BFS system. Type exit to return to the live environment.\n'
-        run_on_tty \
-                chroot "$TARGET" /usr/bin/env -i \
-                HOME=/root \
-                TERM="${TERM:-linux}" \
-                PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-                LANG="${LOCALE:-C}" \
-                /bin/bash --login
+        if [[ "$LOG_ENABLED" == yes && -n "$LOG_FILE" ]]; then
+                installed_log="/var/log/bfs/installer/$(basename "$LOG_FILE")"
+        fi
 
-        printf '\nExited the installed BFS chroot.\n'
-        KEEP_MOUNTS=no
+        message="Congratulations!\n\nYour BFS Linux system installation is complete!\n\nInstallation summary\n--------------------\nHostname:          $HOSTNAME\nKernel package:    $KERNEL_PACKAGE\nBoot mode:         ${BOOT_MODE:-unknown}\nBootloader:        $bootloader_status\nRoot filesystem:   $root_fs\nBtrfs snapshots:   $snapshot_status\nPrimary user:      ${USERNAME:-none}\nAdditional users:  $additional_count\nInstaller log:     $installed_log\n\nWelcome to BFS Linux!"
+
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "BFS Linux Installation Complete" \
+                        --ok-label "Continue" \
+                        --msgbox "$message" \
+                        24 76 \
+                        </dev/tty >/dev/tty 2>/dev/tty
+        else
+                clear_screen
+                printf '%s\n' '============================================================'
+                printf '%s\n' '            BFS Linux Installation Complete'
+                printf '%s\n' '============================================================'
+                printf '\n%b\n\n' "$message"
+                pause_screen
+        fi
+}
+
+post_install_menu() {
+        local choice="" status=0
+
+        while true; do
+                set +e
+                themed_menu choice \
+                        "BFS installation complete" \
+                        "The installation completed successfully. You may enter the installed system again or finish and return to the live environment." \
+                        16 82 6 \
+                        1 "Chroot into the installed BFS system" \
+                        2 "Finish and unmount the installed system"
+                status=$?
+                set -e
+
+                [[ -n "$choice" ]] || choice=2
+
+                case "$choice" in
+                        1) chroot_into_target ;;
+                        2) return 0 ;;
+                        *) warn "Choose a valid post-install option."; sleep 1 ;;
+                esac
+        done
+}
+
+offer_final_chroot() {
+        show_installation_success_dialog
+        post_install_menu
+        printf '
+BFS installation completed. The installer will unmount the target filesystems.
+'
 }
 
 main() {
