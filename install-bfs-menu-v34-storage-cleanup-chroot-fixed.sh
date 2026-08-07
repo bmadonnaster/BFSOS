@@ -100,6 +100,8 @@ LOG_STDOUT_FD=3
 LOG_STDERR_FD=4
 
 MOUNTED_BY_SCRIPT=()
+OPENED_LUKS_BY_SCRIPT=()
+ACTIVATED_VGS_BY_SCRIPT=()
 USED_DEVICES=()
 EXTRA_DEVICES=()
 EXTRA_MOUNTPOINTS=()
@@ -1675,8 +1677,10 @@ luks_menu() {
                                         continue
                                 run_on_tty cryptsetup luksFormat "$device"
                                 read -r -p "Mapping name to open now [leave blank to skip]: " mapping
-                                [[ -z "$mapping" ]] ||
+                                if [[ -n "$mapping" ]]; then
                                         run_on_tty cryptsetup open "$device" "$mapping"
+                                        OPENED_LUKS_BY_SCRIPT+=("$mapping")
+                                fi
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
                                 pause_screen
@@ -1692,6 +1696,7 @@ luks_menu() {
                                 read -r -p "LUKS block device: " device
                                 read -r -p "Mapping name: " mapping
                                 run_on_tty cryptsetup open "$device" "$mapping"
+                                OPENED_LUKS_BY_SCRIPT+=("$mapping")
                                 command -v udevadm >/dev/null 2>&1 &&
                                         udevadm settle || true
                                 pause_screen
@@ -1704,6 +1709,9 @@ luks_menu() {
                                 }
                                 read -r -p "Mapping name to close: " mapping
                                 cryptsetup close "$mapping"
+                                for index in "${!OPENED_LUKS_BY_SCRIPT[@]}"; do
+                                        [[ "${OPENED_LUKS_BY_SCRIPT[$index]}" == "$mapping" ]] && unset 'OPENED_LUKS_BY_SCRIPT[index]'
+                                done
                                 pause_screen
                                 ;;
                         4) return 0 ;;
@@ -1719,7 +1727,7 @@ lvm_menu() {
         local vg_name=""
         local lv_name=""
         local lv_size=""
-        local status=0
+        local status=0 index=""
         local -a pv_array=()
 
         while true; do
@@ -1769,6 +1777,7 @@ lvm_menu() {
                                 read -r -p "Physical volume device(s), separated by spaces: " pv_list
                                 read -r -a pv_array <<< "$pv_list"
                                 vgcreate "$vg_name" "${pv_array[@]}"
+                                ACTIVATED_VGS_BY_SCRIPT+=("$vg_name")
                                 pause_screen
                                 ;;
                         3)
@@ -2628,6 +2637,7 @@ chroot_into_target() {
                 /bin/bash --login
 
         KEEP_MOUNTS=no
+        unmount_virtual_filesystems
         echo
         echo "Returned from the BFS chroot."
         pause_screen
@@ -3432,21 +3442,42 @@ mount_target_filesystems() {
 }
 
 mount_virtual_filesystems() {
-        log "Mounting virtual filesystems"
+        log "Mounting virtual filesystems for chroot"
         mkdir -p "$TARGET"/{dev,dev/pts,proc,sys,run}
-        if ! mountpoint -q "$TARGET/dev"; then mount --bind /dev "$TARGET/dev"; record_mount "$TARGET/dev"; fi
-        if ! mountpoint -q "$TARGET/dev/pts"; then mount -t devpts devpts "$TARGET/dev/pts" -o gid=5,mode=620; record_mount "$TARGET/dev/pts"; fi
-        if ! mountpoint -q "$TARGET/proc"; then mount -t proc proc "$TARGET/proc"; record_mount "$TARGET/proc"; fi
-        if ! mountpoint -q "$TARGET/sys"; then mount -t sysfs sysfs "$TARGET/sys"; record_mount "$TARGET/sys"; fi
-        if ! mountpoint -q "$TARGET/run"; then mount -t tmpfs tmpfs "$TARGET/run"; record_mount "$TARGET/run"; fi
-        if [[ -L "$TARGET/dev/shm" ]]; then mkdir -p "$TARGET/$(readlink "$TARGET/dev/shm")"; else mkdir -p "$TARGET/dev/shm"; fi
-        if [[ "$BOOT_MODE" == uefi && -d /sys/firmware/efi/efivars ]]; then
-                mkdir -p "$TARGET/sys/firmware/efi/efivars"
-                if ! mountpoint -q "$TARGET/sys/firmware/efi/efivars"; then
-                        mount --bind /sys/firmware/efi/efivars "$TARGET/sys/firmware/efi/efivars"
-                        record_mount "$TARGET/sys/firmware/efi/efivars"
-                fi
+
+        if ! mountpoint -q "$TARGET/dev"; then
+                mount --rbind /dev "$TARGET/dev"
+                mount --make-rslave "$TARGET/dev"
+                record_mount "$TARGET/dev"
         fi
+        if ! mountpoint -q "$TARGET/proc"; then
+                mount -t proc proc "$TARGET/proc"
+                record_mount "$TARGET/proc"
+        fi
+        if ! mountpoint -q "$TARGET/sys"; then
+                mount --rbind /sys "$TARGET/sys"
+                mount --make-rslave "$TARGET/sys"
+                record_mount "$TARGET/sys"
+        fi
+        if ! mountpoint -q "$TARGET/run"; then
+                mount --rbind /run "$TARGET/run"
+                mount --make-rslave "$TARGET/run"
+                record_mount "$TARGET/run"
+        fi
+}
+
+unmount_virtual_filesystems() {
+        local destination=""
+
+        # Recursive unmount is required because --rbind includes nested mounts
+        # such as /dev/pts, /dev/shm, and EFI variables below /sys.
+        for destination in "$TARGET/run" "$TARGET/sys" "$TARGET/proc" "$TARGET/dev"; do
+                if findmnt -Rrn "$destination" 2>/dev/null | grep -q .; then
+                        umount -R "$destination" 2>/dev/null ||
+                                umount -Rl "$destination" 2>/dev/null ||
+                                warn "Could not completely unmount $destination"
+                fi
+        done
 }
 
 cleanup() {
@@ -3470,11 +3501,30 @@ cleanup() {
                 unset DIALOGRC
         fi
         [[ "$KEEP_MOUNTS" == yes ]] && return 0
-        for ((index=${#MOUNTED_BY_SCRIPT[@]}-1; index>=0; index--)); do
-                destination="${MOUNTED_BY_SCRIPT[$index]}"
-                mountpoint -q "$destination" && umount "$destination" 2>/dev/null || true
-        done
+
+        # First remove every target mount, including Btrfs snapshot mounts and
+        # nested chroot bind mounts. Storage layers cannot be closed while any
+        # filesystem above them remains mounted.
+        if findmnt -Rrn "$TARGET" 2>/dev/null | grep -q .; then
+                umount -R "$TARGET" 2>/dev/null ||
+                        umount -Rl "$TARGET" 2>/dev/null || true
+        fi
+
         [[ -z "$SWAP_DEV" ]] || swapoff "$SWAP_DEV" 2>/dev/null || true
+
+        # Deactivate only volume groups created by this installer session.
+        if command -v vgchange >/dev/null 2>&1; then
+                for ((index=${#ACTIVATED_VGS_BY_SCRIPT[@]}-1; index>=0; index--)); do
+                        vgchange -an "${ACTIVATED_VGS_BY_SCRIPT[$index]}" 2>/dev/null || true
+                done
+        fi
+
+        # Close only LUKS mappings opened by this installer session, after LVM.
+        if command -v cryptsetup >/dev/null 2>&1; then
+                for ((index=${#OPENED_LUKS_BY_SCRIPT[@]}-1; index>=0; index--)); do
+                        cryptsetup close "${OPENED_LUKS_BY_SCRIPT[$index]}" 2>/dev/null || true
+                done
+        fi
 
         return "$status"
 }
