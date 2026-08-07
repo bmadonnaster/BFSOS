@@ -42,6 +42,14 @@ bootstrap_build() {
     make
     make install
 
+    #
+    # GCC's -m32 multilib search expects the 32-bit runtime under
+    # $TOOLS/$LFS_TGT/lib32. Glibc installs it in $TOOLS/lib32.
+    # Provide the target-layout compatibility link before GCC pass 2.
+    #
+    mkdir -p "$TOOLS/$LFS_TGT"
+    ln -sfn ../lib32 "$TOOLS/$LFS_TGT/lib32"
+
     cd ..
 
     #
