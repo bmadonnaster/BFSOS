@@ -2478,10 +2478,79 @@ configure_bootloader() {
 
 additional_users_text() {
         local user_name=""
+        local separator=""
 
         for user_name in "${ADDITIONAL_USERS[@]}"; do
-                printf '%s ' "$user_name"
+                printf '%s%s' "$separator" "$user_name"
+                separator=" "
         done
+}
+
+show_additional_users_review() {
+        local user_name=""
+
+        if ((${#ADDITIONAL_USERS[@]} == 0)); then
+                printf 'Additional users:     none\n'
+                return 0
+        fi
+
+        printf 'Additional users:\n'
+        for user_name in "${ADDITIONAL_USERS[@]}"; do
+                printf '  - %s\n' "$user_name"
+        done
+}
+
+show_btrfs_review() {
+        local index=0
+        local found=no
+        local device="" mountpoint="" format=""
+        local name="" data_subvol="" snapshot_subvol="" snapshot_mountpoint=""
+
+        printf 'Btrfs snapshots:\n'
+
+        for ((index=0; index<5+${#EXTRA_DEVICES[@]}; index++)); do
+                case "$index" in
+                        0) device="$ROOT_DEV"; mountpoint=/; format="$ROOT_FORMAT" ;;
+                        1) device="$BOOT_DEV"; mountpoint=/boot; format="$BOOT_FORMAT" ;;
+                        2) device="$EFI_DEV"; mountpoint=/boot/efi; format="$EFI_FORMAT" ;;
+                        3) device="$HOME_DEV"; mountpoint=/home; format="$HOME_FORMAT" ;;
+                        4) continue ;;
+                        *)
+                                device="${EXTRA_DEVICES[$((index - 5))]}"
+                                mountpoint="${EXTRA_MOUNTPOINTS[$((index - 5))]}"
+                                format="${EXTRA_FORMATS[$((index - 5))]}"
+                                ;;
+                esac
+
+                [[ -n "$device" ]] || continue
+                [[ "$format" == btrfs ]] || continue
+                found=yes
+
+                name="$(sanitize_btrfs_name "$mountpoint")"
+                case "$mountpoint" in
+                        /)
+                                data_subvol=@
+                                snapshot_subvol=@snapshots
+                                snapshot_mountpoint=/.snapshots
+                                ;;
+                        /home)
+                                data_subvol=@home
+                                snapshot_subvol=@home-snapshots
+                                snapshot_mountpoint=/home/.snapshots
+                                ;;
+                        *)
+                                data_subvol="@$name"
+                                snapshot_subvol="@$name-snapshots"
+                                snapshot_mountpoint="$mountpoint/.snapshots"
+                                ;;
+                esac
+
+                printf '  %-16s %-24s data=%-18s snapshots=%s mounted at %s\n' \
+                        "$mountpoint" "$device" "$data_subvol" \
+                        "$snapshot_subvol" "$snapshot_mountpoint"
+        done
+
+        [[ "$found" == yes ]] || printf '  none (no filesystem is set to format as Btrfs)\n'
 }
 
 menu_status() {
@@ -3032,7 +3101,11 @@ Base archive:         $ARCHIVE
 Users
 -----
 Primary user:         $USERNAME
-Additional users:     $(additional_users_text)
+SUMMARY
+
+                show_additional_users_review
+
+                cat <<SUMMARY
 
 Networking
 ----------
@@ -3065,8 +3138,11 @@ Detected Storage Features
 Encrypted targets:    $AUTO_CRYPTSETUP
 LVM detected:         $AUTO_LVM2
 mdraid detected:      $AUTO_MDADM
-Btrfs snapshots:      automatic when formatted as Btrfs
+SUMMARY
 
+                show_btrfs_review
+
+                cat <<SUMMARY
 
 RAID
 ----

@@ -257,7 +257,7 @@ f:f1dd87922e8fddfe73ef20ae76c2f777:aaa_filesystem/umask.sh
 f:1f922824a6d29c466178d0834d17321c:aaa_filesystem/vte.csh
 f:d713701b894685e338c42f2cf8af338f:aaa_filesystem/vte.sh
 f:21fd5d73c35cc647f6ee852e73ddeb6a:aaa_filesystem/xorg.sh
-f:917a5ebd11d1b6d9cb16719b6d9f3a1f:acl/Pkgfile
+f:8b1202612c7060cf547c69b9278b9d1c:acl/Pkgfile
 f:f405083e721d9176d4e671197986194f:argon2/Pkgfile
 f:8daece87c64487d6abe79c7b1e521044:attr/Pkgfile
 f:94b28978b943fd465300b57d13185ae3:autoconf/Pkgfile
@@ -298,11 +298,11 @@ f:b19378aaa9e4b3f517bbdd1acbe02057:dbus/Pkgfile
 f:522f676bd6e1b4eb9ddc969f42062268:dejagnu/Pkgfile
 f:6abcb19196d2a7adf9119628a9e402a3:dhcpcd/Pkgfile
 f:43f06c6425e45e431fe205e6b5786f1b:dhcpcd/pre-install
-f:9913c7910e34eb5c589125e257e2f66a:dialog/Pkgfile
+f:20d98973387ddfd1b6211696cc357dd3:dialog/Pkgfile
 f:4d4c8b1885e8f00b27ebddfeb26b0c29:diffutils/Pkgfile
 f:a4a2df080fb5f625888eb0830c9fe25f:dosfstools/Pkgfile
-f:83198b5d46a1bb67899659f54929bcf3:dracut/Pkgfile
-f:5624e9274f8cb71e6d0713e702271d1b:dracut/bfs.conf
+f:a4e74b63b68bc752941969bd862df076:dracut/Pkgfile
+f:920a95e49516eae81e8f9f98085a7d6b:dracut/bfs.conf
 f:bf5c1710a978b8629b20c4f30796b409:e2fsprogs/Pkgfile
 f:758f6c47901d8e9cf92c3f654957cd6c:efibootmgr/Pkgfile
 f:7399e8786c9e25e7f99f8caf8c1e228b:efivar/Pkgfile
@@ -499,11 +499,11 @@ f:c6d689e4e8bc7b2b3e13a911bab36e27:pkgconf/x86_64-pc-linux-gnu.personality
 f:2eadad66bcb507405db3e509ba0b55dc:pkgutils/Pkgfile
 f:d9f6ce295e70b61b39cd43c5605c54a7:pkgutils/extension
 f:468a4d0cd212769920fa6b4fe491ea6e:pkgutils/pkgadd.conf
-f:8020f6821b09fe95b2a215f28d4f3156:pkgutils/pkgmk.conf
 f:99bbe0ecb6bb0db1bcbf26f37f888602:pkgutils/pkgutils_add-compress-infopages.patch
 f:7769542e43a4108de16b45133f28eaea:pkgutils/pkgutils_fix-build-needed-trigger.patch
 f:35020b00b942b9353ad9f9cc7cd18d89:pkgutils/pkgutils_ignore-conflict.patch
 f:7fc6f3be2076ff63f51b9ad7681ad2b3:pkgutils/pkgutils_remove-libtool.patch
+f:7a2804aaecc8c60636ce192142b0694a:pkgutils/pkgmk.conf
 f:f4b32780faaae61a529278b6aa198df9:popt/Pkgfile
 f:fd08083fb07cc20a1f95606813d567a2:ports/Pkgfile
 f:0de7bd216b8233739cb7b96163837c03:ports/repokey.pub

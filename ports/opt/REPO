@@ -288,7 +288,6 @@ d:potrace
 d:power-profiles-daemon
 d:protobuf-c
 d:protobuf
-d:prt-utils
 d:pth
 d:publicsuffix-list
 d:pulseaudio
@@ -318,14 +317,12 @@ d:shared-mime-info
 d:slang
 d:smartmontools
 d:smartypants
-d:snapper
 d:socat
 d:soundtouch
 d:speex
 d:spirv-headers
 d:spirv-llvm-translator
 d:spirv-tools
-d:sqlite
 d:startup-notification
 d:subversion
 d:swig
@@ -365,6 +362,7 @@ d:xxhash
 d:yaml
 d:yasm
 d:zip
+d:snapper
 f:18c8379f157a22e25e053a549cfe2931:aalib/Pkgfile
 f:517b2577b1062769769434c4fb97e245:aalib/aalib-aalinuxkbd-return.patch
 f:726fba4b9be81497d43873166933bb5f:aalib/aalib-c99.patch
@@ -743,7 +741,6 @@ f:3a08dd9551d064a073ae4affcf744490:power-profiles-daemon/Pkgfile
 f:df868951f3cd4c622721945418a45c58:protobuf-c/Pkgfile
 f:a44c538c323d566fe7e10588f62f23c0:protobuf-c/protobuf-c-1.5.0-consolidated_fixes-1.patch
 f:1c0831a189a91cdcb22f832a96da68cb:protobuf/Pkgfile
-f:cccbd7d9f6b6a3da4c8ce637303d1ac6:prt-utils/Pkgfile
 f:b9e107a0433dce0ec2197e57c1ddc89d:pth/Pkgfile
 f:538741c208bd9d554aa032c2fe01546c:publicsuffix-list/Pkgfile
 f:fcab884df8994b0c64260db6ef390ca5:pulseaudio/Pkgfile
@@ -807,14 +804,12 @@ f:a95be8418081d4cbc6402a8dd6671a97:slang/Pkgfile
 f:da8178aeefc2739bd066a527c800f861:smartmontools/Pkgfile
 f:75bbd34f9d43d4c8a0c2f83ae9b6b63e:smartmontools/post-install
 f:badcc21a86e4801b22d8bd3845abfd50:smartypants/Pkgfile
-f:4c35208d5e972e6ba07ba8813fd50f61:snapper/Pkgfile
 f:6a5ce1e56e19403d198d242fca155d18:socat/Pkgfile
 f:2029419382f3682572a10821916f0c21:soundtouch/Pkgfile
 f:cf3e5513c848a4aeb27f1ecec59e7132:speex/Pkgfile
 f:fd4611052d4f12558c252a2c24e4c36d:spirv-headers/Pkgfile
 f:bc5e7e99fed3733f5a54274d95cec016:spirv-llvm-translator/Pkgfile
 f:ae180bbfdf42668bcaf9cc676d74aa69:spirv-tools/Pkgfile
-f:bad3b31123c0e0cf63c296b7fcc9c58b:sqlite/Pkgfile
 f:07baf94cc893b002cc11bb7b964f60d1:startup-notification/Pkgfile
 f:32ecf930fa24cc2237bee57b99bd7e2d:subversion/Pkgfile
 f:620f29551a20d29ae102ea9fc5ce6853:swig/Pkgfile
@@ -863,3 +858,4 @@ f:abc9e5f80ae8bec3b64e1b0ad0c7c214:xxhash/Pkgfile
 f:9db49c91476a5df05bbe8bbce1a96e39:yaml/Pkgfile
 f:55363ae14fea33a3276f4381b4865278:yasm/Pkgfile
 f:373a1e481806845e33b2dac007a2a46f:zip/Pkgfile
+f:4c35208d5e972e6ba07ba8813fd50f61:snapper/Pkgfile
