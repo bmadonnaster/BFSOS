@@ -1877,7 +1877,7 @@ lvm_menu() {
                                 # Friendly shorthand: LVM itself rejects 50%, but users
                                 # naturally expect it to mean 50% of the volume group.
                                 if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%$ ]]; then
-                                        normalized_size="${normalized_size}%VG"
+                                        normalized_size="${normalized_size%%%}%VG"
                                 fi
 
                                 if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%(VG|FREE)$ ]]; then
