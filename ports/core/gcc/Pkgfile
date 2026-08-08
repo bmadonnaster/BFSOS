@@ -93,6 +93,7 @@ bootstrap_build() {
         cd build32
 
         ../libstdc++-v3/configure \
+            --build=x86_64-pc-linux-gnu \
             --host="$LFS_TGT" \
             --prefix="$TOOLS" \
             --libdir="$TOOLS/lib32" \
