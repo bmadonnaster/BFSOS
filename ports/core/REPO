@@ -443,10 +443,11 @@ f:710eff3c51851c93e91b539169403f0a:linux-pam/system-password
 f:6be86e52bfbaf5f80ec7c9fc23f55bc0:linux-pam/system-session
 f:1ccf9a860d789a5512daeb9da791efbc:linux/.config
 f:d41d8cd98f00b204e9800998ecf8427e:linux/.nostrip
-f:4798013e47b2a8acece461015b5a49c5:linux/Pkgfile
+f:893cc33d3c50ed82a4851d128bd99e7a:linux/Pkgfile
 f:c51b9b0bc84835d1776d5bfe5f0c2090:linux/config
 f:88a2a50e3caee7181d1905f7763d70d9:linux/generate-config.sh
 f:adeab2dff36dc9f193882fdc95fe8654:linux/post-install
+f:4798013e47b2a8acece461015b5a49c5:linux/Pkgfile.backup
 f:603a862cc8e51dc6b1dd505155287b70:lvm2/Pkgfile
 f:ae6b4f0ed45c1d71f4390e8060106ce1:lz4/Pkgfile
 f:5448505a35c8ea3a77e372cc997218b9:lzo/Pkgfile
