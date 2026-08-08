@@ -349,7 +349,7 @@ f:21d4fe3f8b80c95627a559c2c9eb9cc4:fuse/Pkgfile
 f:2641ae8f463a4672f1346bdfd9448bb3:fuse2/Pkgfile
 f:3bd63711298f0d01d342271d7b4f23bb:fuse2/fuse2-0007-util-ulockmgr_server.c-conditionally-define-closefro.patch
 f:1a322653eb28ba9925718427b9a476fd:gawk/Pkgfile
-f:452a7b8e6af2c956d61295dae0d3032e:gcc/Pkgfile
+f:4e3af9e0a830e5acd907c46440c2414f:gcc/Pkgfile
 f:3d333df77302ed89e06a4a8539943b7d:gcc/c89
 f:da96f545b863e57c6ab2598c1ea9a740:gcc/c99
 f:61a057afa31006764b957a483ba90b9d:gcc/gcc-4.7.3-multilib-dirs.patch

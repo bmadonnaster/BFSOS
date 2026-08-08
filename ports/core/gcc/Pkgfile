@@ -92,7 +92,7 @@ bootstrap_build() {
         mkdir -v build32
         cd build32
 
-        ../libstdc++-v3/configure \
+        if ! ../libstdc++-v3/configure \
             --build=x86_64-pc-linux-gnu \
             --host="$LFS_TGT" \
             --prefix="$TOOLS" \
@@ -104,6 +104,18 @@ bootstrap_build() {
             --with-gxx-include-dir="$TOOLS/$LFS_TGT/include/c++/$version" \
             CC="$LFS_TGT-gcc -m32" \
             CXX="$LFS_TGT-g++ -m32"
+        then
+            mkdir -p "$HOME/bfs-linux-install/logs/toolchain"
+
+            if [ -f config.log ]; then
+                cp -f config.log \
+                    "$HOME/bfs-linux-install/logs/toolchain/gcc-pass2-build32-config.log"
+                echo "Saved failed 32-bit libstdc++ config.log to:"
+                echo "  $HOME/bfs-linux-install/logs/toolchain/gcc-pass2-build32-config.log"
+            fi
+
+            return 1
+        fi
 
         make
         make install
