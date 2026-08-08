@@ -934,20 +934,35 @@ is_used_device() {
 
 get_available_partitions() {
         local path type size fstype label mountpoints
+        local lv_path=""
+        local -A seen_paths=()
+
         AVAILABLE_PATHS=()
         AVAILABLE_TYPES=()
         AVAILABLE_SIZES=()
         AVAILABLE_FSTYPES=()
         AVAILABLE_LABELS=()
         AVAILABLE_MOUNTPOINTS=()
-AVAILABLE_NICS=()
-AVAILABLE_NIC_MACS=()
-AVAILABLE_NIC_STATES=()
-AVAILABLE_NIC_DRIVERS=()
+        AVAILABLE_NICS=()
+        AVAILABLE_NIC_MACS=()
+        AVAILABLE_NIC_STATES=()
+        AVAILABLE_NIC_DRIVERS=()
 
+        # First collect ordinary usable block devices. Do not show RAID-member
+        # partitions or an MD device that has already become an LVM PV.
         while read -r path type size fstype label mountpoints; do
-                [[ "$type" == part || "$type" == lvm || "$type" == crypt || "$type" == raid* ]] || continue
+                [[ "$type" == part || "$type" == crypt || "$type" == raid* || "$type" == lvm ]] || continue
+
+                case "$fstype" in
+                        linux_raid_member|LVM2_member)
+                                continue
+                                ;;
+                esac
+
                 is_used_device "$path" && continue
+                [[ -n "${seen_paths[$path]:-}" ]] && continue
+                seen_paths["$path"]=1
+
                 AVAILABLE_PATHS+=("$path")
                 AVAILABLE_TYPES+=("$type")
                 AVAILABLE_SIZES+=("${size:--}")
@@ -955,9 +970,48 @@ AVAILABLE_NIC_DRIVERS=()
                 AVAILABLE_LABELS+=("${label:--}")
                 AVAILABLE_MOUNTPOINTS+=("${mountpoints:--}")
         done < <(
-                lsblk -prno PATH,TYPE,SIZE,FSTYPE,LABEL,MOUNTPOINTS |
+                lsblk -plno PATH,TYPE,SIZE,FSTYPE,LABEL,MOUNTPOINTS |
                 awk '{p=$1;t=$2;s=$3;f=$4;l=$5;$1=$2=$3=$4=$5="";sub(/^ +/,"");print p,t,s,f,l,$0}'
         )
+
+        # A previous installer run/cleanup may have deactivated an existing VG.
+        # Activate discovered volume groups before enumerating LVs so their
+        # /dev/<vg>/<lv> block-device nodes exist for filesystem assignment.
+        if command -v vgchange >/dev/null 2>&1; then
+                vgchange -ay >/dev/null 2>&1 || true
+                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        fi
+
+        # Some util-linux/lsblk combinations omit logical volumes from list-mode
+        # output when they sit on stacked MD -> LVM storage. Query LVM directly
+        # and add any missing LV paths. This guarantees the filesystem selector
+        # sees the top-layer devices users actually want to format and mount.
+        if command -v lvs >/dev/null 2>&1; then
+                while IFS= read -r lv_path; do
+                        lv_path="${lv_path#"${lv_path%%[![:space:]]*}"}"
+                        lv_path="${lv_path%"${lv_path##*[![:space:]]}"}"
+                        [[ -n "$lv_path" && -b "$lv_path" ]] || continue
+                        is_used_device "$lv_path" && continue
+                        [[ -n "${seen_paths[$lv_path]:-}" ]] && continue
+
+                        path="$lv_path"
+                        type="lvm"
+                        size="$(lsblk -dnro SIZE "$lv_path" 2>/dev/null | head -n1)"
+                        fstype="$(lsblk -dnro FSTYPE "$lv_path" 2>/dev/null | head -n1)"
+                        label="$(lsblk -dnro LABEL "$lv_path" 2>/dev/null | head -n1)"
+                        mountpoints="$(lsblk -dnro MOUNTPOINTS "$lv_path" 2>/dev/null | head -n1)"
+
+                        seen_paths["$path"]=1
+                        AVAILABLE_PATHS+=("$path")
+                        AVAILABLE_TYPES+=("$type")
+                        AVAILABLE_SIZES+=("${size:--}")
+                        AVAILABLE_FSTYPES+=("${fstype:--}")
+                        AVAILABLE_LABELS+=("${label:--}")
+                        AVAILABLE_MOUNTPOINTS+=("${mountpoints:--}")
+                done < <(
+                        lvs --noheadings -o lv_path 2>/dev/null || true
+                )
+        fi
 }
 
 show_available_partitions() {
@@ -1357,10 +1411,12 @@ partition_disks() {
 
 
 list_raid_member_candidates() {
+        # RAID creation in the installer is partition-oriented. Whole disks are
+        # intentionally excluded so users do not see both /dev/vdb and
+        # /dev/vdb1 for the same physical device after partitioning.
         lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS |
         awk '
-                ($2 == "disk" || $2 == "part" || $2 == "lvm" || $2 == "crypt") &&
-                $5 == "" {
+                $2 == "part" && $5 == "" {
                         print
                 }
         '
@@ -1505,10 +1561,16 @@ choose_raid_members() {
         local index=""
         local selected=""
         local candidate=""
-        local already_selected=no
+        local status=0
+        local line=""
+        local description=""
+        local fstype=""
         local -a candidates=()
         local -a descriptions=()
         local -a selected_members=()
+        local -a menu_items=()
+        local -a remaining_candidates=()
+        local -a remaining_descriptions=()
 
         while IFS= read -r line; do
                 [[ -n "$line" ]] || continue
@@ -1518,30 +1580,99 @@ choose_raid_members() {
         done < <(list_raid_member_candidates)
 
         ((${#candidates[@]} >= minimum)) || {
-                warn "At least $minimum unused block devices are required."
+                warn "At least $minimum unused RAID member partitions are required."
                 return 1
         }
 
+        # Preferred interface: one checklist showing only partitions. Space
+        # toggles a member, Enter accepts the complete selection, and users can
+        # correct a mistaken selection before continuing.
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                while true; do
+                        menu_items=()
+
+                        for ((index=0; index<${#candidates[@]}; index++)); do
+                                candidate="${candidates[$index]}"
+                                description="${descriptions[$index]}"
+                                # Remove the path from the descriptive text because
+                                # the path is already the checklist tag.
+                                description="${description#"$candidate"}"
+                                description="${description#"${description%%[![:space:]]*}"}"
+                                [[ -n "$description" ]] || description="RAID member partition"
+
+                                menu_items+=(
+                                        "$candidate"
+                                        "$description"
+                                        off
+                                )
+                        done
+
+                        set +e
+                        choice="$(
+                                dialog --stdout --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Select RAID member partitions" \
+                                        --cancel-label "Cancel" \
+                                        --separate-output \
+                                        --checklist \
+                                        "Use Up/Down to move, Space to select or unselect members, then Enter on OK.\n\nThis RAID level requires at least $minimum member(s)." \
+                                        23 92 15 \
+                                        "${menu_items[@]}" \
+                                        </dev/tty
+                        )"
+                        status=$?
+                        set -e
+
+                        ((status == 0)) || return 1
+
+                        selected_members=()
+                        while IFS= read -r selected; do
+                                [[ -n "$selected" ]] || continue
+                                selected_members+=("$selected")
+                        done <<< "$choice"
+
+                        if ((${#selected_members[@]} < minimum)); then
+                                dialog --clear \
+                                        --backtitle "BFS Linux Installer" \
+                                        --title "Not enough RAID members" \
+                                        --msgbox \
+                                        "This RAID level requires at least $minimum member(s).\n\nYou selected ${#selected_members[@]}." \
+                                        10 60 \
+                                        </dev/tty >/dev/tty 2>/dev/tty || true
+                                continue
+                        fi
+
+                        printf -v "$result_variable" '%s' "${selected_members[*]}"
+                        return 0
+                done
+        fi
+
+        # Text fallback: select one partition at a time, but remove each chosen
+        # member from the displayed list so it cannot be selected twice.
+        remaining_candidates=("${candidates[@]}")
+        remaining_descriptions=("${descriptions[@]}")
+
         while true; do
                 clear_screen
-                echo "Select RAID member devices"
-                echo "=========================="
+                echo "Select RAID member partitions"
+                echo "============================="
                 echo
                 echo "Selected: ${selected_members[*]:-none}"
                 echo
 
-                for ((index=0; index<${#candidates[@]}; index++)); do
+                for ((index=0; index<${#remaining_candidates[@]}; index++)); do
                         printf '  %d) %s\n' \
                                 "$((index + 1))" \
-                                "${descriptions[$index]}"
+                                "${remaining_descriptions[$index]}"
                 done
 
                 printf '  %d) Finished selecting members\n' \
-                        "$(( ${#candidates[@]} + 1 ))"
+                        "$(( ${#remaining_candidates[@]} + 1 ))"
                 printf '  %d) Cancel\n\n' \
-                        "$(( ${#candidates[@]} + 2 ))"
+                        "$(( ${#remaining_candidates[@]} + 2 ))"
 
-                read -r -p "Choose [1-$(( ${#candidates[@]} + 2 ))]: " choice
+                read -r -p "Choose [1-$(( ${#remaining_candidates[@]} + 2 ))]: " choice
 
                 [[ "$choice" =~ ^[0-9]+$ ]] || {
                         warn "Enter a number from the list."
@@ -1549,7 +1680,7 @@ choose_raid_members() {
                         continue
                 }
 
-                if ((choice == ${#candidates[@]} + 1)); then
+                if ((choice == ${#remaining_candidates[@]} + 1)); then
                         if ((${#selected_members[@]} < minimum)); then
                                 warn "This RAID level requires at least $minimum members."
                                 sleep 2
@@ -1560,33 +1691,24 @@ choose_raid_members() {
                         return 0
                 fi
 
-                if ((choice == ${#candidates[@]} + 2)); then
+                if ((choice == ${#remaining_candidates[@]} + 2)); then
                         return 1
                 fi
 
-                ((choice >= 1 && choice <= ${#candidates[@]})) || {
+                ((choice >= 1 && choice <= ${#remaining_candidates[@]})) || {
                         warn "That selection is outside the available range."
                         sleep 1
                         continue
                 }
 
-                selected="${candidates[$((choice - 1))]}"
-                already_selected=no
-
-                for candidate in "${selected_members[@]}"; do
-                        if [[ "$candidate" == "$selected" ]]; then
-                                already_selected=yes
-                                break
-                        fi
-                done
-
-                if [[ "$already_selected" == yes ]]; then
-                        warn "$selected is already selected."
-                        sleep 1
-                        continue
-                fi
-
+                index=$((choice - 1))
+                selected="${remaining_candidates[$index]}"
                 selected_members+=("$selected")
+
+                unset 'remaining_candidates[index]'
+                unset 'remaining_descriptions[index]'
+                remaining_candidates=("${remaining_candidates[@]}")
+                remaining_descriptions=("${remaining_descriptions[@]}")
         done
 }
 
@@ -1855,9 +1977,11 @@ lvm_menu() {
                                 lvm_run pvs 2>/dev/null || true
                                 echo
                                 device=""
+                                # Cancel/Back from the device prompt must return
+                                # to the LVM menu instead of tripping `set -e`.
                                 ask_default device \
                                         "Block device for the physical volume" \
-                                        "/dev/"
+                                        "/dev/" || continue
                                 [[ -n "$device" ]] || continue
                                 [[ -b "$device" ]] || {
                                         warn "Not a block device: $device"
