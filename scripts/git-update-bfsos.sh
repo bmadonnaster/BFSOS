@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# git-update-bfs-linux-install-v5.sh
+# git-update-BFSOS-v5.sh
 #
-# Locate ~/bfs-linux-install, clean generated port metadata and httpup
+# Locate ~/BFSOS, clean generated port metadata and httpup
 # client-state files, regenerate bundled httpup REPO manifests, stage all
 # changes, commit them with today's date, and push.
 #
@@ -12,7 +12,7 @@
 set -Eeuo pipefail
 
 PROGRAM_NAME="${0##*/}"
-PROJECT_NAME="bfs-linux-install"
+PROJECT_NAME="BFSOS"
 CODEBERG_HOST="codeberg.org"
 CODEBERG_SSH_USER="git"
 CODEBERG_KEY_NAME="id_ed25519_codeberg"

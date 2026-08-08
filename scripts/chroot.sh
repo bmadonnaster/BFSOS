@@ -3,7 +3,7 @@
 # chroot.sh
 #
 # Mount or reuse a BFS Linux target at /mnt/bfs and enter its chroot.
-# Intended location: ~/bfs-linux-install/scripts/chroot.sh
+# Intended location: ~/BFSOS/scripts/chroot.sh
 #
 
 set -Eeuo pipefail

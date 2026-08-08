@@ -18,8 +18,8 @@ So there, my rules. If you encounter error or bugs when using `lfs-scripts`, ope
 #Getting started
 I recommend using the Gentoo live GUI iso located at https://www.gentoo.org/downloads/
 After writing to media and booting perfom the below setps.
-git clone https://codeberg.org/bmadonnaster/BFS-Linux-install
-cd BFS-Linux-install
+git clone https://codeberg.org/bmadonnaster/BFSOS
+cd BFSOS
 
 # bunch of scripts
 So i will explain most of these scripts does, else you have to read on top of each script of what it does and how to use it.

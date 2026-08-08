@@ -2,13 +2,13 @@
 #
 # bfs-update-ports.sh
 #
-# Synchronize ~/bfs-linux-install/ports with the BFS-Linux Codeberg repo.
+# Synchronize ~/BFSOS/ports with the BFS-Linux Codeberg repo.
 # This script may be stored and run from any subfolder.
 #
 
 set -Eeuo pipefail
 
-INSTALL_DIR="$HOME/bfs-linux-install"
+INSTALL_DIR="$HOME/BFSOS"
 SOURCE_PORTS="$INSTALL_DIR/ports"
 
 REPO_URL="git@codeberg.org:bmadonnaster/BFS-Linux.git"
@@ -168,7 +168,7 @@ if [[ -d "$REPO_DIR/.git" ]]; then
     fi
 fi
 
-# 1. Verify ~/bfs-linux-install exists.
+# 1. Verify ~/BFSOS exists.
 [[ -d "$INSTALL_DIR" ]] ||
     die "$INSTALL_DIR does not exist."
 
@@ -193,7 +193,7 @@ fi
 echo "Removing old ports folder..."
 rm -rf -- "$REPO_DIR/ports"
 
-# 4. Copy ports from ~/bfs-linux-install.
+# 4. Copy ports from ~/BFSOS.
 echo "Copying $SOURCE_PORTS to $REPO_DIR/ports"
 cp -a -- "$SOURCE_PORTS" "$REPO_DIR/ports"
 

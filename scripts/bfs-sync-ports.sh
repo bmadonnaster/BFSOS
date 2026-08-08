@@ -14,7 +14,7 @@ else
     USER_HOME="$HOME"
 fi
 
-REPO_ROOT="$USER_HOME/bfs-linux-install"
+REPO_ROOT="$USER_HOME/BFSOS"
 SRC_PORTS="/usr/ports"
 DST_PORTS="$REPO_ROOT/ports"
 HTTPUP_REPGEN="/usr/bin/httpup-repgen"
@@ -89,4 +89,4 @@ echo
 echo "Next steps:"
 echo "  cd $REPO_ROOT"
 echo "  git status"
-echo "  ./scripts/git-update-bfs-linux-install.sh"
+echo "  ./scripts/git-update-bfsos.sh"

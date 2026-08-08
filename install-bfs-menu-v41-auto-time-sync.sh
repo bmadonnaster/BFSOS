@@ -189,7 +189,7 @@ CHROOT_INSTALLER="/root/.bfs-install-chroot.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Keep installer logs beside the bootstrap logs, even when this script is
-# stored in bfs-linux-install/scripts/.
+# stored in BFSOS/scripts/.
 if [[ "$(basename "$SCRIPT_DIR")" == scripts ]]; then
         PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 else
@@ -2321,16 +2321,16 @@ configure_archive() {
         installer_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
         # Support the installer being stored either in:
-        #   bfs-linux-install/
+        #   BFSOS/
         # or:
-        #   bfs-linux-install/scripts/
+        #   BFSOS/scripts/
         if [[ -d "$installer_dir/archives/base" ]]; then
                 project_dir="$installer_dir"
         elif [[ -d "$installer_dir/../archives/base" ]]; then
                 project_dir="$(cd "$installer_dir/.." && pwd)"
         elif [[ -n "${HOME:-}" &&
-                -d "$HOME/bfs-linux-install/archives/base" ]]; then
-                project_dir="$HOME/bfs-linux-install"
+                -d "$HOME/BFSOS/archives/base" ]]; then
+                project_dir="$HOME/BFSOS"
         else
                 project_dir="$installer_dir"
         fi

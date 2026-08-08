@@ -105,13 +105,13 @@ bootstrap_build() {
             CC="$LFS_TGT-gcc -m32" \
             CXX="$LFS_TGT-g++ -m32"
         then
-            mkdir -p "$HOME/bfs-linux-install/logs/toolchain"
+            mkdir -p "$HOME/BFSOS/logs/toolchain"
 
             if [ -f config.log ]; then
                 cp -f config.log \
-                    "$HOME/bfs-linux-install/logs/toolchain/gcc-pass2-build32-config.log"
+                    "$HOME/BFSOS/logs/toolchain/gcc-pass2-build32-config.log"
                 echo "Saved failed 32-bit libstdc++ config.log to:"
-                echo "  $HOME/bfs-linux-install/logs/toolchain/gcc-pass2-build32-config.log"
+                echo "  $HOME/BFSOS/logs/toolchain/gcc-pass2-build32-config.log"
             fi
 
             return 1

@@ -1514,7 +1514,7 @@ _buildtoolchain() {
 
     _clean_start
 
-    export PATCH=~/bfs-linux-install/sources/
+    export PATCH="$SCRIPT_DIR/sources/"
     export BOOTSTRAP=1
     export LFS_TGT=x86_64-lfs-linux-gnu
     export LFS_TGT32=i686-lfs-linux-gnu

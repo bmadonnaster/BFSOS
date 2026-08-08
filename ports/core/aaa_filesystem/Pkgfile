@@ -249,9 +249,9 @@ PRETTY_NAME="BFS Linux $bfs_version"
 ID=bfs
 VERSION="$bfs_version"
 VERSION_ID="$bfs_version"
-HOME_URL="https://codeberg.org/bmadonnaster/BFS-Linux"
-SUPPORT_URL="https://codeberg.org/bmadonnaster/BFS-Linux/issues"
-BUG_REPORT_URL="https://codeberg.org/bmadonnaster/BFS-Linux/issues"
+HOME_URL="https://codeberg.org/bmadonnaster/BFSOS"
+SUPPORT_URL="https://codeberg.org/bmadonnaster/BFSOS/issues"
+BUG_REPORT_URL="https://codeberg.org/bmadonnaster/BFSOS/issues"
 EOF
 
     cat > "$PKG/etc/issue" <<EOF

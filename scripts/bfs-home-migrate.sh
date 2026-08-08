@@ -28,7 +28,7 @@ fi
 
 [[ -n "$INVOKING_HOME" ]] || INVOKING_HOME="$HOME"
 
-DEFAULT_ARCHIVE_DIR="$INVOKING_HOME/bfs-linux-install/archives/home-folder-backup"
+DEFAULT_ARCHIVE_DIR="$INVOKING_HOME/BFSOS/archives/home-folder-backup"
 SKEL_DIR="/etc/skel"
 
 TEMP_MOUNT=""
@@ -797,7 +797,7 @@ configure_custom_exclusions() {
                     echo "Enter a path or GNU tar exclusion pattern relative to each home folder."
                     echo "Examples:"
                     echo "  Videos"
-                    echo "  bfs-linux-install/archives"
+                    echo "  BFSOS/archives"
                     echo "  **/*.iso"
                     read -r -p "Custom path or pattern: " custom_pattern
 
