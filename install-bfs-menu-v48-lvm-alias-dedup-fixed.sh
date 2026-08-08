@@ -950,8 +950,13 @@ get_available_partitions() {
 
         # First collect ordinary usable block devices. Do not show RAID-member
         # partitions or an MD device that has already become an LVM PV.
+        #
+        # LVM devices are intentionally excluded here because lsblk commonly
+        # exposes the same LV through /dev/mapper/<vg>-<lv>. We add LVs once,
+        # below, using the friendlier canonical paths reported by `lvs`
+        # (for example /dev/bfs-vg/home).
         while read -r path type size fstype label mountpoints; do
-                [[ "$type" == part || "$type" == crypt || "$type" == raid* || "$type" == lvm ]] || continue
+                [[ "$type" == part || "$type" == crypt || "$type" == raid* ]] || continue
 
                 case "$fstype" in
                         linux_raid_member|LVM2_member)
@@ -982,10 +987,9 @@ get_available_partitions() {
                 command -v udevadm >/dev/null 2>&1 && udevadm settle || true
         fi
 
-        # Some util-linux/lsblk combinations omit logical volumes from list-mode
-        # output when they sit on stacked MD -> LVM storage. Query LVM directly
-        # and add any missing LV paths. This guarantees the filesystem selector
-        # sees the top-layer devices users actually want to format and mount.
+        # Query LVM directly and add each logical volume exactly once using
+        # LVM's friendly /dev/<vg>/<lv> path. This avoids duplicate aliases such
+        # as /dev/mapper/bfs--vg-home and /dev/bfs-vg/home appearing together.
         if command -v lvs >/dev/null 2>&1; then
                 while IFS= read -r lv_path; do
                         lv_path="${lv_path#"${lv_path%%[![:space:]]*}"}"
