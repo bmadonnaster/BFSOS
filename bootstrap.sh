@@ -1908,6 +1908,23 @@ PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 . /var/lib/pkgmk/extension
 EOF
 
+    # Keep the installed/final pkgmk configuration on the external build-work
+    # bind mount too. Stage 3 uses the installed pkgmk/prt-get configuration,
+    # so without this it falls back to /var/cache/pkg/work inside the small
+    # LiveGUI-backed rootfs and GCC can exhaust that filesystem.
+    if [ -f "$LFS/etc/pkgmk.conf" ]; then
+        if grep -q '^# *PKGMK_WORK_DIR=' "$LFS/etc/pkgmk.conf"; then
+            sed -i                 's|^# *PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work"|'                 "$LFS/etc/pkgmk.conf"
+        elif grep -q '^PKGMK_WORK_DIR=' "$LFS/etc/pkgmk.conf"; then
+            sed -i                 's|^PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work"|'                 "$LFS/etc/pkgmk.conf"
+        else
+            printf '\nPKGMK_WORK_DIR="/var/cache/pkg/build-work"\n'                 >> "$LFS/etc/pkgmk.conf"
+        fi
+
+        echo "Final pkgmk work directory configured:"
+        grep '^PKGMK_WORK_DIR=' "$LFS/etc/pkgmk.conf" || true
+    fi
+
     cat > "$LFS/tmp/pkgmk.systemd-bootstrap.conf" <<EOF
 export LANG=C
 export LC_ALL=C
