@@ -276,6 +276,38 @@ setup_installer_theme() {
         export DIALOGRC="$DIALOGRC_FILE"
 }
 
+report_installer_interface_mode() {
+        local -a reasons=()
+
+        if ! command -v dialog >/dev/null 2>&1; then
+                reasons+=("dialog command is not installed or not in PATH")
+        fi
+
+        if [[ ! -e /dev/tty ]]; then
+                reasons+=("/dev/tty does not exist")
+        else
+                [[ -r /dev/tty ]] || reasons+=("/dev/tty is not readable")
+                [[ -w /dev/tty ]] || reasons+=("/dev/tty is not writable")
+        fi
+
+        if ((${#reasons[@]} == 0)); then
+                printf '\nInstaller interface: dialog mode (%s theme)\n' \
+                        "$(theme_display_name)"
+                return 0
+        fi
+
+        printf '\nWARNING: Dialog interface unavailable.\n' >&2
+        printf 'Reason(s):\n' >&2
+
+        local reason
+        for reason in "${reasons[@]}"; do
+                printf '  - %s\n' "$reason" >&2
+        done
+
+        printf 'Continuing with the text-based installer interface.\n\n' >&2
+        return 0
+}
+
 select_installer_theme() {
         local choice="" status=0
 
@@ -4718,6 +4750,7 @@ main() {
         force_posix_locale
         load_installer_settings
         setup_installer_theme
+        report_installer_interface_mode
         setup_logging
         require_commands
         prepare_target_environment
