@@ -19,6 +19,229 @@ cd "$SCRIPT_DIR"
 
 PID_FILE="$SCRIPT_DIR/.bootstrap.pid"
 
+BOOTSTRAP_SETTINGS_FILE="$SCRIPT_DIR/.bfs-bootstrap-settings"
+DIALOGRC_FILE=""
+ORIGINAL_DIALOGRC="${DIALOGRC-}"
+BFS_THEME="${BFS_BOOTSTRAP_THEME:-monochrome}"
+
+load_bootstrap_settings() {
+    [ -f "$BOOTSTRAP_SETTINGS_FILE" ] || return 0
+
+    while IFS='=' read -r key value; do
+        case "$key" in
+            BFS_THEME) BFS_THEME="$value" ;;
+        esac
+    done < "$BOOTSTRAP_SETTINGS_FILE"
+}
+
+save_bootstrap_settings() {
+    cat > "$BOOTSTRAP_SETTINGS_FILE" <<EOF_SETTINGS
+BFS_THEME=$BFS_THEME
+EOF_SETTINGS
+}
+
+write_dialog_theme_classic() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (WHITE,BLACK,ON)
+shadow_color = (BLACK,BLACK,OFF)
+dialog_color = (WHITE,BLUE,ON)
+title_color = (YELLOW,BLUE,ON)
+border_color = (WHITE,BLUE,ON)
+button_active_color = (BLACK,WHITE,ON)
+button_inactive_color = (WHITE,BLUE,ON)
+button_key_active_color = (BLACK,WHITE,ON)
+button_key_inactive_color = (YELLOW,BLUE,ON)
+button_label_active_color = (BLACK,WHITE,ON)
+button_label_inactive_color = (WHITE,BLUE,ON)
+inputbox_color = (WHITE,BLUE,ON)
+inputbox_border_color = (WHITE,BLUE,ON)
+searchbox_color = (WHITE,BLUE,ON)
+searchbox_title_color = (YELLOW,BLUE,ON)
+searchbox_border_color = (WHITE,BLUE,ON)
+position_indicator_color = (YELLOW,BLUE,ON)
+menubox_color = (WHITE,BLUE,ON)
+menubox_border_color = (WHITE,BLUE,ON)
+item_color = (WHITE,BLUE,ON)
+item_selected_color = (BLACK,CYAN,ON)
+tag_color = (YELLOW,BLUE,ON)
+tag_selected_color = (BLACK,CYAN,ON)
+tag_key_color = (YELLOW,BLUE,ON)
+tag_key_selected_color = (BLACK,CYAN,ON)
+check_color = (WHITE,BLUE,ON)
+check_selected_color = (BLACK,CYAN,ON)
+uarrow_color = (YELLOW,BLUE,ON)
+darrow_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_midnight() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (WHITE,BLACK,ON)
+dialog_color = (BLACK,CYAN,ON)
+title_color = (YELLOW,CYAN,ON)
+border_color = (WHITE,CYAN,ON)
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,CYAN,ON)
+menubox_color = (BLACK,CYAN,ON)
+menubox_border_color = (WHITE,CYAN,ON)
+item_color = (BLACK,CYAN,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (YELLOW,CYAN,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_light() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+screen_color = (BLACK,WHITE,ON)
+dialog_color = (BLACK,WHITE,ON)
+title_color = (BLUE,WHITE,ON)
+border_color = (BLUE,WHITE,ON)
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,WHITE,ON)
+menubox_color = (BLACK,WHITE,ON)
+menubox_border_color = (BLUE,WHITE,ON)
+item_color = (BLACK,WHITE,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (BLUE,WHITE,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+EOF_DIALOGRC
+}
+
+write_dialog_theme_monochrome() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = OFF
+use_shadow = OFF
+EOF_DIALOGRC
+}
+
+theme_display_name() {
+    case "$BFS_THEME" in
+        classic) printf '%s' "Classic Blue" ;;
+        midnight) printf '%s' "Midnight" ;;
+        light) printf '%s' "Light" ;;
+        monochrome) printf '%s' "Monochrome" ;;
+        *) printf '%s' "$BFS_THEME" ;;
+    esac
+}
+
+setup_bootstrap_theme() {
+    [ -z "$DIALOGRC_FILE" ] || rm -f "$DIALOGRC_FILE"
+    DIALOGRC_FILE="$(mktemp /tmp/bfs-bootstrap-dialogrc.XXXXXX)"
+
+    case "$BFS_THEME" in
+        classic) write_dialog_theme_classic ;;
+        midnight) write_dialog_theme_midnight ;;
+        light) write_dialog_theme_light ;;
+        monochrome) write_dialog_theme_monochrome ;;
+        *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
+    esac
+
+    export DIALOGRC="$DIALOGRC_FILE"
+}
+
+select_bootstrap_theme() {
+    local choice="" status=0
+
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
+    then
+        set +e
+        choice="$(
+            dialog --stdout --clear \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Interface Theme" \
+                --radiolist \
+                "Choose the bootstrap theme." \
+                17 66 5 \
+                monochrome "Best compatibility for SSH and unusual palettes" \
+                    "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
+                classic "Classic Blue — traditional dark-blue theme" \
+                    "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
+                midnight "Midnight Commander-style theme" \
+                    "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
+                light "Black text on a light background" \
+                    "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
+                </dev/tty
+        )"
+        status=$?
+        set -e
+        [ "$status" -eq 0 ] || return 0
+        [ -n "$choice" ] || return 0
+    else
+        echo "  1) Monochrome"
+        echo "  2) Classic Blue"
+        echo "  3) Midnight"
+        echo "  4) Light"
+        read -r -p "Choose [1-4, current: $(theme_display_name)]: " choice
+        case "$choice" in
+            1) choice=monochrome ;;
+            2) choice=classic ;;
+            3) choice=midnight ;;
+            4) choice=light ;;
+            "") return 0 ;;
+            *) echo "Invalid theme selection."; return 1 ;;
+        esac
+    fi
+
+    BFS_THEME="$choice"
+    setup_bootstrap_theme
+    save_bootstrap_settings
+}
+
+bootstrap_settings_menu() {
+    local choice="" status=0
+
+    while true; do
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] &&
+           [ -w /dev/tty ]
+        then
+            set +e
+            choice="$(
+                dialog --stdout --clear \
+                    --backtitle "BFS Linux Bootstrap" \
+                    --title "Bootstrap Settings" \
+                    --cancel-label "Back" \
+                    --menu \
+                    "Configure the bootstrap interface." \
+                    14 70 4 \
+                    1 "Theme: $(theme_display_name)" \
+                    2 "Back to main menu" \
+                    </dev/tty
+            )"
+            status=$?
+            set -e
+            [ "$status" -eq 0 ] || return 0
+            [ -n "$choice" ] || return 0
+        else
+            clear 2>/dev/null || true
+            echo "Bootstrap Settings"
+            echo "=================="
+            echo
+            echo "  1) Theme: $(theme_display_name)"
+            echo "  2) Back"
+            read -r -p "Choose [1-2]: " choice
+        fi
+
+        case "$choice" in
+            1) select_bootstrap_theme ;;
+            2) return 0 ;;
+            *) echo "Invalid settings selection."; sleep 1 ;;
+        esac
+    done
+}
+
+load_bootstrap_settings
+setup_bootstrap_theme
+
 LOG_DIR="$SCRIPT_DIR/logs"
 TOOLCHAIN_LOG_DIR="$LOG_DIR/toolchain"
 BASE_LOG_DIR="$LOG_DIR/base"
@@ -301,7 +524,12 @@ _show_bootstrap_menu() {
             "$COLOR_RED" "$COLOR_RESET"
     fi
 
-    printf '  %s9)%s %s\n\n' \
+    printf '  %s9)%s %-52s %s\n' \
+        "$COLOR_CYAN" "$COLOR_RESET" \
+        'Settings' \
+        "[Theme: $(theme_display_name)]"
+
+    printf '  %s10)%s %s\n\n' \
         "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
@@ -357,7 +585,7 @@ _select_bootstrap_menu_choice() {
                 --cancel-label "Quit" \
                 --menu \
                 "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
-                23 92 12 \
+                24 92 13 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
                     "$(_dialog_stage_status _toolchain_complete)")" \
@@ -383,6 +611,9 @@ _select_bootstrap_menu_choice() {
                     'Chroot into BFS rootfs' \
                     "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description \
+                    'Settings' \
+                    "Theme: $(theme_display_name)")" \
+                10 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
                 --stdout \
@@ -403,7 +634,7 @@ _select_bootstrap_menu_choice() {
     fi
 
     _show_bootstrap_menu >&2
-    printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    printf '%sChoose [1-10]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
     read -r choice </dev/tty 2>/dev/null || read -r choice
 
     case "$choice" in
@@ -424,7 +655,7 @@ _bootstrap_menu() {
 
         status=0
 
-        if [[ "$choice" =~ ^[1-9]$ ]]; then
+        if [[ "$choice" =~ ^([1-9]|10)$ ]]; then
             printf '\n%sSelected option %s%s\n'                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
         fi
 
@@ -477,7 +708,13 @@ _bootstrap_menu() {
                 status=$?
                 set -e
                 ;;
-            9|q|Q|quit|Quit|QUIT)
+            9)
+                set +e
+                bootstrap_settings_menu
+                status=$?
+                set -e
+                ;;
+            10|q|Q|quit|Quit|QUIT)
                 echo "BFS bootstrap exited."
                 return 0
                 ;;
@@ -570,6 +807,17 @@ _cleanup_on_exit() {
     fi
 
     rm -f "$PID_FILE"
+
+    if [ -n "$DIALOGRC_FILE" ]; then
+        rm -f "$DIALOGRC_FILE"
+    fi
+
+    if [ -n "$ORIGINAL_DIALOGRC" ]; then
+        export DIALOGRC="$ORIGINAL_DIALOGRC"
+    else
+        unset DIALOGRC
+    fi
+
     exit "$status"
 }
 
@@ -1554,7 +1802,7 @@ _compressrootfs() {
 _buildbase() {
     if [ "$(id -u)" != 0 ]; then
         echo "ERROR: Stages 2 and 3 must be run as root." >&2
-        exit 1
+        return 1
     fi
 
     # Any Stage 2/3 build changes the rootfs. Require Stage 4 to verify it again
@@ -1735,14 +1983,14 @@ EOF
                 pkgin -d "$i" -is -if -im -cf "$pkgmk_conf" \
                 || {
                     umountfs
-                    exit 1
+                    return 1
                 }
 
             pkgadd -r "$LFS" ${_force:-} -f \
                 "$(ls -1 "$packagedir/$i#"* | tail -n1)" \
                 || {
                     umountfs
-                    exit 1
+                    return 1
                 }
 
             case $i in
@@ -1803,7 +2051,7 @@ if [ -z "\$REAL_LD" ]; then
         fi
     done
 
-    exit 1
+    return 1
 fi
 
 echo "Using linker: \$REAL_LD"
@@ -1897,7 +2145,7 @@ EOF
                 prt-get update -im -fr -if -fi "$i" \
                 || {
                     umountfs
-                    exit 1
+                    return 1
                 }
 
             _close_active_package_log 0
