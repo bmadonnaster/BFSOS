@@ -3,27 +3,16 @@
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
 # deterministic.
-_force_posix_locale() {
-    unset LC_ALL
-    unset LC_ADDRESS
-    unset LC_COLLATE
-    unset LC_CTYPE
-    unset LC_IDENTIFICATION
-    unset LC_MEASUREMENT
-    unset LC_MESSAGES
-    unset LC_MONETARY
-    unset LC_NAME
-    unset LC_NUMERIC
-    unset LC_PAPER
-    unset LC_TELEPHONE
-    unset LC_TIME
+unset LC_CTYPE
+unset LC_COLLATE
+unset LC_MESSAGES
+unset LC_MONETARY
+unset LC_NUMERIC
+unset LC_TIME
 
-    export LANG=C
-    export LC_ALL=C
-    export LANGUAGE=C
-}
-
-_force_posix_locale
+export LANG=C
+export LC_ALL=C
+export LANGUAGE=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -56,366 +45,6 @@ else
     COLOR_CYAN=""
     COLOR_RESET=""
 fi
-
-DIALOGRC_FILE=""
-ORIGINAL_DIALOGRC="${DIALOGRC-}"
-SETTINGS_FILE="$SCRIPT_DIR/.bfs-build-settings"
-
-BFS_THEME="${BFS_THEME:-monochrome}"
-BFS_BUILD_JOBS="${BFS_BUILD_JOBS:-$(nproc)}"
-BFS_BUILD_OUTPUT="${BFS_BUILD_OUTPUT:-normal}"
-
-_load_build_settings() {
-    [ -f "$SETTINGS_FILE" ] || return 0
-
-    while IFS='=' read -r key value; do
-        case "$key" in
-            BFS_THEME)
-                BFS_THEME="$value"
-                ;;
-            BFS_BUILD_JOBS)
-                BFS_BUILD_JOBS="$value"
-                ;;
-            BFS_BUILD_OUTPUT)
-                BFS_BUILD_OUTPUT="$value"
-                ;;
-        esac
-    done < "$SETTINGS_FILE"
-}
-
-_save_build_settings() {
-    cat > "$SETTINGS_FILE" <<EOF_SETTINGS
-BFS_THEME=$BFS_THEME
-BFS_BUILD_JOBS=$BFS_BUILD_JOBS
-BFS_BUILD_OUTPUT=$BFS_BUILD_OUTPUT
-EOF_SETTINGS
-}
-
-_load_build_settings
-export BFS_THEME BFS_BUILD_JOBS BFS_BUILD_OUTPUT
-
-_write_dialog_theme_classic() {
-    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = ON
-use_shadow = OFF
-
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLACK,OFF)
-dialog_color = (WHITE,BLUE,ON)
-title_color = (YELLOW,BLUE,ON)
-border_color = (WHITE,BLUE,ON)
-
-button_active_color = (BLACK,WHITE,ON)
-button_inactive_color = (WHITE,BLUE,ON)
-button_key_active_color = (BLACK,WHITE,ON)
-button_key_inactive_color = (YELLOW,BLUE,ON)
-button_label_active_color = (BLACK,WHITE,ON)
-button_label_inactive_color = (WHITE,BLUE,ON)
-
-inputbox_color = (WHITE,BLUE,ON)
-inputbox_border_color = (WHITE,BLUE,ON)
-searchbox_color = (WHITE,BLUE,ON)
-searchbox_title_color = (YELLOW,BLUE,ON)
-searchbox_border_color = (WHITE,BLUE,ON)
-
-position_indicator_color = (YELLOW,BLUE,ON)
-menubox_color = (WHITE,BLUE,ON)
-menubox_border_color = (WHITE,BLUE,ON)
-item_color = (WHITE,BLUE,ON)
-item_selected_color = (BLACK,CYAN,ON)
-tag_color = (YELLOW,BLUE,ON)
-tag_selected_color = (BLACK,CYAN,ON)
-tag_key_color = (YELLOW,BLUE,ON)
-tag_key_selected_color = (BLACK,CYAN,ON)
-
-check_color = (WHITE,BLUE,ON)
-check_selected_color = (BLACK,CYAN,ON)
-uarrow_color = (YELLOW,BLUE,ON)
-darrow_color = (YELLOW,BLUE,ON)
-EOF_DIALOGRC
-}
-
-_write_dialog_theme_midnight() {
-    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = ON
-use_shadow = OFF
-
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLACK,OFF)
-dialog_color = (WHITE,CYAN,ON)
-title_color = (YELLOW,CYAN,ON)
-border_color = (WHITE,CYAN,ON)
-
-button_active_color = (WHITE,BLUE,ON)
-button_inactive_color = (BLACK,CYAN,ON)
-button_key_active_color = (YELLOW,BLUE,ON)
-button_key_inactive_color = (YELLOW,CYAN,ON)
-button_label_active_color = (WHITE,BLUE,ON)
-button_label_inactive_color = (BLACK,CYAN,ON)
-
-inputbox_color = (BLACK,CYAN,ON)
-inputbox_border_color = (WHITE,CYAN,ON)
-searchbox_color = (BLACK,CYAN,ON)
-searchbox_title_color = (YELLOW,CYAN,ON)
-searchbox_border_color = (WHITE,CYAN,ON)
-
-position_indicator_color = (YELLOW,CYAN,ON)
-menubox_color = (BLACK,CYAN,ON)
-menubox_border_color = (WHITE,CYAN,ON)
-item_color = (BLACK,CYAN,ON)
-item_selected_color = (WHITE,BLUE,ON)
-tag_color = (YELLOW,CYAN,ON)
-tag_selected_color = (YELLOW,BLUE,ON)
-tag_key_color = (YELLOW,CYAN,ON)
-tag_key_selected_color = (YELLOW,BLUE,ON)
-
-check_color = (BLACK,CYAN,ON)
-check_selected_color = (WHITE,BLUE,ON)
-uarrow_color = (YELLOW,CYAN,ON)
-darrow_color = (YELLOW,CYAN,ON)
-EOF_DIALOGRC
-}
-
-_write_dialog_theme_light() {
-    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = ON
-use_shadow = OFF
-
-screen_color = (BLACK,WHITE,ON)
-shadow_color = (BLACK,BLACK,OFF)
-dialog_color = (BLACK,WHITE,ON)
-title_color = (BLUE,WHITE,ON)
-border_color = (BLUE,WHITE,ON)
-
-button_active_color = (WHITE,BLUE,ON)
-button_inactive_color = (BLACK,WHITE,ON)
-button_key_active_color = (YELLOW,BLUE,ON)
-button_key_inactive_color = (BLUE,WHITE,ON)
-button_label_active_color = (WHITE,BLUE,ON)
-button_label_inactive_color = (BLACK,WHITE,ON)
-
-inputbox_color = (BLACK,WHITE,ON)
-inputbox_border_color = (BLUE,WHITE,ON)
-searchbox_color = (BLACK,WHITE,ON)
-searchbox_title_color = (BLUE,WHITE,ON)
-searchbox_border_color = (BLUE,WHITE,ON)
-
-position_indicator_color = (BLUE,WHITE,ON)
-menubox_color = (BLACK,WHITE,ON)
-menubox_border_color = (BLUE,WHITE,ON)
-item_color = (BLACK,WHITE,ON)
-item_selected_color = (WHITE,BLUE,ON)
-tag_color = (BLUE,WHITE,ON)
-tag_selected_color = (YELLOW,BLUE,ON)
-tag_key_color = (BLUE,WHITE,ON)
-tag_key_selected_color = (YELLOW,BLUE,ON)
-
-check_color = (BLACK,WHITE,ON)
-check_selected_color = (WHITE,BLUE,ON)
-uarrow_color = (BLUE,WHITE,ON)
-darrow_color = (BLUE,WHITE,ON)
-EOF_DIALOGRC
-}
-
-_write_dialog_theme_monochrome() {
-    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = OFF
-use_shadow = OFF
-EOF_DIALOGRC
-}
-
-_setup_tui_theme() {
-    DIALOGRC_FILE="$(mktemp /tmp/bfs-dialogrc.XXXXXX)"
-
-    case "$BFS_THEME" in
-        classic)
-            _write_dialog_theme_classic
-            export NEWT_COLORS='
-root=white,black
-border=white,blue
-window=white,blue
-shadow=black,black
-title=yellow,blue
-button=black,white
-actbutton=black,cyan
-checkbox=white,blue
-actcheckbox=black,cyan
-entry=white,blue
-label=white,blue
-listbox=white,blue
-actlistbox=black,cyan
-textbox=white,blue
-acttextbox=black,cyan
-helpline=white,blue
-roottext=white,black
-emptyscale=white,blue
-fullscale=white,cyan
-disentry=white,blue
-compactbutton=white,blue
-actsellistbox=black,cyan
-sellistbox=white,blue
-'
-            ;;
-        midnight)
-            _write_dialog_theme_midnight
-            export NEWT_COLORS='
-root=white,black
-border=white,cyan
-window=black,cyan
-shadow=black,black
-title=yellow,cyan
-button=black,cyan
-actbutton=white,blue
-checkbox=black,cyan
-actcheckbox=white,blue
-entry=black,cyan
-label=black,cyan
-listbox=black,cyan
-actlistbox=white,blue
-textbox=black,cyan
-acttextbox=white,blue
-helpline=black,cyan
-roottext=white,black
-emptyscale=black,cyan
-fullscale=white,blue
-disentry=black,cyan
-compactbutton=black,cyan
-actsellistbox=white,blue
-sellistbox=black,cyan
-'
-            ;;
-        light)
-            _write_dialog_theme_light
-            export NEWT_COLORS='
-root=black,white
-border=blue,white
-window=black,white
-shadow=black,black
-title=blue,white
-button=black,white
-actbutton=white,blue
-checkbox=black,white
-actcheckbox=white,blue
-entry=black,white
-label=black,white
-listbox=black,white
-actlistbox=white,blue
-textbox=black,white
-acttextbox=white,blue
-helpline=black,white
-roottext=black,white
-emptyscale=black,white
-fullscale=white,blue
-disentry=black,white
-compactbutton=black,white
-actsellistbox=white,blue
-sellistbox=black,white
-'
-            ;;
-        monochrome)
-            _write_dialog_theme_monochrome
-            export NEWT_COLORS='
-root=white,black
-border=white,black
-window=white,black
-shadow=black,black
-title=white,black
-button=black,white
-actbutton=black,white
-checkbox=white,black
-actcheckbox=black,white
-entry=white,black
-label=white,black
-listbox=white,black
-actlistbox=black,white
-textbox=white,black
-acttextbox=black,white
-helpline=white,black
-roottext=white,black
-emptyscale=white,black
-fullscale=black,white
-disentry=white,black
-compactbutton=white,black
-actsellistbox=black,white
-sellistbox=white,black
-'
-            ;;
-        *)
-            echo "WARNING: Unknown BFS_THEME '$BFS_THEME'; using classic." >&2
-            BFS_THEME=classic
-            _write_dialog_theme_classic
-            ;;
-    esac
-
-    export DIALOGRC="$DIALOGRC_FILE"
-}
-
-_select_theme() {
-    local choice=""
-
-    if command -v dialog >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
-    then
-        set +e
-        choice="$(
-            dialog \
-                --clear \
-                --colors \
-                --backtitle "BFS Build System" \
-                --title "Select Theme" \
-                --radiolist \
-                "Choose the interface theme." \
-                18 64 5 \
-                classic "Classic dark-blue installer theme" "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
-                midnight "Midnight Commander-style theme" "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
-                light "Light theme with black text on white" "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
-                monochrome "Monochrome reverse-video theme" "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
-                3>&1 1>&2 2>&3 \
-                </dev/tty >/dev/tty
-        )"
-        local rc=$?
-        set -e
-
-        [ "$rc" -eq 0 ] || return 0
-        [ -n "$choice" ] || return 0
-
-        BFS_THEME="$choice"
-        export BFS_THEME
-
-        if [ -n "$DIALOGRC_FILE" ]; then
-            rm -f "$DIALOGRC_FILE"
-        fi
-        _setup_tui_theme
-        _save_build_settings
-        return 0
-    fi
-
-    echo
-    echo "Available themes:"
-    echo "  1) Classic dark-blue installer"
-    echo "  2) Midnight Commander"
-    echo "  3) Light"
-    echo "  4) Monochrome"
-    read -r -p "Choose [1-4, current: $BFS_THEME]: " choice
-
-    case "$choice" in
-        1) BFS_THEME=classic ;;
-        2) BFS_THEME=midnight ;;
-        3) BFS_THEME=light ;;
-        4) BFS_THEME=monochrome ;;
-        "") return 0 ;;
-        *) echo "Invalid theme selection."; return 1 ;;
-    esac
-
-    export BFS_THEME
-
-    if [ -n "$DIALOGRC_FILE" ]; then
-        rm -f "$DIALOGRC_FILE"
-    fi
-    _setup_tui_theme
-    _save_build_settings
-}
 
 _sanitize_log_name() {
     local name="$1"
@@ -468,22 +97,12 @@ _start_package_log() {
 
     safe_package="$(_sanitize_log_name "$package")"
     timestamp="$(date +%Y%m%d-%H%M%S)"
-
-    if [ "$BFS_BUILD_OUTPUT" = quiet ]; then
-        printf 'Building %-28s [%s]\n' "$package" "$phase"
-    fi
     ACTIVE_LOG_FILE="$directory/${safe_package}-${timestamp}.log"
     ACTIVE_LOG_FIFO="$(mktemp -u /tmp/bfs-build-log.XXXXXX)"
     mkfifo "$ACTIVE_LOG_FIFO"
 
     exec 7>&1 8>&2
-
-    if [ "$BFS_BUILD_OUTPUT" = quiet ]; then
-        tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >/dev/null &
-    else
-        tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >&7 &
-    fi
-
+    tee -a "$ACTIVE_LOG_FILE" < "$ACTIVE_LOG_FIFO" >&7 &
     ACTIVE_LOG_TEE_PID=$!
     exec > "$ACTIVE_LOG_FIFO" 2>&1
 
@@ -544,12 +163,12 @@ _rootfs_archive_complete() {
     _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
 }
 
-_rootfs_restore_available() {
-    _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
+_rootfs_restore_complete() {
+    [ -f "$LFS/.bfs-rootfs-restored" ]
 }
 
-_toolchain_restore_available() {
-    _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' >/dev/null 2>&1
+_toolchain_restore_complete() {
+    [ -f "$LFS/.bfs-toolchain-restored" ]
 }
 
 _chroot_available() {
@@ -565,7 +184,6 @@ _run_root_stage() {
     local stage="$1"
 
     if [ "$(id -u)" -eq 0 ]; then
-        _force_posix_locale
         "$0" "$stage"
         return $?
     fi
@@ -577,24 +195,10 @@ _run_root_stage() {
 
     echo
     echo "Stage $stage requires root privileges."
-    echo "Authenticating with sudo before the build starts..."
+    echo "Running: sudo $0 $stage"
     echo
 
-    sudo -v || {
-        echo "ERROR: sudo authentication failed." >&2
-        return 1
-    }
-
-    echo "Running Stage $stage as root."
-    echo
-
-    sudo \
-        --preserve-env=TERM,BFS_THEME,BFS_BUILD_JOBS,BFS_BUILD_OUTPUT \
-        env \
-        LANG=C \
-        LC_ALL=C \
-        LANGUAGE=C \
-        "$0" "$stage"
+    sudo -- "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -642,7 +246,7 @@ _show_bootstrap_menu() {
 
     printf '%s\n' \
         '============================================================' \
-        '                  BFS Build System' \
+        '                  BFS Linux Bootstrap' \
         '============================================================' \
         ''
 
@@ -669,52 +273,35 @@ _show_bootstrap_menu() {
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Verify completed base system' \
         "[$(_stage_complete_text _verification_complete)]"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
 
     printf '  %s5)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Create base rootfs archive' \
         "[$(_stage_complete_text _rootfs_archive_complete)]"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
 
-    printf '  %s6)%s %-52s [%s]\n' \
+    printf '  %s6)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Restore newest base rootfs archive' \
-        "$(_plain_available_status _rootfs_restore_available)"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
+        "[$(_stage_complete_text _rootfs_restore_complete)]"
 
-    printf '  %s7)%s %-52s [%s]\n' \
+    printf '  %s7)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
         'Restore newest temporary toolchain archive' \
-        "$(_plain_available_status _toolchain_restore_available)"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
+        "[$(_stage_complete_text _toolchain_restore_complete)]"
 
     if _chroot_available; then
         printf '  %s8)%s %-52s [%sAVAILABLE%s]\n' \
             "$COLOR_CYAN" "$COLOR_RESET" \
             'Chroot into BFS rootfs' \
             "$COLOR_GREEN" "$COLOR_RESET"
-        printf '     %sRuns automatically with sudo/root privileges%s\n' \
-            "$COLOR_YELLOW" "$COLOR_RESET"
     else
         printf '  %s8)%s %-52s [%sPENDING%s]\n' \
             "$COLOR_CYAN" "$COLOR_RESET" \
             'Chroot into BFS rootfs' \
             "$COLOR_RED" "$COLOR_RESET"
-        printf '     %sRuns automatically with sudo/root privileges%s\n' \
-            "$COLOR_YELLOW" "$COLOR_RESET"
     fi
 
-    printf '  %s9)%s %-52s [%sTHEME%s]\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Change interface theme' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
-
-    printf '  %s10)%s %s\n\n' \
+    printf '  %s9)%s %s\n\n' \
         "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
@@ -722,14 +309,6 @@ _show_bootstrap_menu() {
 _dialog_stage_status() {
     if "$@"; then
         printf '%s' '\Z2COMPLETE\Zn'
-    else
-        printf '%s' '\Z1PENDING\Zn'
-    fi
-}
-
-_dialog_available_status() {
-    if "$@"; then
-        printf '%s' '\Z2AVAILABLE\Zn'
     else
         printf '%s' '\Z1PENDING\Zn'
     fi
@@ -750,196 +329,26 @@ _dialog_menu_description() {
     printf '%-57s [%s]' "$label" "$status"
 }
 
-
-_select_build_jobs() {
-    local value=""
-
-    if command -v dialog >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
-    then
-        set +e
-        value="$(
-            dialog \
-                --clear \
-                --backtitle "BFS Build System" \
-                --title "Parallel Build Jobs" \
-                --inputbox \
-                "Enter the number of parallel build jobs.\n\nDetected processors: $(nproc)" \
-                12 56 "$BFS_BUILD_JOBS" \
-                3>&1 1>&2 2>&3 \
-                </dev/tty >/dev/tty
-        )"
-        local rc=$?
-        set -e
-        [ "$rc" -eq 0 ] || return 0
-    else
-        read -r -p "Parallel build jobs [$BFS_BUILD_JOBS]: " value
-        value="${value:-$BFS_BUILD_JOBS}"
-    fi
-
-    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        echo "Invalid job count: $value" >&2
-        sleep 1
-        return 1
-    fi
-
-    BFS_BUILD_JOBS="$value"
-    export BFS_BUILD_JOBS
-    _save_build_settings
-}
-
-_select_build_output() {
-    local value=""
-
-    if command -v dialog >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
-    then
-        set +e
-        value="$(
-            dialog \
-                --clear \
-                --backtitle "BFS Build System" \
-                --title "Build Output" \
-                --radiolist \
-                "Choose how package build output is displayed.\n\nLogs are always written in both modes." \
-                14 66 3 \
-                normal "Show build output on screen and save logs" "$([ "$BFS_BUILD_OUTPUT" = normal ] && echo on || echo off)" \
-                quiet "Save full logs but show only package headings" "$([ "$BFS_BUILD_OUTPUT" = quiet ] && echo on || echo off)" \
-                3>&1 1>&2 2>&3 \
-                </dev/tty >/dev/tty
-        )"
-        local rc=$?
-        set -e
-        [ "$rc" -eq 0 ] || return 0
-    else
-        echo "  1) Normal"
-        echo "  2) Quiet"
-        read -r -p "Choose [1-2, current: $BFS_BUILD_OUTPUT]: " value
-        case "$value" in
-            1) value=normal ;;
-            2) value=quiet ;;
-            "") return 0 ;;
-            *) return 1 ;;
-        esac
-    fi
-
-    BFS_BUILD_OUTPUT="$value"
-    export BFS_BUILD_OUTPUT
-    _save_build_settings
-}
-
-_select_settings() {
-    local choice=""
-    local rc=0
-
-    while true; do
-        if command -v dialog >/dev/null 2>&1 &&
-           [ -r /dev/tty ] &&
-           [ -w /dev/tty ]
-        then
-            set +e
-            choice="$(
-                dialog \
-                    --clear \
-                    --backtitle "BFS Build System" \
-                    --title "Settings" \
-                    --cancel-label "Back" \
-                    --menu \
-                    "Configure the BFS build system." \
-                    17 72 6 \
-                    1 "Theme: $BFS_THEME" \
-                    2 "Parallel build jobs: $BFS_BUILD_JOBS" \
-                    3 "Build output: $BFS_BUILD_OUTPUT" \
-                    4 "Back to main menu" \
-                    3>&1 1>&2 2>&3 \
-                    </dev/tty >/dev/tty
-            )"
-            rc=$?
-            set -e
-            [ "$rc" -eq 0 ] || return 0
-        else
-            clear 2>/dev/null || true
-            echo "BFS Build System Settings"
-            echo
-            echo "  1) Theme: $BFS_THEME"
-            echo "  2) Parallel build jobs: $BFS_BUILD_JOBS"
-            echo "  3) Build output: $BFS_BUILD_OUTPUT"
-            echo "  4) Back"
-            echo
-            read -r -p "Choose [1-4]: " choice
-        fi
-
-        choice="$(
-            printf '%s' "$choice" |
-                tr -d '\r\n' |
-                sed -e 's/^[[:space:]]*//'                     -e 's/[[:space:]]*$//'                     -e 's/^"//'                     -e 's/"$//'
-        )"
-
-        case "$choice" in
-            1) _select_theme ;;
-            2) _select_build_jobs ;;
-            3) _select_build_output ;;
-            4) return 0 ;;
-            *) ;;
-        esac
-    done
-}
-
-SELECTED_MENU_CHOICE=""
-
-_plain_menu_status() {
-    if "$@"; then
-        printf '%s' 'COMPLETE'
-    else
-        printf '%s' 'PENDING'
-    fi
-}
-
-_plain_available_status() {
-    if "$@"; then
-        printf '%s' 'AVAILABLE'
-    else
-        printf '%s' 'PENDING'
-    fi
-}
-
-_plain_chroot_status() {
-    if _chroot_available; then
-        printf '%s' 'AVAILABLE'
-    else
-        printf '%s' 'PENDING'
-    fi
-}
-
 _select_bootstrap_menu_choice() {
-    local menu_status=0
-    local dialog_error=""
-    local error_file=""
-
-    SELECTED_MENU_CHOICE=""
+    local choice=""
+    local dialog_status=0
 
     if command -v dialog >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
+       [ -t 0 ] &&
+       [ -t 1 ]
     then
-        error_file="$(mktemp /tmp/bfs-dialog-error.XXXXXX)"
-
         set +e
-        SELECTED_MENU_CHOICE="$(
+        choice="$(
             dialog \
                 --clear \
                 --colors \
                 --no-collapse \
-                --backtitle "BFS Build System" \
-                --title "BFS Build System" \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Bootstrap menu" \
                 --ok-label "Select" \
                 --cancel-label "Quit" \
-                --extra-button \
-                --extra-label "Settings" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 through 8 automatically run with sudo/root privileges.\Zn\n\nUse Tab or Shift+Tab to move between Select, Quit, and Settings." \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
                 23 92 12 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -951,69 +360,43 @@ _select_bootstrap_menu_choice() {
                     'Rebuild base system with final toolchain (sudo/root)' \
                     "$(_dialog_stage_status _base_stage3_complete)")" \
                 4 "$(_dialog_menu_description \
-                    'Verify completed base system (sudo/root)' \
+                    'Verify completed base system' \
                     "$(_dialog_stage_status _verification_complete)")" \
                 5 "$(_dialog_menu_description \
-                    'Create base rootfs archive (sudo/root)' \
+                    'Create base rootfs archive' \
                     "$(_dialog_stage_status _rootfs_archive_complete)")" \
                 6 "$(_dialog_menu_description \
-                    'Restore newest base rootfs archive (sudo/root)' \
-                    "$(_dialog_available_status _rootfs_restore_available)")" \
+                    'Restore newest base rootfs archive' \
+                    "$(_dialog_stage_status _rootfs_restore_complete)")" \
                 7 "$(_dialog_menu_description \
-                    'Restore newest temporary toolchain archive (sudo/root)' \
-                    "$(_dialog_available_status _toolchain_restore_available)")" \
+                    'Restore newest temporary toolchain archive' \
+                    "$(_dialog_stage_status _toolchain_restore_complete)")" \
                 8 "$(_dialog_menu_description \
-                    'Chroot into BFS rootfs (sudo/root)' \
+                    'Chroot into BFS rootfs' \
                     "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
-                --stdout \
-                </dev/tty 2>"$error_file"
+                3>&1 1>&2 2>&3
         )"
-        menu_status=$?
+        dialog_status=$?
         set -e
 
-        clear </dev/tty >/dev/tty 2>/dev/null || true
+        clear 2>/dev/null || true
 
-        case "$menu_status" in
-            0)
-                rm -f "$error_file"
+        if [ "$dialog_status" -ne 0 ]; then
+            printf '%s\n' 9
+        else
+            printf '%s\n' "$choice"
+        fi
 
-                if [ -z "$SELECTED_MENU_CHOICE" ]; then
-                    echo "WARNING: dialog returned no menu selection; using the text menu." >&2
-                    sleep 1
-                else
-                    return 0
-                fi
-                ;;
-            1|255)
-                SELECTED_MENU_CHOICE=9
-                rm -f "$error_file"
-                return 0
-                ;;
-            3)
-                SELECTED_MENU_CHOICE=settings
-                rm -f "$error_file"
-                return 0
-                ;;
-            *)
-                dialog_error="$(cat "$error_file" 2>/dev/null || true)"
-                rm -f "$error_file"
-
-                echo
-                echo "WARNING: dialog could not open; using the text menu instead." >&2
-                if [ -n "$dialog_error" ]; then
-                    echo "$dialog_error" >&2
-                fi
-                sleep 1
-                ;;
-        esac
+        return 0
     fi
 
     _show_bootstrap_menu
-    printf '%sChoose [1-10]: %s' "$COLOR_YELLOW" "$COLOR_RESET"
-    read -r SELECTED_MENU_CHOICE
+    printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    read -r choice
+    printf '%s\n' "$choice"
 }
 
 _bootstrap_menu() {
@@ -1021,31 +404,12 @@ _bootstrap_menu() {
     local status=0
 
     while true; do
-        _select_bootstrap_menu_choice
-
-        # dialog may return surrounding whitespace, a carriage return, or
-        # quoted tags on some terminals/builds. Normalize the result before
-        # dispatching it through the case statement.
-        choice="$(
-            printf '%s' "$SELECTED_MENU_CHOICE" |
-                tr -d '\r\n' |
-                sed -e 's/^[[:space:]]*//'                     -e 's/[[:space:]]*$//'                     -e 's/^"//'                     -e 's/"$//'
-        )"
+        choice="$(_select_bootstrap_menu_choice)"
 
         status=0
 
-        if [ "$choice" = 10 ]; then
-            choice=quit
-        elif [ "$choice" = 9 ] &&
-             { ! command -v dialog >/dev/null 2>&1 ||
-               [ ! -r /dev/tty ] ||
-               [ ! -w /dev/tty ]; }; then
-            choice=theme
-        fi
-
         if [[ "$choice" =~ ^[1-9]$ ]]; then
-            printf '\n%sSelected option %s%s\n' \
-                "$COLOR_CYAN" "$choice" "$COLOR_RESET"
+            printf '\n%sSelected option %s%s\n'                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
         fi
 
         case "$choice" in
@@ -1069,42 +433,35 @@ _bootstrap_menu() {
                 ;;
             4)
                 set +e
-                _run_root_stage 4
+                _verifybase
                 status=$?
                 set -e
                 ;;
             5)
                 set +e
-                _run_root_stage 5
+                _compressrootfs
                 status=$?
                 set -e
                 ;;
             6)
                 set +e
-                _run_root_stage 6
+                _restore_rootfs
                 status=$?
                 set -e
                 ;;
             7)
                 set +e
-                _run_root_stage 7
+                _restore_toolchain
                 status=$?
                 set -e
                 ;;
             8)
                 set +e
-                _run_root_stage 8
+                _enter_bfs_chroot
                 status=$?
                 set -e
                 ;;
-            settings)
-                set +e
-                _select_settings
-                status=$?
-                set -e
-                continue
-                ;;
-            9|quit)
+            9)
                 echo "BFS bootstrap exited."
                 return 0
                 ;;
@@ -1197,17 +554,6 @@ _cleanup_on_exit() {
     fi
 
     rm -f "$PID_FILE"
-
-    if [ -n "$DIALOGRC_FILE" ]; then
-        rm -f "$DIALOGRC_FILE"
-    fi
-
-    if [ -n "$ORIGINAL_DIALOGRC" ]; then
-        export DIALOGRC="$ORIGINAL_DIALOGRC"
-    else
-        unset DIALOGRC
-    fi
-
     exit "$status"
 }
 
@@ -1595,8 +941,171 @@ _restore_rootfs() {
     echo "Verify the restored system with:"
     echo "  sudo $0 4"
 }
+
+_verify_toolchain_multilib() {
+    local failed=0
+    local test_c="/tmp/bfs-toolchain-test.c"
+    local test_cpp="/tmp/bfs-toolchain-test.cpp"
+    local test64="/tmp/bfs-toolchain-test64"
+    local test32="/tmp/bfs-toolchain-test32"
+    local testcpp64="/tmp/bfs-toolchain-testcpp64"
+    local testcpp32="/tmp/bfs-toolchain-testcpp32"
+    local crt64=""
+    local crt32=""
+    local lib32_target=""
+    local summary=""
+    local log_file="$TOOLCHAIN_LOG_DIR/toolchain-verification-$(date +%Y%m%d-%H%M%S).log"
+
+    rm -f \
+        "$test_c" "$test_cpp" \
+        "$test64" "$test32" \
+        "$testcpp64" "$testcpp32"
+
+    cat > "$test_c" <<'EOF_C'
+#include <stdio.h>
+int main(void) {
+    puts("BFS C toolchain test OK");
+    return 0;
+}
+EOF_C
+
+    cat > "$test_cpp" <<'EOF_CPP'
+#include <iostream>
+int main() {
+    std::cout << "BFS C++ toolchain test OK\n";
+    return 0;
+}
+EOF_CPP
+
+    {
+        echo "========================================"
+        echo " BFS TEMPORARY TOOLCHAIN VERIFICATION"
+        echo "========================================"
+        echo
+
+        echo "Checking 64-bit C compile/link/run..."
+        if "$TOOLS/bin/$LFS_TGT-gcc" "$test_c" -o "$test64" &&
+           file "$test64" | grep -q 'ELF 64-bit' &&
+           "$test64" >/dev/null 2>&1
+        then
+            echo "  [PASS] 64-bit C compile/link/run"
+        else
+            echo "  [FAIL] 64-bit C compile/link/run"
+            failed=1
+        fi
+
+        echo "Checking 32-bit C compile/link/run..."
+        if "$TOOLS/bin/$LFS_TGT-gcc" -m32 "$test_c" -o "$test32" &&
+           file "$test32" | grep -q 'ELF 32-bit' &&
+           "$test32" >/dev/null 2>&1
+        then
+            echo "  [PASS] 32-bit C compile/link/run"
+        else
+            echo "  [FAIL] 32-bit C compile/link/run"
+            failed=1
+        fi
+
+        echo "Checking 64-bit C++ compile/link/run..."
+        if "$TOOLS/bin/$LFS_TGT-g++" "$test_cpp" -o "$testcpp64" &&
+           file "$testcpp64" | grep -q 'ELF 64-bit' &&
+           "$testcpp64" >/dev/null 2>&1
+        then
+            echo "  [PASS] 64-bit C++ compile/link/run"
+        else
+            echo "  [FAIL] 64-bit C++ compile/link/run"
+            failed=1
+        fi
+
+        echo "Checking 32-bit C++ compile/link/run..."
+        if "$TOOLS/bin/$LFS_TGT-g++" -m32 "$test_cpp" -o "$testcpp32" &&
+           file "$testcpp32" | grep -q 'ELF 32-bit' &&
+           "$testcpp32" >/dev/null 2>&1
+        then
+            echo "  [PASS] 32-bit C++ compile/link/run"
+        else
+            echo "  [FAIL] 32-bit C++ compile/link/run"
+            failed=1
+        fi
+
+        echo "Checking 64-bit startup files..."
+        crt64="$("$TOOLS/bin/$LFS_TGT-gcc" -print-file-name=crt1.o 2>/dev/null || true)"
+        if [ -n "$crt64" ] &&
+           [ "$crt64" != "crt1.o" ] &&
+           [ -e "$crt64" ]
+        then
+            echo "  [PASS] 64-bit crt1.o: $crt64"
+        else
+            echo "  [FAIL] 64-bit crt1.o was not resolved"
+            failed=1
+        fi
+
+        echo "Checking 32-bit startup files..."
+        crt32="$("$TOOLS/bin/$LFS_TGT-gcc" -m32 -print-file-name=crt1.o 2>/dev/null || true)"
+        if [ -n "$crt32" ] &&
+           [ "$crt32" != "crt1.o" ] &&
+           [ -e "$crt32" ]
+        then
+            echo "  [PASS] 32-bit crt1.o: $crt32"
+        else
+            echo "  [FAIL] 32-bit crt1.o was not resolved"
+            failed=1
+        fi
+
+        echo "Checking lib32 compatibility link..."
+        lib32_target="$(readlink -f "$TOOLS/$LFS_TGT/lib32" 2>/dev/null || true)"
+        if [ "$lib32_target" = "$TOOLS/lib32" ]; then
+            echo "  [PASS] $TOOLS/$LFS_TGT/lib32 -> $TOOLS/lib32"
+        else
+            echo "  [FAIL] lib32 compatibility link is missing or incorrect"
+            echo "         resolved target: ${lib32_target:-<none>}"
+            failed=1
+        fi
+
+        echo
+        if [ "$failed" -eq 0 ]; then
+            echo "RESULT: PASS"
+        else
+            echo "RESULT: FAIL"
+        fi
+    } | tee "$log_file"
+
+    rm -f \
+        "$test_c" "$test_cpp" \
+        "$test64" "$test32" \
+        "$testcpp64" "$testcpp32"
+
+    if [ "$failed" -eq 0 ]; then
+        summary="64-bit C: PASS\n32-bit C: PASS\n64-bit C++: PASS\n32-bit C++: PASS\nStartup files: PASS\nlib32 link: PASS\n\nTemporary toolchain verification PASSED."
+        if command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+            dialog \
+                --clear \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Toolchain verification PASSED" \
+                --msgbox "$summary" 14 68
+            clear 2>/dev/null || true
+        else
+            printf '\n%s\n' "Temporary toolchain verification PASSED."
+        fi
+        return 0
+    fi
+
+    summary="One or more 32/64-bit toolchain checks FAILED.\n\nSee:\n$log_file\n\nStep 1 will not be archived or marked successful."
+    if command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+        dialog \
+            --clear \
+            --backtitle "BFS Linux Bootstrap" \
+            --title "Toolchain verification FAILED" \
+            --msgbox "$summary" 12 72
+        clear 2>/dev/null || true
+    else
+        printf '\nERROR: Temporary toolchain verification FAILED.\n' >&2
+        printf 'See: %s\n' "$log_file" >&2
+    fi
+
+    return 1
+}
+
 _buildtoolchain() {
-    _force_posix_locale
     _ensure_archive_dirs
 
     if [ "$(id -u)" = 0 ]; then
@@ -1620,7 +1129,7 @@ _buildtoolchain() {
 export LANG=C
 export LC_ALL=C
 export LANGUAGE=C
-export MAKEFLAGS=-j$BFS_BUILD_JOBS
+export MAKEFLAGS=-j$(nproc)
 
 PKGMK_SOURCE_DIR=$sourcedir
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
@@ -1642,9 +1151,9 @@ EOF
             -e 's/ -static//' \
             /tmp/pkgutils-5.40.12/Makefile
 
-        make -j"$BFS_BUILD_JOBS" -C /tmp/pkgutils-5.40.12
+        make -j"$(nproc)" -C /tmp/pkgutils-5.40.12
 
-        make -j"$BFS_BUILD_JOBS" \
+        make -j"$(nproc)" \
             -C /tmp/pkgutils-5.40.12 \
             BINDIR="$TOOLS/bin" \
             MANDIR="$TOOLS/man" \
@@ -1698,6 +1207,12 @@ EOF
     done
 
     rm -f /tmp/bootstrap.conf
+
+    echo
+    echo "Running 32-bit and 64-bit temporary-toolchain verification..."
+    if ! _verify_toolchain_multilib; then
+        return 1
+    fi
 
     local toolchain_archive
 
@@ -1891,16 +1406,11 @@ EOF
 _compressrootfs() {
     local rootfs_archive
 
-    if [ "$(id -u)" != 0 ]; then
-        echo "ERROR: Rootfs archive creation must be run as root." >&2
-        return 1
-    fi
-
     if [ ! -f "$LFS/.bfs-verified" ]; then
         echo "ERROR: Base system has not passed stage 4 verification." >&2
         echo "Run:" >&2
         echo "  sudo $0 4" >&2
-        return 1
+        exit 1
     fi
 
     _ensure_archive_dirs
@@ -1909,13 +1419,9 @@ _compressrootfs() {
 
     rm -f "$rootfs_archive"
 
-    echo
-    echo "Creating base rootfs archive:"
-    echo "  $rootfs_archive"
-    echo
+    (
+        cd "$LFS"
 
-    if ! (
-        cd "$LFS" &&
         XZ_DEFAULTS='-T0' tar \
             --exclude='./var/lib/pkg/rejected' \
             --exclude=".$TOOLS" \
@@ -1926,20 +1432,9 @@ _compressrootfs() {
             --exclude='./run/*' \
             --exclude='./root/.cache' \
             -cvJpf "$rootfs_archive" .
-    ); then
-        echo >&2
-        echo "ERROR: Failed to create the base rootfs archive." >&2
-        echo "Removing incomplete archive:" >&2
-        echo "  $rootfs_archive" >&2
-        rm -f "$rootfs_archive"
-        return 1
-    fi
+    )
 
-    if ! tar -tJf "$rootfs_archive" >/dev/null; then
-        echo "ERROR: Created rootfs archive failed integrity verification." >&2
-        rm -f "$rootfs_archive"
-        return 1
-    fi
+    tar -tJf "$rootfs_archive" >/dev/null
 
     echo
     echo "Base rootfs compressed successfully."
@@ -2021,11 +1516,6 @@ _buildbase() {
 
     mkdir -p "$LFS/tmp/lfs-tools/bin"
     cp files/pkgin "$LFS/tmp/lfs-tools/bin/pkgin"
-
-    # Older copies of pkgin may force C.UTF-8, which is unavailable before
-    # glibc locales are generated. Stage 2 must use the guaranteed POSIX locale.
-    sed -i         -e 's/C\.UTF-8/C/g'         -e 's/C\.utf8/C/g'         "$LFS/tmp/lfs-tools/bin/pkgin"
-
     chmod +x "$LFS/tmp/lfs-tools/bin/pkgin"
 
     mkdir -p "$LFS/var/lib/pkgmk"
@@ -2047,7 +1537,7 @@ export LIBRARY_PATH="/usr/lib"
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
-export JOBS=$BFS_BUILD_JOBS
+export JOBS=$(nproc)
 export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
@@ -2072,7 +1562,7 @@ export LDFLAGS="-L/usr/lib -Wl,-rpath-link,/usr/lib"
 export PKG_CONFIG_PATH="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
-export JOBS=$BFS_BUILD_JOBS
+export JOBS=$(nproc)
 export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
@@ -2408,16 +1898,140 @@ curl
 libarchive
 util-linux
 "
-basepkg="aaa_filesystem linux-headers man-pages glibc autoconf zlib bzip2 xz file ncurses readline m4 bc binutils pkgconf libxcrypt gmp mpfr mpc attr acl gcc libcap psmisc sed tzdata iana-etc bison flex pcre2 grep bash libtool gdbm gperf expat inetutils perl perl-xml-parser intltool automake openssl ca-certificates curl gettext elfutils libffi sqlite python coreutils check diffutils gawk findutils groff less gzip zstd iptables libtirpc iproute2 kbd libpipeline make patch man-db tar texinfo python3-setuptools python3-pip python3-flit-core python3-packaging python3-installer python3-build python3-pyproject-hooks python3-wheel libuv libarchive cmake boost meson ninja kmod linux-pam shadow libpng which freetype fuse grub popt mandoc efivar efibootmgr grub-efi vim nano python3-markupsafe python3-tomli python3-pytz python3-babel python3-jinja2 systemd util-linux dbus procps-ng e2fsprogs pkgutils dialog prt-get httpup ports prt-utils lzo btrfs-progs dosfstools exfatprogs f2fs-tools mdadm libaio lvm2 inih liburcu xfsprogs openssh genfstab signify"
+basepkg="
+aaa_filesystem
+linux-headers
+man-pages
+glibc
+autoconf
+zlib
+bzip2
+xz
+file
+ncurses
+readline
+m4
+bc
+binutils
+pkgconf
+libxcrypt
+gmp
+mpfr
+mpc
+attr
+acl
+gcc
+libcap
+psmisc
+sed
+tzdata
+iana-etc
+bison
+flex
+pcre2
+grep
+bash
+libtool
+gdbm
+gperf
+expat
+inetutils
+perl
+perl-xml-parser
+intltool
+automake
+openssl
+ca-certificates
+curl
+gettext
+elfutils
+libffi
+sqlite
+python
+coreutils
+check
+diffutils
+gawk
+findutils
+groff
+less
+gzip
+zstd
+iptables
+libtirpc
+iproute2
+kbd
+libpipeline
+make
+patch
+man-db
+tar
+texinfo
+python3-setuptools
+python3-pip
+python3-flit-core
+python3-packaging
+python3-installer
+python3-build
+python3-pyproject-hooks
+python3-wheel
+libuv
+cmake
+boost
+meson
+ninja
+kmod
+linux-pam
+shadow
+libpng
+which
+freetype
+fuse
+grub
+popt
+mandoc
+efivar
+efibootmgr
+grub-efi
+vim
+nano
+python3-markupsafe
+python3-tomli
+python3-pytz
+python3-babel
+python3-jinja2
+systemd
+util-linux
+dbus
+procps-ng
+e2fsprogs
+libarchive
+pkgutils
+dialog
+prt-get
+httpup
+ports
+prt-utils
+lzo
+btrfs-progs
+dosfstools
+exfatprogs
+f2fs-tools
+mdadm
+libaio
+lvm2
+inih
+liburcu
+xfsprogs
+openssh
+genfstab
+signify
+"
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"
 
-mkdir -p     "$sourcedir"     "$packagedir"     "$TOOLCHAIN_LOG_DIR"     "$BASE_LOG_DIR"
-
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
-
-_setup_tui_theme
 
 case "${1:-menu}" in
     menu|"")
@@ -2447,12 +2061,6 @@ case "${1:-menu}" in
     8|chroot)
         _enter_bfs_chroot
         ;;
-    theme)
-        _select_theme
-        ;;
-    settings)
-        _select_settings
-        ;;
     0|stop|kill)
         _stop_bootstrap
         ;;
@@ -2463,8 +2071,6 @@ Usage:
   $0 menu        Open the interactive bootstrap menu
   $0 1-7         Run a bootstrap stage directly
   $0 8|chroot    Enter the BFS chroot
-  $0 theme       Change interface theme
-  $0 settings    Open build-system settings
   $0 0|stop|kill Stop a running bootstrap process group
 EOF
         ;;
