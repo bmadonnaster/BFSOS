@@ -93,7 +93,7 @@ bootstrap_build() {
         cd build32
 
         ../libstdc++-v3/configure \
-            --host=i686-lfs-linux-gnu \
+            --host="$LFS_TGT" \
             --prefix="$TOOLS" \
             --libdir="$TOOLS/lib32" \
             --disable-multilib \
