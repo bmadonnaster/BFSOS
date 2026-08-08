@@ -262,7 +262,7 @@ f:f405083e721d9176d4e671197986194f:argon2/Pkgfile
 f:8daece87c64487d6abe79c7b1e521044:attr/Pkgfile
 f:94b28978b943fd465300b57d13185ae3:autoconf/Pkgfile
 f:b74f7b3e5aff540e5d9cf3bedee6af67:automake/Pkgfile
-f:6e271723195b720523b718a02b13e41b:bash/Pkgfile
+f:dd3709c03b9b91e79854392e08ec2f61:bash/Pkgfile
 f:2d1691a629c558e894dbb78ee6bf34ef:bash/bash-5.2.21-upstream_fixes-1.patch
 f:7b781c94cae5caa90643463274e675d0:bash/bash-5.2_p15-configure-clang16.patch
 f:8898e8ef6a3d93890b789994eee41759:bash/bash-5.2_p15-random-ub.patch

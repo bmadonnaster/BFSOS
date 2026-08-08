@@ -3,7 +3,7 @@
 name=bash
 version=5.3.15
 release=1
-source=(https://ftpmirror.gnu.org/gnu/$name/$name-${version:0:3}.tar.gz
+source=(https://ftp.gnu.org/gnu/$name/$name-${version:0:3}.tar.gz
 )
 #	bashrc
 #	profile
