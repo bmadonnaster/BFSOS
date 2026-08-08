@@ -517,7 +517,7 @@ _show_bootstrap_menu() {
     if _chroot_available; then
         printf '  %s8)%s %-52s [%sAVAILABLE%s]\n' \
             "$COLOR_CYAN" "$COLOR_RESET" \
-            'Chroot into BFS rootfs' \
+            'Chroot into BFS rootfs (sudo/root)' \
             "$COLOR_GREEN" "$COLOR_RESET"
     else
         printf '  %s8)%s %-52s [%sPENDING%s]\n' \
@@ -525,6 +525,8 @@ _show_bootstrap_menu() {
             'Chroot into BFS rootfs' \
             "$COLOR_RED" "$COLOR_RESET"
     fi
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
     printf '  %s9)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
@@ -586,7 +588,7 @@ _select_bootstrap_menu_choice() {
                 --ok-label "Select" \
                 --cancel-label "Quit" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, and 4 automatically run with sudo/root privileges.\Zn" \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, 4, and 8 automatically run with sudo/root privileges.\Zn" \
                 24 92 13 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -706,7 +708,7 @@ _bootstrap_menu() {
                 ;;
             8)
                 set +e
-                _enter_bfs_chroot
+                _run_root_stage 8
                 status=$?
                 set -e
                 ;;
