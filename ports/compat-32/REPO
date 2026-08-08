@@ -228,7 +228,7 @@ f:3168c2735b17e45a92abb69e2e8c99ba:freetype-32/cross-file.txt
 f:d41d8cd98f00b204e9800998ecf8427e:fribidi-32/.32bit
 f:cde9b9786030a07e5f597bd301ff81f1:fribidi-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:gdbm-32/.32bit
-f:a2fb28eed1aa308bfa97e4a3d3ee2980:gdbm-32/Pkgfile
+f:1f548f6e9a74e3ffc4eff96e9566f949:gdbm-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:gdk-pixbuf-32/.32bit
 f:5778c125d11562ddf5446b1c4e5e46e2:gdk-pixbuf-32/Pkgfile
 f:f463045bbfb880596e3e0cd22c2a7104:gdk-pixbuf-32/post-install
@@ -430,7 +430,7 @@ f:af71d484b969f1366a2cc7037a11303d:libtiff4-32/libtiff4-soname.patch
 f:d41d8cd98f00b204e9800998ecf8427e:libtirpc-32/.32bit
 f:d60c3db2b0307a792d8d1abe8e079825:libtirpc-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libtool-32/.32bit
-f:3d11cb973f4d6977bf8a06f2eaf89388:libtool-32/Pkgfile
+f:ddaa946b8ed64ae18e4933438eba651a:libtool-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libudev0-shim-32/.32bit
 f:e8f100a7a302fe62e56f7d866a434159:libudev0-shim-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libunistring-32/.32bit

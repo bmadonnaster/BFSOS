@@ -389,7 +389,7 @@ f:c5f5f5ad6955079f401298480cf47dcb:aspell/Pkgfile
 f:21f9c1af25aea98828ba20fbfea1cd18:aspell6-en/Pkgfile
 f:e1d134e7ea34736b6cbdfe52f1ac44ee:at-spi2-core/Pkgfile
 f:8826967537e3783a66adc58c03dbb531:atkmm/Pkgfile
-f:37a7727435bc66db19aaa1f7a7d36bae:autoconf-archive/Pkgfile
+f:cd89c44a8141531099163f545e7cc45f:autoconf-archive/Pkgfile
 f:f1c6ca91dc8bb3aa822ddf923cc1ee88:avahi/Pkgfile
 f:c82a8c2a19c5dd7373fb4644ef8e84b3:avahi/avahi-0.8-ipv6_race_condition_fix-1.patch
 f:9f7d6141a5dea294a32ebbb20601e3c8:avahi/post-install
@@ -668,9 +668,9 @@ f:bdc663c7b82ffc0b5df67611621fb625:lua52/lua.diff
 f:e7ba6c2b695b0b84a5ea0cbff5fc9067:lua52/lua.pc
 f:367bc57509a96c453bbd1d4e860809bb:lynx/Pkgfile
 f:3fd61a4332102691d2dcb069e817ea74:mingw-ccache-bindings/Pkgfile
-f:ed8a9543275176ce6e6559fc9e3aba29:mingw-w64-binutils/Pkgfile
+f:a451a14c6729fb4b2da2e9af70422049:mingw-w64-binutils/Pkgfile
 f:a89245058732b01796d0ce1e2279fb00:mingw-w64-crt/.nostrip
-f:4ecb503a3804e2437923a77c1fb2398e:mingw-w64-crt/Pkgfile
+f:bc6ba9a35a130aa2a13c1df377d5ef20:mingw-w64-crt/Pkgfile
 f:8e7a5b0b21d857b04be2668216a4ddc2:mingw-w64-gcc/.nostrip
 f:a16537ef8ffd53c91cd0aa645b757921:mingw-w64-gcc/Pkgfile
 f:de49e18bef945d573b664ad61b142256:mingw-w64-headers/Pkgfile

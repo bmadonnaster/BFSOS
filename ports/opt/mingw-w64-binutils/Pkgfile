@@ -7,7 +7,7 @@
 name=mingw-w64-binutils
 version=2.39
 release=1
-source=(http://ftpmirror.gnu.org/gnu/binutils/binutils-$version.tar.xz)
+source=(https://ftp.gnu.org/gnu/binutils/binutils-$version.tar.xz)
 
 build() {
 	for T in {i686,x86_64}-w64-mingw32; do

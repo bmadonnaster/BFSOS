@@ -8,7 +8,7 @@ name=mingw-w64-crt
 version=12.0.0
 release=1
 source=(https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v$version.tar.bz2 \
-	http://ftpmirror.gnu.org/gnu/binutils/binutils-2.39.tar.xz \
+	https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.xz \
 	http://gcc.gnu.org/pub/gcc/releases/gcc-13.1.0/gcc-13.1.0.tar.xz)
 
 build() {

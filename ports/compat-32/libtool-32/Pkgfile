@@ -7,7 +7,7 @@
 name=libtool-32
 version=2.4.7
 release=1
-source=(https://ftpmirror.gnu.org/gnu/${name%-*}/${name%-*}-$version.tar.xz)
+source=(https://ftp.gnu.org/gnu/${name%-*}/${name%-*}-$version.tar.xz)
 
 build() {
 	cd ${name%-*}-$version
