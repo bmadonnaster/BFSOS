@@ -333,9 +333,17 @@ _select_bootstrap_menu_choice() {
     local choice=""
     local dialog_status=0
 
+    # This function is called inside command substitution:
+    #
+    #     choice="$(_select_bootstrap_menu_choice)"
+    #
+    # Therefore stdout is a pipe and `[ -t 1 ]` is false even when the user is
+    # sitting at a real terminal.  Use /dev/tty explicitly for dialog input and
+    # screen output; --stdout leaves only the selected menu tag on captured
+    # stdout.
     if command -v dialog >/dev/null 2>&1 &&
-       [ -t 0 ] &&
-       [ -t 1 ]
+       [ -r /dev/tty ] &&
+       [ -w /dev/tty ]
     then
         set +e
         choice="$(
@@ -377,12 +385,13 @@ _select_bootstrap_menu_choice() {
                 9 "$(_dialog_menu_description \
                     'Quit' \
                     '\Z3EXIT\Zn')" \
-                3>&1 1>&2 2>&3
+                --stdout \
+                </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
         set -e
 
-        clear 2>/dev/null || true
+        clear </dev/tty >/dev/tty 2>/dev/null || true
 
         if [ "$dialog_status" -ne 0 ]; then
             printf '%s\n' 9
@@ -393,9 +402,16 @@ _select_bootstrap_menu_choice() {
         return 0
     fi
 
-    _show_bootstrap_menu
+    _show_bootstrap_menu >&2
     printf '%sChoose [1-9]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
-    read -r choice
+    read -r choice </dev/tty 2>/dev/null || read -r choice
+
+    case "$choice" in
+        q|Q|quit|Quit|QUIT)
+            choice=9
+            ;;
+    esac
+
     printf '%s\n' "$choice"
 }
 
@@ -461,7 +477,7 @@ _bootstrap_menu() {
                 status=$?
                 set -e
                 ;;
-            9)
+            9|q|Q|quit|Quit|QUIT)
                 echo "BFS bootstrap exited."
                 return 0
                 ;;
