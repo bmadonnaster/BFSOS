@@ -660,6 +660,7 @@ _clean_start() {
     echo "This will permanently delete:"
     echo "  /tmp/lfs*"
     echo "  $packagedir/*"
+    echo "  $buildworkdir/*"
     echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
     echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
     echo
@@ -746,9 +747,15 @@ _clean_start() {
         return 1
     fi
 
-    sudo mkdir -p "$packagedir"
+    sudo mkdir -p "$packagedir" "$buildworkdir"
 
     sudo find "$packagedir" \
+        -mindepth 1 \
+        -maxdepth 1 \
+        -print \
+        -exec rm -rf -- {} +
+
+    sudo find "$buildworkdir" \
         -mindepth 1 \
         -maxdepth 1 \
         -print \
@@ -1621,6 +1628,10 @@ _buildbase() {
     chmod +x "$LFS/tmp/lfs-tools/bin/pkgin"
 
     mkdir -p "$LFS/var/lib/pkgmk"
+    mkdir -p "$buildworkdir"
+
+    echo "Stage 2/3 package work directory:"
+    echo "  $buildworkdir"
 
     cp ports/core/pkgutils/extension \
         "$LFS/var/lib/pkgmk"
@@ -1644,7 +1655,7 @@ export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
-PKGMK_WORK_DIR="/tmp/pkgmk-\$name"
+PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 
 . /var/lib/pkgmk/extension
 EOF
@@ -1669,7 +1680,7 @@ export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
-PKGMK_WORK_DIR="/tmp/pkgmk-\$name"
+PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 
 . /var/lib/pkgmk/extension
 EOF
@@ -1931,9 +1942,13 @@ mountfs() {
 
     mkdir -p "$LFS/$pkgmksrc"
     mkdir -p "$LFS/$pkgmkpkg"
+    mkdir -p "$LFS/$pkgmkwork"
+
+    mkdir -p "$sourcedir" "$packagedir" "$buildworkdir"
 
     mount --bind "$sourcedir" "$LFS/$pkgmksrc"
     mount --bind "$packagedir" "$LFS/$pkgmkpkg"
+    mount --bind "$buildworkdir" "$LFS/$pkgmkwork"
 }
 
 umountfs() {
@@ -1942,6 +1957,7 @@ umountfs() {
     unmount "$LFS/run"
     unmount "$LFS/proc"
     unmount "$LFS/sys"
+    unmount "$LFS/$pkgmkwork"
     unmount "$LFS/$pkgmkpkg"
     unmount "$LFS/$pkgmksrc"
 }
@@ -2132,8 +2148,14 @@ signify
 sourcedir="$PWD/sources"
 packagedir="$PWD/packages"
 
+# Stage 2/3 pkgmk build trees can be several GiB (especially GCC multilib).
+# Keep them on the same filesystem as the BFS repository rather than the
+# LiveGUI /tmp overlay, which may be very small.
+buildworkdir="$PWD/build-work"
+
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
+pkgmkwork="var/cache/pkg/build-work"
 
 case "${1:-menu}" in
     menu|"")
