@@ -9,7 +9,7 @@ release=2
 keep_static=1
 
 source=(
-    https://download.savannah.gnu.org/releases/$name/$name-$version.tar.xz
+    https://mirrors.edge.kernel.org/yocto-sources/$name-$version.tar.xz
 )
 
 post_build() {
