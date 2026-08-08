@@ -693,12 +693,58 @@ _clean_start() {
     echo
     echo "Removing old BFS build files..."
 
-    find /tmp \
-        -mindepth 1 \
-        -maxdepth 1 \
-        -name 'lfs*' \
-        -print \
-        -exec sudo rm -rf -- {} +
+    # A previous Stage 2/3/chroot or interrupted run can leave bind/proc/sys/tmpfs
+    # mounts below $LFS.  rm -rf cannot remove a mount point and historically the
+    # script continued anyway, leaving a split/stale toolchain tree behind.
+    #
+    # Unmount every BFS mount deepest-first before deleting /tmp/lfs*.
+    _clean_start_unmount_tree() {
+        local root="$1"
+        local target=""
+
+        [ -e "$root" ] || [ -L "$root" ] || return 0
+
+        while IFS= read -r target; do
+            [ -n "$target" ] || continue
+            echo "Unmounting stale BFS mount: $target"
+
+            if ! sudo umount -- "$target" 2>/dev/null; then
+                # A stale/busy bind can survive an interrupted build. Lazy
+                # unmount is safe here because the user explicitly requested a
+                # completely clean build and the tree is about to be deleted.
+                sudo umount -l -- "$target" || {
+                    echo "ERROR: Unable to unmount stale BFS mount: $target" >&2
+                    return 1
+                }
+            fi
+        done < <(
+            findmnt -Rrn -o TARGET --target "$root" 2>/dev/null |
+                awk -v root="$root" '$0 == root || index($0, root "/") == 1 { print }' |
+                awk '{ depth=gsub("/", "/"); print depth "\t" $0 }' |
+                sort -rn |
+                cut -f2-
+        )
+
+        if mountpoint -q "$root" 2>/dev/null; then
+            echo "ERROR: $root is still mounted after cleanup." >&2
+            return 1
+        fi
+    }
+
+    _clean_start_unmount_tree "$TOOLS" || return 1
+    _clean_start_unmount_tree "$LFS" || return 1
+
+    # Delete the two known BFS trees explicitly.  Do not use a broad /tmp/lfs*
+    # removal as the primary cleanup path, and do not continue after rm errors.
+    sudo rm -rf -- "$TOOLS" "$LFS" || {
+        echo "ERROR: Failed to remove old BFS build trees." >&2
+        return 1
+    }
+
+    if [ -e "$TOOLS" ] || [ -L "$TOOLS" ] || [ -e "$LFS" ] || [ -L "$LFS" ]; then
+        echo "ERROR: Old BFS build trees still exist after cleanup." >&2
+        return 1
+    fi
 
     sudo mkdir -p "$packagedir"
 
