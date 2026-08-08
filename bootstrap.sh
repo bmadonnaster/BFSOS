@@ -494,8 +494,10 @@ _show_bootstrap_menu() {
 
     printf '  %s4)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
-        'Verify completed base system' \
+        'Verify completed base system (sudo/root)' \
         "[$(_stage_complete_text _verification_complete)]"
+    printf '     %sRuns automatically with sudo/root privileges%s\n' \
+        "$COLOR_YELLOW" "$COLOR_RESET"
 
     printf '  %s5)%s %-52s %s\n' \
         "$COLOR_CYAN" "$COLOR_RESET" \
@@ -584,7 +586,7 @@ _select_bootstrap_menu_choice() {
                 --ok-label "Select" \
                 --cancel-label "Quit" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2 and 3 automatically run with sudo/root privileges.\Zn" \
+                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, and 4 automatically run with sudo/root privileges.\Zn" \
                 24 92 13 \
                 1 "$(_dialog_menu_description \
                     'Build temporary toolchain' \
@@ -680,7 +682,7 @@ _bootstrap_menu() {
                 ;;
             4)
                 set +e
-                _verifybase
+                _run_root_stage 4
                 status=$?
                 set -e
                 ;;
