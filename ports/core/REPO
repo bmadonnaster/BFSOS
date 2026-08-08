@@ -257,9 +257,9 @@ f:f1dd87922e8fddfe73ef20ae76c2f777:aaa_filesystem/umask.sh
 f:1f922824a6d29c466178d0834d17321c:aaa_filesystem/vte.csh
 f:d713701b894685e338c42f2cf8af338f:aaa_filesystem/vte.sh
 f:21fd5d73c35cc647f6ee852e73ddeb6a:aaa_filesystem/xorg.sh
-f:8b1202612c7060cf547c69b9278b9d1c:acl/Pkgfile
+f:ac67d9d6152fa9a8ea04a3f0f9bc2644:acl/Pkgfile
 f:f405083e721d9176d4e671197986194f:argon2/Pkgfile
-f:8daece87c64487d6abe79c7b1e521044:attr/Pkgfile
+f:925cedd7f6a72da5a1ae30af8ab622ad:attr/Pkgfile
 f:94b28978b943fd465300b57d13185ae3:autoconf/Pkgfile
 f:b74f7b3e5aff540e5d9cf3bedee6af67:automake/Pkgfile
 f:dd3709c03b9b91e79854392e08ec2f61:bash/Pkgfile
@@ -453,7 +453,7 @@ f:5448505a35c8ea3a77e372cc997218b9:lzo/Pkgfile
 f:195dd76a11dc723f85a560bc59344b08:m4/Pkgfile
 f:37215ea10cfd4a3c69dfbdb168a6b4fe:make-ca/Pkgfile
 f:c6d52e2696ac8055f007e118d5406e47:make/Pkgfile
-f:11016f2099fea7200d157522d63b5c57:man-db/Pkgfile
+f:869f2a1ff910479536defd76d1d2281d:man-db/Pkgfile
 f:de21fcf42bcef791c928f73d5c68299e:man-pages/Pkgfile
 f:2db0ee4a306c9ee104c89fb5fd618c36:mandoc/Pkgfile
 f:3e1bbdb1148e2ccdd4e14088c29702bd:mdadm/Pkgfile
