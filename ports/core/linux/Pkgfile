@@ -96,13 +96,58 @@ pkg_build() {
     scripts/config --enable NLS_CODEPAGE_437
     scripts/config --enable NLS_ISO8859_1
 
-    # Future storage support as modules.
+    # Storage stack used by the BFS installer.
+    #
+    # Keep the MD core enabled, with the actual RAID personalities as modules.
+    # Dracut will pull the required modules into the initramfs when a system
+    # boots from or depends on MD/LVM/LUKS storage.
+    scripts/config --enable MD
+    scripts/config --module MD_LINEAR
+    scripts/config --module MD_RAID0
+    scripts/config --module MD_RAID1
+    scripts/config --module MD_RAID10
+    scripts/config --module MD_RAID456
+
+    # Device Mapper / LVM.
     scripts/config --module BLK_DEV_DM
+    scripts/config --module DM_SNAPSHOT
+    scripts/config --module DM_THIN_PROVISIONING
+    scripts/config --module DM_CACHE
+    scripts/config --module DM_WRITECACHE
+    scripts/config --module DM_MIRROR
+    scripts/config --module DM_RAID
+    scripts/config --module DM_MULTIPATH
+    scripts/config --module DM_DELAY
+    scripts/config --module DM_ZERO
+
+    # LUKS / encrypted and authenticated block-device support.
     scripts/config --module DM_CRYPT
-    scripts/config --module MD
-    scripts/config --module BLK_DEV_MD
+    scripts/config --module DM_INTEGRITY
+
+    # Useful integrity/verified-root targets. These do not force their use;
+    # they simply guarantee that kernels built by this port can support them.
+    scripts/config --module DM_VERITY
 
     make olddefconfig
+
+    # Do not silently ship another kernel without the storage features the
+    # installer exposes.
+    grep -q '^CONFIG_MD=y$' .config || {
+        echo "Kernel configuration error: CONFIG_MD was not enabled." >&2
+        return 1
+    }
+    grep -q '^CONFIG_BLK_DEV_DM=m$' .config || {
+        echo "Kernel configuration error: CONFIG_BLK_DEV_DM was not built as a module." >&2
+        return 1
+    }
+    grep -q '^CONFIG_DM_CRYPT=m$' .config || {
+        echo "Kernel configuration error: CONFIG_DM_CRYPT was not built as a module." >&2
+        return 1
+    }
+    grep -q '^CONFIG_MD_RAID456=m$' .config || {
+        echo "Kernel configuration error: CONFIG_MD_RAID456 was not built as a module." >&2
+        return 1
+    }
 
     kernver="$(make -s kernelrelease)"
 
