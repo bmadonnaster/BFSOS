@@ -19,6 +19,79 @@ cd "$SCRIPT_DIR"
 
 PID_FILE="$SCRIPT_DIR/.bootstrap.pid"
 
+# Synchronize the host/live-environment clock before any bootstrap archive or
+# package timestamps are created. Prefer chrony (Gentoo LiveGUI), then systemd
+# time synchronization, followed by ntpd/ntpdate. A failed sync is a warning,
+# not a fatal error, so offline bootstrap work remains possible.
+sync_system_clock() {
+    local synced=no
+    local i=0
+    local -a root_cmd=()
+
+    [ "${BFS_TIME_SYNC:-yes}" = yes ] || {
+        printf 'Automatic time synchronization disabled (BFS_TIME_SYNC=%s).\n' \
+            "${BFS_TIME_SYNC:-no}"
+        return 0
+    }
+
+    if [ "$(id -u)" -ne 0 ]; then
+        if command -v sudo >/dev/null 2>&1; then
+            root_cmd=(sudo --)
+        else
+            echo "WARNING: Cannot synchronize the clock: root privileges/sudo are unavailable." >&2
+            echo "WARNING: Verify the clock before building packages: $(date)" >&2
+            return 0
+        fi
+    fi
+
+    printf '\nSynchronizing system clock...\n'
+
+    if command -v chronyd >/dev/null 2>&1; then
+        if "${root_cmd[@]}" chronyd -q; then
+            synced=yes
+            printf 'System clock synchronized with chronyd.\n'
+        fi
+    fi
+
+    if [ "$synced" != yes ] &&
+       command -v timedatectl >/dev/null 2>&1 &&
+       [ -d /run/systemd/system ]; then
+        if "${root_cmd[@]}" timedatectl set-ntp true >/dev/null 2>&1; then
+            i=0
+            while [ "$i" -lt 15 ]; do
+                if [ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null || true)" = yes ]; then
+                    synced=yes
+                    printf 'System clock synchronized with systemd time synchronization.\n'
+                    break
+                fi
+                sleep 1
+                i=$((i + 1))
+            done
+        fi
+    fi
+
+    if [ "$synced" != yes ] && command -v ntpd >/dev/null 2>&1; then
+        if "${root_cmd[@]}" ntpd -q -g; then
+            synced=yes
+            printf 'System clock synchronized with ntpd.\n'
+        fi
+    fi
+
+    if [ "$synced" != yes ] && command -v ntpdate >/dev/null 2>&1; then
+        if "${root_cmd[@]}" ntpdate -u pool.ntp.org; then
+            synced=yes
+            printf 'System clock synchronized with ntpdate.\n'
+        fi
+    fi
+
+    if [ "$synced" != yes ]; then
+        echo "WARNING: Automatic time synchronization was unavailable or failed." >&2
+        echo "WARNING: Verify the clock before building packages: $(date)" >&2
+    fi
+
+    return 0
+}
+
 BOOTSTRAP_SETTINGS_FILE="$SCRIPT_DIR/.bfs-bootstrap-settings"
 DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
@@ -238,6 +311,11 @@ bootstrap_settings_menu() {
         esac
     done
 }
+
+case "${1:-menu}" in
+    0|stop|kill|-h|--help|help) ;;
+    *) sync_system_clock ;;
+esac
 
 load_bootstrap_settings
 setup_bootstrap_theme

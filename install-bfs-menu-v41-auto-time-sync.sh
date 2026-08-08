@@ -28,6 +28,66 @@ force_posix_locale() {
 
 force_posix_locale
 
+# Synchronize the live environment clock before logs, archive extraction, or
+# package builds. Prefer chrony (used by Gentoo LiveGUI), then systemd's time
+# synchronization, followed by classic ntpd/ntpdate fallbacks. Failure is
+# non-fatal so the installer can still be used in an offline environment.
+sync_system_clock() {
+        local synced=no
+        local i=0
+
+        [[ "${BFS_TIME_SYNC:-yes}" == yes ]] || {
+                printf 'Automatic time synchronization disabled (BFS_TIME_SYNC=%s).\n' \
+                        "${BFS_TIME_SYNC:-no}"
+                return 0
+        }
+
+        printf '\nSynchronizing system clock...\n'
+
+        if command -v chronyd >/dev/null 2>&1; then
+                if chronyd -q; then
+                        synced=yes
+                        printf 'System clock synchronized with chronyd.\n'
+                fi
+        fi
+
+        if [[ "$synced" != yes ]] &&
+           command -v timedatectl >/dev/null 2>&1 &&
+           [[ -d /run/systemd/system ]]; then
+                if timedatectl set-ntp true >/dev/null 2>&1; then
+                        for ((i=0; i<15; i++)); do
+                                if [[ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null || true)" == yes ]]; then
+                                        synced=yes
+                                        printf 'System clock synchronized with systemd time synchronization.\n'
+                                        break
+                                fi
+                                sleep 1
+                        done
+                fi
+        fi
+
+        if [[ "$synced" != yes ]] && command -v ntpd >/dev/null 2>&1; then
+                if ntpd -q -g; then
+                        synced=yes
+                        printf 'System clock synchronized with ntpd.\n'
+                fi
+        fi
+
+        if [[ "$synced" != yes ]] && command -v ntpdate >/dev/null 2>&1; then
+                if ntpdate -u pool.ntp.org; then
+                        synced=yes
+                        printf 'System clock synchronized with ntpdate.\n'
+                fi
+        fi
+
+        if [[ "$synced" != yes ]]; then
+                printf 'WARNING: Automatic time synchronization was unavailable or failed.\n' >&2
+                printf 'WARNING: Verify the clock before building packages: %s\n' "$(date)" >&2
+        fi
+
+        return 0
+}
+
 # BFS Linux installer
 #
 # Assumptions:
@@ -4817,6 +4877,7 @@ main() {
         parse_arguments "$@"
         require_root "$@"
         force_posix_locale
+        sync_system_clock
         load_installer_settings
         setup_installer_theme
         report_installer_interface_mode
