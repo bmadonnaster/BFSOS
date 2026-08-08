@@ -1759,8 +1759,16 @@ lvm_menu() {
         local vg_name=""
         local lv_name=""
         local lv_size=""
+        local normalized_size=""
         local status=0 index=""
         local -a pv_array=()
+
+        # LVM reports inherited installer logging descriptors as "leaked".
+        # Closing only fd 3/4 for LVM utilities keeps normal stdout/stderr logging
+        # while preventing those harmless warnings.
+        lvm_run() {
+                "$@" 3>&- 4>&-
+        }
 
         while true; do
                 set +e
@@ -1784,9 +1792,13 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                lsblk -fp
+                                lvm_run pvs 2>/dev/null || true
                                 echo
-                                read -r -p "Block device for the physical volume: " device
+                                device=""
+                                ask_default device \
+                                        "Block device for the physical volume" \
+                                        "/dev/"
+                                [[ -n "$device" ]] || continue
                                 [[ -b "$device" ]] || {
                                         warn "Not a block device: $device"
                                         pause_screen
@@ -1794,7 +1806,12 @@ lvm_menu() {
                                 }
                                 confirm "Initialize $device as an LVM physical volume?" ||
                                         continue
-                                pvcreate "$device"
+                                if ! lvm_run pvcreate "$device"; then
+                                        warn "pvcreate failed for $device. Returning to the LVM menu."
+                                        pause_screen
+                                        continue
+                                fi
+                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
                                 pause_screen
                                 ;;
                         2)
@@ -1803,13 +1820,27 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                pvs
+                                lvm_run pvs 2>/dev/null || true
                                 echo
-                                read -r -p "New volume-group name: " vg_name
-                                read -r -p "Physical volume device(s), separated by spaces: " pv_list
+                                vg_name=""
+                                pv_list=""
+                                ask_default vg_name "New volume-group name" "bfs-vg" || continue
+                                ask_default pv_list \
+                                        "Physical volume device(s), separated by spaces" \
+                                        "/dev/" || continue
+                                [[ -n "$vg_name" && -n "$pv_list" ]] || {
+                                        warn "A volume-group name and at least one physical volume are required."
+                                        pause_screen
+                                        continue
+                                }
                                 read -r -a pv_array <<< "$pv_list"
-                                vgcreate "$vg_name" "${pv_array[@]}"
+                                if ! lvm_run vgcreate "$vg_name" "${pv_array[@]}"; then
+                                        warn "vgcreate failed. Returning to the LVM menu."
+                                        pause_screen
+                                        continue
+                                fi
                                 ACTIVATED_VGS_BY_SCRIPT+=("$vg_name")
+                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
                                 pause_screen
                                 ;;
                         3)
@@ -1818,26 +1849,64 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                vgs
+                                lvm_run vgs 2>/dev/null || true
                                 echo
-                                read -r -p "Volume-group name: " vg_name
-                                read -r -p "Logical-volume name: " lv_name
-                                read -r -p "Size, for example 100G or 100%FREE: " lv_size
-                                if [[ "$lv_size" == *%* ]]; then
-                                        lvcreate -l "$lv_size" -n "$lv_name" "$vg_name"
-                                else
-                                        lvcreate -L "$lv_size" -n "$lv_name" "$vg_name"
+                                vg_name=""
+                                lv_name=""
+                                lv_size=""
+                                ask_default vg_name "Volume-group name" "bfs-vg" || continue
+                                ask_default lv_name "Logical-volume name" "home" || continue
+                                ask_default lv_size \
+                                        "LV size: 10G, 50%, 50%VG, 50%FREE, or 100%FREE (bare % means %VG)" \
+                                        "50%" || continue
+
+                                [[ "$vg_name" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
+                                        warn "Invalid volume-group name: $vg_name"
+                                        pause_screen
+                                        continue
+                                }
+                                [[ "$lv_name" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
+                                        warn "Invalid logical-volume name: $lv_name"
+                                        pause_screen
+                                        continue
+                                }
+
+                                normalized_size="${lv_size^^}"
+                                normalized_size="${normalized_size//[[:space:]]/}"
+
+                                # Friendly shorthand: LVM itself rejects 50%, but users
+                                # naturally expect it to mean 50% of the volume group.
+                                if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%$ ]]; then
+                                        normalized_size="${normalized_size}%VG"
                                 fi
-                                command -v udevadm >/dev/null 2>&1 &&
-                                        udevadm settle || true
+
+                                if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%(VG|FREE)$ ]]; then
+                                        if ! lvm_run lvcreate -l "$normalized_size" -n "$lv_name" "$vg_name"; then
+                                                warn "lvcreate failed. Check the requested percentage and free space; the installer will continue."
+                                                pause_screen
+                                                continue
+                                        fi
+                                elif [[ "$normalized_size" =~ ^[1-9][0-9]*([.][0-9]+)?[KMGTPE]$ ]]; then
+                                        if ! lvm_run lvcreate -L "$normalized_size" -n "$lv_name" "$vg_name"; then
+                                                warn "lvcreate failed. Check the requested size and free space; the installer will continue."
+                                                pause_screen
+                                                continue
+                                        fi
+                                else
+                                        warn "Invalid LV size '$lv_size'. Use values such as 10G, 50%, 50%VG, 50%FREE, or 100%FREE."
+                                        pause_screen
+                                        continue
+                                fi
+
+                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
                                 pause_screen
                                 ;;
                         4)
-                                pvs 2>/dev/null || true
+                                lvm_run pvs 2>/dev/null || true
                                 echo
-                                vgs 2>/dev/null || true
+                                lvm_run vgs 2>/dev/null || true
                                 echo
-                                lvs 2>/dev/null || true
+                                lvm_run lvs 2>/dev/null || true
                                 pause_screen
                                 ;;
                         5) return 0 ;;
