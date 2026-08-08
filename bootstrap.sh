@@ -1137,9 +1137,49 @@ _buildtoolchain() {
     export LFS_TGT32=i686-lfs-linux-gnu
     export LFS_TGTX32=x86_64-lfs-linux-gnux32
 
-    mkdir -p ${LFS}${TOOLS} "$sourcedir"
-    rm -f "$TOOLS"
-    ln -sf "${LFS}${TOOLS}" "$TOOLS"
+    # The temporary toolchain must physically live inside the BFS rootfs:
+    #
+    #   /tmp/lfs-tools -> /tmp/lfs-rootfs/tmp/lfs-tools
+    #
+    # Do not use `rm -f` here.  If /tmp/lfs-tools already exists as a
+    # directory, `ln -sf TARGET /tmp/lfs-tools` creates a nested
+    # /tmp/lfs-tools/lfs-tools symlink instead of replacing the directory.
+    case "$TOOLS" in
+        /tmp/lfs-tools)
+            ;;
+        *)
+            echo "ERROR: Refusing to replace unexpected tools path: $TOOLS" >&2
+            return 1
+            ;;
+    esac
+
+    case "${LFS}${TOOLS}" in
+        /tmp/lfs-rootfs/tmp/lfs-tools)
+            ;;
+        *)
+            echo "ERROR: Unexpected rooted toolchain path: ${LFS}${TOOLS}" >&2
+            return 1
+            ;;
+    esac
+
+    rm -rf -- "$TOOLS"
+    mkdir -p "${LFS}${TOOLS}" "$sourcedir"
+    ln -s "${LFS}${TOOLS}" "$TOOLS"
+
+    if [ ! -L "$TOOLS" ]; then
+        echo "ERROR: $TOOLS was not created as a symlink." >&2
+        return 1
+    fi
+
+    if [ "$(readlink -f "$TOOLS")" != "${LFS}${TOOLS}" ]; then
+        echo "ERROR: $TOOLS points to the wrong location." >&2
+        echo "  Expected: ${LFS}${TOOLS}" >&2
+        echo "  Actual:   $(readlink -f "$TOOLS" 2>/dev/null || echo '<unresolved>')" >&2
+        return 1
+    fi
+
+    echo "Temporary toolchain path verified:"
+    echo "  $TOOLS -> ${LFS}${TOOLS}"
 
     cat > /tmp/bootstrap.conf <<EOF
 export LANG=C
