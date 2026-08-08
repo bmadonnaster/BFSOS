@@ -169,7 +169,7 @@ select_bootstrap_theme() {
                     "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
                 light "Black text on a light background" \
                     "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
-                </dev/tty
+                </dev/tty 2>/dev/tty
         )"
         status=$?
         set -e
@@ -215,7 +215,7 @@ bootstrap_settings_menu() {
                     14 70 4 \
                     1 "Theme: $(theme_display_name)" \
                     2 "Back to main menu" \
-                    </dev/tty
+                    </dev/tty 2>/dev/tty
             )"
             status=$?
             set -e
