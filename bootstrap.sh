@@ -2094,6 +2094,7 @@ python3-build
 python3-pyproject-hooks
 python3-wheel
 libuv
+libarchive
 cmake
 boost
 meson
@@ -2123,7 +2124,6 @@ util-linux
 dbus
 procps-ng
 e2fsprogs
-libarchive
 pkgutils
 dialog
 prt-get

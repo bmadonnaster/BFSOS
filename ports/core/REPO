@@ -394,7 +394,7 @@ f:2c5cd0880187429b0dc793003a64facd:iana-etc/Pkgfile
 f:360a3f628c8695fb4e7de446c8319f21:iana-etc/protocols
 f:a65836c4bbb25f7c351da143536301fd:iana-etc/services
 f:d6b011b611df75cfa3b42b933250c1a8:iana-etc/update.sh
-f:d7ba443c328de8c3a3e47b70534d25e7:inetutils/Pkgfile
+f:821e27ed9c8de744a52453766c84a481:inetutils/Pkgfile
 f:5030992608b3d84f7624f52b1f1ec3f1:inih/Pkgfile
 f:10149863446381c69115205475ffeb2e:intltool/Pkgfile
 f:239886015b5aa80c54b22c104c610099:iproute2/Pkgfile
