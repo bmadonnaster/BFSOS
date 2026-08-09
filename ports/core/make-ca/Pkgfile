@@ -5,7 +5,7 @@
 
 name=make-ca
 version=1.16.1
-release=3
+release=4
 source=(
 https://github.com/lfs-book/make-ca/archive/v$version/$name-$version.tar.gz
 )
@@ -16,13 +16,8 @@ pkg_build() {
 
     make DESTDIR="$PKG" install
 
-    install -vdm755 \
-        "$PKG/etc/ssl/local" \
-        "$PKG/etc/ssl/certs"
-
-    # Compatibility path expected by httpup and other software.
-    # make-ca generates the actual bundle at:
-    #   /etc/pki/tls/certs/ca-bundle.crt
-    ln -sfn /etc/pki/tls/certs/ca-bundle.crt \
-        "$PKG/etc/ssl/certs/ca-certificates.crt"
+    # Keep only make-ca's own local trust directory in this package.
+    # /etc/ssl/cert.pem and /etc/ssl/certs/ca-certificates.crt are owned
+    # by the ca-certificates package and must not be duplicated here.
+    install -vdm755 "$PKG/etc/ssl/local"
 }
