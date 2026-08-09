@@ -1,19 +1,28 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: A stream oriented C library for parsing XML
-# URL:         
+# Description: Builds and maintains the system CA certificate trust store
+# URL: https://github.com/lfs-book/make-ca
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  
+# Depends on: p11-kit
 
 name=make-ca
 version=1.16.1
-release=1
-source=(https://github.com/lfs-book/make-ca/archive/v$version/$name-$version.tar.gz)
-
+release=2
+source=(
+https://github.com/lfs-book/make-ca/archive/v$version/$name-$version.tar.gz
+)
 
 pkg_build() {
+    # BLFS recommends removing deprecated mktemp -t usage.
+    sed '/mktemp/s/-t //' -i make-ca
 
+    make DESTDIR="$PKG" install
 
-make DESTDIR=$PKG install &&
-install -vdm755 $PKG/etc/ssl/local
+    install -vdm755 \
+        "$PKG/etc/ssl/local" \
+        "$PKG/etc/ssl/certs"
+
+    # Compatibility path expected by httpup and other software.
+    # make-ca generates the actual bundle at:
+    #   /etc/pki/tls/certs/ca-bundle.crt
+    ln -sfn /etc/pki/tls/certs/ca-bundle.crt \
+        "$PKG/etc/ssl/certs/ca-certificates.crt"
 }
