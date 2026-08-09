@@ -452,8 +452,8 @@ f:603a862cc8e51dc6b1dd505155287b70:lvm2/Pkgfile
 f:ae6b4f0ed45c1d71f4390e8060106ce1:lz4/Pkgfile
 f:5448505a35c8ea3a77e372cc997218b9:lzo/Pkgfile
 f:195dd76a11dc723f85a560bc59344b08:m4/Pkgfile
-f:cb126ffd2b32f5ef558728a6889b4ef7:make-ca/Pkgfile
 f:37215ea10cfd4a3c69dfbdb168a6b4fe:make-ca/Pkgfile.backup
+f:4e89a4d7153269e778967e9bd67994c0:make-ca/Pkgfile
 f:c6d52e2696ac8055f007e118d5406e47:make/Pkgfile
 f:869f2a1ff910479536defd76d1d2281d:man-db/Pkgfile
 f:de21fcf42bcef791c928f73d5c68299e:man-pages/Pkgfile

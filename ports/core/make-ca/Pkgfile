@@ -1,11 +1,11 @@
 # Description: Builds and maintains the system CA certificate trust store
 # URL: https://github.com/lfs-book/make-ca
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: p11-kit
+# Depends on:
 
 name=make-ca
 version=1.16.1
-release=2
+release=3
 source=(
 https://github.com/lfs-book/make-ca/archive/v$version/$name-$version.tar.gz
 )
