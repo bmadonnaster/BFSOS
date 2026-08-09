@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer
+# BFS Linux installer - v50 tracker fixes r2 (RAID + LUKS + LVM)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -133,7 +133,9 @@ INSTALL_SUDO="${BFS_INSTALL_SUDO:-yes}"
 SUDO_MODE="${BFS_SUDO_MODE:-password}"
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
 INSTALL_NETWORKMANAGER="${BFS_INSTALL_NETWORKMANAGER:-no}"
-INSTALL_CRYPTSETUP="${BFS_INSTALL_CRYPTSETUP:-no}"
+# cryptsetup is installer-managed. It is installed automatically when the
+# final selected storage topology contains a LUKS/crypt layer.
+INSTALL_CRYPTSETUP=no
 AUTO_CRYPTSETUP=no
 AUTO_LVM2=no
 AUTO_MDADM=no
@@ -581,6 +583,34 @@ pause_screen() {
         read -r -p 'Press Enter to continue...' _
 }
 
+
+dialog_message() {
+        local title="$1" message="$2"
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear --backtitle "BFS Linux Installer" --title "$title" \
+                        --msgbox "$message" 18 84 </dev/tty >/dev/tty 2>/dev/tty || true
+        else
+                printf '\n%s\n%s\n\n%s\n' "$title" "$(printf '%*s' "${#title}" '' | tr ' ' '=')" "$message"
+                pause_screen
+        fi
+}
+
+dialog_password() {
+        local result_variable="$1" title="$2" prompt="$3" value="" status=0
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                set +e
+                value="$(dialog --stdout --clear --insecure --backtitle "BFS Linux Installer" \
+                        --title "$title" --cancel-label "Back" --passwordbox "$prompt" 12 72 </dev/tty)"
+                status=$?
+                set -e
+                ((status == 0)) || return 1
+        else
+                read -r -s -p "$prompt: " value </dev/tty
+                printf '\n' >/dev/tty
+        fi
+        printf -v "$result_variable" '%s' "$value"
+}
+
 run_on_tty() {
         local status=0
 
@@ -959,7 +989,9 @@ get_available_partitions() {
                 [[ "$type" == part || "$type" == crypt || "$type" == raid* ]] || continue
 
                 case "$fstype" in
-                        linux_raid_member|LVM2_member)
+                        linux_raid_member|LVM2_member|crypto_LUKS)
+                                # A LUKS header is a storage layer, not a filesystem target.
+                                # Format/mount the active /dev/mapper device (or descendants) instead.
                                 continue
                                 ;;
                 esac
@@ -1043,6 +1075,7 @@ select_partition() {
         local variable="$1"
         local prompt="$2"
         local optional="${3:-no}"
+        local optional_label="${4:-Skip this partition}"
         local answer=""
         local selected_index=""
         local selected_device=""
@@ -1063,7 +1096,7 @@ select_partition() {
                 menu_items=()
 
                 if [[ "$optional" == yes ]]; then
-                        menu_items+=(0 "Skip this partition")
+                        menu_items+=(0 "$optional_label")
                 fi
 
                 for ((index=0; index<${#AVAILABLE_PATHS[@]}; index++)); do
@@ -1462,90 +1495,18 @@ choose_raid_level() {
 
 
 show_raid_level_summary() {
-        local raid_level="$1"
-
-        clear_screen
-        echo "RAID selection summary"
-        echo "======================"
-        echo
-
+        local raid_level="$1" summary=""
         case "$raid_level" in
-                linear)
-                        cat <<'EOF_LINEAR'
-RAID type     : Linear / JBOD
-Minimum disks : 2
-Layout        : Concatenation
-Redundancy    : None
-Performance   : Similar to a single disk
-Usable space  : Sum of all member capacities
-EOF_LINEAR
-                        ;;
-                0)
-                        cat <<'EOF_RAID0'
-RAID type     : RAID 0
-Minimum disks : 2
-Layout        : Striping
-Redundancy    : None
-Performance   : Excellent read and write performance
-Usable space  : Sum of all member capacities
-EOF_RAID0
-                        ;;
-                1)
-                        cat <<'EOF_RAID1'
-RAID type     : RAID 1
-Minimum disks : 2
-Layout        : Mirroring
-Redundancy    : One complete mirrored copy
-Performance   : Fast reads; writes similar to one disk
-Usable space  : Capacity of the smallest member
-EOF_RAID1
-                        ;;
-                4)
-                        cat <<'EOF_RAID4'
-RAID type     : RAID 4
-Minimum disks : 3
-Layout        : Striping with dedicated parity
-Redundancy    : One drive may fail
-Performance   : Fast reads; parity disk may limit writes
-Usable space  : Capacity of N-1 members
-EOF_RAID4
-                        ;;
-                5)
-                        cat <<'EOF_RAID5'
-RAID type     : RAID 5
-Minimum disks : 3
-Layout        : Striping with distributed parity
-Redundancy    : One drive may fail
-Performance   : Fast reads; good general-purpose writes
-Usable space  : Capacity of N-1 members
-EOF_RAID5
-                        ;;
-                6)
-                        cat <<'EOF_RAID6'
-RAID type     : RAID 6
-Minimum disks : 4
-Layout        : Striping with dual distributed parity
-Redundancy    : Two drives may fail
-Performance   : Fast reads; slower writes than RAID 5
-Usable space  : Capacity of N-2 members
-EOF_RAID6
-                        ;;
-                10)
-                        cat <<'EOF_RAID10'
-RAID type     : RAID 10
-Minimum disks : 4
-Layout        : Striping across mirrored pairs
-Redundancy    : Multiple failures may be tolerated if mirrors remain intact
-Performance   : Excellent read and write performance
-Usable space  : Approximately 50% of total capacity
-EOF_RAID10
-                        ;;
-                *)
-                        warn "Unknown RAID level: $raid_level"
-                        ;;
+                linear) summary=$'RAID type     : Linear / JBOD\nMinimum disks : 2\nLayout        : Concatenation\nRedundancy    : None\nPerformance   : Similar to a single disk\nUsable space  : Sum of all member capacities' ;;
+                0) summary=$'RAID type     : RAID 0\nMinimum disks : 2\nLayout        : Striping\nRedundancy    : None\nPerformance   : Excellent read and write performance\nUsable space  : Sum of all member capacities' ;;
+                1) summary=$'RAID type     : RAID 1\nMinimum disks : 2\nLayout        : Mirroring\nRedundancy    : One complete mirrored copy\nPerformance   : Fast reads; writes similar to one disk\nUsable space  : Capacity of the smallest member' ;;
+                4) summary=$'RAID type     : RAID 4\nMinimum disks : 3\nLayout        : Striping with dedicated parity\nRedundancy    : One drive may fail\nPerformance   : Fast reads; parity disk may limit writes\nUsable space  : Capacity of N-1 members' ;;
+                5) summary=$'RAID type     : RAID 5\nMinimum disks : 3\nLayout        : Striping with distributed parity\nRedundancy    : One drive may fail\nPerformance   : Fast reads; good general-purpose writes\nUsable space  : Capacity of N-1 members' ;;
+                6) summary=$'RAID type     : RAID 6\nMinimum disks : 4\nLayout        : Striping with dual distributed parity\nRedundancy    : Two drives may fail\nPerformance   : Fast reads; slower writes than RAID 5\nUsable space  : Capacity of N-2 members' ;;
+                10) summary=$'RAID type     : RAID 10\nMinimum disks : 4\nLayout        : Striping across mirrored pairs\nRedundancy    : Multiple failures may be tolerated if mirrors remain intact\nPerformance   : Excellent read and write performance\nUsable space  : Approximately 50% of total capacity' ;;
+                *) summary="Unknown RAID level: $raid_level" ;;
         esac
-
-        pause_screen
+        dialog_message "RAID selection summary" "$summary"
 }
 
 minimum_raid_members() {
@@ -1740,68 +1701,34 @@ assemble_raid_arrays() {
 }
 
 create_raid_array() {
-        local raid_level=""
-        local minimum=""
-        local member_string=""
-        local array_device=""
-        local -a members=()
+        local raid_level="" minimum="" member_string="" array_device="/dev/md0"
+        local bitmap_choice=no status_text=""
+        local -a members=() bitmap_args=()
 
-        command -v mdadm >/dev/null 2>&1 || {
-                warn "mdadm is not available in this live environment."
-                pause_screen
-                return 0
-        }
-
+        command -v mdadm >/dev/null 2>&1 || { dialog_message "Software RAID" "mdadm is not available in this live environment."; return 0; }
         choose_raid_level raid_level || return 0
         minimum="$(minimum_raid_members "$raid_level")"
-
         show_raid_level_summary "$raid_level"
         choose_raid_members member_string "$minimum" || return 0
         read -r -a members <<< "$member_string"
 
-        clear_screen
-        echo "Create software RAID array"
-        echo "=========================="
-        echo
-        echo "RAID level: $raid_level"
-        echo "Members:    ${members[*]}"
-        echo
+        ask_default array_device "Array device (for example /dev/md0)" "/dev/md0" || return 0
+        [[ "$array_device" =~ ^/dev/md[0-9]+$ ]] || { dialog_message "Invalid RAID device" "Use an array device such as /dev/md0."; return 0; }
+        confirm "Create $array_device as RAID $raid_level using:\n\n${members[*]}\n\nExisting data on all selected members will be destroyed." || return 0
 
-        read -r -p "Array device [/dev/md0]: " array_device
-        array_device="${array_device:-/dev/md0}"
-
-        [[ "$array_device" =~ ^/dev/md[0-9]+$ ]] || {
-                warn "Use an array device such as /dev/md0."
-                pause_screen
-                return 0
-        }
-
-        confirm "Create $array_device? Existing data on all selected members will be destroyed." || {
-                echo "RAID creation cancelled."
-                pause_screen
-                return 0
-        }
-
-        if [[ "$raid_level" == linear ]]; then
-                mdadm \
-                        --create "$array_device" \
-                        --level=linear \
-                        --raid-devices="${#members[@]}" \
-                        "${members[@]}"
-        else
-                mdadm \
-                        --create "$array_device" \
-                        --level="$raid_level" \
-                        --raid-devices="${#members[@]}" \
-                        "${members[@]}"
+        if [[ "$raid_level" != linear && "$raid_level" != 0 ]]; then
+                ask_yes_no bitmap_choice "Enable an internal write-intent bitmap?\n\nThis can improve recovery/resync behavior after an unclean shutdown." no || return 0
+                [[ "$bitmap_choice" == yes ]] && bitmap_args=(--bitmap=internal) || bitmap_args=(--bitmap=none)
         fi
 
-        command -v udevadm >/dev/null 2>&1 &&
-                udevadm settle || true
-
-        echo
-        cat /proc/mdstat 2>/dev/null || true
-        pause_screen
+        if [[ "$raid_level" == linear ]]; then
+                mdadm --create "$array_device" --run --force --level=linear --raid-devices="${#members[@]}" "${members[@]}"
+        else
+                mdadm --create "$array_device" --run --force --level="$raid_level" --raid-devices="${#members[@]}" "${bitmap_args[@]}" "${members[@]}"
+        fi
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        status_text="$(cat /proc/mdstat 2>/dev/null || true)"
+        dialog_message "RAID array created" "$array_device was created successfully.\n\n$status_text"
 }
 
 show_raid_details() {
@@ -1856,86 +1783,139 @@ raid_menu() {
         done
 }
 
-luks_menu() {
-        local choice=""
-        local device=""
-        local mapping=""
-        local status=0
+list_luks_candidates() {
+        local p t sz fs mp parent
+        while read -r p t sz fs mp; do
+                [[ "$t" == part || "$t" == raid* ]] || continue
+                [[ -z "$mp" ]] || continue
+                case "$fs" in linux_raid_member|LVM2_member|crypto_LUKS) continue ;; esac
+                # Do not offer active RAID member partitions; offer the assembled MD device instead.
+                if [[ "$t" == part ]] && lsblk -nrpo TYPE "$p" 2>/dev/null | tail -n +2 | grep -q '^raid'; then continue; fi
+                printf '%s|%s|%s|%s\n' "$p" "$sz" "$t" "${fs:--}"
+        done < <(lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS | awk '{print $1,$2,$3,$4,$5}')
+}
 
+select_luks_device() {
+        local result_variable="$1" title="$2" line p sz t fs choice="" status=0
+        local -a items=() paths=()
+        while IFS='|' read -r p sz t fs; do
+                [[ -n "$p" ]] || continue
+                paths+=("$p"); items+=("${#paths[@]}" "$p  $sz  $t  $fs")
+        done < <(list_luks_candidates)
+        ((${#paths[@]})) || { dialog_message "$title" "No eligible LUKS target devices were found."; return 1; }
+        themed_menu choice "$title" "Select the block device." 22 92 14 "${items[@]}"
+        [[ "$choice" =~ ^[0-9]+$ ]] && ((choice>=1 && choice<=${#paths[@]})) || return 1
+        printf -v "$result_variable" '%s' "${paths[$((choice-1))]}"
+}
+
+select_luks_existing_device() {
+        local result_variable="$1" p sz fs choice=""; local -a paths=() items=()
+        while read -r p sz fs; do
+                [[ "$fs" == crypto_LUKS ]] || continue
+                paths+=("$p"); items+=("${#paths[@]}" "$p  $sz  LUKS")
+        done < <(lsblk -prno PATH,SIZE,FSTYPE)
+        ((${#paths[@]})) || { dialog_message "Open LUKS" "No LUKS containers were found."; return 1; }
+        themed_menu choice "Open LUKS container" "Select a LUKS device." 20 88 12 "${items[@]}"
+        [[ "$choice" =~ ^[0-9]+$ ]] && ((choice>=1 && choice<=${#paths[@]})) || return 1
+        printf -v "$result_variable" '%s' "${paths[$((choice-1))]}"
+}
+
+ask_mapping_name() {
+        local result_variable="$1" default="$2" mapping=""
         while true; do
-                set +e
-                themed_menu choice \
-                        "LUKS encryption" \
-                        "Create, open, or close encrypted block-device mappings." \
-                        17 74 7 \
-                        1 "Create a new LUKS container" \
-                        2 "Open an existing LUKS container" \
-                        3 "Close a mapped LUKS container" \
-                        4 "Return to Storage setup"
-                status=$?
-                set -e
-                [[ -n "$choice" ]] || return 0
+                ask_default mapping "Mapper name (creates /dev/mapper/<name>)" "$default" || return 1
+                [[ "$mapping" =~ ^[A-Za-z0-9+_.-]+$ ]] || { dialog_message "Invalid mapper name" "Use letters, numbers, +, _, . or -. Spaces and / are not allowed."; continue; }
+                [[ ! -e "/dev/mapper/$mapping" ]] || { dialog_message "Mapper already exists" "/dev/mapper/$mapping already exists. Choose another name."; continue; }
+                printf -v "$result_variable" '%s' "$mapping"; return 0
+        done
+}
 
+luks_menu() {
+        local choice="" device="" mapping="" pass1="" pass2="" status=0 default_mapping="cryptroot"
+        while true; do
+                themed_menu choice "LUKS encryption" "Create, open, or close encrypted block-device mappings." 17 74 7 \
+                        1 "Create a new LUKS container" 2 "Open an existing LUKS container" 3 "Close a mapped LUKS container" 4 "Return to Storage setup"
+                [[ -n "$choice" ]] || return 0
                 case "$choice" in
                         1)
-                                command -v cryptsetup >/dev/null 2>&1 || {
-                                        warn "cryptsetup is unavailable."
-                                        pause_screen
-                                        continue
-                                }
-                                lsblk -fp
-                                echo
-                                read -r -p "Block device to encrypt: " device
-                                [[ -b "$device" ]] || {
-                                        warn "Not a block device: $device"
-                                        pause_screen
-                                        continue
-                                }
-                                confirm "Initialize $device as LUKS? Existing data will be destroyed." ||
-                                        continue
-                                run_on_tty cryptsetup luksFormat "$device"
-                                read -r -p "Mapping name to open now [leave blank to skip]: " mapping
-                                if [[ -n "$mapping" ]]; then
-                                        run_on_tty cryptsetup open "$device" "$mapping"
-                                        OPENED_LUKS_BY_SCRIPT+=("$mapping")
+                                command -v cryptsetup >/dev/null 2>&1 || { dialog_message "LUKS encryption" "cryptsetup is unavailable."; continue; }
+                                select_luks_device device "Create LUKS container" || continue
+                                [[ "$device" == /dev/md* ]] && default_mapping="cryptraid" || default_mapping="cryptroot"
+                                confirm "WARNING: This will permanently overwrite data on $device.\n\nCreate a new LUKS2 container?" || continue
+                                while true; do
+                                        dialog_password pass1 "LUKS passphrase" "Enter the new passphrase for $device." || { pass1=""; break; }
+                                        dialog_password pass2 "Confirm LUKS passphrase" "Enter the same passphrase again." || { pass1=""; pass2=""; break; }
+                                        [[ -n "$pass1" ]] || { dialog_message "LUKS passphrase" "The passphrase cannot be empty."; continue; }
+                                        [[ "$pass1" == "$pass2" ]] || { dialog_message "LUKS passphrase" "The passphrases did not match. Try again."; pass1=""; pass2=""; continue; }
+                                        break
+                                done
+                                [[ -n "$pass1" ]] || continue
+                                if ! printf '%s' "$pass1" | cryptsetup luksFormat --type luks2 --batch-mode --key-file - "$device"; then
+                                        pass1=""; pass2=""; dialog_message "LUKS error" "cryptsetup luksFormat failed for $device."; continue
                                 fi
-                                command -v udevadm >/dev/null 2>&1 &&
-                                        udevadm settle || true
-                                pause_screen
+                                ask_mapping_name mapping "$default_mapping" || { pass1=""; pass2=""; continue; }
+                                if ! printf '%s' "$pass1" | cryptsetup open --key-file - "$device" "$mapping"; then
+                                        pass1=""; pass2=""; dialog_message "LUKS error" "The new container was created, but /dev/mapper/$mapping could not be opened."; continue
+                                fi
+                                pass1=""; pass2=""
+                                OPENED_LUKS_BY_SCRIPT+=("$mapping")
+                                udevadm settle 2>/dev/null || true
+                                if [[ -b "/dev/mapper/$mapping" ]] && cryptsetup status "$mapping" >/dev/null 2>&1; then
+                                        dialog_message "LUKS ready" "$device is encrypted and open as /dev/mapper/$mapping."
+                                else
+                                        dialog_message "LUKS error" "The mapping /dev/mapper/$mapping did not remain active."
+                                fi
                                 ;;
                         2)
-                                command -v cryptsetup >/dev/null 2>&1 || {
-                                        warn "cryptsetup is unavailable."
-                                        pause_screen
-                                        continue
-                                }
-                                lsblk -fp
-                                echo
-                                read -r -p "LUKS block device: " device
-                                read -r -p "Mapping name: " mapping
-                                run_on_tty cryptsetup open "$device" "$mapping"
-                                OPENED_LUKS_BY_SCRIPT+=("$mapping")
-                                command -v udevadm >/dev/null 2>&1 &&
-                                        udevadm settle || true
-                                pause_screen
+                                command -v cryptsetup >/dev/null 2>&1 || { dialog_message "LUKS encryption" "cryptsetup is unavailable."; continue; }
+                                select_luks_existing_device device || continue
+                                ask_mapping_name mapping "cryptroot" || continue
+                                dialog_password pass1 "LUKS passphrase" "Enter the passphrase for $device." || continue
+                                if printf '%s' "$pass1" | cryptsetup open --key-file - "$device" "$mapping"; then
+                                        OPENED_LUKS_BY_SCRIPT+=("$mapping"); udevadm settle 2>/dev/null || true
+                                        dialog_message "LUKS opened" "$device is open as /dev/mapper/$mapping."
+                                else
+                                        dialog_message "LUKS error" "Could not open $device."
+                                fi
+                                pass1=""
                                 ;;
                         3)
-                                command -v cryptsetup >/dev/null 2>&1 || {
-                                        warn "cryptsetup is unavailable."
-                                        pause_screen
-                                        continue
-                                }
-                                read -r -p "Mapping name to close: " mapping
-                                cryptsetup close "$mapping"
-                                for index in "${!OPENED_LUKS_BY_SCRIPT[@]}"; do
-                                        [[ "${OPENED_LUKS_BY_SCRIPT[$index]}" == "$mapping" ]] && unset 'OPENED_LUKS_BY_SCRIPT[index]'
-                                done
-                                pause_screen
+                                ask_default mapping "Mapping name to close" "cryptroot" || continue
+                                if cryptsetup close "$mapping"; then dialog_message "LUKS closed" "/dev/mapper/$mapping was closed."; else dialog_message "LUKS error" "Could not close $mapping."; fi
                                 ;;
                         4) return 0 ;;
-                        *) warn "Choose a valid LUKS option."; sleep 1 ;;
                 esac
         done
+}
+
+select_pv_devices() {
+        local result_variable="$1" p t sz fs mp choice="" status=0
+        local -a paths=() items=() selected=()
+        while read -r p t sz fs mp; do
+                [[ "$t" == part || "$t" == crypt || "$t" == raid* ]] || continue
+                [[ -z "$mp" ]] || continue
+                case "$fs" in linux_raid_member|LVM2_member|crypto_LUKS) continue ;; esac
+                paths+=("$p"); items+=("$p" "$sz  $t  ${fs:--}" off)
+        done < <(lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS | awk '{print $1,$2,$3,$4,$5}')
+        ((${#paths[@]})) || { dialog_message "LVM physical volume" "No eligible block devices were found."; return 1; }
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                set +e
+                choice="$(dialog --stdout --clear --backtitle "BFS Linux Installer" --title "LVM physical volume" \
+                        --cancel-label "Back" --separate-output --checklist \
+                        "Use Up/Down to move and Space to select one or more devices." 22 92 14 "${items[@]}" </dev/tty)"
+                status=$?; set -e; ((status==0)) || return 1
+                choice="$(printf '%s\n' "$choice" | tr '\n' ' ')"
+        else
+                ask_default choice "Physical volume device(s), separated by spaces" "/dev/" || return 1
+        fi
+        [[ -n "${choice// /}" ]] || return 1
+        printf -v "$result_variable" '%s' "$choice"
+}
+
+show_lvm_status_dialog() {
+        local text
+        text="$( { printf 'PHYSICAL VOLUMES\n'; pvs 2>&1 || true; printf '\nVOLUME GROUPS\n'; vgs 2>&1 || true; printf '\nLOGICAL VOLUMES\n'; lvs 2>&1 || true; } 3>&- 4>&-)"
+        dialog_message "LVM status" "$text"
 }
 
 lvm_menu() {
@@ -1978,29 +1958,16 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                lvm_run pvs 2>/dev/null || true
-                                echo
-                                device=""
-                                # Cancel/Back from the device prompt must return
-                                # to the LVM menu instead of tripping `set -e`.
-                                ask_default device \
-                                        "Block device for the physical volume" \
-                                        "/dev/" || continue
-                                [[ -n "$device" ]] || continue
-                                [[ -b "$device" ]] || {
-                                        warn "Not a block device: $device"
-                                        pause_screen
-                                        continue
-                                }
-                                confirm "Initialize $device as an LVM physical volume?" ||
-                                        continue
-                                if ! lvm_run pvcreate "$device"; then
-                                        warn "pvcreate failed for $device. Returning to the LVM menu."
-                                        pause_screen
+                                pv_list=""
+                                select_pv_devices pv_list || continue
+                                read -r -a pv_array <<< "$pv_list"
+                                confirm "Initialize these device(s) as LVM physical volumes?\n\n${pv_array[*]}" || continue
+                                if ! lvm_run pvcreate "${pv_array[@]}"; then
+                                        dialog_message "LVM error" "pvcreate failed. Returning to the LVM menu."
                                         continue
                                 fi
                                 command -v udevadm >/dev/null 2>&1 && udevadm settle || true
-                                pause_screen
+                                dialog_message "LVM physical volume" "Physical volume creation completed successfully.\n\n${pv_array[*]}"
                                 ;;
                         2)
                                 command -v vgcreate >/dev/null 2>&1 || {
@@ -2008,8 +1975,6 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                lvm_run pvs 2>/dev/null || true
-                                echo
                                 vg_name=""
                                 pv_list=""
                                 ask_default vg_name "New volume-group name" "bfs-vg" || continue
@@ -2029,7 +1994,7 @@ lvm_menu() {
                                 fi
                                 ACTIVATED_VGS_BY_SCRIPT+=("$vg_name")
                                 command -v udevadm >/dev/null 2>&1 && udevadm settle || true
-                                pause_screen
+                                dialog_message "LVM volume group" "Volume group '$vg_name' created successfully."
                                 ;;
                         3)
                                 command -v lvcreate >/dev/null 2>&1 || {
@@ -2037,8 +2002,6 @@ lvm_menu() {
                                         pause_screen
                                         continue
                                 }
-                                lvm_run vgs 2>/dev/null || true
-                                echo
                                 vg_name=""
                                 lv_name=""
                                 lv_size=""
@@ -2087,15 +2050,10 @@ lvm_menu() {
                                 fi
 
                                 command -v udevadm >/dev/null 2>&1 && udevadm settle || true
-                                pause_screen
+                                dialog_message "LVM logical volume" "Logical volume '$lv_name' created successfully in '$vg_name'."
                                 ;;
                         4)
-                                lvm_run pvs 2>/dev/null || true
-                                echo
-                                lvm_run vgs 2>/dev/null || true
-                                echo
-                                lvm_run lvs 2>/dev/null || true
-                                pause_screen
+                                show_lvm_status_dialog
                                 ;;
                         5) return 0 ;;
                         *) warn "Choose a valid LVM option."; sleep 1 ;;
@@ -2348,8 +2306,9 @@ configure_disks() {
 
                         device=""
                         if ! select_partition device \
-                                "Select a partition, then choose its filesystem action and mount point" \
-                                yes; then
+                                "Select a device to add/edit its filesystem and mount point.\n\nCurrent selections: ${#STORAGE_DEVICES[@]}\nChoose Done when all filesystems are assigned." \
+                                yes \
+                                "Done selecting filesystems"; then
                                 break
                         fi
 
@@ -2375,23 +2334,10 @@ configure_disks() {
                         STORAGE_FORMATS+=("$format")
                         STORAGE_MOUNTPOINTS+=("$mountpoint")
 
-                        if command -v dialog >/dev/null 2>&1 &&
-                           [[ -r /dev/tty && -w /dev/tty ]]; then
-                                if dialog --clear \
-                                        --backtitle "BFS Linux Installer" \
-                                        --title "Filesystem selection" \
-                                        --yesno \
-                                        "Add another partition?\n\nCurrent selections: ${#STORAGE_DEVICES[@]}" \
-                                        11 58 \
-                                        </dev/tty >/dev/tty 2>/dev/tty; then
-                                        continue
-                                fi
-                                break
-                        else
-                                read -r -p "Add another partition? [y/N]: " choice
-                                [[ "${choice,,}" == y || "${choice,,}" == yes ]] ||
-                                        break
-                        fi
+                        # Return to the same device-selection menu. The user
+                        # chooses "Done selecting filesystems" when complete,
+                        # instead of answering a repeated Add another? prompt.
+                        continue
                 done
 
                 if ((${#STORAGE_DEVICES[@]} == 0)); then
@@ -2428,7 +2374,6 @@ configure_disks() {
 
                 if [[ "$confirmed" == yes ]]; then
                         DISKS_CONFIGURED=yes
-                        pause_screen
                         return 0
                 fi
         done
@@ -2440,11 +2385,6 @@ configure_archive() {
         local archive_dir=""
         local default_archive=""
         local entered_archive=""
-
-        clear_screen
-        echo "Base archive"
-        echo "============"
-        echo
 
         installer_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -2490,14 +2430,14 @@ configure_archive() {
 
         while true; do
                 if [[ -n "$default_archive" ]]; then
-                        read -r -p \
-                                "Path to BFS rootfs archive [$default_archive]: " \
-                                entered_archive
+                        entered_archive=""
+                        ask_default entered_archive \
+                                "Path to BFS rootfs archive" \
+                                "$default_archive" || return 0
                         ARCHIVE="${entered_archive:-$default_archive}"
                 else
-                        read -r -p \
-                                "Path to BFS rootfs archive: " \
-                                ARCHIVE
+                        ARCHIVE=""
+                        ask ARCHIVE "Path to BFS rootfs archive" || return 0
                 fi
 
                 [[ -n "$ARCHIVE" ]] || {
@@ -2526,8 +2466,8 @@ configure_archive() {
                 "$SAVE_BASE_ARCHIVE"
 
         ARCHIVE_CONFIGURED=yes
-        pause_screen
 }
+
 configure_system() {
         ask_default HOSTNAME "Hostname" "$HOSTNAME" || return 0
         ask_default TIMEZONE "Timezone" "$TIMEZONE" || return 0
@@ -2665,11 +2605,10 @@ configure_packages() {
                                         --title "Optional software" \
                                         --cancel-label "Back" \
                                         --checklist \
-                                        "Select optional software packages." \
-                                        18 74 8 \
+                                        "Select optional software packages.\n\nStorage utilities such as cryptsetup, lvm2, and mdadm are installed automatically when the selected storage layout requires them." \
+                                        18 84 7 \
                                         git "Git version-control system" "$([[ "$INSTALL_GIT" == yes ]] && echo on || echo off)" \
                                         wget "Wget download utility" "$([[ "$INSTALL_WGET" == yes ]] && echo on || echo off)" \
-                                        cryptsetup "LUKS encryption tools" "$([[ "$INSTALL_CRYPTSETUP" == yes ]] && echo on || echo off)" \
                                         </dev/tty
                         )"; then
                                 status=0
@@ -2680,14 +2619,11 @@ configure_packages() {
 
                         INSTALL_GIT=no
                         INSTALL_WGET=no
-                        INSTALL_CRYPTSETUP=no
 
                         [[ " $choice " == *' "git" '* || " $choice " == *' git '* ]] &&
                                 INSTALL_GIT=yes
                         [[ " $choice " == *' "wget" '* || " $choice " == *' wget '* ]] &&
                                 INSTALL_WGET=yes
-                        [[ " $choice " == *' "cryptsetup" '* || " $choice " == *' cryptsetup '* ]] &&
-                                INSTALL_CRYPTSETUP=yes
 
                         PACKAGES_CONFIGURED=yes
                         return 0
@@ -2698,20 +2634,21 @@ configure_packages() {
 Optional software
 =================
 
+Storage utilities (cryptsetup, lvm2, mdadm) are installed automatically
+when the selected storage layout requires them.
+
   1) $(selection_mark "$INSTALL_GIT") git
   2) $(selection_mark "$INSTALL_WGET") wget
-  3) $(selection_mark "$INSTALL_CRYPTSETUP") cryptsetup
-  4) Done
+  3) Done
 
 EOF_PACKAGES
-                read -r -p "Choose [1-4]: " choice
+                read -r -p "Choose [1-3]: " choice
 
                 case "$choice" in
                         1) toggle_setting INSTALL_GIT ;;
                         2) toggle_setting INSTALL_WGET ;;
-                        3) toggle_setting INSTALL_CRYPTSETUP ;;
-                        4) PACKAGES_CONFIGURED=yes; return 0 ;;
-                        *) warn "Choose a number from 1 through 4."; sleep 1 ;;
+                        3) PACKAGES_CONFIGURED=yes; return 0 ;;
+                        *) warn "Choose a number from 1 through 3."; sleep 1 ;;
                 esac
         done
 }
@@ -3164,12 +3101,14 @@ detect_storage_requirements() {
         AUTO_LVM2=no
         AUTO_MDADM=no
 
+        # These are derived from the final devices selected for /, /home, swap,
+        # and other mountpoints. Merely visiting the LUKS/LVM/RAID menus does
+        # not force packages into the installed system.
         while IFS= read -r device; do
                 [[ -n "$device" ]] || continue
 
                 if device_ancestry_has_type "$device" crypt; then
                         AUTO_CRYPTSETUP=yes
-                        INSTALL_CRYPTSETUP=yes
                 fi
 
                 if device_ancestry_has_type "$device" lvm; then
@@ -3180,44 +3119,32 @@ detect_storage_requirements() {
                         AUTO_MDADM=yes
                 fi
         done < <(selected_target_devices)
+
+        # cryptsetup is never a manual optional-package choice. Keep the legacy
+        # variable synchronized for the chroot template/review code.
+        INSTALL_CRYPTSETUP="$AUTO_CRYPTSETUP"
 }
 
 crypt_mapping_records() {
-        local selected_device=""
-        local path=""
-        local type=""
-        local mapping_name=""
-        local parent_name=""
-        local parent_device=""
-        local luks_uuid=""
-        local record=""
+        local selected_device="" path="" type="" mapping_name="" parent_device="" luks_uuid="" record=""
+        local status_output="" line=""
         local -a seen=()
 
         while IFS= read -r selected_device; do
                 [[ -n "$selected_device" ]] || continue
-
                 while read -r path type; do
                         [[ "$type" == crypt ]] || continue
-
                         mapping_name="$(basename "$path")"
-                        parent_name="$(lsblk -dnro PKNAME "$path" 2>/dev/null || true)"
-                        [[ -n "$parent_name" ]] || continue
-
-                        parent_device="/dev/$parent_name"
-                        luks_uuid="$(blkid -s UUID -o value "$parent_device" 2>/dev/null || true)"
+                        status_output="$(cryptsetup status "$mapping_name" 2>/dev/null || true)"
+                        parent_device="$(printf '%s\n' "$status_output" | sed -n 's/^[[:space:]]*device:[[:space:]]*//p' | head -n1)"
+                        [[ -b "$parent_device" ]] || continue
+                        luks_uuid="$(cryptsetup luksUUID "$parent_device" 2>/dev/null || blkid -s UUID -o value "$parent_device" 2>/dev/null || true)"
                         [[ -n "$luks_uuid" ]] || continue
-
                         record="$mapping_name|$parent_device|$luks_uuid"
-
-                        if printf '%s\n' "${seen[@]}" | grep -qxF "$record"; then
-                                continue
-                        fi
-
+                        if ((${#seen[@]})) && printf '%s\n' "${seen[@]}" | grep -qxF "$record"; then continue; fi
                         seen+=("$record")
                         printf '%s\n' "$record"
-                done < <(
-                        lsblk -s -prno PATH,TYPE "$selected_device" 2>/dev/null || true
-                )
+                done < <(lsblk -s -prno PATH,TYPE "$selected_device" 2>/dev/null || true)
         done < <(selected_target_devices)
 }
 
@@ -3298,6 +3225,39 @@ validate_settings() {
         fi
 }
 
+mdraid_review_text() {
+        local array="" device="" detail="" level="" size="" state="" members="" member=""
+        local found=no
+
+        if [[ ! -r /proc/mdstat ]]; then
+                printf 'none\n'
+                return 0
+        fi
+
+        while read -r array; do
+                [[ -n "$array" ]] || continue
+                found=yes
+                device="/dev/$array"
+                detail="$(mdadm --detail "$device" 2>/dev/null || true)"
+                level="$(printf '%s\n' "$detail" | awk -F: '/Raid Level/ {gsub(/^[[:space:]]+/,"",$2); print $2; exit}')"
+                size="$(printf '%s\n' "$detail" | awk -F: '/Array Size/ {gsub(/^[[:space:]]+/,"",$2); print $2; exit}')"
+                state="$(printf '%s\n' "$detail" | awk -F: '/^[[:space:]]*State/ {gsub(/^[[:space:]]+/,"",$2); print $2; exit}')"
+                members=""
+                while IFS= read -r member; do
+                        [[ -n "$member" ]] || continue
+                        members+="${members:+ }$member"
+                done < <(printf '%s\n' "$detail" | awk '$NF ~ /^\/dev\// {print $NF}')
+
+                printf 'Array:    %s\n' "$device"
+                printf 'Level:    %s\n' "${level:-unknown}"
+                printf 'Size:     %s\n' "${size:-unknown}"
+                printf 'State:    %s\n' "${state:-unknown}"
+                printf 'Members:  %s\n\n' "${members:-unknown}"
+        done < <(awk '$2 ~ /^raid/ {print $1}' /proc/mdstat)
+
+        [[ "$found" == yes ]] || printf 'none\n'
+}
+
 show_additional_partitions() {
         local index
         if ((${#EXTRA_DEVICES[@]} == 0)); then
@@ -3322,6 +3282,7 @@ show_summary() {
         local warning_count=0
 
         detect_storage_requirements
+        CRYPT_TARGETS="$(crypt_mapping_records | awk -F'|' '{printf "%s%s -> %s", (NR>1 ? ", " : ""), $2, $1}')"
 
         selected_count=1
         [[ -n "$BOOT_DEV" ]] && selected_count=$((selected_count + 1))
@@ -3428,7 +3389,7 @@ Git:                  $INSTALL_GIT
 Wget:                 $INSTALL_WGET
 Sudo:                 $INSTALL_SUDO
 Sudo mode:            $SUDO_MODE
-Cryptsetup:           $INSTALL_CRYPTSETUP
+Cryptsetup:           $(if [[ "$AUTO_CRYPTSETUP" == yes ]]; then printf '%s' "AUTO (required by LUKS)"; else printf '%s' "not required"; fi)
 Save base archive:    $SAVE_BASE_ARCHIVE
 Archive save dir:     $BASE_ARCHIVE_DIR
 
@@ -3446,9 +3407,7 @@ SUMMARY
 RAID
 ----
 Enabled:             ${AUTO_MDADM:-no}
-Level:               ${RAID_LEVEL:-not configured}
-Arrays:              ${MDADM_ARRAYS:-none}
-
+$(mdraid_review_text)
 LUKS Encryption
 ---------------
 Enabled:             ${AUTO_CRYPTSETUP:-no}
@@ -4058,7 +4017,7 @@ build_package_list() {
 
         [[ "$KERNEL_PACKAGE" != none ]] && packages+=("$KERNEL_PACKAGE")
         [[ "$INSTALL_NETWORKMANAGER" == yes ]] && packages+=(networkmanager)
-        [[ "$INSTALL_CRYPTSETUP" == yes || "$AUTO_CRYPTSETUP" == yes ]] && packages+=(cryptsetup)
+        [[ "$AUTO_CRYPTSETUP" == yes ]] && packages+=(cryptsetup)
         [[ "$AUTO_LVM2" == yes ]] && packages+=(lvm2)
         [[ "$AUTO_MDADM" == yes ]] && packages+=(mdadm)
         [[ "$INSTALL_GIT" == yes ]] && packages+=(git)
@@ -4109,6 +4068,8 @@ KERNEL_PACKAGE_VALUE="__KERNEL_PACKAGE__"
 INSTALL_SUDO_VALUE="__INSTALL_SUDO__"
 SUDO_MODE_VALUE="__SUDO_MODE__"
 INSTALL_NETWORKMANAGER_VALUE="__INSTALL_NETWORKMANAGER__"
+# INSTALL_CRYPTSETUP_VALUE is retained for compatibility with older template
+# logic; both values are derived automatically from selected LUKS storage.
 INSTALL_CRYPTSETUP_VALUE="__INSTALL_CRYPTSETUP__"
 AUTO_CRYPTSETUP_VALUE="__AUTO_CRYPTSETUP__"
 AUTO_LVM2_VALUE="__AUTO_LVM2__"
@@ -4514,8 +4475,7 @@ if [[ "$AUTO_MDADM_VALUE" == yes ]] &&
         mdadm --detail --scan > /etc/mdadm.conf || true
 fi
 
-if [[ "$INSTALL_CRYPTSETUP_VALUE" == yes ||
-      "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
+if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
         mkdir -p /etc/cryptsetup-keys.d
         chmod 0700 /etc/cryptsetup-keys.d
 fi
@@ -4680,8 +4640,8 @@ configure_dracut_storage_modules() {
         mkdir -p /etc/dracut.conf.d
 
         # Only request modules that the selected root-storage ancestry
-        # actually requires. Installing cryptsetup as an optional utility
-        # does not by itself require the crypt module in the initramfs.
+        # actually requires. cryptsetup itself is installed automatically
+        # whenever the final storage topology contains a crypt layer.
         if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
                 command -v cryptsetup >/dev/null 2>&1 || {
                         echo "Encrypted root storage was detected, but cryptsetup is missing." >&2
