@@ -95,7 +95,7 @@ sync_system_clock() {
 BOOTSTRAP_SETTINGS_FILE="$SCRIPT_DIR/.bfs-bootstrap-settings"
 DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
-BFS_THEME="${BFS_BOOTSTRAP_THEME:-monochrome}"
+BFS_THEME="${BFS_BOOTSTRAP_THEME:-slackware}"
 
 load_bootstrap_settings() {
     [ -f "$BOOTSTRAP_SETTINGS_FILE" ] || return 0
@@ -190,15 +190,14 @@ EOF_DIALOGRC
 write_dialog_theme_slackware() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
-use_shadow = OFF
+use_shadow = ON
 
-# Classic Slackware setup look: cyan dialog field, black body text,
-# yellow title, blue active selection/buttons, and red accelerator tags.
-screen_color = (BLACK,CYAN,OFF)
-shadow_color = (BLACK,CYAN,OFF)
+# Nostalgic Slackware setup/Dialog look.
+screen_color = (WHITE,BLACK,ON)
+shadow_color = (BLACK,BLUE,OFF)
 dialog_color = (BLACK,CYAN,ON)
 title_color = (YELLOW,CYAN,ON)
-border_color = (BLACK,CYAN,ON)
+border_color = (WHITE,CYAN,ON)
 
 button_active_color = (WHITE,BLUE,ON)
 button_inactive_color = (BLACK,CYAN,ON)
@@ -208,14 +207,14 @@ button_label_active_color = (WHITE,BLUE,ON)
 button_label_inactive_color = (BLACK,CYAN,ON)
 
 inputbox_color = (BLACK,CYAN,ON)
-inputbox_border_color = (BLACK,CYAN,ON)
+inputbox_border_color = (WHITE,CYAN,ON)
 searchbox_color = (BLACK,CYAN,ON)
 searchbox_title_color = (YELLOW,CYAN,ON)
-searchbox_border_color = (BLACK,CYAN,ON)
+searchbox_border_color = (WHITE,CYAN,ON)
 
-position_indicator_color = (BLACK,CYAN,ON)
+position_indicator_color = (YELLOW,CYAN,ON)
 menubox_color = (BLACK,CYAN,ON)
-menubox_border_color = (BLACK,CYAN,ON)
+menubox_border_color = (WHITE,CYAN,ON)
 item_color = (BLACK,CYAN,ON)
 item_selected_color = (WHITE,BLUE,ON)
 tag_color = (RED,CYAN,ON)
@@ -258,7 +257,7 @@ setup_bootstrap_theme() {
         slackware) write_dialog_theme_slackware ;;
         light) write_dialog_theme_light ;;
         monochrome) write_dialog_theme_monochrome ;;
-        *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
+        *) BFS_THEME=slackware; write_dialog_theme_slackware ;;
     esac
 
     export DIALOGRC="$DIALOGRC_FILE"

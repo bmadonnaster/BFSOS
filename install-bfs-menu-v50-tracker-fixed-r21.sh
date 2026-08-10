@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer - v50 tracker fixes r8 (RAID + LUKS + LVM)
+# BFS Linux installer - v50 tracker fixes r21 (storage/UI/accessibility polish)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -207,7 +207,11 @@ LOG_CLOSED=no
 mkdir -p "$INSTALLER_LOG_DIR"
 DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
-BFS_THEME="${BFS_INSTALLER_THEME:-monochrome}"
+BFS_THEME="${BFS_INSTALLER_THEME:-slackware}"
+CONSOLE_FONT_PREFERENCE="default"
+CONSOLE_FONT_SIZE="default"
+CONSOLE_FONT_OVERRIDE="${BFS_CONSOLE_FONT:-}"
+INSTALL_CONSOLE_FONT="${BFS_INSTALL_CONSOLE_FONT:-no}"
 SELECTED_MENU_CHOICE=""
 
 load_installer_settings() {
@@ -216,6 +220,8 @@ load_installer_settings() {
         while IFS='=' read -r key value; do
                 case "$key" in
                         BFS_THEME) BFS_THEME="$value" ;;
+                        CONSOLE_FONT_PREFERENCE) CONSOLE_FONT_PREFERENCE="$value" ;;
+                        INSTALL_CONSOLE_FONT) INSTALL_CONSOLE_FONT="$value" ;;
                         LOG_ENABLED) LOG_ENABLED="$value" ;;
                 esac
         done < "$INSTALLER_SETTINGS_FILE"
@@ -224,6 +230,8 @@ load_installer_settings() {
 save_installer_settings() {
         cat > "$INSTALLER_SETTINGS_FILE" <<EOF_SETTINGS
 BFS_THEME=$BFS_THEME
+CONSOLE_FONT_PREFERENCE=$CONSOLE_FONT_PREFERENCE
+INSTALL_CONSOLE_FONT=$INSTALL_CONSOLE_FONT
 LOG_ENABLED=$LOG_ENABLED
 EOF_SETTINGS
 }
@@ -310,15 +318,15 @@ EOF_DIALOGRC
 write_dialog_theme_slackware() {
         cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
-use_shadow = OFF
+use_shadow = ON
 
-# Classic Slackware setup look: cyan dialog field, black body text,
-# yellow title, blue active selection/buttons, and red accelerator tags.
-screen_color = (BLACK,CYAN,OFF)
-shadow_color = (BLACK,CYAN,OFF)
+# Nostalgic Slackware setup/Dialog look:
+# black console, cyan panels, yellow titles, blue selections, visible shadow.
+screen_color = (WHITE,BLACK,ON)
+shadow_color = (BLACK,BLUE,OFF)
 dialog_color = (BLACK,CYAN,ON)
 title_color = (YELLOW,CYAN,ON)
-border_color = (BLACK,CYAN,ON)
+border_color = (WHITE,CYAN,ON)
 
 button_active_color = (WHITE,BLUE,ON)
 button_inactive_color = (BLACK,CYAN,ON)
@@ -328,14 +336,14 @@ button_label_active_color = (WHITE,BLUE,ON)
 button_label_inactive_color = (BLACK,CYAN,ON)
 
 inputbox_color = (BLACK,CYAN,ON)
-inputbox_border_color = (BLACK,CYAN,ON)
+inputbox_border_color = (WHITE,CYAN,ON)
 searchbox_color = (BLACK,CYAN,ON)
 searchbox_title_color = (YELLOW,CYAN,ON)
-searchbox_border_color = (BLACK,CYAN,ON)
+searchbox_border_color = (WHITE,CYAN,ON)
 
-position_indicator_color = (BLACK,CYAN,ON)
+position_indicator_color = (YELLOW,CYAN,ON)
 menubox_color = (BLACK,CYAN,ON)
-menubox_border_color = (BLACK,CYAN,ON)
+menubox_border_color = (WHITE,CYAN,ON)
 item_color = (BLACK,CYAN,ON)
 item_selected_color = (WHITE,BLUE,ON)
 tag_color = (RED,CYAN,ON)
@@ -378,7 +386,7 @@ setup_installer_theme() {
                 slackware) write_dialog_theme_slackware ;;
                 light) write_dialog_theme_light ;;
                 monochrome) write_dialog_theme_monochrome ;;
-                *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
+                *) BFS_THEME=slackware; write_dialog_theme_slackware ;;
         esac
 
         export DIALOGRC="$DIALOGRC_FILE"
@@ -414,6 +422,78 @@ report_installer_interface_mode() {
 
         printf 'Continuing with the text-based installer interface.\n\n' >&2
         return 0
+}
+
+find_console_font_for_size() {
+        local size="$1" dir="" candidate=""
+        local -a dirs=(/usr/share/consolefonts /usr/share/kbd/consolefonts /lib/kbd/consolefonts)
+        local -a patterns=()
+
+        case "$size" in
+                16)
+                        patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*')
+                        ;;
+                20)
+                        patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' '*Terminus*20*' '*20*.psf*')
+                        ;;
+                *) return 1 ;;
+        esac
+
+        for dir in "${dirs[@]}"; do
+                [[ -d "$dir" ]] || continue
+                for candidate in "${patterns[@]}"; do
+                        find "$dir" -maxdepth 1 -type f -name "$candidate" -print -quit 2>/dev/null
+                done
+        done | head -n1
+}
+
+apply_console_font() {
+        local size="${1:-$CONSOLE_FONT_SIZE}" font=""
+
+        command -v setfont >/dev/null 2>&1 || {
+                [[ "$size" == default ]] || warn "setfont is unavailable; console font size was not changed."
+                return 0
+        }
+
+        case "$size" in
+                default)
+                        setfont >/dev/tty 2>/dev/tty || true
+                        ;;
+                16|20)
+                        font="$(find_console_font_for_size "$size" || true)"
+                        if [[ -z "$font" ]]; then
+                                warn "No ${size}-pixel console font was found; keeping the current console font."
+                                return 0
+                        fi
+                        if ! setfont "$font" >/dev/tty 2>/dev/tty; then
+                                warn "Could not apply $font. This is normal over SSH or inside a graphical terminal."
+                        fi
+                        ;;
+        esac
+}
+
+console_font_display_name() {
+        case "$CONSOLE_FONT_SIZE" in
+                default) printf '%s' "Default" ;;
+                16) printf '%s' "Large 16" ;;
+                20) printf '%s' "Large 20" ;;
+                *) printf '%s' "$CONSOLE_FONT_SIZE" ;;
+        esac
+}
+
+select_console_font_size() {
+        local choice="" status=0
+        themed_menu choice "Console Font Size" \
+                "Choose the Linux virtual-console font size for this installer session.\n\nLarge fonts are most useful on high-DPI/4K displays." \
+                18 78 6 \
+                default "Default console font" \
+                16 "Large 16-pixel font" \
+                20 "Large 20-pixel font"
+        [[ -n "$choice" ]] || return 0
+        CONSOLE_FONT_PREFERENCE="$choice"
+        CONSOLE_FONT_SIZE="$choice"
+        apply_console_font "$choice"
+        save_installer_settings
 }
 
 select_installer_theme() {
@@ -534,22 +614,34 @@ installer_settings_menu() {
         local choice="" status=0 path=""
         while true; do
                 themed_menu choice "Installer Settings" \
-                        "Configure interface, logging, and reusable installation profiles." \
-                        19 82 7 \
+                        "Configure interface, accessibility, logging, and reusable installation profiles." \
+                        24 88 10 \
                         1 "Theme: $(theme_display_name)" \
-                        2 "Logging: $LOG_ENABLED" \
-                        3 "Save current configuration" \
-                        4 "Save configuration as..." \
-                        5 "Load configuration..." \
-                        6 "Back to main menu"
+                        2 "Console font: $(console_font_display_name)" \
+                        3 "Use selected console font after install: $INSTALL_CONSOLE_FONT" \
+                        4 "Logging: $LOG_ENABLED" \
+                        5 "Save current configuration" \
+                        6 "Save configuration as..." \
+                        7 "Load configuration..." \
+                        8 "Back to main menu"
                 [[ -n "$choice" ]] || return 0
                 case "$choice" in
                         1) select_installer_theme ;;
-                        2) [[ "$LOG_ENABLED" == yes ]] && LOG_ENABLED=no || LOG_ENABLED=yes; save_installer_settings ;;
-                        3) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
-                        4) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
-                        5) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
-                        6) return 0 ;;
+                        2) select_console_font_size ;;
+                        3)
+                                [[ "$INSTALL_CONSOLE_FONT" == yes ]] &&
+                                        INSTALL_CONSOLE_FONT=no ||
+                                        INSTALL_CONSOLE_FONT=yes
+                                save_installer_settings
+                                ;;
+                        4)
+                                [[ "$LOG_ENABLED" == yes ]] && LOG_ENABLED=no || LOG_ENABLED=yes
+                                save_installer_settings
+                                ;;
+                        5) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
+                        6) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
+                        7) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
+                        8) return 0 ;;
                         *) warn "Invalid settings selection."; sleep 1 ;;
                 esac
         done
@@ -851,7 +943,7 @@ confirm() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v35-postinstall-menu-systemd-offline-fixed.sh [options]
+Usage: install-bfs-menu-v50-tracker-fixed-r21.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -860,6 +952,9 @@ Options:
   --log                  Enable automatic logging (default)
   --no-log               Disable automatic logging
   --log-file PATH        Use PATH for the live-environment log
+  --large-console        Use a 20-pixel console font for this run only
+  --console-font SIZE    Runtime console font: default, 16, or 20
+  --console-font=SIZE    Same as above
   -h, --help             Show this help
 USAGE
 }
@@ -880,6 +975,19 @@ parse_arguments() {
                                 LOG_ENABLED=yes
                                 LOG_FILE="$2"
                                 shift 2
+                                ;;
+                        --large-console)
+                                CONSOLE_FONT_OVERRIDE=20
+                                shift
+                                ;;
+                        --console-font)
+                                (($# >= 2)) || die "--console-font requires default, 16, or 20."
+                                case "$2" in default|16|20) CONSOLE_FONT_OVERRIDE="$2" ;; *) die "Invalid console font size: $2" ;; esac
+                                shift 2
+                                ;;
+                        --console-font=*)
+                                case "${1#*=}" in default|16|20) CONSOLE_FONT_OVERRIDE="${1#*=}" ;; *) die "Invalid console font size: ${1#*=}" ;; esac
+                                shift
                                 ;;
                         -h|--help)
                                 usage
@@ -1952,14 +2060,26 @@ select_luks_device() {
 }
 
 select_luks_existing_device() {
-        local result_variable="$1" p sz fs choice=""; local -a paths=() items=()
+        local result_variable="$1" p="" sz="" fs="" choice=""
+        local -a paths=() items=()
+        local -A seen=()
+
         while read -r p sz fs; do
-                [[ "$fs" == crypto_LUKS ]] || continue
-                paths+=("$p"); items+=("${#paths[@]}" "$p  $sz  LUKS")
+                [[ "$fs" == crypto_LUKS && -n "$p" ]] || continue
+                [[ -z "${seen[$p]:-}" ]] || continue
+                seen["$p"]=1
+                paths+=("$p")
+                items+=("${#paths[@]}" "$p  $sz  LUKS")
         done < <(lsblk -prno PATH,SIZE,FSTYPE)
-        ((${#paths[@]})) || { dialog_message "Open LUKS" "No LUKS containers were found."; return 1; }
+
+        ((${#paths[@]})) || {
+                dialog_message "Open LUKS" "No LUKS containers were found."
+                return 1
+        }
+
         themed_menu choice "Open LUKS container" "Select a LUKS device." 20 88 12 "${items[@]}"
-        [[ "$choice" =~ ^[0-9]+$ ]] && ((choice>=1 && choice<=${#paths[@]})) || return 1
+        [[ "$choice" =~ ^[0-9]+$ ]] &&
+                ((choice>=1 && choice<=${#paths[@]})) || return 1
         printf -v "$result_variable" '%s' "${paths[$((choice-1))]}"
 }
 
@@ -2038,27 +2158,159 @@ luks_menu() {
 }
 
 select_pv_devices() {
-        local result_variable="$1" p t sz fs mp choice="" status=0
-        local -a paths=() items=() selected=()
+        local result_variable="$1" p="" t="" sz="" fs="" mp="" choice="" status=0
+        local -a paths=() items=()
+        local -A seen=()
+
         while read -r p t sz fs mp; do
-                [[ "$t" == part || "$t" == crypt || "$t" == raid* ]] || continue
+                [[ -n "$p" ]] || continue
+                [[ -z "${seen[$p]:-}" ]] || continue
+                seen["$p"]=1
+                [[ "$t" == part || "$t" == crypt || "$t" == raid* || "$p" == /dev/mapper/* ]] || continue
                 [[ -z "$mp" ]] || continue
                 case "$fs" in linux_raid_member|LVM2_member|crypto_LUKS) continue ;; esac
-                paths+=("$p"); items+=("$p" "$sz  $t  ${fs:--}" off)
+                paths+=("$p")
+                items+=("$p" "$sz  $t  ${fs:--}" off)
         done < <(lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS | awk '{print $1,$2,$3,$4,$5}')
-        ((${#paths[@]})) || { dialog_message "LVM physical volume" "No eligible block devices were found."; return 1; }
+
+        ((${#paths[@]})) || {
+                dialog_message "LVM physical volume" "No eligible block devices were found."
+                return 1
+        }
+
         if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
-                set +e
-                choice="$(dialog --stdout --clear --backtitle "BFS Linux Installer" --title "LVM physical volume" \
+                if choice="$(dialog --stdout --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "LVM physical volume" \
                         --cancel-label "Back" --separate-output --checklist \
-                        "Use Up/Down to move and Space to select one or more devices." 22 92 14 "${items[@]}" </dev/tty)"
-                status=$?; set -e; ((status==0)) || return 1
+                        "Use Up/Down to move and Space to select one or more devices." \
+                        22 92 14 "${items[@]}" </dev/tty)"; then
+                        status=0
+                else
+                        status=$?
+                fi
+                ((status==0)) || return 1
                 choice="$(printf '%s\n' "$choice" | tr '\n' ' ')"
         else
                 ask_default choice "Physical volume device(s), separated by spaces" "/dev/" || return 1
         fi
+
         [[ -n "${choice// /}" ]] || return 1
         printf -v "$result_variable" '%s' "$choice"
+}
+
+select_existing_pvs() {
+        local result_variable="$1" pv="" size="" vg="" choice="" status=0
+        local -a items=()
+        local -A seen=()
+
+        while IFS='|' read -r pv size vg; do
+                pv="$(printf '%s' "$pv" | xargs)"
+                size="$(printf '%s' "$size" | xargs)"
+                vg="$(printf '%s' "$vg" | xargs)"
+                [[ -n "$pv" && -z "$vg" ]] || continue
+                [[ -z "${seen[$pv]:-}" ]] || continue
+                seen["$pv"]=1
+                items+=("$pv" "${size:-unknown}  unassigned PV" off)
+        done < <(pvs --noheadings --separator '|' -o pv_name,pv_size,vg_name 3>&- 4>&- 2>/dev/null || true)
+
+        ((${#items[@]})) || {
+                dialog_message "Create volume group" \
+                        "No unassigned LVM physical volumes were found.\n\nCreate a physical volume first."
+                return 1
+        }
+
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                if choice="$(dialog --stdout --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "Select physical volumes" \
+                        --cancel-label "Back" --separate-output --checklist \
+                        "Select one or more existing, unassigned physical volumes for the new volume group." \
+                        22 92 14 "${items[@]}" </dev/tty)"; then
+                        status=0
+                else
+                        status=$?
+                fi
+                ((status==0)) || return 1
+                choice="$(printf '%s\n' "$choice" | tr '\n' ' ')"
+        else
+                ask_default choice "Existing physical volume(s), separated by spaces" "" || return 1
+        fi
+
+        [[ -n "${choice// /}" ]] || return 1
+        printf -v "$result_variable" '%s' "$choice"
+}
+
+select_existing_vg() {
+        local result_variable="$1" vg="" size="" free="" choice=""
+        local -a names=() items=()
+        local -A seen=()
+
+        while IFS='|' read -r vg size free; do
+                vg="$(printf '%s' "$vg" | xargs)"
+                size="$(printf '%s' "$size" | xargs)"
+                free="$(printf '%s' "$free" | xargs)"
+                [[ -n "$vg" ]] || continue
+                [[ -z "${seen[$vg]:-}" ]] || continue
+                seen["$vg"]=1
+                names+=("$vg")
+                items+=("${#names[@]}" "$vg  size=${size:-?} free=${free:-?}")
+        done < <(vgs --noheadings --separator '|' -o vg_name,vg_size,vg_free 3>&- 4>&- 2>/dev/null || true)
+
+        ((${#names[@]})) || {
+                dialog_message "Create logical volume" "No LVM volume groups were found."
+                return 1
+        }
+
+        themed_menu choice "Select volume group" \
+                "Choose the volume group in which to create the logical volume." \
+                20 86 12 "${items[@]}"
+        [[ "$choice" =~ ^[0-9]+$ ]] &&
+                ((choice>=1 && choice<=${#names[@]})) || return 1
+        printf -v "$result_variable" '%s' "${names[$((choice-1))]}"
+}
+
+lvm_review_text() {
+        local pv="" vg="" size="" free="" lv="" path=""
+        local found=no
+
+        printf 'Physical Volumes:\n'
+        while IFS='|' read -r pv vg size free; do
+                pv="$(printf '%s' "$pv" | xargs)"
+                vg="$(printf '%s' "$vg" | xargs)"
+                size="$(printf '%s' "$size" | xargs)"
+                free="$(printf '%s' "$free" | xargs)"
+                [[ -n "$pv" ]] || continue
+                found=yes
+                printf '  %s  size=%s free=%s  VG=%s\n' \
+                        "$pv" "${size:-?}" "${free:-?}" "${vg:-unassigned}"
+        done < <(pvs --noheadings --separator '|' -o pv_name,vg_name,pv_size,pv_free 3>&- 4>&- 2>/dev/null || true)
+        [[ "$found" == yes ]] || printf '  none\n'
+
+        printf 'Volume Groups:\n'
+        found=no
+        while IFS='|' read -r vg size free; do
+                vg="$(printf '%s' "$vg" | xargs)"
+                size="$(printf '%s' "$size" | xargs)"
+                free="$(printf '%s' "$free" | xargs)"
+                [[ -n "$vg" ]] || continue
+                found=yes
+                printf '  %s  size=%s free=%s\n' "$vg" "${size:-?}" "${free:-?}"
+        done < <(vgs --noheadings --separator '|' -o vg_name,vg_size,vg_free 3>&- 4>&- 2>/dev/null || true)
+        [[ "$found" == yes ]] || printf '  none\n'
+
+        printf 'Logical Volumes:\n'
+        found=no
+        while IFS='|' read -r vg lv path size; do
+                vg="$(printf '%s' "$vg" | xargs)"
+                lv="$(printf '%s' "$lv" | xargs)"
+                path="$(printf '%s' "$path" | xargs)"
+                size="$(printf '%s' "$size" | xargs)"
+                [[ -n "$lv" ]] || continue
+                found=yes
+                printf '  %s/%s  %s  size=%s\n' "$vg" "$lv" "${path:-/dev/$vg/$lv}" "${size:-?}"
+        done < <(lvs --noheadings --separator '|' -o vg_name,lv_name,lv_path,lv_size 3>&- 4>&- 2>/dev/null || true)
+        [[ "$found" == yes ]] || printf '  none\n'
 }
 
 show_lvm_status_dialog() {
@@ -2127,12 +2379,9 @@ lvm_menu() {
                                 vg_name=""
                                 pv_list=""
                                 ask_default vg_name "New volume-group name" "bfs-vg" || continue
-                                ask_default pv_list \
-                                        "Physical volume device(s), separated by spaces" \
-                                        "/dev/" || continue
+                                select_existing_pvs pv_list || continue
                                 [[ -n "$vg_name" && -n "$pv_list" ]] || {
-                                        warn "A volume-group name and at least one physical volume are required."
-                                        pause_screen
+                                        dialog_message "LVM volume group" "A volume-group name and at least one physical volume are required."
                                         continue
                                 }
                                 read -r -a pv_array <<< "$pv_list"
@@ -2154,7 +2403,7 @@ lvm_menu() {
                                 vg_name=""
                                 lv_name=""
                                 lv_size=""
-                                ask_default vg_name "Volume-group name" "bfs-vg" || continue
+                                select_existing_vg vg_name || continue
                                 ask_default lv_name "Logical-volume name" "home" || continue
                                 ask_default lv_size \
                                         "LV size: 10G, 50%, 50%VG, 50%FREE, or 100%FREE (bare % means %VG)" \
@@ -2375,14 +2624,20 @@ storage_mountpoint_in_use() {
 }
 
 storage_selection_summary_text() {
-        local index=0
+        local index=0 action="" format=""
         printf '%s\n' "Selected filesystems and mount points" "====================================" ""
-        printf '  %-4s %-28s %-12s %s\n' NUM DEVICE ACTION MOUNTPOINT
-        printf '  %-4s %-28s %-12s %s\n' --- ------ ------ ----------
+        printf '  %-4s %-28s %-24s %s\n' NUM DEVICE ACTION MOUNTPOINT
+        printf '  %-4s %-28s %-24s %s\n' --- ------ ------ ----------
         for ((index=0; index<${#STORAGE_DEVICES[@]}; index++)); do
-                printf '  %-4d %-28s %-12s %s\n' \
+                format="${STORAGE_FORMATS[$index]}"
+                if [[ "$format" == keep ]]; then
+                        action="KEEP (do not format)"
+                else
+                        action="FORMAT as $format"
+                fi
+                printf '  %-4d %-28s %-24s %s\n' \
                         "$((index + 1))" "${STORAGE_DEVICES[$index]}" \
-                        "${STORAGE_FORMATS[$index]}" "${STORAGE_MOUNTPOINTS[$index]}"
+                        "$action" "${STORAGE_MOUNTPOINTS[$index]}"
         done
 }
 
@@ -2535,20 +2790,24 @@ configure_disks() {
                         continue
                 fi
 
+                local selection_summary=""
+                selection_summary="$(storage_selection_summary_text)"
+
                 if command -v dialog >/dev/null 2>&1 &&
                    [[ -r /dev/tty && -w /dev/tty ]]; then
                         if dialog --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "Confirm storage assignments" \
                                 --yesno \
-                                "Use these filesystem and mount-point selections?\n\nSelect No to start the storage selection again." \
-                                12 68 \
+                                "$selection_summary\n\nUse these filesystem and mount-point selections?\n\nSelect No to start again." \
+                                26 112 \
                                 </dev/tty >/dev/tty 2>/dev/tty; then
                                 confirmed=yes
                         else
                                 confirmed=no
                         fi
                 else
+                        printf '\n%s\n\n' "$selection_summary"
                         read -r -p "Use these selections? [Y/n]: " choice
                         [[ -z "$choice" || "${choice,,}" == y || "${choice,,}" == yes ]] &&
                                 confirmed=yes || confirmed=no
@@ -3597,8 +3856,7 @@ Encrypted devices:   ${CRYPT_TARGETS:-none}
 LVM
 ---
 Enabled:             ${AUTO_LVM2:-no}
-Volume Group:        ${LVM_VG_NAME:-none}
-Logical Volumes:     ${LVM_LOGICAL_VOLUMES:-none}
+$(lvm_review_text)
 
 Installation Totals
 -------------------
@@ -3833,7 +4091,8 @@ mount_device() {
 }
 
 mount_target_filesystems() {
-        local index="" device="" mountpoint_name=""
+        local index="" device="" mountpoint_name="" record=""
+        local -a records=()
 
         log "Mounting target filesystems"
 
@@ -3847,25 +4106,41 @@ mount_target_filesystems() {
                 mount_device "$ROOT_DEV" "$TARGET"
         fi
 
-        [[ -z "$BOOT_DEV" ]] || mount_device "$BOOT_DEV" "$TARGET/boot"
-        [[ "$BOOT_MODE" != uefi ]] || mount_device "$EFI_DEV" "$TARGET/boot/efi"
-
-        if [[ -n "$HOME_DEV" ]]; then
-                if ! mount_btrfs_layout "$HOME_DEV" "$TARGET/home" /home; then
-                        mount_device "$HOME_DEV" "$TARGET/home"
-                fi
+        [[ -z "$BOOT_DEV" ]] || records+=("$BOOT_DEV|/boot")
+        if [[ "$BOOT_MODE" == uefi && -n "$EFI_DEV" ]]; then
+                records+=("$EFI_DEV|/boot/efi")
         fi
+        [[ -z "$HOME_DEV" ]] || records+=("$HOME_DEV|/home")
 
         for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
-                device="${EXTRA_DEVICES[$index]}"
-                mountpoint_name="${EXTRA_MOUNTPOINTS[$index]}"
+                records+=("${EXTRA_DEVICES[$index]}|${EXTRA_MOUNTPOINTS[$index]}")
+        done
+
+        # Mount parents before children regardless of the order in which the
+        # user selected them. This is required for layouts such as /usr plus
+        # /usr/local, /boot plus /boot/efi, and arbitrary separate /opt trees.
+        while IFS= read -r record; do
+                [[ -n "$record" ]] || continue
+                device="${record%%|*}"
+                mountpoint_name="${record#*|}"
 
                 if ! mount_btrfs_layout \
                         "$device" "$TARGET$mountpoint_name" "$mountpoint_name"
                 then
                         mount_device "$device" "$TARGET$mountpoint_name"
                 fi
-        done
+        done < <(
+                printf '%s\n' "${records[@]}" |
+                awk -F'|' '
+                        NF >= 2 {
+                                mp=$2
+                                depth=gsub(/\//, "/", mp)
+                                printf "%04d|%s\n", depth, $0
+                        }
+                ' |
+                sort -t'|' -k1,1n -k3,3 |
+                cut -d'|' -f2-
+        )
 
         [[ -z "$SWAP_DEV" ]] || swapon "$SWAP_DEV"
 }
@@ -4257,6 +4532,8 @@ AUTO_LVM2_VALUE="__AUTO_LVM2__"
 AUTO_MDADM_VALUE="__AUTO_MDADM__"
 BTRFS_CONFIG_NAMES_VALUE="__BTRFS_CONFIG_NAMES__"
 BTRFS_MOUNTPOINTS_VALUE="__BTRFS_MOUNTPOINTS__"
+CONSOLE_FONT_SIZE_VALUE="__CONSOLE_FONT_SIZE__"
+INSTALL_CONSOLE_FONT_VALUE="__INSTALL_CONSOLE_FONT__"
 
 log() { printf '\n==> %s\n' "$*"; }
 
@@ -4327,7 +4604,47 @@ cat > /etc/hosts <<EOF_HOSTS
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 EOF_HOSTS
-printf 'FONT=Lat2-Terminus16\n' > /etc/vconsole.conf
+configure_installed_console_font() {
+        local size="$CONSOLE_FONT_SIZE_VALUE" font="" base=""
+        local -a dirs=(/usr/share/consolefonts /usr/share/kbd/consolefonts /lib/kbd/consolefonts)
+        local dir="" pattern=""
+        local -a patterns=()
+
+        # Preserve the existing BFS default unless the user explicitly asked
+        # for the selected large installer font to persist after installation.
+        if [[ "$INSTALL_CONSOLE_FONT_VALUE" != yes || "$size" == default ]]; then
+                printf 'FONT=Lat2-Terminus16\n' > /etc/vconsole.conf
+                return 0
+        fi
+
+        case "$size" in
+                16) patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*') ;;
+                20) patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' '*Terminus*20*' '*20*.psf*') ;;
+                *)  patterns=() ;;
+        esac
+
+        for dir in "${dirs[@]}"; do
+                [[ -d "$dir" ]] || continue
+                for pattern in "${patterns[@]}"; do
+                        font="$(find "$dir" -maxdepth 1 -type f -name "$pattern" -print -quit 2>/dev/null)"
+                        [[ -z "$font" ]] || break 2
+                done
+        done
+
+        if [[ -z "$font" ]]; then
+                echo "WARNING: Requested ${size}-pixel installed console font was unavailable; using Lat2-Terminus16." >&2
+                printf 'FONT=Lat2-Terminus16\n' > /etc/vconsole.conf
+                return 0
+        fi
+
+        base="$(basename "$font")"
+        base="${base%.gz}"
+        base="${base%.psfu}"
+        base="${base%.psf}"
+        printf 'FONT=%s\n' "$base" > /etc/vconsole.conf
+}
+
+configure_installed_console_font
 
 cat > /etc/inputrc <<'EOF_INPUTRC'
 set horizontal-scroll-mode Off
@@ -5007,15 +5324,18 @@ configure_grub_storage_cmdline
 configure_dracut_storage_modules() {
         local config_file="/etc/dracut.conf.d/20-bfs-storage.conf"
         local -a modules=()
+        local separate_usr=no
 
         mkdir -p /etc/dracut.conf.d
 
-        # Only request modules that the selected root-storage ancestry
-        # actually requires. cryptsetup itself is installed automatically
-        # whenever the final storage topology contains a crypt layer.
+        if awk '!/^[[:space:]]*#/ && $2 == "/usr" {found=1} END {exit !found}' /etc/fstab 2>/dev/null; then
+                separate_usr=yes
+                modules+=(usrmount)
+        fi
+
         if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
                 command -v cryptsetup >/dev/null 2>&1 || {
-                        echo "Encrypted root storage was detected, but cryptsetup is missing." >&2
+                        echo "Encrypted storage was detected, but cryptsetup is missing." >&2
                         return 1
                 }
                 modules+=(crypt)
@@ -5024,7 +5344,7 @@ configure_dracut_storage_modules() {
         if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
                 command -v lvm >/dev/null 2>&1 ||
                 command -v vgchange >/dev/null 2>&1 || {
-                        echo "LVM root storage was detected, but LVM tools are missing." >&2
+                        echo "LVM storage was detected, but LVM tools are missing." >&2
                         return 1
                 }
                 modules+=(lvm)
@@ -5032,18 +5352,47 @@ configure_dracut_storage_modules() {
 
         if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
                 command -v mdadm >/dev/null 2>&1 || {
-                        echo "Software RAID root storage was detected, but mdadm is missing." >&2
+                        echo "Software RAID storage was detected, but mdadm is missing." >&2
                         return 1
                 }
                 modules+=(mdraid)
         fi
 
         if ((${#modules[@]} > 0)); then
-                printf '# Generated by the BFS installer.\n' > "$config_file"
-                printf 'add_dracutmodules+=" %s "\n' "${modules[*]}" >> "$config_file"
+                printf '# Generated by the BFS installer from the final storage topology.\n' > "$config_file"
+                printf '# Separate /usr: %s\n' "$separate_usr" >> "$config_file"
+                # BFS uses host-only initramfs images. Force these topology-
+                # critical modules into every future rebuild of this machine.
+                printf 'force_add_dracutmodules+=" %s "\n' "${modules[*]}" >> "$config_file"
         else
                 rm -f "$config_file"
         fi
+}
+
+verify_required_dracut_modules() {
+        local image="$1" module="" required_line=""
+        local -a required=()
+
+        command -v lsinitrd >/dev/null 2>&1 || {
+                echo "WARNING: lsinitrd is unavailable; cannot verify initramfs module list." >&2
+                return 0
+        }
+
+        [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]] && required+=(crypt)
+        [[ "$AUTO_LVM2_VALUE" == yes ]] && required+=(lvm)
+        [[ "$AUTO_MDADM_VALUE" == yes ]] && required+=(mdraid)
+        if awk '!/^[[:space:]]*#/ && $2 == "/usr" {found=1} END {exit !found}' /etc/fstab 2>/dev/null; then
+                required+=(usrmount)
+        fi
+
+        required_line="$(lsinitrd "$image" 2>/dev/null || true)"
+        for module in "${required[@]}"; do
+                if ! grep -qE "(^|[[:space:]/-])${module}([[:space:]/.-]|$)" <<<"$required_line"; then
+                        echo "Initramfs verification failed: required Dracut module '$module' was not found in $image." >&2
+                        return 1
+                fi
+        done
+        return 0
 }
 
 rebuild_final_initramfs() {
@@ -5079,6 +5428,7 @@ rebuild_final_initramfs() {
         log "Generating final initramfs for $kernel_release"
         log "Storage stack: RAID=$AUTO_MDADM_VALUE LUKS=$AUTO_CRYPTSETUP_VALUE LVM=$AUTO_LVM2_VALUE"
         dracut --force "$initramfs_image" "$kernel_release"
+        verify_required_dracut_modules "$initramfs_image" || exit 1
 }
 
 rebuild_final_initramfs
@@ -5315,6 +5665,8 @@ CHROOT
                 -e "s|__AUTO_MDADM__|$AUTO_MDADM|g" \
                 -e "s|__BTRFS_CONFIG_NAMES__|$(printf '%s' "${BTRFS_CONFIG_NAMES[*]}" | sed 's/[&|]/\\&/g')|g" \
                 -e "s|__BTRFS_MOUNTPOINTS__|$(printf '%s' "${BTRFS_MOUNTPOINTS[*]}" | sed 's/[&|]/\\&/g')|g" \
+                -e "s|__CONSOLE_FONT_SIZE__|$CONSOLE_FONT_SIZE|g" \
+                -e "s|__INSTALL_CONSOLE_FONT__|$INSTALL_CONSOLE_FONT|g" \
                 "$TARGET$CHROOT_INSTALLER"
         chmod 0700 "$TARGET$CHROOT_INSTALLER"
 }
@@ -5408,7 +5760,13 @@ main() {
         force_posix_locale
         sync_system_clock
         load_installer_settings
+        if [[ -n "$CONSOLE_FONT_OVERRIDE" ]]; then
+                CONSOLE_FONT_SIZE="$CONSOLE_FONT_OVERRIDE"
+        else
+                CONSOLE_FONT_SIZE="$CONSOLE_FONT_PREFERENCE"
+        fi
         setup_installer_theme
+        apply_console_font "$CONSOLE_FONT_SIZE"
         report_installer_interface_mode
         setup_logging
         require_commands
