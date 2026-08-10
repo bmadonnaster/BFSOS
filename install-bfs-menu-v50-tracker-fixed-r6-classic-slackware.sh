@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer - v50 tracker fixes r4 (RAID + LUKS + LVM)
+# BFS Linux installer - v50 tracker fixes r6 (RAID + LUKS + LVM)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -1773,10 +1773,15 @@ assemble_raid_arrays() {
                 return 0
         }
 
-        set +e
-        mdadm --assemble --scan
-        assemble_status=$?
-        set -e
+        # Run mdadm in an if-condition rather than under `set +e`.  The
+        # installer has an ERR trap, and a bare non-zero mdadm exit can still
+        # trigger that trap even when "no arrays exist" is a perfectly normal
+        # result on a clean installation.
+        if mdadm --assemble --scan; then
+                assemble_status=0
+        else
+                assemble_status=$?
+        fi
 
         command -v udevadm >/dev/null 2>&1 &&
                 udevadm settle || true
@@ -1785,6 +1790,8 @@ assemble_raid_arrays() {
 
         if ((assemble_status == 0)); then
                 dialog_message "Software RAID" "RAID assembly scan completed.\n\n$status_text"
+        elif ! awk '$2 == ":" && $4 ~ /^raid/ {found=1} END {exit !found}' /proc/mdstat 2>/dev/null; then
+                dialog_message "Software RAID" "No existing RAID arrays were found.\n\nThis is normal on a clean installation. Choose 'Create a new array' to continue."
         else
                 dialog_message "Software RAID" "One or more RAID arrays could not be assembled automatically.\n\nCurrent MD status:\n\n$status_text"
         fi
