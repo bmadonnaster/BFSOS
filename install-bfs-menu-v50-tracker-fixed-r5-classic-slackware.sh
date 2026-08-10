@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer - v50 tracker fixes r2 (RAID + LUKS + LVM)
+# BFS Linux installer - v50 tracker fixes r4 (RAID + LUKS + LVM)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -307,6 +307,49 @@ tag_selected_color = (YELLOW,BLUE,ON)
 EOF_DIALOGRC
 }
 
+write_dialog_theme_slackware() {
+        cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+
+# Classic Slackware setup look: cyan dialog field, black body text,
+# yellow title, blue active selection/buttons, and red accelerator tags.
+screen_color = (BLACK,CYAN,OFF)
+shadow_color = (BLACK,CYAN,OFF)
+dialog_color = (BLACK,CYAN,ON)
+title_color = (YELLOW,CYAN,ON)
+border_color = (BLACK,CYAN,ON)
+
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,CYAN,ON)
+button_key_active_color = (YELLOW,BLUE,ON)
+button_key_inactive_color = (RED,CYAN,ON)
+button_label_active_color = (WHITE,BLUE,ON)
+button_label_inactive_color = (BLACK,CYAN,ON)
+
+inputbox_color = (BLACK,CYAN,ON)
+inputbox_border_color = (BLACK,CYAN,ON)
+searchbox_color = (BLACK,CYAN,ON)
+searchbox_title_color = (YELLOW,CYAN,ON)
+searchbox_border_color = (BLACK,CYAN,ON)
+
+position_indicator_color = (BLACK,CYAN,ON)
+menubox_color = (BLACK,CYAN,ON)
+menubox_border_color = (BLACK,CYAN,ON)
+item_color = (BLACK,CYAN,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (RED,CYAN,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+tag_key_color = (RED,CYAN,ON)
+tag_key_selected_color = (YELLOW,BLUE,ON)
+
+check_color = (BLACK,CYAN,ON)
+check_selected_color = (WHITE,BLUE,ON)
+uarrow_color = (YELLOW,CYAN,ON)
+darrow_color = (YELLOW,CYAN,ON)
+EOF_DIALOGRC
+}
+
 write_dialog_theme_monochrome() {
         cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = OFF
@@ -318,6 +361,7 @@ theme_display_name() {
         case "$BFS_THEME" in
                 classic) printf '%s' "Classic Blue" ;;
                 midnight) printf '%s' "Midnight" ;;
+                slackware) printf '%s' "Classic Slackware" ;;
                 light) printf '%s' "Light" ;;
                 monochrome) printf '%s' "Monochrome" ;;
                 *) printf '%s' "$BFS_THEME" ;;
@@ -331,6 +375,7 @@ setup_installer_theme() {
         case "$BFS_THEME" in
                 classic) write_dialog_theme_classic ;;
                 midnight) write_dialog_theme_midnight ;;
+                slackware) write_dialog_theme_slackware ;;
                 light) write_dialog_theme_light ;;
                 monochrome) write_dialog_theme_monochrome ;;
                 *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
@@ -382,13 +427,15 @@ select_installer_theme() {
                                 --title "Interface Theme" \
                                 --radiolist \
                                 "Choose the installer theme." \
-                                17 66 5 \
+                                19 72 6 \
                                 monochrome "Best compatibility for SSH and unusual palettes" \
                                         "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
                                 classic "Classic Blue — bootstrap-style dark-blue theme" \
                                         "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
                                 midnight "Midnight Commander-style theme" \
                                         "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
+                                slackware "Classic Slackware setup-style cyan theme" \
+                                        "$([[ "$BFS_THEME" == slackware ]] && echo on || echo off)" \
                                 light "Black text on a light background" \
                                         "$([[ "$BFS_THEME" == light ]] && echo on || echo off)" \
                                 </dev/tty
@@ -402,13 +449,15 @@ select_installer_theme() {
                 echo "  1) Monochrome"
                 echo "  2) Classic Blue"
                 echo "  3) Midnight"
-                echo "  4) Light"
-                read -r -p "Choose [1-4, current: $(theme_display_name)]: " choice
+                echo "  4) Classic Slackware"
+                echo "  5) Light"
+                read -r -p "Choose [1-5, current: $(theme_display_name)]: " choice
                 case "$choice" in
                         1) choice=monochrome ;;
                         2) choice=classic ;;
                         3) choice=midnight ;;
-                        4) choice=light ;;
+                        4) choice=slackware ;;
+                        5) choice=light ;;
                         "") return 0 ;;
                         *) warn "Invalid theme selection."; return 1 ;;
                 esac
@@ -1717,26 +1766,28 @@ choose_raid_members() {
 }
 
 assemble_raid_arrays() {
-        clear_screen
-        echo "Assemble existing RAID arrays"
-        echo "============================="
-        echo
+        local status_text="" assemble_status=0
 
         command -v mdadm >/dev/null 2>&1 || {
-                warn "mdadm is not available in this live environment."
-                pause_screen
+                dialog_message "Software RAID" "mdadm is not available in this live environment."
                 return 0
         }
 
-        mdadm --assemble --scan ||
-                warn "One or more RAID arrays could not be assembled."
+        set +e
+        mdadm --assemble --scan
+        assemble_status=$?
+        set -e
 
         command -v udevadm >/dev/null 2>&1 &&
                 udevadm settle || true
 
-        echo
-        cat /proc/mdstat 2>/dev/null || true
-        pause_screen
+        status_text="$(cat /proc/mdstat 2>/dev/null || true)"
+
+        if ((assemble_status == 0)); then
+                dialog_message "Software RAID" "RAID assembly scan completed.\n\n$status_text"
+        else
+                dialog_message "Software RAID" "One or more RAID arrays could not be assembled automatically.\n\nCurrent MD status:\n\n$status_text"
+        fi
 }
 
 create_raid_array() {
@@ -1771,28 +1822,39 @@ create_raid_array() {
 }
 
 show_raid_details() {
-        local array=""
+        local array="" tmp=""
 
-        clear_screen
-        echo "Software RAID status"
-        echo "===================="
-        echo
+        tmp="$(mktemp /tmp/bfs-raid-status.XXXXXX)"
+        {
+                printf '%s\n' "Software RAID status"
+                printf '%s\n\n' "===================="
+                cat /proc/mdstat 2>/dev/null || true
 
-        cat /proc/mdstat 2>/dev/null || true
+                if command -v mdadm >/dev/null 2>&1; then
+                        while IFS= read -r array; do
+                                [[ -n "$array" ]] || continue
+                                printf '\n%s\n' "------------------------------------------------------------"
+                                mdadm --detail "$array" 2>/dev/null || true
+                        done < <(
+                                lsblk -prno PATH,TYPE 2>/dev/null |
+                                awk '$2 ~ /^raid/ { print $1 }'
+                        )
+                fi
+        } >"$tmp"
 
-        if command -v mdadm >/dev/null 2>&1; then
-                while IFS= read -r array; do
-                        [[ -n "$array" ]] || continue
-                        echo
-                        echo "------------------------------------------------------------"
-                        mdadm --detail "$array" 2>/dev/null || true
-                done < <(
-                        lsblk -prno PATH,TYPE |
-                        awk '$2 ~ /^raid/ { print $1 }'
-                )
+        if command -v dialog >/dev/null 2>&1 &&
+           [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "Software RAID status" \
+                        --textbox "$tmp" 28 110 \
+                        </dev/tty >/dev/tty 2>/dev/tty || true
+        else
+                cat "$tmp"
+                pause_screen
         fi
 
-        pause_screen
+        rm -f "$tmp"
 }
 
 raid_menu() {
@@ -3324,7 +3386,7 @@ mdraid_review_text() {
                 printf 'Size:     %s\n' "${size:-unknown}"
                 printf 'State:    %s\n' "${state:-unknown}"
                 printf 'Members:  %s\n\n' "${members:-unknown}"
-        done < <(awk '$2 ~ /^raid/ {print $1}' /proc/mdstat)
+        done < <(awk '$2 == ":" && $4 ~ /^raid/ {print $1}' /proc/mdstat)
 
         [[ "$found" == yes ]] || printf 'none\n'
 }
@@ -4678,31 +4740,221 @@ EOF_SNAPPER
 
 configure_btrfs_snapshots
 
-# Blank the Linux virtual console after 30 minutes.
+# Keep normal cosmetic options in GRUB_CMDLINE_LINUX_DEFAULT, while storage
+# discovery arguments live in GRUB_CMDLINE_LINUX so normal, recovery, and
+# future kernel entries all inherit the same required early-boot topology.
 mkdir -p /etc/default
 touch /etc/default/grub
 
-if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub; then
-        current_cmdline="$(
-                sed -n 's/^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)"/\1/p' \
-                        /etc/default/grub |
-                head -n1
-        )"
+grub_get_cmdline_value() {
+        local key="$1"
+        sed -n "s/^${key}=\"\([^\"]*\)\"/\1/p" /etc/default/grub | head -n1
+}
 
-        case " $current_cmdline " in
+grub_set_cmdline_value() {
+        local key="$1" value="$2"
+        if grep -q "^${key}=" /etc/default/grub; then
+                sed -i "s|^${key}=.*|${key}=\"${value}\"|" /etc/default/grub
+        else
+                printf '%s="%s"\n' "$key" "$value" >> /etc/default/grub
+        fi
+}
+
+cmdline_append_unique() {
+        local variable="$1" token="$2" value="${!1:-}"
+        case " $value " in
+                *" $token "*) ;;
+                *) value="${value:+$value }$token" ;;
+        esac
+        printf -v "$variable" '%s' "$value"
+}
+
+strip_bfs_storage_cmdline() {
+        local value="$1" token="" result=""
+        for token in $value; do
+                case "$token" in
+                        rd.auto|rd.md=*|rd.luks.uuid=*|rd.lvm.lv=*)
+                                ;;
+                        *)
+                                result+="${result:+ }$token"
+                                ;;
+                esac
+        done
+        printf '%s' "$result"
+}
+
+discover_required_lvm_cmdline() {
+        local source="" mountpoint="" fstype="" options="" dump="" passno=""
+        local device="" lv_record="" vg="" lv=""
+
+        command -v lvs >/dev/null 2>&1 || return 0
+        [[ -r /etc/fstab ]] || return 0
+
+        while read -r source mountpoint fstype options dump passno; do
+                [[ -n "$source" && "$source" != \#* ]] || continue
+
+                device=""
+                case "$source" in
+                        UUID=*)
+                                command -v blkid >/dev/null 2>&1 &&
+                                        device="$(blkid -U "${source#UUID=}" 2>/dev/null || true)"
+                                ;;
+                        /dev/*)
+                                device="$source"
+                                ;;
+                esac
+
+                [[ -n "$device" && -b "$device" ]] || continue
+
+                lv_record="$(
+                        lvs --noheadings --separator '|' -o vg_name,lv_name "$device" 2>/dev/null |
+                                head -n1 |
+                                sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+                )"
+                [[ -n "$lv_record" ]] || continue
+
+                IFS='|' read -r vg lv <<< "$lv_record"
+                vg="${vg//[[:space:]]/}"
+                lv="${lv//[[:space:]]/}"
+                [[ -n "$vg" && -n "$lv" ]] || continue
+                printf '%s/%s\n' "$vg" "$lv"
+        done < /etc/fstab
+}
+
+configure_grub_storage_cmdline() {
+        local default_cmdline="" storage_cmdline="" token="" uuid="" lv=""
+        local -A seen_luks=() seen_lvs=()
+
+        default_cmdline="$(grub_get_cmdline_value GRUB_CMDLINE_LINUX_DEFAULT)"
+        storage_cmdline="$(grub_get_cmdline_value GRUB_CMDLINE_LINUX)"
+
+        # Remove storage arguments from both variables before rebuilding them.
+        # This makes repeated installer runs idempotent and avoids stale UUID/LV
+        # references after changing a storage layout.
+        default_cmdline="$(strip_bfs_storage_cmdline "$default_cmdline")"
+        storage_cmdline="$(strip_bfs_storage_cmdline "$storage_cmdline")"
+
+        case " $default_cmdline " in
                 *" consoleblank="*) ;;
-                *) current_cmdline="${current_cmdline:+$current_cmdline }consoleblank=1800" ;;
+                *) default_cmdline="${default_cmdline:+$default_cmdline }consoleblank=1800" ;;
         esac
 
-        sed -i \
-                "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$current_cmdline\"|" \
-                /etc/default/grub
-else
-        printf '%s\n' \
-                'GRUB_CMDLINE_LINUX_DEFAULT="consoleblank=1800"' \
-                >> /etc/default/grub
-fi
+        if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+                # rd.md=1 permits MD support; rd.auto is the critical discovery
+                # switch required for arrays such as MD -> LUKS -> LVM.
+                cmdline_append_unique storage_cmdline "rd.auto"
+                cmdline_append_unique storage_cmdline "rd.md=1"
+        fi
 
+        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes && -r /etc/crypttab ]]; then
+                while read -r token; do
+                        [[ "$token" == UUID=* ]] || continue
+                        uuid="${token#UUID=}"
+                        uuid="${uuid#luks-}"
+                        [[ -n "$uuid" ]] || continue
+                        [[ -z "${seen_luks[$uuid]:-}" ]] || continue
+                        seen_luks["$uuid"]=1
+                        cmdline_append_unique storage_cmdline "rd.luks.uuid=luks-$uuid"
+                done < <(
+                        awk '!/^[[:space:]]*#/ && NF >= 2 {print $2}' /etc/crypttab
+                )
+        fi
+
+        if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
+                while IFS= read -r lv; do
+                        [[ -n "$lv" ]] || continue
+                        [[ -z "${seen_lvs[$lv]:-}" ]] || continue
+                        seen_lvs["$lv"]=1
+                        cmdline_append_unique storage_cmdline "rd.lvm.lv=$lv"
+                done < <(discover_required_lvm_cmdline)
+        fi
+
+        grub_set_cmdline_value GRUB_CMDLINE_LINUX_DEFAULT "$default_cmdline"
+        grub_set_cmdline_value GRUB_CMDLINE_LINUX "$storage_cmdline"
+
+        log "GRUB default kernel arguments: ${default_cmdline:-none}"
+        log "GRUB storage kernel arguments: ${storage_cmdline:-none}"
+}
+
+verify_grub_storage_cmdline() {
+        local cfg="/boot/grub/grub.cfg" token="" uuid="" lv=""
+        local linux_lines="" recovery_lines=""
+        local -A seen_luks=() seen_lvs=()
+
+        [[ -s "$cfg" ]] || return 1
+        linux_lines="$(grep -E '^[[:space:]]*linux[[:space:]]' "$cfg" || true)"
+        [[ -n "$linux_lines" ]] || {
+                echo "GRUB verification failed: no Linux entries found." >&2
+                return 1
+        }
+
+        if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+                grep -qE '(^|[[:space:]])rd\.auto([[:space:]]|$)' <<<"$linux_lines" || {
+                        echo "GRUB verification failed: RAID storage requires rd.auto." >&2
+                        return 1
+                }
+                grep -qE '(^|[[:space:]])rd\.md=1([[:space:]]|$)' <<<"$linux_lines" || {
+                        echo "GRUB verification failed: RAID storage requires rd.md=1." >&2
+                        return 1
+                }
+        fi
+
+        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes && -r /etc/crypttab ]]; then
+                while read -r token; do
+                        [[ "$token" == UUID=* ]] || continue
+                        uuid="${token#UUID=}"
+                        uuid="${uuid#luks-}"
+                        [[ -n "$uuid" ]] || continue
+                        [[ -z "${seen_luks[$uuid]:-}" ]] || continue
+                        seen_luks["$uuid"]=1
+                        grep -qF "rd.luks.uuid=luks-$uuid" <<<"$linux_lines" || {
+                                echo "GRUB verification failed: missing LUKS UUID $uuid." >&2
+                                return 1
+                        }
+                done < <(
+                        awk '!/^[[:space:]]*#/ && NF >= 2 {print $2}' /etc/crypttab
+                )
+        fi
+
+        if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
+                while IFS= read -r lv; do
+                        [[ -n "$lv" ]] || continue
+                        [[ -z "${seen_lvs[$lv]:-}" ]] || continue
+                        seen_lvs["$lv"]=1
+                        grep -qF "rd.lvm.lv=$lv" <<<"$linux_lines" || {
+                                echo "GRUB verification failed: missing LVM argument for $lv." >&2
+                                return 1
+                        }
+                done < <(discover_required_lvm_cmdline)
+        fi
+
+        # Storage arguments are written to GRUB_CMDLINE_LINUX specifically so
+        # recovery entries inherit them too. If recovery entries exist, verify
+        # that at least the critical RAID/LUKS discovery tokens are present.
+        recovery_lines="$(grep -E '^[[:space:]]*linux[[:space:]].*[[:space:]]single([[:space:]]|$)' "$cfg" || true)"
+        if [[ -n "$recovery_lines" ]]; then
+                if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+                        grep -qE '(^|[[:space:]])rd\.auto([[:space:]]|$)' <<<"$recovery_lines" || {
+                                echo "GRUB verification failed: recovery entry is missing rd.auto." >&2
+                                return 1
+                        }
+                        grep -qE '(^|[[:space:]])rd\.md=1([[:space:]]|$)' <<<"$recovery_lines" || {
+                                echo "GRUB verification failed: recovery entry is missing rd.md=1." >&2
+                                return 1
+                        }
+                fi
+                for uuid in "${!seen_luks[@]}"; do
+                        grep -qF "rd.luks.uuid=luks-$uuid" <<<"$recovery_lines" || {
+                                echo "GRUB verification failed: recovery entry is missing LUKS UUID $uuid." >&2
+                                return 1
+                        }
+                done
+        fi
+
+        return 0
+}
+
+configure_grub_storage_cmdline
 
 configure_dracut_storage_modules() {
         local config_file="/etc/dracut.conf.d/20-bfs-storage.conf"
@@ -4880,6 +5132,11 @@ if [[ "$INSTALL_GRUB_VALUE" == yes ]]; then
                         exit 1
                 }
         fi
+
+        verify_grub_storage_cmdline || {
+                echo "GRUB storage command-line verification failed." >&2
+                exit 1
+        }
 
         if [[ "$BOOT_MODE_VALUE" == uefi ]]; then
                 [[ -s /boot/efi/EFI/BFS/grubx64.efi ]] || {

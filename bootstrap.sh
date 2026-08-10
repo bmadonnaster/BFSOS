@@ -187,6 +187,49 @@ tag_selected_color = (YELLOW,BLUE,ON)
 EOF_DIALOGRC
 }
 
+write_dialog_theme_slackware() {
+    cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
+use_colors = ON
+use_shadow = OFF
+
+# Classic Slackware setup look: cyan dialog field, black body text,
+# yellow title, blue active selection/buttons, and red accelerator tags.
+screen_color = (BLACK,CYAN,OFF)
+shadow_color = (BLACK,CYAN,OFF)
+dialog_color = (BLACK,CYAN,ON)
+title_color = (YELLOW,CYAN,ON)
+border_color = (BLACK,CYAN,ON)
+
+button_active_color = (WHITE,BLUE,ON)
+button_inactive_color = (BLACK,CYAN,ON)
+button_key_active_color = (YELLOW,BLUE,ON)
+button_key_inactive_color = (RED,CYAN,ON)
+button_label_active_color = (WHITE,BLUE,ON)
+button_label_inactive_color = (BLACK,CYAN,ON)
+
+inputbox_color = (BLACK,CYAN,ON)
+inputbox_border_color = (BLACK,CYAN,ON)
+searchbox_color = (BLACK,CYAN,ON)
+searchbox_title_color = (YELLOW,CYAN,ON)
+searchbox_border_color = (BLACK,CYAN,ON)
+
+position_indicator_color = (BLACK,CYAN,ON)
+menubox_color = (BLACK,CYAN,ON)
+menubox_border_color = (BLACK,CYAN,ON)
+item_color = (BLACK,CYAN,ON)
+item_selected_color = (WHITE,BLUE,ON)
+tag_color = (RED,CYAN,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+tag_key_color = (RED,CYAN,ON)
+tag_key_selected_color = (YELLOW,BLUE,ON)
+
+check_color = (BLACK,CYAN,ON)
+check_selected_color = (WHITE,BLUE,ON)
+uarrow_color = (YELLOW,CYAN,ON)
+darrow_color = (YELLOW,CYAN,ON)
+EOF_DIALOGRC
+}
+
 write_dialog_theme_monochrome() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = OFF
@@ -198,6 +241,7 @@ theme_display_name() {
     case "$BFS_THEME" in
         classic) printf '%s' "Classic Blue" ;;
         midnight) printf '%s' "Midnight" ;;
+        slackware) printf '%s' "Classic Slackware" ;;
         light) printf '%s' "Light" ;;
         monochrome) printf '%s' "Monochrome" ;;
         *) printf '%s' "$BFS_THEME" ;;
@@ -211,6 +255,7 @@ setup_bootstrap_theme() {
     case "$BFS_THEME" in
         classic) write_dialog_theme_classic ;;
         midnight) write_dialog_theme_midnight ;;
+        slackware) write_dialog_theme_slackware ;;
         light) write_dialog_theme_light ;;
         monochrome) write_dialog_theme_monochrome ;;
         *) BFS_THEME=monochrome; write_dialog_theme_monochrome ;;
@@ -233,13 +278,15 @@ select_bootstrap_theme() {
                 --title "Interface Theme" \
                 --radiolist \
                 "Choose the bootstrap theme." \
-                17 66 5 \
+                19 72 6 \
                 monochrome "Best compatibility for SSH and unusual palettes" \
                     "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
                 classic "Classic Blue — traditional dark-blue theme" \
                     "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" \
                     "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
+                slackware "Classic Slackware setup-style cyan theme" \
+                    "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
                 light "Black text on a light background" \
                     "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                 </dev/tty 2>/dev/tty
@@ -252,13 +299,15 @@ select_bootstrap_theme() {
         echo "  1) Monochrome"
         echo "  2) Classic Blue"
         echo "  3) Midnight"
-        echo "  4) Light"
-        read -r -p "Choose [1-4, current: $(theme_display_name)]: " choice
+        echo "  4) Classic Slackware"
+        echo "  5) Light"
+        read -r -p "Choose [1-5, current: $(theme_display_name)]: " choice
         case "$choice" in
             1) choice=monochrome ;;
             2) choice=classic ;;
             3) choice=midnight ;;
-            4) choice=light ;;
+            4) choice=slackware ;;
+            5) choice=light ;;
             "") return 0 ;;
             *) echo "Invalid theme selection."; return 1 ;;
         esac
