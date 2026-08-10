@@ -128,7 +128,7 @@ INSTALL_GRUB="${BFS_INSTALL_GRUB:-yes}"
 SAVE_BASE_ARCHIVE="${BFS_SAVE_BASE_ARCHIVE:-yes}"
 BASE_ARCHIVE_DIR="${BFS_BASE_ARCHIVE_DIR:-/var/cache/bfs/archives/base}"
 ENABLE_OPENSSH="${BFS_ENABLE_OPENSSH:-${BFS_INSTALL_OPENSSH:-yes}}"
-INSTALL_GIT="${BFS_INSTALL_GIT:-no}"
+INSTALL_GIT="${BFS_INSTALL_GIT:-yes}"
 INSTALL_SUDO="${BFS_INSTALL_SUDO:-yes}"
 SUDO_MODE="${BFS_SUDO_MODE:-password}"
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
@@ -200,6 +200,7 @@ fi
 
 INSTALLER_LOG_DIR="$PROJECT_DIR/logs/installer"
 INSTALLER_SETTINGS_FILE="$SCRIPT_DIR/.bfs-installer-settings"
+INSTALLER_PROFILE_FILE="${BFS_INSTALLER_PROFILE:-$SCRIPT_DIR/bfs-installer-profile.conf}"
 LOG_STARTED_EPOCH=""
 LOG_CLOSED=no
 
@@ -419,49 +420,87 @@ select_installer_theme() {
         save_installer_settings
 }
 
+profile_quote() { printf '%q' "$1"; }
+
+save_installer_profile() {
+        local path="${1:-$INSTALLER_PROFILE_FILE}" i
+        {
+                echo '# BFSOS installer profile v1 - no passwords or LUKS passphrases are stored.'
+                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_NETWORKMANAGER ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT; do
+                        printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
+                done
+                for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'; done
+                for ((i=0;i<${#STORAGE_DEVICES[@]};i++)); do
+                        printf 'STORAGE='; profile_quote "${STORAGE_DEVICES[$i]}|${STORAGE_FORMATS[$i]}|${STORAGE_MOUNTPOINTS[$i]}"; printf '\n'
+                done
+        } >"$path"
+        INSTALLER_PROFILE_FILE="$path"
+        dialog_message "Configuration profile" "Saved installer configuration to:\n$path\n\nPasswords and LUKS passphrases were not saved."
+}
+
+load_installer_profile() {
+        local path="${1:-$INSTALLER_PROFILE_FILE}" line key raw value a b c missing="" dev
+        [[ -f "$path" ]] || { dialog_message "Configuration profile" "Profile not found:\n$path"; return 1; }
+        ADDITIONAL_USERS=(); STORAGE_DEVICES=(); STORAGE_FORMATS=(); STORAGE_MOUNTPOINTS=()
+        while IFS= read -r line || [[ -n "$line" ]]; do
+                [[ -z "$line" || "$line" == \#* || "$line" != *=* ]] && continue
+                key="${line%%=*}"; raw="${line#*=}"
+                # Decode only shell %q produced by this installer; reject command syntax.
+                [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
+                eval "value=$raw"
+                case "$key" in
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_NETWORKMANAGER|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT) printf -v "$key" '%s' "$value" ;;
+                        ADDITIONAL_USER) ADDITIONAL_USERS+=("$value") ;;
+                        STORAGE) IFS='|' read -r a b c <<<"$value"; STORAGE_DEVICES+=("$a"); STORAGE_FORMATS+=("$b"); STORAGE_MOUNTPOINTS+=("$c") ;;
+                esac
+        done <"$path"
+        for dev in "${STORAGE_DEVICES[@]}" "$ROOT_DEV" "$BOOT_DEV" "$EFI_DEV" "$SWAP_DEV" "$HOME_DEV"; do
+                [[ -z "$dev" || -b "$dev" ]] || missing+="$dev\\n"
+        done
+        if [[ -n "$missing" ]]; then
+                dialog_message "Profile validation" "Loaded profile, but these saved block devices are not currently present:\n\n$missing\nReview Storage before installing."
+                DISKS_CONFIGURED=no
+        elif ((${#STORAGE_DEVICES[@]})); then
+                apply_storage_selections || true
+                DISKS_CONFIGURED=yes
+        fi
+        ARCHIVE_CONFIGURED=$([[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] && echo yes || echo no)
+        INSTALLER_PROFILE_FILE="$path"
+        dialog_message "Configuration profile" "Loaded installer configuration from:\n$path\n\nReview all selections before installation. Secrets will still be requested when needed."
+}
+
+profile_path_dialog() {
+        local result_variable="$1" title="$2" value status=0
+        value="$INSTALLER_PROFILE_FILE"
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                value="$(dialog --stdout --clear --backtitle "BFS Linux Installer" --title "$title" --inputbox "Configuration profile path:" 12 82 "$value" </dev/tty)" || status=$?
+                ((status==0)) || return 1
+        else
+                read -r -p "Configuration profile [$value]: " value; value="${value:-$INSTALLER_PROFILE_FILE}"
+        fi
+        printf -v "$result_variable" '%s' "$value"
+}
+
 installer_settings_menu() {
-        local choice="" status=0
-
+        local choice="" status=0 path=""
         while true; do
-                if command -v dialog >/dev/null 2>&1 &&
-                   [[ -r /dev/tty && -w /dev/tty ]]; then
-                        if choice="$(
-                                dialog --stdout --clear \
-                                        --backtitle "BFS Linux Installer" \
-                                        --title "Installer Settings" \
-                                        --cancel-label "Back" \
-                                        --menu \
-                                        "Configure the installer interface and logging." \
-                                        16 72 5 \
-                                        1 "Theme: $(theme_display_name)" \
-                                        2 "Logging: $LOG_ENABLED" \
-                                        3 "Back to main menu" \
-                                        </dev/tty
-                        )"; then
-                                status=0
-                        else
-                                status=$?
-                        fi
-                        [[ -n "$choice" ]] || return 0
-                else
-                        clear_screen
-                        echo "Installer Settings"
-                        echo "=================="
-                        echo
-                        echo "  1) Theme: $(theme_display_name)"
-                        echo "  2) Logging: $LOG_ENABLED"
-                        echo "  3) Back"
-                        read -r -p "Choose [1-3]: " choice
-                fi
-
+                themed_menu choice "Installer Settings" \
+                        "Configure interface, logging, and reusable installation profiles." \
+                        19 82 7 \
+                        1 "Theme: $(theme_display_name)" \
+                        2 "Logging: $LOG_ENABLED" \
+                        3 "Save current configuration" \
+                        4 "Save configuration as..." \
+                        5 "Load configuration..." \
+                        6 "Back to main menu"
+                [[ -n "$choice" ]] || return 0
                 case "$choice" in
                         1) select_installer_theme ;;
-                        2)
-                                [[ "$LOG_ENABLED" == yes ]] &&
-                                        LOG_ENABLED=no || LOG_ENABLED=yes
-                                save_installer_settings
-                                ;;
-                        3) return 0 ;;
+                        2) [[ "$LOG_ENABLED" == yes ]] && LOG_ENABLED=no || LOG_ENABLED=yes; save_installer_settings ;;
+                        3) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
+                        4) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
+                        5) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
+                        6) return 0 ;;
                         *) warn "Invalid settings selection."; sleep 1 ;;
                 esac
         done
@@ -2061,6 +2100,20 @@ lvm_menu() {
         done
 }
 
+show_current_storage_dialog() {
+        local tmp
+        tmp="$(mktemp /tmp/bfs-storage-devices.XXXXXX)"
+        lsblk -fp -o NAME,FSTYPE,FSVER,LABEL,UUID,FSAVAIL,FSUSE%,MOUNTPOINTS >"$tmp" 2>&1 || true
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear --backtitle "BFS Linux Installer" \
+                        --title "Current storage devices" --textbox "$tmp" 24 110 \
+                        </dev/tty >/dev/tty 2>/dev/tty || true
+        else
+                cat "$tmp"
+        fi
+        rm -f "$tmp"
+}
+
 storage_menu() {
         local choice="" status=0
 
@@ -2087,7 +2140,7 @@ storage_menu() {
                         3) luks_menu ;;
                         4) lvm_menu ;;
                         5) configure_disks ;;
-                        6) clear_screen; lsblk -fp; pause_screen ;;
+                        6) show_current_storage_dialog ;;
                         7) return 0 ;;
                         *) warn "Choose a valid storage option."; sleep 1 ;;
                 esac
@@ -2139,6 +2192,21 @@ ask_mountpoint_dialog() {
         local value=""
         local status=0
         local default_value="/"
+        local base="${device##*/}"
+
+        # Suggest obvious mount points, but always leave the value editable.
+        case "$base" in
+                home) default_value=/home ;;
+                var) default_value=/var ;;
+                root|luksroot) default_value=/ ;;
+                *)
+                        if [[ "$format" == ext2 ]] && ! storage_mountpoint_in_use /boot; then
+                                default_value=/boot
+                        elif [[ "$format" == vfat ]] && ! storage_mountpoint_in_use /boot/efi; then
+                                default_value=/boot/efi
+                        fi
+                        ;;
+        esac
 
         if [[ "$format" == swap ]]; then
                 printf -v "$result_variable" '%s' swap
@@ -2196,23 +2264,29 @@ storage_mountpoint_in_use() {
         return 1
 }
 
-show_storage_selection_summary() {
+storage_selection_summary_text() {
         local index=0
-
-        clear_screen
-        echo "Selected filesystems and mount points"
-        echo "===================================="
-        echo
-        printf '  %-4s %-24s %-12s %s\n' NUM DEVICE ACTION MOUNTPOINT
-        printf '  %-4s %-24s %-12s %s\n' --- ------ ------ ----------
+        printf '%s\n' "Selected filesystems and mount points" "====================================" ""
+        printf '  %-4s %-28s %-12s %s\n' NUM DEVICE ACTION MOUNTPOINT
+        printf '  %-4s %-28s %-12s %s\n' --- ------ ------ ----------
         for ((index=0; index<${#STORAGE_DEVICES[@]}; index++)); do
-                printf '  %-4d %-24s %-12s %s\n' \
-                        "$((index + 1))" \
-                        "${STORAGE_DEVICES[$index]}" \
-                        "${STORAGE_FORMATS[$index]}" \
-                        "${STORAGE_MOUNTPOINTS[$index]}"
+                printf '  %-4d %-28s %-12s %s\n' \
+                        "$((index + 1))" "${STORAGE_DEVICES[$index]}" \
+                        "${STORAGE_FORMATS[$index]}" "${STORAGE_MOUNTPOINTS[$index]}"
         done
-        echo
+}
+
+show_storage_selection_summary() {
+        local text
+        text="$(storage_selection_summary_text)"
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear --backtitle "BFS Linux Installer" \
+                        --title "Filesystem plan" --msgbox "$text" 22 100 \
+                        </dev/tty >/dev/tty 2>/dev/tty || true
+        else
+                clear_screen
+                printf '%s\n' "$text"
+        fi
 }
 
 apply_storage_selections() {
@@ -2345,8 +2419,6 @@ configure_disks() {
                         pause_screen
                         return 0
                 fi
-
-                show_storage_selection_summary
 
                 if ! apply_storage_selections; then
                         pause_screen
@@ -2864,9 +2936,8 @@ chroot_into_target() {
 
         KEEP_MOUNTS=no
         unmount_virtual_filesystems
-        echo
-        echo "Returned from the BFS chroot."
-        pause_screen
+        # Return directly to the installer menu; no redundant terminal pause.
+        return 0
 }
 
 installer_menu() {
