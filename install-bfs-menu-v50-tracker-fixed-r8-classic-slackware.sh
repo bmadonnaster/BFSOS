@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer - v50 tracker fixes r6 (RAID + LUKS + LVM)
+# BFS Linux installer - v50 tracker fixes r8 (RAID + LUKS + LVM)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -1892,15 +1892,50 @@ raid_menu() {
 }
 
 list_luks_candidates() {
-        local p t sz fs mp parent
+        local p="" t="" sz="" fs="" mp="" array=""
+        local -A seen=()
+
+        # Always enumerate active MD arrays explicitly.  Depending on util-linux
+        # version and array state, lsblk may report an MD device as raid5,
+        # raid6, raid10, or another MD-specific TYPE.  The LUKS selector should
+        # never lose a valid assembled /dev/md* target because of that detail.
+        if [[ -r /proc/mdstat ]]; then
+                while IFS= read -r array; do
+                        [[ -n "$array" && -b "$array" ]] || continue
+                        sz="$(lsblk -dnro SIZE "$array" 2>/dev/null | head -n1)"
+                        t="$(lsblk -dnro TYPE "$array" 2>/dev/null | head -n1)"
+                        fs="$(lsblk -dnro FSTYPE "$array" 2>/dev/null | head -n1)"
+                        mp="$(lsblk -dnro MOUNTPOINTS "$array" 2>/dev/null | head -n1)"
+                        [[ -z "$mp" ]] || continue
+                        case "$fs" in LVM2_member|crypto_LUKS) continue ;; esac
+                        seen["$array"]=1
+                        printf '%s|%s|%s|%s\n' "$array" "${sz:--}" "${t:-raid}" "${fs:--}"
+                done < <(
+                        awk '$2 == ":" && $4 ~ /^raid/ {print "/dev/" $1}' /proc/mdstat
+                )
+        fi
+
         while read -r p t sz fs mp; do
-                [[ "$t" == part || "$t" == raid* ]] || continue
+                [[ -n "$p" ]] || continue
+                [[ -z "${seen[$p]:-}" ]] || continue
+                [[ "$t" == part || "$t" == raid* || "$p" == /dev/md* ]] || continue
                 [[ -z "$mp" ]] || continue
                 case "$fs" in linux_raid_member|LVM2_member|crypto_LUKS) continue ;; esac
-                # Do not offer active RAID member partitions; offer the assembled MD device instead.
-                if [[ "$t" == part ]] && lsblk -nrpo TYPE "$p" 2>/dev/null | tail -n +2 | grep -q '^raid'; then continue; fi
+
+                # Do not offer an individual partition that is currently a
+                # member of an assembled MD array; offer the MD array itself.
+                if [[ "$t" == part ]] &&
+                   lsblk -nrpo TYPE "$p" 2>/dev/null |
+                        tail -n +2 |
+                        grep -qE '^(raid|md)'; then
+                        continue
+                fi
+
                 printf '%s|%s|%s|%s\n' "$p" "$sz" "$t" "${fs:--}"
-        done < <(lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS | awk '{print $1,$2,$3,$4,$5}')
+        done < <(
+                lsblk -prno PATH,TYPE,SIZE,FSTYPE,MOUNTPOINTS |
+                        awk '{print $1,$2,$3,$4,$5}'
+        )
 }
 
 select_luks_device() {
@@ -1929,12 +1964,18 @@ select_luks_existing_device() {
 }
 
 ask_mapping_name() {
-        local result_variable="$1" default="$2" mapping=""
+        local result_variable="$1" default="$2" selected_mapping=""
         while true; do
-                ask_default mapping "Mapper name (creates /dev/mapper/<name>)" "$default" || return 1
-                [[ "$mapping" =~ ^[A-Za-z0-9+_.-]+$ ]] || { dialog_message "Invalid mapper name" "Use letters, numbers, +, _, . or -. Spaces and / are not allowed."; continue; }
-                [[ ! -e "/dev/mapper/$mapping" ]] || { dialog_message "Mapper already exists" "/dev/mapper/$mapping already exists. Choose another name."; continue; }
-                printf -v "$result_variable" '%s' "$mapping"; return 0
+                ask_default selected_mapping "Mapper name (creates /dev/mapper/<name>)" "$default" || return 1
+                [[ "$selected_mapping" =~ ^[A-Za-z0-9+_.-]+$ ]] || { dialog_message "Invalid mapper name" "Use letters, numbers, +, _, . or -. Spaces and / are not allowed."; continue; }
+                [[ ! -e "/dev/mapper/$selected_mapping" ]] || { dialog_message "Mapper already exists" "/dev/mapper/$selected_mapping already exists. Choose another name."; continue; }
+
+                # Bash uses dynamic scoping for local variables. Do not name this
+                # helper-local value `mapping`, because the caller also asks us
+                # to return into a variable named `mapping`; otherwise printf -v
+                # updates the helper's local variable and the caller sees blank.
+                printf -v "$result_variable" '%s' "$selected_mapping"
+                return 0
         done
 }
 
