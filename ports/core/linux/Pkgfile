@@ -186,6 +186,11 @@ pkg_build() {
     mv "$SRC/$name-$version" \
         "$PKG/usr/src/linux-$kernver"
 
+    # Conventional current-kernel source symlink.
+    # Keep this relative so it remains valid inside the packaged root.
+    ln -sfn "linux-$kernver" \
+        "$PKG/usr/src/linux"
+
     rm -f \
         "$PKG/lib/modules/$kernver/build" \
         "$PKG/lib/modules/$kernver/source"
