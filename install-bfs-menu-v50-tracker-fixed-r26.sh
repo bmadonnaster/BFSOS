@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFS Linux installer - v50 tracker fixes r21 (storage/UI/accessibility polish)
+# BFS Linux installer - v50 tracker fixes r26 (tracker issues 42-56)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -132,6 +132,7 @@ INSTALL_GIT="${BFS_INSTALL_GIT:-yes}"
 INSTALL_SUDO="${BFS_INSTALL_SUDO:-yes}"
 SUDO_MODE="${BFS_SUDO_MODE:-password}"
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
+INSTALL_WPA_SUPPLICANT="${BFS_INSTALL_WPA_SUPPLICANT:-no}"
 INSTALL_NETWORKMANAGER="${BFS_INSTALL_NETWORKMANAGER:-no}"
 # cryptsetup is installer-managed. It is installed automatically when the
 # final selected storage topology contains a LUKS/crypt layer.
@@ -149,8 +150,8 @@ SYSTEM_CONFIGURED=no
 USERS_CONFIGURED=no
 KERNEL_CONFIGURED=no
 NETWORK_CONFIGURED=no
-PACKAGES_CONFIGURED=no
-SUDO_CONFIGURED=no
+PACKAGES_CONFIGURED=optional
+SUDO_CONFIGURED=default
 BOOTLOADER_CONFIGURED=no
 PARTITIONING_VISITED=optional
 
@@ -239,41 +240,45 @@ EOF_SETTINGS
 write_dialog_theme_classic() {
         cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
-use_shadow = OFF
+use_shadow = ON
 
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLACK,OFF)
-dialog_color = (WHITE,BLUE,ON)
-title_color = (YELLOW,BLUE,ON)
-border_color = (WHITE,BLUE,ON)
+# Classic Debian installer-inspired palette, translated from cdebconf/newt:
+# newt default root is white-on-blue; windows are black-on-lightgray;
+# titles are red-on-lightgray; selected list entries use yellow-on-blue.
+screen_color = (WHITE,BLUE,OFF)
+shadow_color = (WHITE,BLACK,OFF)
+dialog_color = (BLACK,WHITE,OFF)
+title_color = (RED,WHITE,ON)
+border_color = (BLACK,WHITE,OFF)
 
-button_active_color = (BLACK,WHITE,ON)
-button_inactive_color = (WHITE,BLUE,ON)
-button_key_active_color = (BLACK,WHITE,ON)
-button_key_inactive_color = (YELLOW,BLUE,ON)
-button_label_active_color = (BLACK,WHITE,ON)
-button_label_inactive_color = (WHITE,BLUE,ON)
+button_active_color = (RED,WHITE,ON)
+button_inactive_color = (BLACK,WHITE,OFF)
+button_key_active_color = (RED,WHITE,ON)
+button_key_inactive_color = (BLACK,WHITE,ON)
+button_label_active_color = (RED,WHITE,ON)
+button_label_inactive_color = (BLACK,WHITE,OFF)
 
-inputbox_color = (WHITE,BLUE,ON)
-inputbox_border_color = (WHITE,BLUE,ON)
-searchbox_color = (WHITE,BLUE,ON)
-searchbox_title_color = (YELLOW,BLUE,ON)
-searchbox_border_color = (WHITE,BLUE,ON)
+inputbox_color = (YELLOW,BLUE,OFF)
+inputbox_border_color = (BLACK,WHITE,OFF)
+searchbox_color = (BLACK,WHITE,OFF)
+searchbox_title_color = (RED,WHITE,ON)
+searchbox_border_color = (BLACK,WHITE,OFF)
 
 position_indicator_color = (YELLOW,BLUE,ON)
-menubox_color = (WHITE,BLUE,ON)
-menubox_border_color = (WHITE,BLUE,ON)
-item_color = (WHITE,BLUE,ON)
-item_selected_color = (BLACK,CYAN,ON)
-tag_color = (YELLOW,BLUE,ON)
-tag_selected_color = (BLACK,CYAN,ON)
-tag_key_color = (YELLOW,BLUE,ON)
-tag_key_selected_color = (BLACK,CYAN,ON)
+menubox_color = (BLACK,WHITE,OFF)
+menubox_border_color = (BLACK,WHITE,OFF)
+item_color = (BLACK,WHITE,OFF)
+item_selected_color = (YELLOW,BLUE,ON)
+tag_color = (RED,WHITE,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+tag_key_color = (RED,WHITE,ON)
+tag_key_selected_color = (YELLOW,BLUE,ON)
 
-check_color = (WHITE,BLUE,ON)
-check_selected_color = (BLACK,CYAN,ON)
-uarrow_color = (YELLOW,BLUE,ON)
-darrow_color = (YELLOW,BLUE,ON)
+check_color = (YELLOW,BLUE,OFF)
+check_selected_color = (BLACK,WHITE,ON)
+uarrow_color = (RED,WHITE,ON)
+darrow_color = (RED,WHITE,ON)
+gauge_color = (YELLOW,BLUE,ON)
 EOF_DIALOGRC
 }
 
@@ -317,44 +322,58 @@ EOF_DIALOGRC
 
 write_dialog_theme_slackware() {
         cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = ON
+aspect = 0
+separate_widget = ""
+tab_len = 0
+visit_items = OFF
+use_scrollbar = OFF
 use_shadow = ON
+use_colors = ON
 
-# Nostalgic Slackware setup/Dialog look:
-# black console, cyan panels, yellow titles, blue selections, visible shadow.
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLUE,OFF)
-dialog_color = (BLACK,CYAN,ON)
+# Slackware's actual dialogrc palette.
+screen_color = (WHITE,BLUE,OFF)
+shadow_color = (WHITE,BLACK,OFF)
+dialog_color = (BLACK,CYAN,OFF)
 title_color = (YELLOW,CYAN,ON)
-border_color = (WHITE,CYAN,ON)
+border_color = (CYAN,CYAN,ON)
 
 button_active_color = (WHITE,BLUE,ON)
-button_inactive_color = (BLACK,CYAN,ON)
-button_key_active_color = (YELLOW,BLUE,ON)
-button_key_inactive_color = (RED,CYAN,ON)
-button_label_active_color = (WHITE,BLUE,ON)
+button_inactive_color = dialog_color
+button_key_active_color = button_active_color
+button_key_inactive_color = (RED,CYAN,OFF)
+button_label_active_color = button_active_color
 button_label_inactive_color = (BLACK,CYAN,ON)
 
-inputbox_color = (BLACK,CYAN,ON)
-inputbox_border_color = (WHITE,CYAN,ON)
-searchbox_color = (BLACK,CYAN,ON)
-searchbox_title_color = (YELLOW,CYAN,ON)
-searchbox_border_color = (WHITE,CYAN,ON)
+inputbox_color = (BLUE,WHITE,OFF)
+inputbox_border_color = border_color
+searchbox_color = (YELLOW,WHITE,ON)
+searchbox_title_color = (WHITE,WHITE,ON)
+searchbox_border_color = (RED,WHITE,OFF)
 
-position_indicator_color = (YELLOW,CYAN,ON)
-menubox_color = (BLACK,CYAN,ON)
-menubox_border_color = (WHITE,CYAN,ON)
-item_color = (BLACK,CYAN,ON)
-item_selected_color = (WHITE,BLUE,ON)
-tag_color = (RED,CYAN,ON)
-tag_selected_color = (YELLOW,BLUE,ON)
-tag_key_color = (RED,CYAN,ON)
-tag_key_selected_color = (YELLOW,BLUE,ON)
+position_indicator_color = button_key_inactive_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+item_selected_color = screen_color
+tag_color = title_color
+tag_selected_color = screen_color
+tag_key_color = button_key_inactive_color
+tag_key_selected_color = (RED,BLUE,ON)
 
-check_color = (BLACK,CYAN,ON)
-check_selected_color = (WHITE,BLUE,ON)
-uarrow_color = (YELLOW,CYAN,ON)
-darrow_color = (YELLOW,CYAN,ON)
+check_color = dialog_color
+check_selected_color = (WHITE,CYAN,ON)
+uarrow_color = (GREEN,CYAN,ON)
+darrow_color = uarrow_color
+itemhelp_color = shadow_color
+form_active_text_color = inputbox_color
+form_text_color = (CYAN,BLUE,ON)
+form_item_readonly_color = (CYAN,WHITE,ON)
+gauge_color = (BLUE,WHITE,ON)
+
+border2_color = dialog_color
+inputbox_border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
 EOF_DIALOGRC
 }
 
@@ -367,7 +386,7 @@ EOF_DIALOGRC
 
 theme_display_name() {
         case "$BFS_THEME" in
-                classic) printf '%s' "Classic Blue" ;;
+                classic) printf '%s' "Classic Debian" ;;
                 midnight) printf '%s' "Midnight" ;;
                 slackware) printf '%s' "Classic Slackware" ;;
                 light) printf '%s' "Light" ;;
@@ -492,6 +511,11 @@ select_console_font_size() {
         [[ -n "$choice" ]] || return 0
         CONSOLE_FONT_PREFERENCE="$choice"
         CONSOLE_FONT_SIZE="$choice"
+        if [[ "$choice" == default ]]; then
+                INSTALL_CONSOLE_FONT=no
+        else
+                INSTALL_CONSOLE_FONT=yes
+        fi
         apply_console_font "$choice"
         save_installer_settings
 }
@@ -510,7 +534,7 @@ select_installer_theme() {
                                 19 72 6 \
                                 monochrome "Best compatibility for SSH and unusual palettes" \
                                         "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
-                                classic "Classic Blue — bootstrap-style dark-blue theme" \
+                                classic "Classic Debian — Debian installer/newt-style theme" \
                                         "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
                                 midnight "Midnight Commander-style theme" \
                                         "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
@@ -527,7 +551,7 @@ select_installer_theme() {
                 [[ -n "$choice" ]] || return 0
         else
                 echo "  1) Monochrome"
-                echo "  2) Classic Blue"
+                echo "  2) Classic Debian"
                 echo "  3) Midnight"
                 echo "  4) Classic Slackware"
                 echo "  5) Light"
@@ -555,7 +579,7 @@ save_installer_profile() {
         local path="${1:-$INSTALLER_PROFILE_FILE}" i
         {
                 echo '# BFSOS installer profile v1 - no passwords or LUKS passphrases are stored.'
-                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_NETWORKMANAGER ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT; do
+                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_NETWORKMANAGER ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT; do
                         printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
                 done
                 for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'; done
@@ -578,7 +602,7 @@ load_installer_profile() {
                 [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
                 eval "value=$raw"
                 case "$key" in
-                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_NETWORKMANAGER|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT) printf -v "$key" '%s' "$value" ;;
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_NETWORKMANAGER|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT) printf -v "$key" '%s' "$value" ;;
                         ADDITIONAL_USER) ADDITIONAL_USERS+=("$value") ;;
                         STORAGE) IFS='|' read -r a b c <<<"$value"; STORAGE_DEVICES+=("$a"); STORAGE_FORMATS+=("$b"); STORAGE_MOUNTPOINTS+=("$c") ;;
                 esac
@@ -593,9 +617,29 @@ load_installer_profile() {
                 apply_storage_selections || true
                 DISKS_CONFIGURED=yes
         fi
-        ARCHIVE_CONFIGURED=$([[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] && echo yes || echo no)
+        recalculate_configuration_status
         INSTALLER_PROFILE_FILE="$path"
         dialog_message "Configuration profile" "Loaded installer configuration from:\n$path\n\nReview all selections before installation. Secrets will still be requested when needed."
+}
+
+recalculate_configuration_status() {
+        # Recompute menu state after loading a profile instead of trusting stale
+        # status flags from a previous installer session.
+        DISKS_CONFIGURED=no
+        if ((${#STORAGE_DEVICES[@]})); then
+                apply_storage_selections >/dev/null 2>&1 && DISKS_CONFIGURED=yes || true
+        elif [[ -n "$ROOT_DEV" && -b "$ROOT_DEV" ]]; then
+                DISKS_CONFIGURED=yes
+        fi
+
+        ARCHIVE_CONFIGURED=$([[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] && echo yes || echo no)
+        SYSTEM_CONFIGURED=$([[ -n "$HOSTNAME" && -n "$TIMEZONE" && -n "$LOCALE" ]] && echo yes || echo no)
+        USERS_CONFIGURED=$([[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]] && echo yes || echo no)
+        KERNEL_CONFIGURED=$([[ -n "$KERNEL_PACKAGE" ]] && echo yes || echo no)
+        NETWORK_CONFIGURED=$([[ -n "$NETWORK_IFACE" && -n "$NETWORK_TARGET_NAME" ]] && echo yes || echo no)
+        PACKAGES_CONFIGURED=optional
+        SUDO_CONFIGURED=default
+        BOOTLOADER_CONFIGURED=$([[ "$INSTALL_GRUB" == yes || "$INSTALL_GRUB" == no ]] && echo yes || echo no)
 }
 
 profile_path_dialog() {
@@ -610,37 +654,180 @@ profile_path_dialog() {
         printf -v "$result_variable" '%s' "$value"
 }
 
+storage_device_is_protected() {
+        local candidate="$1" source="" ancestor=""
+        local -a protected_sources=()
+
+        source="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
+        [[ -n "$source" ]] && protected_sources+=("$source")
+        source="$(findmnt -T "$PROJECT_DIR" -n -o SOURCE 2>/dev/null || true)"
+        [[ -n "$source" ]] && protected_sources+=("$source")
+        source="$(findmnt -n -o SOURCE /run/initramfs/live 2>/dev/null || true)"
+        [[ -n "$source" ]] && protected_sources+=("$source")
+
+        for source in "${protected_sources[@]}"; do
+                [[ "$candidate" == "$source" ]] && return 0
+                while IFS= read -r ancestor; do
+                        [[ "$candidate" == "$ancestor" ]] && return 0
+                done < <(lsblk -s -prno PATH "$source" 2>/dev/null || true)
+        done
+        return 1
+}
+
+storage_reset_preview() {
+        local tmp="$1"
+        {
+                echo "BFSOS storage maintenance preview"
+                echo "================================"
+                echo
+                echo "Mounted filesystems below target:"
+                findmnt -Rrn -o TARGET,SOURCE "$TARGET" 2>/dev/null || echo "  none"
+                echo
+                echo "Active swap:"
+                swapon --show 2>/dev/null || echo "  none"
+                echo
+                echo "LVM:"
+                pvs 2>/dev/null || true
+                vgs 2>/dev/null || true
+                lvs 2>/dev/null || true
+                echo
+                echo "LUKS/device-mapper mappings:"
+                lsblk -prno PATH,TYPE,FSTYPE 2>/dev/null | awk '$2=="crypt" || $3=="crypto_LUKS"'
+                echo
+                echo "MD RAID:"
+                cat /proc/mdstat 2>/dev/null || true
+        } >"$tmp"
+}
+
+storage_reset_deactivate() {
+        umount -R "$TARGET" 2>/dev/null || true
+        swapoff -a 2>/dev/null || true
+        command -v vgchange >/dev/null 2>&1 && vgchange -an 2>/dev/null || true
+
+        local mapping="" array=""
+        if command -v cryptsetup >/dev/null 2>&1; then
+                while IFS= read -r mapping; do
+                        [[ -n "$mapping" ]] || continue
+                        storage_device_is_protected "$mapping" && continue
+                        cryptsetup close "${mapping##*/}" 2>/dev/null || true
+                done < <(lsblk -prno PATH,TYPE 2>/dev/null | awk '$2=="crypt"{print $1}' | tac)
+        fi
+
+        if command -v mdadm >/dev/null 2>&1; then
+                while IFS= read -r array; do
+                        [[ -n "$array" ]] || continue
+                        storage_device_is_protected "$array" && continue
+                        mdadm --stop "$array" 2>/dev/null || true
+                done < <(awk '$2==":" && $4 ~ /^raid/ {print "/dev/"$1}' /proc/mdstat 2>/dev/null)
+        fi
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+}
+
+storage_reset_destroy_metadata() {
+        local -a candidates=()
+        local dev="" choice="" status=0
+        storage_reset_deactivate
+
+        # Offer only block devices that are not mounted, are not the live root,
+        # and are not the filesystem containing the BFSOS project itself.
+        local live_root="" project_source=""
+        live_root="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
+        project_source="$(findmnt -T "$PROJECT_DIR" -n -o SOURCE 2>/dev/null || true)"
+
+        while IFS= read -r dev; do
+                [[ -b "$dev" ]] || continue
+                storage_device_is_protected "$dev" && continue
+                [[ "$dev" != "$live_root" && "$dev" != "$project_source" ]] || continue
+                findmnt -rn -S "$dev" >/dev/null 2>&1 && continue
+                candidates+=("$dev" "$(lsblk -dnro SIZE,FSTYPE "$dev" 2>/dev/null | head -n1)")
+        done < <(lsblk -prno PATH,TYPE 2>/dev/null | awk '$2=="part" || $2 ~ /^raid/ || $2=="crypt" {print $1}' | sort -u)
+
+        ((${#candidates[@]})) || {
+                dialog_message "Storage reset" "No safe unmounted storage candidates were found."
+                return 0
+        }
+
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                local -a checklist=()
+                local i
+                for ((i=0;i<${#candidates[@]};i+=2)); do
+                        checklist+=("${candidates[$i]}" "${candidates[$((i+1))]}" off)
+                done
+                choice="$(dialog --stdout --separate-output --clear \
+                        --backtitle "BFS Linux Installer" --title "Destroy storage metadata" \
+                        --checklist "Select only devices whose old RAID/LUKS/LVM/filesystem metadata should be erased.\n\nThe live root and BFSOS project filesystem are excluded automatically." \
+                        24 110 14 "${checklist[@]}" </dev/tty)" || return 0
+        else
+                dialog_message "Storage reset" "Destructive metadata reset requires Dialog mode so devices can be selected explicitly."
+                return 0
+        fi
+
+        [[ -n "$choice" ]] || return 0
+        confirm "DESTROY signatures/metadata on these selected devices?\n\n$choice\n\nThis cannot be undone." || return 0
+
+        while IFS= read -r dev; do
+                [[ -b "$dev" ]] || continue
+                mdadm --zero-superblock --force "$dev" 2>/dev/null || true
+                pvremove -ff -y "$dev" 2>/dev/null || true
+                wipefs -a "$dev" 2>/dev/null || true
+        done <<<"$choice"
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        dialog_message "Storage reset" "Selected storage metadata was removed."
+}
+
+storage_reset_menu() {
+        local choice="" tmp=""
+        tmp="$(mktemp /tmp/bfs-storage-reset-preview.XXXXXX)"
+        storage_reset_preview "$tmp"
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear --backtitle "BFS Linux Installer" --title "Existing storage state" \
+                        --textbox "$tmp" 26 116 </dev/tty >/dev/tty 2>/dev/tty || true
+        fi
+        rm -f "$tmp"
+
+        themed_menu choice "Storage maintenance" \
+                "Choose a storage cleanup mode. Nothing destructive runs automatically." \
+                17 86 6 \
+                1 "Deactivate only — unmount, swapoff, deactivate VGs, close LUKS, stop MD" \
+                2 "Destroy selected metadata — explicit device checklist + wipefs" \
+                3 "Back"
+        case "$choice" in
+                1)
+                        confirm "Deactivate currently active target storage now?\n\nNo signatures will be erased." || return 0
+                        storage_reset_deactivate
+                        dialog_message "Storage maintenance" "Storage was deactivated."
+                        ;;
+                2) storage_reset_destroy_metadata ;;
+                *) return 0 ;;
+        esac
+}
+
 installer_settings_menu() {
         local choice="" status=0 path=""
         while true; do
                 themed_menu choice "Installer Settings" \
-                        "Configure interface, accessibility, logging, and reusable installation profiles." \
-                        24 88 10 \
+                        "Configure interface, accessibility, logging, reusable profiles, and storage maintenance." \
+                        25 92 11 \
                         1 "Theme: $(theme_display_name)" \
                         2 "Console font: $(console_font_display_name)" \
-                        3 "Use selected console font after install: $INSTALL_CONSOLE_FONT" \
-                        4 "Logging: $LOG_ENABLED" \
-                        5 "Save current configuration" \
-                        6 "Save configuration as..." \
-                        7 "Load configuration..." \
+                        3 "Logging: $LOG_ENABLED" \
+                        4 "Save current configuration" \
+                        5 "Save configuration as..." \
+                        6 "Load configuration..." \
+                        7 "Reset/deactivate existing storage..." \
                         8 "Back to main menu"
                 [[ -n "$choice" ]] || return 0
                 case "$choice" in
                         1) select_installer_theme ;;
                         2) select_console_font_size ;;
                         3)
-                                [[ "$INSTALL_CONSOLE_FONT" == yes ]] &&
-                                        INSTALL_CONSOLE_FONT=no ||
-                                        INSTALL_CONSOLE_FONT=yes
-                                save_installer_settings
-                                ;;
-                        4)
                                 [[ "$LOG_ENABLED" == yes ]] && LOG_ENABLED=no || LOG_ENABLED=yes
                                 save_installer_settings
                                 ;;
-                        5) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
-                        6) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
-                        7) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
+                        4) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
+                        5) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
+                        6) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
+                        7) storage_reset_menu ;;
                         8) return 0 ;;
                         *) warn "Invalid settings selection."; sleep 1 ;;
                 esac
@@ -648,7 +835,12 @@ installer_settings_menu() {
 }
 
 dialog_status() {
-        [[ "$1" == yes ]] && printf '%s' "CONFIGURED" || printf '%s' "PENDING"
+        case "$1" in
+                yes) printf '%s' "CONFIGURED" ;;
+                optional) printf '%s' "OPTIONAL" ;;
+                default) printf '%s' "DEFAULT" ;;
+                *) printf '%s' "PENDING" ;;
+        esac
 }
 
 installer_ready() {
@@ -660,8 +852,6 @@ installer_ready() {
            "$USERS_CONFIGURED" == yes &&
            "$KERNEL_CONFIGURED" == yes &&
            "$NETWORK_CONFIGURED" == yes &&
-           "$PACKAGES_CONFIGURED" == yes &&
-           "$SUDO_CONFIGURED" == yes &&
            "$BOOTLOADER_CONFIGURED" == yes ]]
 }
 
@@ -941,9 +1131,26 @@ confirm() {
         [[ "${answer,,}" == y || "${answer,,}" == yes ]]
 }
 
+confirm_continue() {
+        local prompt="$1" answer=""
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear \
+                        --backtitle "BFS Linux Installer" \
+                        --title "Ready to install" \
+                        --yes-label "Continue" \
+                        --no-label "Back" \
+                        --defaultno \
+                        --yesno "$prompt" 11 76 \
+                        </dev/tty >/dev/tty 2>/dev/tty
+                return $?
+        fi
+        read -r -p "$prompt [y/N]: " answer
+        [[ "${answer,,}" == y || "${answer,,}" == yes ]]
+}
+
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v50-tracker-fixed-r21.sh [options]
+Usage: install-bfs-menu-v50-tracker-fixed-r26.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -1311,12 +1518,12 @@ select_partition() {
                 status=$?
                 set -e
 
+                if ((status != 0)); then
+                        return 2
+                fi
+
                 if [[ -z "$answer" ]]; then
-                        if [[ "$optional" == yes ]]; then
-                                printf -v "$variable" ''
-                                return 0
-                        fi
-                        return 1
+                        return 2
                 fi
 
                 if [[ "$optional" == yes && "$answer" == 0 ]]; then
@@ -1932,6 +2139,17 @@ create_raid_array() {
                 mdadm --create "$array_device" --run --force --level="$raid_level" --raid-devices="${#members[@]}" "${bitmap_args[@]}" "${members[@]}"
         fi
         command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+
+        local stale_signatures=""
+        stale_signatures="$(wipefs -n "$array_device" 2>/dev/null | sed '1d' || true)"
+        if [[ -n "$stale_signatures" ]]; then
+                if confirm "The newly created array $array_device still exposes old filesystem/LUKS signatures:\n\n$stale_signatures\n\nWipe these stale signatures now?\n\nThis affects only signatures on the assembled array, not its MD member metadata."; then
+                        wipefs -a "$array_device"
+                        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                else
+                        dialog_message "RAID signatures kept" "The stale signatures were left intact. They may hide $array_device from later LUKS/filesystem selectors."
+                fi
+        fi
         status_text="$(cat /proc/mdstat 2>/dev/null || true)"
         dialog_message "RAID array created" "$array_device was created successfully.\n\n$status_text"
 }
@@ -2555,9 +2773,14 @@ ask_mountpoint_dialog() {
 
         # Suggest obvious mount points, but always leave the value editable.
         case "$base" in
+                root|luksroot) default_value=/ ;;
+                usr) default_value=/usr ;;
+                opt) default_value=/opt ;;
                 home) default_value=/home ;;
                 var) default_value=/var ;;
-                root|luksroot) default_value=/ ;;
+                tmp) default_value=/tmp ;;
+                srv) default_value=/srv ;;
+                swap) default_value=swap ;;
                 *)
                         if [[ "$format" == ext2 ]] && ! storage_mountpoint_in_use /boot; then
                                 default_value=/boot
@@ -2624,21 +2847,55 @@ storage_mountpoint_in_use() {
 }
 
 storage_selection_summary_text() {
-        local index=0 action="" format=""
-        printf '%s\n' "Selected filesystems and mount points" "====================================" ""
-        printf '  %-4s %-28s %-24s %s\n' NUM DEVICE ACTION MOUNTPOINT
-        printf '  %-4s %-28s %-24s %s\n' --- ------ ------ ----------
+        local index=0 action="" format="" dev=""
+        printf '%s
+' "Selected filesystems and mount points" "====================================" ""
+        printf '%-4s %-38s %-22s %s
+' NUM DEVICE ACTION MOUNTPOINT
+        printf '%-4s %-38s %-22s %s
+' --- ------ ------ ----------
         for ((index=0; index<${#STORAGE_DEVICES[@]}; index++)); do
                 format="${STORAGE_FORMATS[$index]}"
+                dev="${STORAGE_DEVICES[$index]}"
                 if [[ "$format" == keep ]]; then
-                        action="KEEP (do not format)"
+                        action="KEEP"
                 else
                         action="FORMAT as $format"
                 fi
-                printf '  %-4d %-28s %-24s %s\n' \
-                        "$((index + 1))" "${STORAGE_DEVICES[$index]}" \
-                        "$action" "${STORAGE_MOUNTPOINTS[$index]}"
+                printf '%-4d %-38s %-22s %s
+' \
+                        "$((index + 1))" "$dev" "$action" "${STORAGE_MOUNTPOINTS[$index]}"
         done
+}
+
+confirm_storage_selection_plan() {
+        local tmp="" choice="" status=0
+        tmp="$(mktemp /tmp/bfs-filesystem-plan.XXXXXX)"
+        storage_selection_summary_text >"$tmp"
+
+        if command -v dialog >/dev/null 2>&1 && [[ -r /dev/tty && -w /dev/tty ]]; then
+                dialog --clear --backtitle "BFS Linux Installer" \
+                        --title "Filesystem plan" \
+                        --exit-label "Continue" \
+                        --textbox "$tmp" 28 118 \
+                        </dev/tty >/dev/tty 2>/dev/tty || { rm -f "$tmp"; return 1; }
+
+                dialog --clear --backtitle "BFS Linux Installer" \
+                        --title "Confirm storage assignments" \
+                        --yes-label "Continue" \
+                        --no-label "Back" \
+                        --yesno "Use the filesystem plan shown on the previous screen?" 9 72 \
+                        </dev/tty >/dev/tty 2>/dev/tty
+                status=$?
+                rm -f "$tmp"
+                ((status == 0))
+                return
+        fi
+
+        cat "$tmp"
+        rm -f "$tmp"
+        read -r -p "Use these selections? [Y/n]: " choice
+        [[ -z "$choice" || "${choice,,}" == y || "${choice,,}" == yes ]]
 }
 
 show_storage_selection_summary() {
@@ -2744,11 +3001,17 @@ configure_disks() {
                         fi
 
                         device=""
-                        if ! select_partition device \
+                        set +e
+                        select_partition device \
                                 "Select a device to add/edit its filesystem and mount point.\n\nCurrent selections: ${#STORAGE_DEVICES[@]}\nChoose Done when all filesystems are assigned." \
                                 yes \
-                                "Done selecting filesystems"; then
-                                break
+                                "Done selecting filesystems"
+                        status=$?
+                        set -e
+                        if ((status == 2)); then
+                                return 0
+                        elif ((status != 0)); then
+                                continue
                         fi
 
                         [[ -n "$device" ]] || break
@@ -2780,37 +3043,19 @@ configure_disks() {
                 done
 
                 if ((${#STORAGE_DEVICES[@]} == 0)); then
-                        warn "No filesystems were selected."
-                        pause_screen
+                        dialog_message "Filesystem assignment" "No filesystem assignments were saved. Returning to Storage setup."
                         return 0
                 fi
 
                 if ! apply_storage_selections; then
-                        pause_screen
+                        dialog_message "Filesystem assignment" "The filesystem plan is incomplete or invalid. Review the assignments and try again."
                         continue
                 fi
 
-                local selection_summary=""
-                selection_summary="$(storage_selection_summary_text)"
-
-                if command -v dialog >/dev/null 2>&1 &&
-                   [[ -r /dev/tty && -w /dev/tty ]]; then
-                        if dialog --clear \
-                                --backtitle "BFS Linux Installer" \
-                                --title "Confirm storage assignments" \
-                                --yesno \
-                                "$selection_summary\n\nUse these filesystem and mount-point selections?\n\nSelect No to start again." \
-                                26 112 \
-                                </dev/tty >/dev/tty 2>/dev/tty; then
-                                confirmed=yes
-                        else
-                                confirmed=no
-                        fi
+                if confirm_storage_selection_plan; then
+                        confirmed=yes
                 else
-                        printf '\n%s\n\n' "$selection_summary"
-                        read -r -p "Use these selections? [Y/n]: " choice
-                        [[ -z "$choice" || "${choice,,}" == y || "${choice,,}" == yes ]] &&
-                                confirmed=yes || confirmed=no
+                        confirmed=no
                 fi
 
                 if [[ "$confirmed" == yes ]]; then
@@ -3047,9 +3292,10 @@ configure_packages() {
                                         --cancel-label "Back" \
                                         --checklist \
                                         "Select optional software packages.\n\nStorage utilities such as cryptsetup, lvm2, and mdadm are installed automatically when the selected storage layout requires them." \
-                                        18 84 7 \
+                                        20 88 8 \
                                         git "Git version-control system" "$([[ "$INSTALL_GIT" == yes ]] && echo on || echo off)" \
                                         wget "Wget download utility" "$([[ "$INSTALL_WGET" == yes ]] && echo on || echo off)" \
+                                        wpa_supplicant "WPA/WPA2 wireless supplicant" "$([[ "$INSTALL_WPA_SUPPLICANT" == yes ]] && echo on || echo off)" \
                                         </dev/tty
                         )"; then
                                 status=0
@@ -3060,11 +3306,14 @@ configure_packages() {
 
                         INSTALL_GIT=no
                         INSTALL_WGET=no
+                        INSTALL_WPA_SUPPLICANT=no
 
                         [[ " $choice " == *' "git" '* || " $choice " == *' git '* ]] &&
                                 INSTALL_GIT=yes
                         [[ " $choice " == *' "wget" '* || " $choice " == *' wget '* ]] &&
                                 INSTALL_WGET=yes
+                        [[ " $choice " == *' "wpa_supplicant" '* || " $choice " == *' wpa_supplicant '* ]] &&
+                                INSTALL_WPA_SUPPLICANT=yes
 
                         PACKAGES_CONFIGURED=yes
                         return 0
@@ -3080,16 +3329,18 @@ when the selected storage layout requires them.
 
   1) $(selection_mark "$INSTALL_GIT") git
   2) $(selection_mark "$INSTALL_WGET") wget
-  3) Done
+  3) $(selection_mark "$INSTALL_WPA_SUPPLICANT") wpa_supplicant
+  4) Done
 
 EOF_PACKAGES
-                read -r -p "Choose [1-3]: " choice
+                read -r -p "Choose [1-4]: " choice
 
                 case "$choice" in
                         1) toggle_setting INSTALL_GIT ;;
                         2) toggle_setting INSTALL_WGET ;;
-                        3) PACKAGES_CONFIGURED=yes; return 0 ;;
-                        *) warn "Choose a number from 1 through 3."; sleep 1 ;;
+                        3) toggle_setting INSTALL_WPA_SUPPLICANT ;;
+                        4) PACKAGES_CONFIGURED=yes; return 0 ;;
+                        *) warn "Choose a number from 1 through 4."; sleep 1 ;;
                 esac
         done
 }
@@ -3230,7 +3481,12 @@ show_btrfs_review() {
 }
 
 menu_status() {
-        [[ "$1" == yes ]] && printf configured || printf pending
+        case "$1" in
+                yes) printf configured ;;
+                optional) printf optional ;;
+                default) printf default ;;
+                *) printf pending ;;
+        esac
 }
 
 show_main_menu() {
@@ -3631,8 +3887,6 @@ validate_settings() {
         [[ "$USERS_CONFIGURED" == yes ]] || die "User account setup is incomplete."
         [[ "$KERNEL_CONFIGURED" == yes ]] || die "Kernel selection is incomplete."
         [[ "$NETWORK_CONFIGURED" == yes ]] || die "Networking setup is incomplete."
-        [[ "$PACKAGES_CONFIGURED" == yes ]] || die "Optional software selection is incomplete."
-        [[ "$SUDO_CONFIGURED" == yes ]] || die "Sudo configuration is incomplete."
         [[ "$BOOTLOADER_CONFIGURED" == yes ]] || die "Bootloader setup is incomplete."
         [[ -b "$ROOT_DEV" ]] || die "Root device does not exist: $ROOT_DEV"
         [[ -f "$ARCHIVE" ]] || die "Rootfs archive does not exist: $ARCHIVE"
@@ -4250,8 +4504,24 @@ cleanup() {
         return "$status"
 }
 
+installer_err_trap() {
+        local status=$?
+        local line="${BASH_LINENO[0]:-${LINENO}}"
+        local command="${BASH_COMMAND:-unknown}"
+        local stack=""
+        stack="$(caller 0 2>/dev/null || true)"
+        printf '\nERROR: command failed\n' >&2
+        printf '  Exit status : %s\n' "$status" >&2
+        printf '  Source      : %s\n' "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}" >&2
+        printf '  Line        : %s\n' "$line" >&2
+        printf '  Function    : %s\n' "${FUNCNAME[1]:-main}" >&2
+        printf '  Command     : %s\n' "$command" >&2
+        [[ -z "$stack" ]] || printf '  Caller      : %s\n' "$stack" >&2
+        exit "$status"
+}
+
 trap cleanup EXIT
-trap 'die "Installation stopped near line $LINENO."' ERR
+trap installer_err_trap ERR
 
 path_is_or_contains_mount() {
         local path="$1" mounted_target=""
@@ -4479,6 +4749,7 @@ build_package_list() {
         [[ "$INSTALL_GIT" == yes ]] && packages+=(git)
         [[ "$INSTALL_SUDO" == yes ]] && packages+=(sudo)
         [[ "$INSTALL_WGET" == yes ]] && packages+=(wget)
+        [[ "$INSTALL_WPA_SUPPLICANT" == yes ]] && packages+=(wpa_supplicant)
         [[ "$ENABLE_OPENSSH" == yes ]] && packages+=(openssh)
         if ((${#BTRFS_DEVICES[@]} > 0)); then
                 packages+=(snapper)
@@ -5157,6 +5428,7 @@ discover_required_lvm_cmdline() {
 
         while read -r source mountpoint fstype options dump passno; do
                 [[ -n "$source" && "$source" != \#* ]] || continue
+                [[ "$mountpoint" == / || "$mountpoint" == /usr ]] || continue
 
                 device=""
                 case "$source" in
@@ -5186,6 +5458,48 @@ discover_required_lvm_cmdline() {
         done < /etc/fstab
 }
 
+discover_required_luks_cmdline() {
+        local source="" mountpoint="" fstype="" options="" dump="" passno=""
+        local device="" ancestor="" type="" uuid=""
+
+        [[ -r /etc/fstab ]] || return 0
+        while read -r source mountpoint fstype options dump passno; do
+                [[ -n "$source" && "$source" != \#* ]] || continue
+                [[ "$mountpoint" == / || "$mountpoint" == /usr ]] || continue
+                case "$source" in
+                        UUID=*) device="$(blkid -U "${source#UUID=}" 2>/dev/null || true)" ;;
+                        /dev/*) device="$source" ;;
+                        *) continue ;;
+                esac
+                [[ -n "$device" ]] || continue
+                while read -r ancestor type; do
+                        [[ "$type" == crypt ]] || continue
+                        local parent=""
+                        parent="$(lsblk -pnro PKNAME "$ancestor" 2>/dev/null | head -n1 || true)"
+                        [[ -b "$parent" ]] || continue
+                        uuid="$(cryptsetup luksUUID "$parent" 2>/dev/null || blkid -s UUID -o value "$parent" 2>/dev/null || true)"
+                        [[ -n "$uuid" ]] && printf '%s\n' "$uuid"
+                done < <(lsblk -s -prno PATH,TYPE "$device" 2>/dev/null || true)
+        done < /etc/fstab
+}
+
+discover_required_md_cmdline() {
+        local source="" mountpoint="" fstype="" options="" dump="" passno=""
+        local device="" ancestor="" type=""
+        [[ -r /etc/fstab ]] || return 0
+        while read -r source mountpoint fstype options dump passno; do
+                [[ -n "$source" && "$source" != \#* ]] || continue
+                [[ "$mountpoint" == / || "$mountpoint" == /usr ]] || continue
+                case "$source" in
+                        UUID=*) device="$(blkid -U "${source#UUID=}" 2>/dev/null || true)" ;;
+                        /dev/*) device="$source" ;;
+                        *) continue ;;
+                esac
+                [[ -n "$device" ]] || continue
+                lsblk -s -prno PATH,TYPE "$device" 2>/dev/null | awk '$2 ~ /^raid/ {print $1}'
+        done < /etc/fstab
+}
+
 configure_grub_storage_cmdline() {
         local default_cmdline="" storage_cmdline="" token="" uuid="" lv=""
         local -A seen_luks=() seen_lvs=()
@@ -5204,25 +5518,19 @@ configure_grub_storage_cmdline() {
                 *) default_cmdline="${default_cmdline:+$default_cmdline }consoleblank=1800" ;;
         esac
 
-        if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
-                # rd.md=1 permits MD support; rd.auto is the critical discovery
-                # switch required for arrays such as MD -> LUKS -> LVM.
-                cmdline_append_unique storage_cmdline "rd.auto"
-                cmdline_append_unique storage_cmdline "rd.md=1"
-        fi
-
-        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes && -r /etc/crypttab ]]; then
-                while read -r token; do
-                        [[ "$token" == UUID=* ]] || continue
-                        uuid="${token#UUID=}"
+        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
+                while IFS= read -r uuid; do
                         uuid="${uuid#luks-}"
                         [[ -n "$uuid" ]] || continue
                         [[ -z "${seen_luks[$uuid]:-}" ]] || continue
                         seen_luks["$uuid"]=1
                         cmdline_append_unique storage_cmdline "rd.luks.uuid=luks-$uuid"
-                done < <(
-                        awk '!/^[[:space:]]*#/ && NF >= 2 {print $2}' /etc/crypttab
-                )
+                done < <(discover_required_luks_cmdline)
+        fi
+
+        if discover_required_md_cmdline | grep -q .; then
+                cmdline_append_unique storage_cmdline "rd.auto"
+                cmdline_append_unique storage_cmdline "rd.md=1"
         fi
 
         if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
@@ -5253,32 +5561,28 @@ verify_grub_storage_cmdline() {
                 return 1
         }
 
-        if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+        if discover_required_md_cmdline | grep -q .; then
                 grep -qE '(^|[[:space:]])rd\.auto([[:space:]]|$)' <<<"$linux_lines" || {
-                        echo "GRUB verification failed: RAID storage requires rd.auto." >&2
+                        echo "GRUB verification failed: boot-critical RAID storage requires rd.auto." >&2
                         return 1
                 }
                 grep -qE '(^|[[:space:]])rd\.md=1([[:space:]]|$)' <<<"$linux_lines" || {
-                        echo "GRUB verification failed: RAID storage requires rd.md=1." >&2
+                        echo "GRUB verification failed: boot-critical RAID storage requires rd.md=1." >&2
                         return 1
                 }
         fi
 
-        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes && -r /etc/crypttab ]]; then
-                while read -r token; do
-                        [[ "$token" == UUID=* ]] || continue
-                        uuid="${token#UUID=}"
+        if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
+                while IFS= read -r uuid; do
                         uuid="${uuid#luks-}"
                         [[ -n "$uuid" ]] || continue
                         [[ -z "${seen_luks[$uuid]:-}" ]] || continue
                         seen_luks["$uuid"]=1
                         grep -qF "rd.luks.uuid=luks-$uuid" <<<"$linux_lines" || {
-                                echo "GRUB verification failed: missing LUKS UUID $uuid." >&2
+                                echo "GRUB verification failed: missing required LUKS UUID $uuid." >&2
                                 return 1
                         }
-                done < <(
-                        awk '!/^[[:space:]]*#/ && NF >= 2 {print $2}' /etc/crypttab
-                )
+                done < <(discover_required_luks_cmdline)
         fi
 
         if [[ "$AUTO_LVM2_VALUE" == yes ]]; then
@@ -5298,7 +5602,7 @@ verify_grub_storage_cmdline() {
         # that at least the critical RAID/LUKS discovery tokens are present.
         recovery_lines="$(grep -E '^[[:space:]]*linux[[:space:]].*[[:space:]]single([[:space:]]|$)' "$cfg" || true)"
         if [[ -n "$recovery_lines" ]]; then
-                if [[ "$AUTO_MDADM_VALUE" == yes ]]; then
+                if discover_required_md_cmdline | grep -q .; then
                         grep -qE '(^|[[:space:]])rd\.auto([[:space:]]|$)' <<<"$recovery_lines" || {
                                 echo "GRUB verification failed: recovery entry is missing rd.auto." >&2
                                 return 1
@@ -5772,12 +6076,15 @@ main() {
         require_commands
         prepare_target_environment
 
-        installer_menu
-        validate_settings
-        show_summary
-
-        confirm "Begin the BFS installation?" ||
-                die "Installation cancelled."
+        while true; do
+                installer_menu
+                validate_settings
+                show_summary
+                if confirm_continue "Begin the BFS installation?"; then
+                        break
+                fi
+                # "Back" means back to configuration/review, not fatal cleanup.
+        done
 
         format_selected_partitions
         mount_target_filesystems

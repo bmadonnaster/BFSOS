@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+# BFSOS bootstrap r26 - authentic Slackware/Classic Debian theme updates
+
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
 # deterministic.
@@ -116,36 +118,45 @@ EOF_SETTINGS
 write_dialog_theme_classic() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
-use_shadow = OFF
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLACK,OFF)
-dialog_color = (WHITE,BLUE,ON)
-title_color = (YELLOW,BLUE,ON)
-border_color = (WHITE,BLUE,ON)
-button_active_color = (BLACK,WHITE,ON)
-button_inactive_color = (WHITE,BLUE,ON)
-button_key_active_color = (BLACK,WHITE,ON)
-button_key_inactive_color = (YELLOW,BLUE,ON)
-button_label_active_color = (BLACK,WHITE,ON)
-button_label_inactive_color = (WHITE,BLUE,ON)
-inputbox_color = (WHITE,BLUE,ON)
-inputbox_border_color = (WHITE,BLUE,ON)
-searchbox_color = (WHITE,BLUE,ON)
-searchbox_title_color = (YELLOW,BLUE,ON)
-searchbox_border_color = (WHITE,BLUE,ON)
+use_shadow = ON
+
+# Classic Debian installer-inspired palette, translated from cdebconf/newt:
+# newt default root is white-on-blue; windows are black-on-lightgray;
+# titles are red-on-lightgray; selected list entries use yellow-on-blue.
+screen_color = (WHITE,BLUE,OFF)
+shadow_color = (WHITE,BLACK,OFF)
+dialog_color = (BLACK,WHITE,OFF)
+title_color = (RED,WHITE,ON)
+border_color = (BLACK,WHITE,OFF)
+
+button_active_color = (RED,WHITE,ON)
+button_inactive_color = (BLACK,WHITE,OFF)
+button_key_active_color = (RED,WHITE,ON)
+button_key_inactive_color = (BLACK,WHITE,ON)
+button_label_active_color = (RED,WHITE,ON)
+button_label_inactive_color = (BLACK,WHITE,OFF)
+
+inputbox_color = (YELLOW,BLUE,OFF)
+inputbox_border_color = (BLACK,WHITE,OFF)
+searchbox_color = (BLACK,WHITE,OFF)
+searchbox_title_color = (RED,WHITE,ON)
+searchbox_border_color = (BLACK,WHITE,OFF)
+
 position_indicator_color = (YELLOW,BLUE,ON)
-menubox_color = (WHITE,BLUE,ON)
-menubox_border_color = (WHITE,BLUE,ON)
-item_color = (WHITE,BLUE,ON)
-item_selected_color = (BLACK,CYAN,ON)
-tag_color = (YELLOW,BLUE,ON)
-tag_selected_color = (BLACK,CYAN,ON)
-tag_key_color = (YELLOW,BLUE,ON)
-tag_key_selected_color = (BLACK,CYAN,ON)
-check_color = (WHITE,BLUE,ON)
-check_selected_color = (BLACK,CYAN,ON)
-uarrow_color = (YELLOW,BLUE,ON)
-darrow_color = (YELLOW,BLUE,ON)
+menubox_color = (BLACK,WHITE,OFF)
+menubox_border_color = (BLACK,WHITE,OFF)
+item_color = (BLACK,WHITE,OFF)
+item_selected_color = (YELLOW,BLUE,ON)
+tag_color = (RED,WHITE,ON)
+tag_selected_color = (YELLOW,BLUE,ON)
+tag_key_color = (RED,WHITE,ON)
+tag_key_selected_color = (YELLOW,BLUE,ON)
+
+check_color = (YELLOW,BLUE,OFF)
+check_selected_color = (BLACK,WHITE,ON)
+uarrow_color = (RED,WHITE,ON)
+darrow_color = (RED,WHITE,ON)
+gauge_color = (YELLOW,BLUE,ON)
 EOF_DIALOGRC
 }
 
@@ -189,43 +200,58 @@ EOF_DIALOGRC
 
 write_dialog_theme_slackware() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
-use_colors = ON
+aspect = 0
+separate_widget = ""
+tab_len = 0
+visit_items = OFF
+use_scrollbar = OFF
 use_shadow = ON
+use_colors = ON
 
-# Nostalgic Slackware setup/Dialog look.
-screen_color = (WHITE,BLACK,ON)
-shadow_color = (BLACK,BLUE,OFF)
-dialog_color = (BLACK,CYAN,ON)
+# Slackware's actual dialogrc palette.
+screen_color = (WHITE,BLUE,OFF)
+shadow_color = (WHITE,BLACK,OFF)
+dialog_color = (BLACK,CYAN,OFF)
 title_color = (YELLOW,CYAN,ON)
-border_color = (WHITE,CYAN,ON)
+border_color = (CYAN,CYAN,ON)
 
 button_active_color = (WHITE,BLUE,ON)
-button_inactive_color = (BLACK,CYAN,ON)
-button_key_active_color = (YELLOW,BLUE,ON)
-button_key_inactive_color = (RED,CYAN,ON)
-button_label_active_color = (WHITE,BLUE,ON)
+button_inactive_color = dialog_color
+button_key_active_color = button_active_color
+button_key_inactive_color = (RED,CYAN,OFF)
+button_label_active_color = button_active_color
 button_label_inactive_color = (BLACK,CYAN,ON)
 
-inputbox_color = (BLACK,CYAN,ON)
-inputbox_border_color = (WHITE,CYAN,ON)
-searchbox_color = (BLACK,CYAN,ON)
-searchbox_title_color = (YELLOW,CYAN,ON)
-searchbox_border_color = (WHITE,CYAN,ON)
+inputbox_color = (BLUE,WHITE,OFF)
+inputbox_border_color = border_color
+searchbox_color = (YELLOW,WHITE,ON)
+searchbox_title_color = (WHITE,WHITE,ON)
+searchbox_border_color = (RED,WHITE,OFF)
 
-position_indicator_color = (YELLOW,CYAN,ON)
-menubox_color = (BLACK,CYAN,ON)
-menubox_border_color = (WHITE,CYAN,ON)
-item_color = (BLACK,CYAN,ON)
-item_selected_color = (WHITE,BLUE,ON)
-tag_color = (RED,CYAN,ON)
-tag_selected_color = (YELLOW,BLUE,ON)
-tag_key_color = (RED,CYAN,ON)
-tag_key_selected_color = (YELLOW,BLUE,ON)
+position_indicator_color = button_key_inactive_color
+menubox_color = dialog_color
+menubox_border_color = border_color
+item_color = dialog_color
+item_selected_color = screen_color
+tag_color = title_color
+tag_selected_color = screen_color
+tag_key_color = button_key_inactive_color
+tag_key_selected_color = (RED,BLUE,ON)
 
-check_color = (BLACK,CYAN,ON)
-check_selected_color = (WHITE,BLUE,ON)
-uarrow_color = (YELLOW,CYAN,ON)
-darrow_color = (YELLOW,CYAN,ON)
+check_color = dialog_color
+check_selected_color = (WHITE,CYAN,ON)
+uarrow_color = (GREEN,CYAN,ON)
+darrow_color = uarrow_color
+itemhelp_color = shadow_color
+form_active_text_color = inputbox_color
+form_text_color = (CYAN,BLUE,ON)
+form_item_readonly_color = (CYAN,WHITE,ON)
+gauge_color = (BLUE,WHITE,ON)
+
+border2_color = dialog_color
+inputbox_border2_color = dialog_color
+searchbox_border2_color = dialog_color
+menubox_border2_color = dialog_color
 EOF_DIALOGRC
 }
 
@@ -238,7 +264,7 @@ EOF_DIALOGRC
 
 theme_display_name() {
     case "$BFS_THEME" in
-        classic) printf '%s' "Classic Blue" ;;
+        classic) printf '%s' "Classic Debian" ;;
         midnight) printf '%s' "Midnight" ;;
         slackware) printf '%s' "Classic Slackware" ;;
         light) printf '%s' "Light" ;;
@@ -280,7 +306,7 @@ select_bootstrap_theme() {
                 19 72 6 \
                 monochrome "Best compatibility for SSH and unusual palettes" \
                     "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
-                classic "Classic Blue — traditional dark-blue theme" \
+                classic "Classic Debian — Debian installer/newt-style theme" \
                     "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" \
                     "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
@@ -296,7 +322,7 @@ select_bootstrap_theme() {
         [ -n "$choice" ] || return 0
     else
         echo "  1) Monochrome"
-        echo "  2) Classic Blue"
+        echo "  2) Classic Debian"
         echo "  3) Midnight"
         echo "  4) Classic Slackware"
         echo "  5) Light"
