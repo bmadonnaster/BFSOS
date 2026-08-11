@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r35 - integrated build/install workflow
+# BFSOS bootstrap r39 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -100,18 +100,10 @@ ORIGINAL_DIALOGRC="${DIALOGRC-}"
 BFS_THEME="${BFS_BOOTSTRAP_THEME:-slackware}"
 
 load_bootstrap_settings() {
-    [ -f "$BOOTSTRAP_SETTINGS_FILE" ] || return 0
-
-    while IFS='=' read -r key value; do
-        case "$key" in
-            BFS_THEME)
-                case "$value" in
-                    slackware|classic|midnight|light|monochrome) BFS_THEME="$value" ;;
-                    *) BFS_THEME=slackware ;;
-                esac
-                ;;
-        esac
-    done < "$BOOTSTRAP_SETTINGS_FILE"
+    # Classic Slackware is the bootstrap default on every new invocation.
+    # Theme changes are session-local so stale settings from an earlier test
+    # cannot unexpectedly make Debian or another theme the startup default.
+    BFS_THEME="${BFS_BOOTSTRAP_THEME:-slackware}"
 }
 
 save_bootstrap_settings() {
@@ -365,37 +357,61 @@ bootstrap_settings_menu() {
             choice="$(
                 dialog --stdout --clear \
                     --backtitle "BFS Linux Bootstrap" \
-                    --title "Bootstrap Settings" \
+                    --title "Bootstrap Settings - Interface Theme" \
+                    --ok-label "Apply" \
                     --cancel-label "Back" \
-                    --menu \
-                    "Configure the bootstrap interface." \
-                    14 70 4 \
-                    1 "Theme: $(theme_display_name)" \
-                    2 "Back to main menu" \
+                    --radiolist \
+                    "Choose the bootstrap interface theme." \
+                    20 82 7 \
+                    slackware "Classic Slackware setup-style cyan theme (default)" \
+                        "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
+                    classic "Classic Debian installer/newt-style theme" \
+                        "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
+                    monochrome "Monochrome - best compatibility for unusual terminals" \
+                        "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
+                    midnight "Midnight Commander-style theme" \
+                        "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
+                    light "Black text on a light background" \
+                        "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                     </dev/tty 2>/dev/tty
             )"
             status=$?
             set -e
+
+            # Back/Esc returns immediately to the main bootstrap menu.
             [ "$status" -eq 0 ] || return 0
             [ -n "$choice" ] || return 0
         else
             clear 2>/dev/null || true
-            echo "Bootstrap Settings"
-            echo "=================="
+            echo "Bootstrap Settings - Interface Theme"
+            echo "===================================="
             echo
-            echo "  1) Theme: $(theme_display_name)"
-            echo "  2) Back"
-            read -r -p "Choose [1-2]: " choice
+            echo "  1) Classic Slackware (default)"
+            echo "  2) Classic Debian"
+            echo "  3) Monochrome"
+            echo "  4) Midnight"
+            echo "  5) Light"
+            echo "  6) Back to main menu"
+            echo
+            read -r -p "Choose [1-6, current: $(theme_display_name)]: " choice
+            case "$choice" in
+                1) choice=slackware ;;
+                2) choice=classic ;;
+                3) choice=monochrome ;;
+                4) choice=midnight ;;
+                5) choice=light ;;
+                6|"") return 0 ;;
+                *) continue ;;
+            esac
         fi
 
-        case "$choice" in
-            1) select_bootstrap_theme ;;
-            2) return 0 ;;
-            *) ;;
-        esac
+        BFS_THEME="$choice"
+        setup_bootstrap_theme
+
+        # Keep the user in Settings so another theme can be previewed.
+        # Back returns to the main menu with no success/pause screen.
     done
 }
-
 
 case "${1:-menu}" in
     0|stop|kill|-h|--help|help) ;;
@@ -750,7 +766,7 @@ _show_bootstrap_menu() {
     printf '  %s7)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Restore newest temporary toolchain archive' "$(_toolchain_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s8)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sNOT AVAILABLE%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s9)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s10)%s %-54s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' "[Theme: $(theme_display_name)]"
@@ -770,7 +786,7 @@ _dialog_chroot_status() {
     if _chroot_available; then
         printf '%s' '\Z2AVAILABLE\Zn'
     else
-        printf '%s' '\Z1PENDING\Zn'
+        printf '%s' '\Z1NOT AVAILABLE\Zn'
     fi
 }
 
@@ -802,7 +818,7 @@ _select_bootstrap_menu_choice() {
                 5 "$(_dialog_menu_description 'Create/compress base rootfs archive (required)' "$(_dialog_stage_status _rootfs_archive_complete)")" \
                 6 "$(_dialog_menu_description 'Restore newest base rootfs archive' "$(_dialog_action_status _rootfs_archive_complete)")" \
                 7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
-                8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_action_status _chroot_available)")" \
+                8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
                 10 "$(_dialog_menu_description 'Settings' "Theme: $(theme_display_name)")" \
                 11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
