@@ -5,7 +5,7 @@
 
 name=wireless_tools
 version=30.pre9
-release=3
+release=4
 
 source=(https://deb.debian.org/debian/pool/main/w/wireless-tools/wireless-tools_30~pre9.orig.tar.gz)
 
@@ -17,11 +17,8 @@ build_opt() {
 }
 
 pkg_build() {
-    # BFS pkgmk calls pkg_build() directly from the extracted source directory,
-    # so run the optimized build here first.
     build_opt
 
-    # Programs
     install -d "$PKG/usr/sbin"
 
     install -m755 \
@@ -34,17 +31,6 @@ pkg_build() {
         ifrename \
         "$PKG/usr/sbin/"
 
-    # Shared library
-    install -d "$PKG/usr/lib"
-
-    install -m755 \
-        libiw.so.30 \
-        "$PKG/usr/lib/libiw.so.30"
-
-    ln -sf libiw.so.30 \
-        "$PKG/usr/lib/libiw.so"
-
-    # Development headers
     install -d "$PKG/usr/include"
 
     install -m644 \
@@ -52,7 +38,6 @@ pkg_build() {
         wireless.h \
         "$PKG/usr/include/"
 
-    # Man pages
     install -d \
         "$PKG/usr/share/man/man5" \
         "$PKG/usr/share/man/man7" \
