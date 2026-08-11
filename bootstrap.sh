@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r39 - integrated build/install workflow
+# BFSOS bootstrap r40 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -302,15 +302,15 @@ select_bootstrap_theme() {
                 --radiolist \
                 "Choose the bootstrap theme." \
                 20 78 7 \
-                slackware "Classic Slackware setup-style cyan theme (default)" \
+                Slackware "Classic Slackware setup-style cyan theme (default)" \
                     "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
-                classic "Classic Debian installer/newt-style theme" \
+                Debian "Classic Debian installer/newt-style theme" \
                     "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 monochrome "Best compatibility for SSH and unusual palettes" \
                     "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
-                midnight "Midnight Commander-style theme" \
+                Midnight "Midnight Commander-style theme" \
                     "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
-                light "Black text on a light background" \
+                Light "Black text on a light background" \
                     "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                 </dev/tty 2>/dev/tty
         )"
@@ -339,6 +339,14 @@ select_bootstrap_theme() {
         esac
     fi
 
+    case "$choice" in
+        Slackware) choice=slackware ;;
+        Debian) choice=classic ;;
+        Monochrome) choice=monochrome ;;
+        Midnight) choice=midnight ;;
+        Light) choice=light ;;
+    esac
+
     BFS_THEME="$choice"
     setup_bootstrap_theme
     save_bootstrap_settings
@@ -363,15 +371,15 @@ bootstrap_settings_menu() {
                     --radiolist \
                     "Choose the bootstrap interface theme." \
                     20 82 7 \
-                    slackware "Classic Slackware setup-style cyan theme (default)" \
+                    Slackware "Classic Slackware setup-style cyan theme (default)" \
                         "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
-                    classic "Classic Debian installer/newt-style theme" \
+                    Debian "Classic Debian installer/newt-style theme" \
                         "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
-                    monochrome "Monochrome - best compatibility for unusual terminals" \
+                    Monochrome "Monochrome - best compatibility for unusual terminals" \
                         "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
-                    midnight "Midnight Commander-style theme" \
+                    Midnight "Midnight Commander-style theme" \
                         "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
-                    light "Black text on a light background" \
+                    Light "Black text on a light background" \
                         "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                     </dev/tty 2>/dev/tty
             )"
@@ -404,6 +412,14 @@ bootstrap_settings_menu() {
                 *) continue ;;
             esac
         fi
+
+        case "$choice" in
+            Slackware) choice=slackware ;;
+            Debian) choice=classic ;;
+            Monochrome) choice=monochrome ;;
+            Midnight) choice=midnight ;;
+            Light) choice=light ;;
+        esac
 
         BFS_THEME="$choice"
         setup_bootstrap_theme
