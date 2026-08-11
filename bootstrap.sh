@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r42 - integrated build/install workflow
+# BFSOS bootstrap r43 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -823,7 +823,9 @@ _select_bootstrap_menu_choice() {
             dialog --clear --colors --no-collapse \
                 --backtitle "BFS Linux Bootstrap" \
                 --title "Bootstrap menu" \
-                --ok-label "Select" --cancel-label "Quit" \
+                --ok-label "Select" \
+                --extra-button --extra-label "Settings" \
+                --cancel-label "Quit" \
                 --menu \
                 "Required normal path: 1 -> 2 -> 4 -> 5. Stage 3 is optional.\n\nA valid existing base archive satisfies installer readiness automatically." \
                 26 100 14 \
@@ -837,13 +839,16 @@ _select_bootstrap_menu_choice() {
                 8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
                 11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
-                10 "Settings" \
                 --stdout </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
         set -e
         clear </dev/tty >/dev/tty 2>/dev/null || true
-        [ "$dialog_status" -eq 0 ] && printf '%s\n' "$choice" || printf '%s\n' 11
+        case "$dialog_status" in
+            0) printf '%s\n' "$choice" ;;
+            3) printf '%s\n' 10 ;;
+            *) printf '%s\n' 11 ;;
+        esac
         return 0
     fi
     _show_bootstrap_menu >&2
