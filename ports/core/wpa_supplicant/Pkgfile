@@ -7,12 +7,14 @@
 
 name=wpa_supplicant
 version=2.11
-release=1
+release=2
 source=(https://w1.fi/releases/wpa_supplicant-$version.tar.gz
-	wpa_supplicant.conf)
+        wpa_supplicant.conf
+        openssl-4-asn1.patch)
 
 build() {
 	cd $name-$version
+        patch -Np1 -i "$SRC/openssl-4-asn1.patch"
 
 	cat > wpa_supplicant/.config << "EOF"
 CONFIG_BACKEND=file

@@ -661,8 +661,9 @@ f:e5590010f204c76d764683c7013876ed:vim/Pkgfile
 f:5b29d52648bd302ee221de954c8d7e15:wget/Pkgfile
 f:c94c90d75b0cc933fd1d659a013d399f:wgetpaste/Pkgfile
 f:c5b7b889fabb1a3a98f475109d3d88fe:which/Pkgfile
-f:3b8575e3d46dcae6178a03305cd2679b:wpa_supplicant/Pkgfile
 f:dace26d9323391e9bc9f647964536f4a:wpa_supplicant/wpa_supplicant.conf
+f:4a6da56a0e76c3e0243927225a75d8d2:wpa_supplicant/openssl-4-asn1.patch
+f:e5344458031ea69f65bfd8c956f8bca4:wpa_supplicant/Pkgfile
 f:4aee1205ff86037b9ce08e48f593d2e0:xfsprogs/Pkgfile
 f:df1642eb4ff68e430b2dc1cd092c783a:xz/Pkgfile
 f:b475b125e5481772887072d9a21d86b3:zlib/Pkgfile

@@ -1,0 +1,24 @@
+--- a/src/crypto/tls_openssl.c
++++ b/src/crypto/tls_openssl.c
+@@ -2418,7 +2418,10 @@
+ 		    gen->type != GEN_URI)
+ 			continue;
+ 
+-		pos = os_malloc(10 + gen->d.ia5->length + 1);
++		int ia5_len = ASN1_STRING_length(gen->d.ia5);
++		const unsigned char *ia5_data =
++			ASN1_STRING_get0_data(gen->d.ia5);
++		pos = os_malloc(10 + ia5_len + 1);
+ 		if (pos == NULL)
+ 			break;
+ 		altsubject[num_altsubject++] = pos;
+@@ -2438,8 +2441,8 @@
+ 			break;
+ 		}
+ 
+-		os_memcpy(pos, gen->d.ia5->data, gen->d.ia5->length);
+-		pos += gen->d.ia5->length;
++		os_memcpy(pos, ia5_data, ia5_len);
++		pos += ia5_len;
+ 		*pos = '\0';
+ 	}
