@@ -745,8 +745,10 @@ _dialog_required_status() {
 _dialog_stage3_status() {
     if _base_stage3_complete; then
         printf '%s' '\Z2COMPLETE\Zn'
-    else
+    elif _base_stage2_complete; then
         printf '%s' '\Z2AVAILABLE\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
     fi
 }
 
@@ -772,7 +774,7 @@ _show_bootstrap_menu() {
     printf '  %s2)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Build base system with temporary toolchain (required)' "$(_required_stage_complete _base_stage2_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s3)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET")"
+        'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || { _base_stage2_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; })"
     printf '  %s4)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s5)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
