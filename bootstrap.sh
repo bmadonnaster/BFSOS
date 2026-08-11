@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r27 - tracker fixes for logging and terminal cleanup
+# BFSOS bootstrap r35 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -510,6 +510,74 @@ _copy_base_logs_into_rootfs() {
     echo "  $destination"
 }
 
+
+_latest_rootfs_archive() {
+    local file="" base="" key="" best="" best_key="" mtime=""
+    [ -d "$BASE_ARCHIVE_DIR" ] || return 1
+    while IFS= read -r -d '' file; do
+        [ -r "$file" ] || continue
+        case "$file" in *.tar.xz|*.tar.zst|*.tar.gz) ;; *) continue ;; esac
+        base="$(basename "$file")"
+        if [[ "$base" =~ ([0-9]{8})[-_]?([0-9]{6}) ]]; then
+            key="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
+        else
+            mtime="$(stat -c '%Y' "$file" 2>/dev/null || printf '0')"
+            printf -v key 'mtime-%020d' "$mtime"
+        fi
+        if [ -z "$best" ] || [[ "$key" > "$best_key" ]] ||
+           { [ "$key" = "$best_key" ] && [[ "$file" > "$best" ]]; }; then
+            best="$file"; best_key="$key"
+        fi
+    done < <(
+        find "$BASE_ARCHIVE_DIR" -maxdepth 1 -type f \
+            \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
+            -print0 2>/dev/null
+    )
+    [ -n "$best" ] || return 1
+    printf '%s\n' "$best"
+}
+
+_find_latest_installer() {
+    local dir="$SCRIPT_DIR/scripts" file="" best=""
+    [ -d "$dir" ] || return 1
+    while IFS= read -r file; do
+        [ -f "$file" ] && [ -x "$file" ] || continue
+        case "$(basename "$file")" in *backup*|*old*|*disabled*|*~) continue ;; esac
+        best="$file"
+    done < <(find "$dir" -maxdepth 1 -type f -name 'install-bfs-menu-v*.sh' -print 2>/dev/null | sort -V)
+    [ -n "$best" ] || return 1
+    printf '%s\n' "$best"
+}
+
+_installer_available() {
+    _latest_rootfs_archive >/dev/null 2>&1 && _find_latest_installer >/dev/null 2>&1
+}
+
+_launch_bfs_installer() {
+    local archive="" installer="" status=0
+    archive="$(_latest_rootfs_archive)" || {
+        echo "ERROR: No valid BFSOS base rootfs archive is available in:" >&2
+        echo "  $BASE_ARCHIVE_DIR" >&2
+        return 1
+    }
+    installer="$(_find_latest_installer)" || {
+        echo "ERROR: No executable BFSOS installer was found under:" >&2
+        echo "  $SCRIPT_DIR/scripts" >&2
+        return 1
+    }
+    echo
+    echo "Launching BFSOS installer:"
+    echo "  Installer: $installer"
+    echo "  Base file: $archive"
+    echo
+    set +e
+    BFS_ARCHIVE="$archive" "$installer"
+    status=$?
+    set -e
+    _reset_terminal_ui
+    return "$status"
+}
+
 _stage_complete_text() {
     if "$@"; then
         printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET"
@@ -534,8 +602,9 @@ _verification_complete() {
     [ -f "$LFS/.bfs-verified" ]
 }
 
+
 _rootfs_archive_complete() {
-    _latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' >/dev/null 2>&1
+    _latest_rootfs_archive >/dev/null 2>&1
 }
 
 _rootfs_restore_complete() {
@@ -614,79 +683,66 @@ _enter_bfs_chroot() {
     return "$status"
 }
 
-_show_bootstrap_menu() {
-    local status_column=62
 
-    clear 2>/dev/null || printf '\033[2J\033[H'
+_required_stage_complete() {
+    local check="$1"
+    "$check" || _rootfs_archive_complete
+}
 
-    printf '%s\n' \
-        '============================================================' \
-        '                  BFS Linux Bootstrap' \
-        '============================================================' \
-        ''
-
-    printf '  %s1)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Build temporary toolchain' \
-        "[$(_stage_complete_text _toolchain_complete)]"
-
-    printf '  %s2)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Build base system with temporary toolchain' \
-        "[$(_stage_complete_text _base_stage2_complete)]"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
-
-    printf '  %s3)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Rebuild base system with final toolchain' \
-        "[$(_stage_complete_text _base_stage3_complete)]"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
-
-    printf '  %s4)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Verify completed base system (sudo/root)' \
-        "[$(_stage_complete_text _verification_complete)]"
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
-
-    printf '  %s5)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Create base rootfs archive' \
-        "[$(_stage_complete_text _rootfs_archive_complete)]"
-
-    printf '  %s6)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Restore newest base rootfs archive' \
-        "[$(_stage_complete_text _rootfs_restore_complete)]"
-
-    printf '  %s7)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Restore newest temporary toolchain archive' \
-        "[$(_stage_complete_text _toolchain_restore_complete)]"
-
-    if _chroot_available; then
-        printf '  %s8)%s %-52s [%sAVAILABLE%s]\n' \
-            "$COLOR_CYAN" "$COLOR_RESET" \
-            'Chroot into BFS rootfs (sudo/root)' \
-            "$COLOR_GREEN" "$COLOR_RESET"
+_dialog_required_status() {
+    local check="$1"
+    if _required_stage_complete "$check"; then
+        printf '%s' '\Z2COMPLETE\Zn'
     else
-        printf '  %s8)%s %-52s [%sPENDING%s]\n' \
-            "$COLOR_CYAN" "$COLOR_RESET" \
-            'Chroot into BFS rootfs' \
-            "$COLOR_RED" "$COLOR_RESET"
+        printf '%s' '\Z1PENDING\Zn'
     fi
-    printf '     %sRuns automatically with sudo/root privileges%s\n' \
-        "$COLOR_YELLOW" "$COLOR_RESET"
+}
 
-    printf '  %s9)%s %-52s %s\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" \
-        'Settings' \
-        "[Theme: $(theme_display_name)]"
+_dialog_stage3_status() {
+    if _base_stage3_complete; then
+        printf '%s' '\Z2COMPLETE\Zn'
+    else
+        printf '%s' '\Z2AVAILABLE\Zn'
+    fi
+}
 
-    printf '  %s10)%s %s\n\n' \
-        "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
+_dialog_action_status() {
+    if "$@"; then
+        printf '%s' '\Z2AVAILABLE\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
+    fi
+}
+
+
+_show_bootstrap_menu() {
+    clear 2>/dev/null || printf '\033[2J\033[H'
+    printf '%s\n' '============================================================' \
+        '                  BFS Linux Bootstrap' \
+        '============================================================' ''
+
+    _txt_status() { "$1" && printf '%s%s%s' "$COLOR_GREEN" "$2" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; }
+
+    printf '  %s1)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Build temporary toolchain (required)' "$(_required_stage_complete _toolchain_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s2)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Build base system with temporary toolchain (required)' "$(_required_stage_complete _base_stage2_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s3)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET")"
+    printf '  %s4)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s5)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Create/compress base rootfs archive (required)' "$(_rootfs_archive_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s6)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Restore newest base rootfs archive' "$(_rootfs_archive_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s7)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Restore newest temporary toolchain archive' "$(_toolchain_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s8)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s9)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+    printf '  %s10)%s %-54s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' "[Theme: $(theme_display_name)]"
+    printf '  %s11)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
 
@@ -713,182 +769,68 @@ _dialog_menu_description() {
     printf '%-57s [%s]' "$label" "$status"
 }
 
-_select_bootstrap_menu_choice() {
-    local choice=""
-    local dialog_status=0
 
-    # This function is called inside command substitution:
-    #
-    #     choice="$(_select_bootstrap_menu_choice)"
-    #
-    # Therefore stdout is a pipe and `[ -t 1 ]` is false even when the user is
-    # sitting at a real terminal.  Use /dev/tty explicitly for dialog input and
-    # screen output; --stdout leaves only the selected menu tag on captured
-    # stdout.
+_select_bootstrap_menu_choice() {
+    local choice="" dialog_status=0
     if command -v dialog >/dev/null 2>&1 &&
-       [ -r /dev/tty ] &&
-       [ -w /dev/tty ]
-    then
+       [ -r /dev/tty ] && [ -w /dev/tty ]; then
         set +e
         choice="$(
-            dialog \
-                --clear \
-                --colors \
-                --no-collapse \
+            dialog --clear --colors --no-collapse \
                 --backtitle "BFS Linux Bootstrap" \
                 --title "Bootstrap menu" \
-                --ok-label "Select" \
-                --cancel-label "Quit" \
+                --ok-label "Select" --cancel-label "Quit" \
                 --menu \
-                "Use Up/Down arrows and Enter, or type an option number.\n\n\Z3Options 2, 3, 4, and 8 automatically run with sudo/root privileges.\Zn" \
-                24 92 13 \
-                1 "$(_dialog_menu_description \
-                    'Build temporary toolchain' \
-                    "$(_dialog_stage_status _toolchain_complete)")" \
-                2 "$(_dialog_menu_description \
-                    'Build base system with temporary toolchain (sudo/root)' \
-                    "$(_dialog_stage_status _base_stage2_complete)")" \
-                3 "$(_dialog_menu_description \
-                    'Rebuild base system with final toolchain (sudo/root)' \
-                    "$(_dialog_stage_status _base_stage3_complete)")" \
-                4 "$(_dialog_menu_description \
-                    'Verify completed base system' \
-                    "$(_dialog_stage_status _verification_complete)")" \
-                5 "$(_dialog_menu_description \
-                    'Create base rootfs archive' \
-                    "$(_dialog_stage_status _rootfs_archive_complete)")" \
-                6 "$(_dialog_menu_description \
-                    'Restore newest base rootfs archive' \
-                    "$(_dialog_stage_status _rootfs_restore_complete)")" \
-                7 "$(_dialog_menu_description \
-                    'Restore newest temporary toolchain archive' \
-                    "$(_dialog_stage_status _toolchain_restore_complete)")" \
-                8 "$(_dialog_menu_description \
-                    'Chroot into BFS rootfs' \
-                    "$(_dialog_chroot_status)")" \
-                9 "$(_dialog_menu_description \
-                    'Settings' \
-                    "Theme: $(theme_display_name)")" \
-                10 "$(_dialog_menu_description \
-                    'Quit' \
-                    '\Z3EXIT\Zn')" \
-                --stdout \
-                </dev/tty 2>/dev/tty
+                "Required normal path: 1 -> 2 -> 4 -> 5. Stage 3 is optional.\n\nA valid existing base archive satisfies installer readiness automatically." \
+                26 100 14 \
+                1 "$(_dialog_menu_description 'Build temporary toolchain (required)' "$(_dialog_required_status _toolchain_complete)")" \
+                2 "$(_dialog_menu_description 'Build base system with temporary toolchain (required)' "$(_dialog_required_status _base_stage2_complete)")" \
+                3 "$(_dialog_menu_description 'Rebuild base system with final toolchain (optional)' "$(_dialog_stage3_status)")" \
+                4 "$(_dialog_menu_description 'Verify completed base system (required)' "$(_dialog_required_status _verification_complete)")" \
+                5 "$(_dialog_menu_description 'Create/compress base rootfs archive (required)' "$(_dialog_stage_status _rootfs_archive_complete)")" \
+                6 "$(_dialog_menu_description 'Restore newest base rootfs archive' "$(_dialog_action_status _rootfs_archive_complete)")" \
+                7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
+                8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_action_status _chroot_available)")" \
+                9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
+                10 "$(_dialog_menu_description 'Settings' "Theme: $(theme_display_name)")" \
+                11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
+                --stdout </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
         set -e
-
         clear </dev/tty >/dev/tty 2>/dev/null || true
-
-        if [ "$dialog_status" -ne 0 ]; then
-            printf '%s\n' 9
-        else
-            printf '%s\n' "$choice"
-        fi
-
+        [ "$dialog_status" -eq 0 ] && printf '%s\n' "$choice" || printf '%s\n' 11
         return 0
     fi
-
     _show_bootstrap_menu >&2
-    printf '%sChoose [1-10]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    printf '%sChoose [1-11]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
     read -r choice </dev/tty 2>/dev/null || read -r choice
-
-    case "$choice" in
-        q|Q|quit|Quit|QUIT)
-            choice=9
-            ;;
-    esac
-
+    case "$choice" in q|Q|quit|Quit|QUIT) choice=11 ;; esac
     printf '%s\n' "$choice"
 }
 
-_bootstrap_menu() {
-    local choice=""
-    local status=0
 
+_bootstrap_menu() {
+    local choice="" status=0
     while true; do
         choice="$(_select_bootstrap_menu_choice)"
-
         status=0
-
-        if [[ "$choice" =~ ^([1-9]|10)$ ]]; then
-            printf '\n%sSelected option %s%s\n'                 "$COLOR_CYAN" "$choice" "$COLOR_RESET"
-        fi
-
         case "$choice" in
-            1)
-                set +e
-                _buildtoolchain
-                status=$?
-                set -e
-                ;;
-            2)
-                set +e
-                _run_root_stage 2
-                status=$?
-                set -e
-                ;;
-            3)
-                set +e
-                _run_root_stage 3
-                status=$?
-                set -e
-                ;;
-            4)
-                set +e
-                _run_root_stage 4
-                status=$?
-                set -e
-                ;;
-            5)
-                set +e
-                _compressrootfs
-                status=$?
-                set -e
-                ;;
-            6)
-                set +e
-                _restore_rootfs
-                status=$?
-                set -e
-                ;;
-            7)
-                set +e
-                _restore_toolchain
-                status=$?
-                set -e
-                ;;
-            8)
-                set +e
-                _run_root_stage 8
-                status=$?
-                set -e
-                ;;
-            9)
-                set +e
-                bootstrap_settings_menu
-                status=$?
-                set -e
-                ;;
-            10|q|Q|quit|Quit|QUIT)
-                echo "BFS bootstrap exited."
-                return 0
-                ;;
-            *)
-                echo
-                echo "Invalid selection."
-                sleep 1
-                continue
-                ;;
+            1) set +e; _buildtoolchain; status=$?; set -e ;;
+            2) set +e; _run_root_stage 2; status=$?; set -e ;;
+            3) set +e; _run_root_stage 3; status=$?; set -e ;;
+            4) set +e; _run_root_stage 4; status=$?; set -e ;;
+            5) set +e; _compressrootfs; status=$?; set -e ;;
+            6) set +e; _restore_rootfs; status=$?; set -e ;;
+            7) set +e; _restore_toolchain; status=$?; set -e ;;
+            8) set +e; _run_root_stage 8; status=$?; set -e ;;
+            9) set +e; _launch_bfs_installer; status=$?; set -e ;;
+            10) set +e; bootstrap_settings_menu; status=$?; set -e ;;
+            11|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
+            *) echo "Invalid selection."; sleep 1; continue ;;
         esac
-
         echo
-        if [ "$status" -eq 0 ]; then
-            echo "Operation completed successfully."
-        else
-            echo "Operation failed with exit status $status."
-        fi
-
+        [ "$status" -eq 0 ] && echo "Operation completed successfully." || echo "Operation failed with exit status $status."
         _pause_menu
     done
 }
@@ -2618,6 +2560,9 @@ case "${1:-menu}" in
     8|chroot)
         _enter_bfs_chroot
         ;;
+    9|install|installer)
+        _launch_bfs_installer
+        ;;
     0|stop|kill)
         _stop_bootstrap
         ;;
@@ -2628,6 +2573,7 @@ Usage:
   $0 menu        Open the interactive bootstrap menu
   $0 1-7         Run a bootstrap stage directly
   $0 8|chroot    Enter the BFS chroot
+  $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 0|stop|kill Stop a running bootstrap process group
 EOF
         ;;
