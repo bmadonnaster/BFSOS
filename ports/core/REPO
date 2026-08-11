@@ -220,6 +220,7 @@ d:xfsprogs
 d:xz
 d:zlib
 d:zstd
+d:wireless_tools
 f:f70bbec388eac3b99a99718b96b6d4c6:aaa_filesystem/.bash_logout
 f:7a9dcf4e4b24dbbe1064b16db851fe65:aaa_filesystem/.bash_profile
 f:646ca28ca35dffaed560924a2ba3deb0:aaa_filesystem/.bashrc
@@ -662,9 +663,10 @@ f:5b29d52648bd302ee221de954c8d7e15:wget/Pkgfile
 f:c94c90d75b0cc933fd1d659a013d399f:wgetpaste/Pkgfile
 f:c5b7b889fabb1a3a98f475109d3d88fe:which/Pkgfile
 f:dace26d9323391e9bc9f647964536f4a:wpa_supplicant/wpa_supplicant.conf
-f:4a6da56a0e76c3e0243927225a75d8d2:wpa_supplicant/openssl-4-asn1.patch
-f:e5344458031ea69f65bfd8c956f8bca4:wpa_supplicant/Pkgfile
+f:fa4d64c3bb6cb1ee862b5282fc1e8a6e:wpa_supplicant/openssl-4-asn1.patch
+f:296cc2f59c79cdd5f682dc98d93c3096:wpa_supplicant/Pkgfile
 f:4aee1205ff86037b9ce08e48f593d2e0:xfsprogs/Pkgfile
 f:df1642eb4ff68e430b2dc1cd092c783a:xz/Pkgfile
 f:b475b125e5481772887072d9a21d86b3:zlib/Pkgfile
 f:7255dfc6fd43a3295059436b5e01056b:zstd/Pkgfile
+f:ca5896066d652706ea0a2885bfbc5597:wireless_tools/Pkgfile
