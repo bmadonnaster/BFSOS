@@ -5,13 +5,11 @@
 
 name=wireless_tools
 version=30.pre9
-release=1
+release=2
 
 source=(https://deb.debian.org/debian/pool/main/w/wireless-tools/wireless-tools_30~pre9.orig.tar.gz)
 
 build_opt() {
-    cd wireless_tools.30
-
     make \
         CC="${CC:-gcc}" \
         CFLAGS="${CFLAGS:--O2 -pipe}" \
@@ -19,8 +17,6 @@ build_opt() {
 }
 
 pkg_build() {
-    cd wireless_tools.30
-
     # Programs
     install -d "$PKG/usr/sbin"
 
@@ -58,12 +54,10 @@ pkg_build() {
         "$PKG/usr/share/man/man7" \
         "$PKG/usr/share/man/man8"
 
-    install -m644 \
-        iftab.5 \
+    install -m644 iftab.5 \
         "$PKG/usr/share/man/man5/"
 
-    install -m644 \
-        wireless.7 \
+    install -m644 wireless.7 \
         "$PKG/usr/share/man/man7/"
 
     install -m644 \
