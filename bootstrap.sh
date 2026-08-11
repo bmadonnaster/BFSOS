@@ -104,7 +104,12 @@ load_bootstrap_settings() {
 
     while IFS='=' read -r key value; do
         case "$key" in
-            BFS_THEME) BFS_THEME="$value" ;;
+            BFS_THEME)
+                case "$value" in
+                    slackware|midnight|light|monochrome) BFS_THEME="$value" ;;
+                    *) BFS_THEME=slackware ;;
+                esac
+                ;;
         esac
     done < "$BOOTSTRAP_SETTINGS_FILE"
 }
@@ -304,14 +309,12 @@ select_bootstrap_theme() {
                 --radiolist \
                 "Choose the bootstrap theme." \
                 19 72 6 \
+                slackware "Classic Slackware setup-style cyan theme (default)" \
+                    "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
                 monochrome "Best compatibility for SSH and unusual palettes" \
                     "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
-                classic "Classic Debian — Debian installer/newt-style theme" \
-                    "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" \
                     "$([ "$BFS_THEME" = midnight ] && echo on || echo off)" \
-                slackware "Classic Slackware setup-style cyan theme" \
-                    "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
                 light "Black text on a light background" \
                     "$([ "$BFS_THEME" = light ] && echo on || echo off)" \
                 </dev/tty 2>/dev/tty
@@ -321,17 +324,17 @@ select_bootstrap_theme() {
         [ "$status" -eq 0 ] || return 0
         [ -n "$choice" ] || return 0
     else
-        echo "  1) Monochrome"
+        echo "  1) Classic Slackware (default)"
         echo "  2) Classic Debian"
-        echo "  3) Midnight"
-        echo "  4) Classic Slackware"
+        echo "  3) Monochrome"
+        echo "  4) Midnight"
         echo "  5) Light"
         read -r -p "Choose [1-5, current: $(theme_display_name)]: " choice
         case "$choice" in
-            1) choice=monochrome ;;
+            1) choice=slackware ;;
             2) choice=classic ;;
-            3) choice=midnight ;;
-            4) choice=slackware ;;
+            3) choice=monochrome ;;
+            4) choice=midnight ;;
             5) choice=light ;;
             "") return 0 ;;
             *) echo "Invalid theme selection."; return 1 ;;
@@ -379,7 +382,7 @@ bootstrap_settings_menu() {
         fi
 
         case "$choice" in
-            1) select_bootstrap_theme ;;
+            1) set +e; select_bootstrap_theme; status=$?; set -e; [ "$status" -eq 0 ] || return "$status" ;;
             2) return 0 ;;
             *) echo "Invalid settings selection."; sleep 1 ;;
         esac
@@ -616,7 +619,8 @@ _toolchain_restore_complete() {
 }
 
 _chroot_available() {
-    [ -x "$LFS/usr/bin/bash" ] || [ -x "$LFS/bin/bash" ]
+    { [ -f "$LFS/.bfs-rootfs-restored" ] || [ -f "$LFS/.bfs-toolchain-restored" ]; } &&
+    { [ -x "$LFS/usr/bin/bash" ] || [ -x "$LFS/bin/bash" ]; }
 }
 
 _pause_menu() {
