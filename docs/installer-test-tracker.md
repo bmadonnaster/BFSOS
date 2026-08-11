@@ -1,5 +1,15 @@
 # BFSOS Installer v50 Test / Fix Tracker
 
+
+### Bootstrap Stage 3 availability status
+- [x] **COMPLETED / VERIFIED:** Correct Stage 3 (`Rebuild base system with final toolchain`) status logic.
+- Stage 3 now shows **[PENDING]** until the required temporary-toolchain/base-system prerequisite stages are complete.
+- After Stage 2 is complete, Stage 3 changes to **[AVAILABLE]**.
+- After Stage 3 itself is completed, it shows **[COMPLETE]**.
+- Corrected in both the dialog and text-fallback bootstrap menus.
+- Verified during testing on August 11, 2026: the corrected behavior now appears as intended.
+
+
 **Installer:** `install-bfs-menu-v50-luks-auto-cryptsetup.sh`\
 **Test focus:** RAID + LUKS + LVM\
 **Status:** Active testing
