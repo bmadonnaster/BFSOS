@@ -1,0 +1,45 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-08T04:45:28+00:00
+Script:         ./install-bfs-menu-v40-lvm-percent-shorthand-fixed.sh
+Script path:    /mnt/bfs-build/bfs-linux-install/install-bfs-menu-v40-lvm-percent-shorthand-fixed.sh
+Log file:       /mnt/bfs-build/bfs-linux-install/logs/installer/install-20260808-044528.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  4823
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+
+Starting cfdisk for /dev/vda...
+Changes are written only when you choose Write in cfdisk.
+
+[H[2J[3Jc]104[!p[?3;4l[4l>[?69l[H[2J[3Jc]104[!p[?3;4l[4l>[?69l
+Starting cfdisk for /dev/vdb...
+Changes are written only when you choose Write in cfdisk.
+
+[H[2J[3Jc]104[!p[?3;4l[4l>[?69l[H[2J[3Jc]104[!p[?3;4l[4l>[?69l  PV         VG     Fmt  Attr PSize   PFree
+  /dev/vdb1  bfs-vg lvm2 a--  <32.00g 4.00m
+
+
+WARNING: Not a block device: /dev/vgb1
+
+Press Enter to continue...  PV         VG     Fmt  Attr PSize   PFree
+  /dev/vdb1  bfs-vg lvm2 a--  <32.00g 4.00m
+
+  Can't initialize physical volume "/dev/vdb1" of volume group "bfs-vg" without -ff
+  /dev/vdb1: physical volume not initialized.
+
+WARNING: pvcreate failed for /dev/vdb1. Returning to the LVM menu.
+
+Press Enter to continue...Installer exited.
+
+============================================================
+Finished:       2026-08-08T04:50:07+00:00
+Result:         SUCCESS
+Exit status:    0
+Elapsed:        00:04:39
+============================================================

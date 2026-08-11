@@ -1,0 +1,190 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-09T21:59:28+00:00
+Script:         ./install-bfs-menu-v50-luks-auto-cryptsetup.sh
+Script path:    /mnt/bfs-build/BFSOS/install-bfs-menu-v50-luks-auto-cryptsetup.sh
+Log file:       /mnt/bfs-build/BFSOS/logs/installer/install-20260809-215928.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  83796
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+
+  Physical volume "/dev/mapper/cryptraid" successfully created.
+
+Press Enter to continue...  PV                    VG Fmt  Attr PSize   PFree  
+  /dev/mapper/cryptraid    lvm2 ---  999.47g 999.47g
+
+  Volume group "bfs-vg" successfully created
+
+Press Enter to continue...  VG     #PV #LV #SN Attr    VSize    VFree   
+  bfs-vg   1   0   0 wz--n-- <999.47g <999.47g
+
+  Logical volume "home" created.
+
+Press Enter to continue...  VG     #PV #LV #SN Attr    VSize    VFree  
+  bfs-vg   1   1   0 wz--n-- <999.47g 499.73g
+
+  Logical volume "var" created.
+
+Press Enter to continue...  PV                    VG     Fmt  Attr PSize    PFree
+  /dev/mapper/cryptraid bfs-vg lvm2 a--  <999.47g    0 
+
+  VG     #PV #LV #SN Attr    VSize    VFree
+  bfs-vg   1   2   0 wz--n-- <999.47g    0 
+
+  LV   VG     Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  home bfs-vg -wi-a----- 499.73g                                                    
+  var  bfs-vg -wi-a----- 499.73g                                                    
+
+Press Enter to continue...[H[2J[3JSelected filesystems and mount points
+====================================
+
+  NUM  DEVICE                   ACTION       MOUNTPOINT
+  ---  ------                   ------       ----------
+  1    /dev/mapper/luksroot     btrfs        /
+  2    /dev/vda3                swap         swap
+  3    /dev/vda2                ext2         /boot
+  4    /dev/vda1                vfat         /boot/efi
+  5    /dev/bfs-vg/home         btrfs        /home
+  6    /dev/bfs-vg/var          btrfs        /var
+
+
+Press Enter to continue...[H[2J[3JBase archive
+============
+
+Path to BFS rootfs archive [/mnt/bfs-build/BFSOS/archives/base/bfs-rootfs-0.9.0-20260808.tar.xz]: 
+Press Enter to continue...
+==> Formatting /dev/mapper/luksroot as btrfs for /
+btrfs-progs v7.0
+See https://btrfs.readthedocs.io for more information.
+
+NOTE: default settings have changed in version 6.19 (supported since linux 6.1):
+      - enable block-group-tree (-O bgt)
+
+Label:              (null)
+UUID:               d68c9211-0baa-408f-a0de-1bd270d7bc6d
+Node size:          16384
+Sector size:        4096	(CPU page size: 4096)
+Filesystem size:    217.84GiB
+Block group profiles:
+  Data:             single            8.00MiB
+  Metadata:         DUP               1.00GiB
+  System:           DUP               8.00MiB
+SSD detected:       no
+Zoned device:       no
+Features:           extref, skinny-metadata, no-holes, free-space-tree, block-group-tree
+Checksum:           crc32c
+Number of devices:  1
+Devices:
+   ID        SIZE  PATH                
+    1   217.84GiB  /dev/mapper/luksroot
+
+
+==> Formatting /dev/vda2 as ext2 for /boot
+mke2fs 1.47.4 (6-Mar-2025)
+Discarding device blocks:      0/488192             done                            
+Creating filesystem with 488192 4k blocks and 122160 inodes
+Filesystem UUID: 7f62a3dd-8214-498d-ab34-62181ac69d78
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912
+
+Allocating group tables:  0/15     done                            
+Writing inode tables:  0/15     done                            
+Writing superblocks and filesystem accounting information:  0/15     done
+
+
+==> Formatting /dev/vda1 as vfat for /boot/efi
+mkfs.fat 4.2 (2021-01-31)
+
+==> Formatting /dev/vda3 as swap for swap
+mkswap: /dev/vda3: warning: wiping old swap signature.
+Setting up swapspace version 1, size = 29.8 GiB (32000438272 bytes)
+no label, UUID=fbd18fe7-5b28-4cab-82d6-448e0b1e9da4
+
+==> Formatting /dev/bfs-vg/home as btrfs for /home
+btrfs-progs v7.0
+See https://btrfs.readthedocs.io for more information.
+
+NOTE: default settings have changed in version 6.19 (supported since linux 6.1):
+      - enable block-group-tree (-O bgt)
+
+Label:              (null)
+UUID:               60da7014-7a91-461f-8081-9459c2992f1e
+Node size:          16384
+Sector size:        4096	(CPU page size: 4096)
+Filesystem size:    499.73GiB
+Block group profiles:
+  Data:             single            8.00MiB
+  Metadata:         DUP               1.00GiB
+  System:           DUP               8.00MiB
+SSD detected:       no
+Zoned device:       no
+Features:           extref, skinny-metadata, no-holes, free-space-tree, block-group-tree
+Checksum:           crc32c
+Number of devices:  1
+Devices:
+   ID        SIZE  PATH            
+    1   499.73GiB  /dev/bfs-vg/home
+
+
+==> Formatting /dev/bfs-vg/var as btrfs for /var
+btrfs-progs v7.0
+See https://btrfs.readthedocs.io for more information.
+
+NOTE: default settings have changed in version 6.19 (supported since linux 6.1):
+      - enable block-group-tree (-O bgt)
+
+Label:              (null)
+UUID:               669bcefd-213a-450d-bd12-e27bd03b43c4
+Node size:          16384
+Sector size:        4096	(CPU page size: 4096)
+Filesystem size:    499.73GiB
+Block group profiles:
+  Data:             single            8.00MiB
+  Metadata:         DUP               1.00GiB
+  System:           DUP               8.00MiB
+SSD detected:       no
+Zoned device:       no
+Features:           extref, skinny-metadata, no-holes, free-space-tree, block-group-tree
+Checksum:           crc32c
+Number of devices:  1
+Devices:
+   ID        SIZE  PATH           
+    1   499.73GiB  /dev/bfs-vg/var
+
+
+==> Creating Btrfs data and snapshot subvolumes
+Create subvolume '/tmp/bfs-btrfs.kUUkWq/@'
+Create subvolume '/tmp/bfs-btrfs.kUUkWq/@snapshots'
+Create subvolume '/tmp/bfs-btrfs.i2TXGX/@home'
+Create subvolume '/tmp/bfs-btrfs.i2TXGX/@home-snapshots'
+Create subvolume '/tmp/bfs-btrfs.Z8qLTW/@var'
+Create subvolume '/tmp/bfs-btrfs.Z8qLTW/@var-snapshots'
+
+==> Mounting target filesystems
+
+==> Extracting BFS root filesystem
+
+==> Saving BFS base archive
+
+==> Saved base archive to /var/cache/bfs/archives/base/bfs-rootfs-0.9.0-20260808.tar.xz
+
+==> Generating clean /etc/fstab
+
+==> Generated /etc/fstab passed syntax validation
+
+==> Generating /etc/crypttab
+
+ERROR: Encrypted storage was detected, but no crypttab entries could be generated.
+
+============================================================
+Finished:       2026-08-09T22:18:31+00:00
+Result:         FAILED
+Exit status:    1
+Elapsed:        00:19:03
+============================================================

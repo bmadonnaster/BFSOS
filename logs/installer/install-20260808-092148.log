@@ -1,0 +1,25 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-08T09:21:48+00:00
+Script:         ./install-bfs-menu-v40-lvm-percent-shorthand-fixed.sh
+Script path:    /mnt/bfs-build/bfs-linux-install/install-bfs-menu-v40-lvm-percent-shorthand-fixed.sh
+Log file:       /mnt/bfs-build/bfs-linux-install/logs/installer/install-20260808-092148.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  115798
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+
+
+ERROR: Installation stopped near line 1798.
+
+============================================================
+Finished:       2026-08-08T09:22:17+00:00
+Result:         FAILED
+Exit status:    1
+Elapsed:        00:00:29
+============================================================

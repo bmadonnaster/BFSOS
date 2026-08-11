@@ -1,0 +1,389 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-08T20:40:49+00:00
+Script:         ./install-bfs-menu-v42-snapper-config-fixed.sh
+Script path:    /mnt/bfs-build/BFSOS/install-bfs-menu-v42-snapper-config-fixed.sh
+Log file:       /mnt/bfs-build/BFSOS/logs/installer/install-20260808-204049.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  6030
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+[H[2J[3JRAID selection summary
+======================
+
+RAID type     : RAID 5
+Minimum disks : 3
+Layout        : Striping with distributed parity
+Redundancy    : One drive may fail
+Performance   : Fast reads; good general-purpose writes
+Usable space  : Capacity of N-1 members
+
+Press Enter to continue...[H[2J[3JSelect RAID member devices
+==========================
+
+Selected: none
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JSelect RAID member devices
+==========================
+
+Selected: /dev/vdb1
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JSelect RAID member devices
+==========================
+
+Selected: /dev/vdb1 /dev/vdc1
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JSelect RAID member devices
+==========================
+
+Selected: /dev/vdb1 /dev/vdc1 /dev/vdd1
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JSelect RAID member devices
+==========================
+
+Selected: /dev/vdb1 /dev/vdc1 /dev/vdd1 /dev/vde1
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JSelect RAID member devices
+==========================
+
+Selected: /dev/vdb1 /dev/vdc1 /dev/vdd1 /dev/vde1 /dev/vdf1
+
+  1) /dev/vda disk 250G  
+  2) /dev/vda1 part 488M vfat 
+  3) /dev/vda2 part 1.9G ext2 
+  4) /dev/vda3 part 29.8G swap 
+  5) /dev/vda4 part 217.9G btrfs 
+  6) /dev/vdb disk 250G  
+  7) /dev/vdb1 part 250G  
+  8) /dev/vdc disk 250G  
+  9) /dev/vdc1 part 250G  
+  10) /dev/vdd disk 250G  
+  11) /dev/vdd1 part 250G  
+  12) /dev/vde disk 250G  
+  13) /dev/vde1 part 250G  
+  14) /dev/vdf disk 250G  
+  15) /dev/vdf1 part 250G  
+  16) Finished selecting members
+  17) Cancel
+
+Choose [1-17]: [H[2J[3JCreate software RAID array
+==========================
+
+RAID level: 5
+Members:    /dev/vdb1 /dev/vdc1 /dev/vdd1 /dev/vde1 /dev/vdf1
+
+Array device [/dev/md0]: To optimize recovery speed, it is recommended to enable write-intent bitmap, do you want to enable it now? [y/N]? mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
+
+Personalities : [raid4] [raid5] [raid6] 
+md0 : active raid5 vdf1[5] vde1[3] vdd1[2] vdc1[1] vdb1[0]
+      1048039424 blocks super 1.2 level 5, 512k chunk, algorithm 2 [5/4] [UUUU_]
+      [>....................]  recovery =  0.0% (8340/262009856) finish=522.8min speed=8340K/sec
+      bitmap: 2/2 pages [8KB], 65536KB chunk
+
+unused devices: <none>
+
+Press Enter to continue...[H[2J[3JSoftware RAID status
+====================
+
+Personalities : [raid4] [raid5] [raid6] 
+md0 : active raid5 vdf1[5] vde1[3] vdd1[2] vdc1[1] vdb1[0]
+      1048039424 blocks super 1.2 level 5, 512k chunk, algorithm 2 [5/4] [UUUU_]
+      [>....................]  recovery =  0.5% (1427388/262009856) finish=42.5min speed=101956K/sec
+      bitmap: 0/2 pages [0KB], 65536KB chunk
+
+unused devices: <none>
+
+------------------------------------------------------------
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sat Aug  8 20:43:34 2026
+        Raid Level : raid5
+        Array Size : 1048039424 (999.49 GiB 1073.19 GB)
+     Used Dev Size : 262009856 (249.87 GiB 268.30 GB)
+      Raid Devices : 5
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+     Intent Bitmap : Internal
+
+       Update Time : Sat Aug  8 20:43:47 2026
+             State : clean, degraded, recovering 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : bitmap
+
+    Rebuild Status : 0% complete
+
+              Name : livecd:0  (local to host livecd)
+              UUID : 978f7d61:b4d175df:7fae5601:ce89f8e9
+            Events : 3
+
+    Number   Major   Minor   RaidDevice State
+       0     253       17        0      active sync   /dev/vdb1
+       1     253       33        1      active sync   /dev/vdc1
+       2     253       49        2      active sync   /dev/vdd1
+       3     253       65        3      active sync   /dev/vde1
+       5     253       81        4      spare rebuilding   /dev/vdf1
+
+------------------------------------------------------------
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sat Aug  8 20:43:34 2026
+        Raid Level : raid5
+        Array Size : 1048039424 (999.49 GiB 1073.19 GB)
+     Used Dev Size : 262009856 (249.87 GiB 268.30 GB)
+      Raid Devices : 5
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+     Intent Bitmap : Internal
+
+       Update Time : Sat Aug  8 20:43:47 2026
+             State : clean, degraded, recovering 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : bitmap
+
+    Rebuild Status : 0% complete
+
+              Name : livecd:0  (local to host livecd)
+              UUID : 978f7d61:b4d175df:7fae5601:ce89f8e9
+            Events : 3
+
+    Number   Major   Minor   RaidDevice State
+       0     253       17        0      active sync   /dev/vdb1
+       1     253       33        1      active sync   /dev/vdc1
+       2     253       49        2      active sync   /dev/vdd1
+       3     253       65        3      active sync   /dev/vde1
+       5     253       81        4      spare rebuilding   /dev/vdf1
+
+------------------------------------------------------------
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sat Aug  8 20:43:34 2026
+        Raid Level : raid5
+        Array Size : 1048039424 (999.49 GiB 1073.19 GB)
+     Used Dev Size : 262009856 (249.87 GiB 268.30 GB)
+      Raid Devices : 5
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+     Intent Bitmap : Internal
+
+       Update Time : Sat Aug  8 20:43:47 2026
+             State : clean, degraded, recovering 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : bitmap
+
+    Rebuild Status : 0% complete
+
+              Name : livecd:0  (local to host livecd)
+              UUID : 978f7d61:b4d175df:7fae5601:ce89f8e9
+            Events : 3
+
+    Number   Major   Minor   RaidDevice State
+       0     253       17        0      active sync   /dev/vdb1
+       1     253       33        1      active sync   /dev/vdc1
+       2     253       49        2      active sync   /dev/vdd1
+       3     253       65        3      active sync   /dev/vde1
+       5     253       81        4      spare rebuilding   /dev/vdf1
+
+------------------------------------------------------------
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sat Aug  8 20:43:34 2026
+        Raid Level : raid5
+        Array Size : 1048039424 (999.49 GiB 1073.19 GB)
+     Used Dev Size : 262009856 (249.87 GiB 268.30 GB)
+      Raid Devices : 5
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+     Intent Bitmap : Internal
+
+       Update Time : Sat Aug  8 20:43:47 2026
+             State : clean, degraded, recovering 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : bitmap
+
+    Rebuild Status : 0% complete
+
+              Name : livecd:0  (local to host livecd)
+              UUID : 978f7d61:b4d175df:7fae5601:ce89f8e9
+            Events : 3
+
+    Number   Major   Minor   RaidDevice State
+       0     253       17        0      active sync   /dev/vdb1
+       1     253       33        1      active sync   /dev/vdc1
+       2     253       49        2      active sync   /dev/vdd1
+       3     253       65        3      active sync   /dev/vde1
+       5     253       81        4      spare rebuilding   /dev/vdf1
+
+------------------------------------------------------------
+/dev/md0:
+           Version : 1.2
+     Creation Time : Sat Aug  8 20:43:34 2026
+        Raid Level : raid5
+        Array Size : 1048039424 (999.49 GiB 1073.19 GB)
+     Used Dev Size : 262009856 (249.87 GiB 268.30 GB)
+      Raid Devices : 5
+     Total Devices : 5
+       Persistence : Superblock is persistent
+
+     Intent Bitmap : Internal
+
+       Update Time : Sat Aug  8 20:43:47 2026
+             State : clean, degraded, recovering 
+    Active Devices : 4
+   Working Devices : 5
+    Failed Devices : 0
+     Spare Devices : 1
+
+            Layout : left-symmetric
+        Chunk Size : 512K
+
+Consistency Policy : bitmap
+
+    Rebuild Status : 0% complete
+
+              Name : livecd:0  (local to host livecd)
+              UUID : 978f7d61:b4d175df:7fae5601:ce89f8e9
+            Events : 3
+
+    Number   Major   Minor   RaidDevice State
+       0     253       17        0      active sync   /dev/vdb1
+       1     253       33        1      active sync   /dev/vdc1
+       2     253       49        2      active sync   /dev/vdd1
+       3     253       65        3      active sync   /dev/vde1
+       5     253       81        4      spare rebuilding   /dev/vdf1
+
+Press Enter to continue...Installer exited.
+
+============================================================
+Finished:       2026-08-08T20:47:15+00:00
+Result:         SUCCESS
+Exit status:    0
+Elapsed:        00:06:26
+============================================================

@@ -1,0 +1,25 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-10T05:32:04+00:00
+Script:         ./install-bfs-menu-v50-tracker-fixed-r21.sh
+Script path:    /mnt/bfs-build/BFSOS/install-bfs-menu-v50-tracker-fixed-r21.sh
+Log file:       /mnt/bfs-build/BFSOS/logs/installer/install-20260810-053204.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  14126
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
+Installer exited.
+
+============================================================
+Finished:       2026-08-10T05:32:58+00:00
+Result:         SUCCESS
+Exit status:    0
+Elapsed:        00:00:54
+============================================================

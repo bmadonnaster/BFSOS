@@ -1,0 +1,25 @@
+============================================================
+BFS Linux Installer
+Started:        2026-08-10T02:38:44+00:00
+Script:         ./install-bfs-menu-v50-tracker-fixed-r5-classic-slackware.sh
+Script path:    /mnt/bfs-build/BFSOS/install-bfs-menu-v50-tracker-fixed-r5-classic-slackware.sh
+Log file:       /mnt/bfs-build/BFSOS/logs/installer/install-20260810-023844.log
+Host:           livecd
+Kernel:         7.1.3-gentoo-dist
+Architecture:   x86_64
+Installer PID:  5436
+Target:         /mnt/bfs
+Locale runtime: LANG=C LC_ALL=C LANGUAGE=C
+============================================================
+
+==> Preparing clean installer mount state
+mdadm: No arrays found in config file or automatically
+
+ERROR: Installation stopped near line 1777.
+
+============================================================
+Finished:       2026-08-10T02:39:30+00:00
+Result:         FAILED
+Exit status:    1
+Elapsed:        00:00:46
+============================================================
