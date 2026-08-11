@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFSOS installer - v50 tracker fixes r35 (tracker issues 57-71)
+# BFSOS installer - v50 tracker fixes r36 (tracker issues through 82)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -130,7 +130,7 @@ BASE_ARCHIVE_DIR="${BFS_BASE_ARCHIVE_DIR:-/var/cache/bfs/archives/base}"
 ENABLE_OPENSSH="${BFS_ENABLE_OPENSSH:-${BFS_INSTALL_OPENSSH:-yes}}"
 INSTALL_GIT="${BFS_INSTALL_GIT:-yes}"
 INSTALL_SUDO="${BFS_INSTALL_SUDO:-yes}"
-SUDO_MODE="${BFS_SUDO_MODE:-password}"
+SUDO_MODE="${BFS_SUDO_MODE:-password}"  # default: authenticate with invoking user password
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
 INSTALL_WPA_SUPPLICANT="${BFS_INSTALL_WPA_SUPPLICANT:-no}"
 INSTALL_WIRELESS_TOOLS="${BFS_INSTALL_WIRELESS_TOOLS:-no}"
@@ -217,6 +217,7 @@ CONSOLE_FONT_SIZE="default"
 CONSOLE_FONT_OVERRIDE="${BFS_CONSOLE_FONT:-}"
 INSTALL_CONSOLE_FONT="${BFS_INSTALL_CONSOLE_FONT:-no}"
 SELECTED_MENU_CHOICE=""
+INSTALL_CONFIRMED=no
 
 load_installer_settings() {
         [[ -f "$INSTALLER_SETTINGS_FILE" ]] || return 0
@@ -545,18 +546,19 @@ select_installer_theme() {
                         dialog --stdout --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "Interface Theme" \
+                                --cancel-label "Back" \
                                 --radiolist \
                                 "Choose the installer theme." \
-                                19 72 6 \
-                                monochrome "Best compatibility for SSH and unusual palettes" \
-                                        "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
-                                classic "Classic Debian — Debian installer/newt-style theme" \
-                                        "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
-                                midnight "Midnight Commander-style theme" \
-                                        "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
-                                slackware "Classic Slackware setup-style cyan theme" \
+                                20 82 7 \
+                                Slackware "Classic Slackware setup-style cyan theme (default)" \
                                         "$([[ "$BFS_THEME" == slackware ]] && echo on || echo off)" \
-                                light "Black text on a light background" \
+                                Debian "Classic Debian installer/newt-style theme" \
+                                        "$([[ "$BFS_THEME" == classic ]] && echo on || echo off)" \
+                                Monochrome "Best compatibility for SSH and unusual palettes" \
+                                        "$([[ "$BFS_THEME" == monochrome ]] && echo on || echo off)" \
+                                Midnight "Midnight Commander-style theme" \
+                                        "$([[ "$BFS_THEME" == midnight ]] && echo on || echo off)" \
+                                Light "Black text on a light background" \
                                         "$([[ "$BFS_THEME" == light ]] && echo on || echo off)" \
                                 </dev/tty
                 )"; then
@@ -564,31 +566,37 @@ select_installer_theme() {
                 else
                         status=$?
                 fi
-                [[ -n "$choice" ]] || return 0
-        else
-                echo "  1) Monochrome"
-                echo "  2) Classic Debian"
-                echo "  3) Midnight"
-                echo "  4) Classic Slackware"
-                echo "  5) Light"
-                read -r -p "Choose [1-5, current: $(theme_display_name)]: " choice
+                [[ "$status" -eq 0 && -n "$choice" ]] || return 0
                 case "$choice" in
-                        1) choice=monochrome ;;
+                        Slackware) choice=slackware ;;
+                        Debian) choice=classic ;;
+                        Monochrome) choice=monochrome ;;
+                        Midnight) choice=midnight ;;
+                        Light) choice=light ;;
+                esac
+        else
+                echo "  1) Slackware (Classic Slackware, default)"
+                echo "  2) Debian (Classic Debian)"
+                echo "  3) Monochrome"
+                echo "  4) Midnight"
+                echo "  5) Light"
+                echo "  6) Back"
+                read -r -p "Choose [1-6, current: $(theme_display_name)]: " choice
+                case "$choice" in
+                        1) choice=slackware ;;
                         2) choice=classic ;;
-                        3) choice=midnight ;;
-                        4) choice=slackware ;;
+                        3) choice=monochrome ;;
+                        4) choice=midnight ;;
                         5) choice=light ;;
-                        "") return 0 ;;
+                        6|"") return 0 ;;
                         *) warn "Invalid theme selection."; return 1 ;;
                 esac
         fi
 
-        [[ -n "$choice" ]] || return 0
         BFS_THEME="$choice"
         setup_installer_theme
         save_installer_settings
 }
-
 profile_quote() { printf '%q' "$1"; }
 
 save_installer_profile() {
@@ -825,7 +833,7 @@ storage_reset_destroy_metadata() {
                 pvremove -ff -y "$dev" 2>/dev/null || true
                 wipefs -a "$dev" 2>/dev/null || true
         done <<<"$choice"
-        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        refresh_storage_state
         dialog_message "Storage reset" "Selected storage metadata was removed.\n\nRe-scan with lsblk, /proc/mdstat, and mdadm --examine before starting a new install."
 }
 
@@ -1204,7 +1212,7 @@ confirm_continue() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v50-tracker-fixed-r26.sh [options]
+Usage: install-bfs-menu-v50-tracker-fixed-r36.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -1825,6 +1833,39 @@ get_whole_disks() {
         }'
 }
 
+refresh_storage_state() {
+        local disk="" failed=0
+
+        sync
+
+        # Ask the kernel to reread partition tables on all whole disks. Busy
+        # devices are reported but do not abort the installer; the subsequent
+        # inventory is always rebuilt from current kernel state.
+        while IFS= read -r disk; do
+                [[ -b "$disk" ]] || continue
+                if command -v partprobe >/dev/null 2>&1; then
+                        partprobe "$disk" >/dev/null 2>&1 || {
+                                warn "Could not refresh the partition table for $disk (device may be busy)."
+                                failed=1
+                        }
+                elif command -v blockdev >/dev/null 2>&1; then
+                        blockdev --rereadpt "$disk" >/dev/null 2>&1 || {
+                                warn "Could not reread the partition table for $disk (device may be busy)."
+                                failed=1
+                        }
+                fi
+        done < <(lsblk -dnpo NAME,TYPE 2>/dev/null | awk '$2=="disk" {print $1}')
+
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        command -v pvscan >/dev/null 2>&1 && pvscan --cache >/dev/null 2>&1 || true
+        command -v vgscan >/dev/null 2>&1 && vgscan --mknodes >/dev/null 2>&1 || true
+
+        # Rebuild the installer's cached device arrays; never carry a pre-change
+        # inventory into the next storage screen.
+        get_available_partitions
+        return 0
+}
+
 partition_disks() {
         local choice="" disk="" index="" line="" status=0
         local -a disk_paths=()
@@ -1897,8 +1938,7 @@ partition_disks() {
                         pause_screen
                 fi
 
-                command -v partprobe >/dev/null 2>&1 && partprobe "$disk" || true
-                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                refresh_storage_state
                 sleep 1
         done
 }
@@ -2152,8 +2192,7 @@ assemble_raid_arrays() {
                 assemble_status=$?
         fi
 
-        command -v udevadm >/dev/null 2>&1 &&
-                udevadm settle || true
+        refresh_storage_state
 
         status_text="$(cat /proc/mdstat 2>/dev/null || true)"
 
@@ -2192,14 +2231,14 @@ create_raid_array() {
         else
                 mdadm --create "$array_device" --run --force --level="$raid_level" --raid-devices="${#members[@]}" "${bitmap_args[@]}" "${members[@]}"
         fi
-        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        refresh_storage_state
 
         local stale_signatures=""
         stale_signatures="$(wipefs -n "$array_device" 2>/dev/null | sed '1d' || true)"
         if [[ -n "$stale_signatures" ]]; then
                 if confirm "The newly created array $array_device still exposes old filesystem/LUKS signatures:\n\n$stale_signatures\n\nWipe these stale signatures now?\n\nThis affects only signatures on the assembled array, not its MD member metadata."; then
                         wipefs -a "$array_device"
-                        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                        refresh_storage_state
                 else
                         dialog_message "RAID signatures kept" "The stale signatures were left intact. They may hide $array_device from later LUKS/filesystem selectors."
                 fi
@@ -2400,7 +2439,7 @@ luks_menu() {
                                 fi
                                 pass1=""; pass2=""
                                 OPENED_LUKS_BY_SCRIPT+=("$mapping")
-                                udevadm settle 2>/dev/null || true
+                                refresh_storage_state
                                 if [[ -b "/dev/mapper/$mapping" ]] && cryptsetup status "$mapping" >/dev/null 2>&1; then
                                         dialog_message "LUKS ready" "$device is encrypted and open as /dev/mapper/$mapping."
                                 else
@@ -2413,7 +2452,7 @@ luks_menu() {
                                 ask_mapping_name mapping "cryptroot" || continue
                                 dialog_password pass1 "LUKS passphrase" "Enter the passphrase for $device." || continue
                                 if printf '%s' "$pass1" | cryptsetup open --key-file - "$device" "$mapping"; then
-                                        OPENED_LUKS_BY_SCRIPT+=("$mapping"); udevadm settle 2>/dev/null || true
+                                        OPENED_LUKS_BY_SCRIPT+=("$mapping"); refresh_storage_state
                                         dialog_message "LUKS opened" "$device is open as /dev/mapper/$mapping."
                                 else
                                         dialog_message "LUKS error" "Could not open $device."
@@ -2422,7 +2461,12 @@ luks_menu() {
                                 ;;
                         3)
                                 ask_default mapping "Mapping name to close" "cryptroot" || continue
-                                if cryptsetup close "$mapping"; then dialog_message "LUKS closed" "/dev/mapper/$mapping was closed."; else dialog_message "LUKS error" "Could not close $mapping."; fi
+                                if cryptsetup close "$mapping"; then
+                                        refresh_storage_state
+                                        dialog_message "LUKS closed" "/dev/mapper/$mapping was closed."
+                                else
+                                        dialog_message "LUKS error" "Could not close $mapping."
+                                fi
                                 ;;
                         4) return 0 ;;
                 esac
@@ -2639,7 +2683,7 @@ lvm_menu() {
                                         dialog_message "LVM error" "pvcreate failed. Returning to the LVM menu."
                                         continue
                                 fi
-                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                                refresh_storage_state
                                 dialog_message "LVM physical volume" "Physical volume creation completed successfully.\n\n${pv_array[*]}"
                                 ;;
                         2)
@@ -2663,7 +2707,7 @@ lvm_menu() {
                                         continue
                                 fi
                                 ACTIVATED_VGS_BY_SCRIPT+=("$vg_name")
-                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                                refresh_storage_state
                                 dialog_message "LVM volume group" "Volume group '$vg_name' created successfully."
                                 ;;
                         3)
@@ -2719,7 +2763,7 @@ lvm_menu() {
                                         continue
                                 fi
 
-                                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                                refresh_storage_state
                                 dialog_message "LVM logical volume" "Logical volume '$lv_name' created successfully in '$vg_name'."
                                 ;;
                         4)
@@ -3854,9 +3898,22 @@ installer_menu() {
                         7)  configure_packages ;;
                         8)  configure_sudo ;;
                         9)  configure_bootloader ;;
-                        10) show_summary ;;
+                        10)
+                                show_summary
+                                if installer_ready; then
+                                        while true; do
+                                                if confirm_continue "Begin the BFS installation?"; then
+                                                        INSTALL_CONFIRMED=yes
+                                                        return 0
+                                                fi
+                                                # Back from Ready to install returns directly to Review.
+                                                show_summary
+                                        done
+                                fi
+                                ;;
                         11)
                                 if installer_ready; then
+                                        INSTALL_CONFIRMED=no
                                         return 0
                                 fi
 
@@ -4350,6 +4407,7 @@ format_device() {
                 vfat) mkfs.fat -F 32 "$device" ;;
                 swap) mkswap -f "$device" ;;
         esac
+        refresh_storage_state
 }
 
 
@@ -5846,9 +5904,9 @@ set -e
 modprobe zram 2>/dev/null || true
 [[ -b /dev/zram0 ]] || { echo "zram0 device is unavailable" >&2; exit 1; }
 mem_kb="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
-size_bytes=$((mem_kb * 1024 / 2))
-cap=$((8 * 1024 * 1024 * 1024))
-((size_bytes > cap)) && size_bytes=$cap
+# BFSOS default: ZRAM capacity is twice physical RAM. This is compressed
+# virtual capacity, not preallocated physical memory.
+size_bytes=$((mem_kb * 1024 * 2))
 if [[ -e /sys/block/zram0/reset ]]; then
         swapoff /dev/zram0 2>/dev/null || true
         echo 1 > /sys/block/zram0/reset 2>/dev/null || true
@@ -5869,6 +5927,7 @@ EOF_ZRAM_STOP
         cat > "$service" <<'EOF_ZRAM_SERVICE'
 [Unit]
 Description=BFSOS compressed ZRAM swap
+DefaultDependencies=no
 After=systemd-modules-load.service
 Before=swap.target
 
@@ -6334,9 +6393,9 @@ post_install_menu() {
 offer_final_chroot() {
         show_installation_success_dialog
         post_install_menu
-        printf '
-BFS installation completed. The installer will unmount the target filesystems.
-'
+        # Finish returns directly to the calling shell/bootstrap. Cleanup is
+        # handled by the normal EXIT trap without another completion message.
+        reset_terminal_ui
 }
 
 main() {
@@ -6358,16 +6417,17 @@ main() {
         prepare_target_environment
 
         while true; do
+                INSTALL_CONFIRMED=no
                 installer_menu
                 validate_settings
-                # Option 10 is the explicit review screen and ends with Continue.
-                # The Install action itself presents only the actual
-                # Continue/Back decision, avoiding two consecutive Continue
-                # summary screens.
+
+                # Review (option 10) already flows through Ready to install.
+                [[ "$INSTALL_CONFIRMED" == yes ]] && break
+
+                # Direct option 11 opens Ready to install; Back returns to menu.
                 if confirm_continue "Begin the BFS installation?"; then
                         break
                 fi
-                # "Back" means back to configuration/review, not fatal cleanup.
         done
 
         format_selected_partitions
@@ -6384,23 +6444,6 @@ main() {
         offer_package_cache_cleanup
 
         log "Installation complete"
-
-        cat <<DONE
-
-Review before rebooting:
-
-    $TARGET/etc/fstab
-    $TARGET/etc/hostname
-    $TARGET/etc/locale.conf
-    $TARGET/etc/systemd/network/10-bfs-ethernet.link
-    $TARGET/boot/grub/grub.cfg
-
-Saved validation manifests:
-
-    $TARGET/root/base-system.manifest
-    $TARGET/root/systemd-units.manifest
-    $TARGET/root/ldconfig.manifest
-DONE
 
         offer_final_chroot
 

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r43 - integrated build/install workflow
+# BFSOS bootstrap r44 - tracker fixes 75/77
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -872,8 +872,19 @@ _bootstrap_menu() {
             5) set +e; _compressrootfs; status=$?; set -e ;;
             6) set +e; _restore_rootfs; status=$?; set -e ;;
             7) set +e; _restore_toolchain; status=$?; set -e ;;
-            8) set +e; _run_root_stage 8; status=$?; set -e ;;
-            9) set +e; _launch_bfs_installer; status=$?; set -e ;;
+            8)
+                # Chroot is an optional action. If it is not currently usable,
+                # simply redraw the menu without an error/success/pause screen.
+                _chroot_available || continue
+                set +e; _run_root_stage 8; status=$?; set -e
+                ;;
+            9)
+                # The installer owns its own UI/result handling. When it exits,
+                # restore the terminal and immediately redraw bootstrap.
+                set +e; _launch_bfs_installer; status=$?; set -e
+                _reset_terminal_ui
+                continue
+                ;;
             10) bootstrap_settings_menu; continue ;;
             11|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
             *) echo "Invalid selection."; sleep 1; continue ;;
