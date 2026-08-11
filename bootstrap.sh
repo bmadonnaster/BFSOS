@@ -106,7 +106,7 @@ load_bootstrap_settings() {
         case "$key" in
             BFS_THEME)
                 case "$value" in
-                    slackware|midnight|light|monochrome) BFS_THEME="$value" ;;
+                    slackware|classic|midnight|light|monochrome) BFS_THEME="$value" ;;
                     *) BFS_THEME=slackware ;;
                 esac
                 ;;
@@ -306,11 +306,14 @@ select_bootstrap_theme() {
             dialog --stdout --clear \
                 --backtitle "BFS Linux Bootstrap" \
                 --title "Interface Theme" \
+                --cancel-label "Back" \
                 --radiolist \
                 "Choose the bootstrap theme." \
-                19 72 6 \
+                20 78 7 \
                 slackware "Classic Slackware setup-style cyan theme (default)" \
                     "$([ "$BFS_THEME" = slackware ] && echo on || echo off)" \
+                classic "Classic Debian installer/newt-style theme" \
+                    "$([ "$BFS_THEME" = classic ] && echo on || echo off)" \
                 monochrome "Best compatibility for SSH and unusual palettes" \
                     "$([ "$BFS_THEME" = monochrome ] && echo on || echo off)" \
                 midnight "Midnight Commander-style theme" \
@@ -321,6 +324,8 @@ select_bootstrap_theme() {
         )"
         status=$?
         set -e
+
+        # Cancel/Back means return directly to Bootstrap Settings.
         [ "$status" -eq 0 ] || return 0
         [ -n "$choice" ] || return 0
     else
@@ -329,21 +334,23 @@ select_bootstrap_theme() {
         echo "  3) Monochrome"
         echo "  4) Midnight"
         echo "  5) Light"
-        read -r -p "Choose [1-5, current: $(theme_display_name)]: " choice
+        echo "  6) Back"
+        read -r -p "Choose [1-6, current: $(theme_display_name)]: " choice
         case "$choice" in
             1) choice=slackware ;;
             2) choice=classic ;;
             3) choice=monochrome ;;
             4) choice=midnight ;;
             5) choice=light ;;
-            "") return 0 ;;
-            *) echo "Invalid theme selection."; return 1 ;;
+            6|"") return 0 ;;
+            *) echo "Invalid theme selection."; return 0 ;;
         esac
     fi
 
     BFS_THEME="$choice"
     setup_bootstrap_theme
     save_bootstrap_settings
+    return 0
 }
 
 bootstrap_settings_menu() {
@@ -382,12 +389,13 @@ bootstrap_settings_menu() {
         fi
 
         case "$choice" in
-            1) set +e; select_bootstrap_theme; status=$?; set -e; [ "$status" -eq 0 ] || return "$status" ;;
+            1) select_bootstrap_theme ;;
             2) return 0 ;;
-            *) echo "Invalid settings selection."; sleep 1 ;;
+            *) ;;
         esac
     done
 }
+
 
 case "${1:-menu}" in
     0|stop|kill|-h|--help|help) ;;
@@ -829,7 +837,7 @@ _bootstrap_menu() {
             7) set +e; _restore_toolchain; status=$?; set -e ;;
             8) set +e; _run_root_stage 8; status=$?; set -e ;;
             9) set +e; _launch_bfs_installer; status=$?; set -e ;;
-            10) set +e; bootstrap_settings_menu; status=$?; set -e ;;
+            10) bootstrap_settings_menu; continue ;;
             11|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
             *) echo "Invalid selection."; sleep 1; continue ;;
         esac
