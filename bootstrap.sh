@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r41 - integrated build/install workflow
+# BFSOS bootstrap r42 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -836,8 +836,8 @@ _select_bootstrap_menu_choice() {
                 7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
                 8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
-                10 "Settings" \
                 11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
+                10 "Settings" \
                 --stdout </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
