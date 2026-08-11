@@ -12,6 +12,9 @@ bfs-install*.log
 # Build logs
 logs/toolchain/*
 logs/base/*
+.bfs*
+.bootstrap.pid 
+bfs-installer-profile.conf 
 # Keep the directories
 !logs/toolchain/.gitkeep
 !logs/base/.gitkeep
