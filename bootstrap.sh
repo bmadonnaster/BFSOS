@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r40 - integrated build/install workflow
+# BFSOS bootstrap r41 - integrated build/install workflow
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -785,7 +785,7 @@ _show_bootstrap_menu() {
         'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sNOT AVAILABLE%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s9)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
-    printf '  %s10)%s %-54s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' "[Theme: $(theme_display_name)]"
+    printf '  %s10)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' 
     printf '  %s11)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
@@ -836,7 +836,7 @@ _select_bootstrap_menu_choice() {
                 7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
                 8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
-                10 "$(_dialog_menu_description 'Settings' "Theme: $(theme_display_name)")" \
+                10 "Settings" \
                 11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
                 --stdout </dev/tty 2>/dev/tty
         )"
