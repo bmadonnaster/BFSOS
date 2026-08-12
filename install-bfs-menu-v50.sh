@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFSOS installer - v50 tracker fixes r36 (tracker issues through 82)
+# BFSOS installer - v50 tracker fixes r40 (RC tracker consolidation through 93)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -134,6 +134,7 @@ SUDO_MODE="${BFS_SUDO_MODE:-password}"  # default: authenticate with invoking us
 INSTALL_WGET="${BFS_INSTALL_WGET:-yes}"
 INSTALL_WPA_SUPPLICANT="${BFS_INSTALL_WPA_SUPPLICANT:-no}"
 INSTALL_WIRELESS_TOOLS="${BFS_INSTALL_WIRELESS_TOOLS:-no}"
+INSTALL_GPM="${BFS_INSTALL_GPM:-no}"
 INSTALL_NETWORKMANAGER="${BFS_INSTALL_NETWORKMANAGER:-no}"
 # cryptsetup is installer-managed. It is installed automatically when the
 # final selected storage topology contains a LUKS/crypt layer.
@@ -145,6 +146,9 @@ KEEP_MOUNTS="${BFS_KEEP_MOUNTS:-no}"
 FINAL_CHROOT="${BFS_FINAL_CHROOT:-no}"
 GRUB_FALLBACK="${BFS_GRUB_FALLBACK:-no}"
 ZRAM_SWAP="${BFS_ZRAM_SWAP:-auto}"
+ZRAM_MAX_GIB="${BFS_ZRAM_MAX_GIB:-32}"
+CONSOLE_VIDEO_MODE="${BFS_CONSOLE_VIDEO_MODE:-1920x1080@60}"
+CONSOLE_VIDEO_ARG=""
 CLEAR_PACKAGE_CACHE="${BFS_CLEAR_PACKAGE_CACHE:-ask}"
 
 DISKS_CONFIGURED=no
@@ -470,7 +474,10 @@ find_console_font_for_size() {
                         patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*')
                         ;;
                 20)
-                        patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' '*Terminus*20*' '*20*.psf*')
+                        patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatGrkCyr-12x22*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*20*.psf*')
+                        ;;
+                32)
+                        patterns=('latarcyrheb-sun32*' '*sun32*' '*32*.psf*')
                         ;;
                 *) return 1 ;;
         esac
@@ -495,7 +502,7 @@ apply_console_font() {
                 default)
                         setfont >/dev/tty 2>/dev/tty || true
                         ;;
-                16|20)
+                16|20|32)
                         font="$(find_console_font_for_size "$size" || true)"
                         if [[ -z "$font" ]]; then
                                 warn "No ${size}-pixel console font was found; keeping the current console font."
@@ -512,7 +519,8 @@ console_font_display_name() {
         case "$CONSOLE_FONT_SIZE" in
                 default) printf '%s' "Default" ;;
                 16) printf '%s' "Large 16" ;;
-                20) printf '%s' "Large 20" ;;
+                20) printf '%s' "Large ~20" ;;
+                32) printf '%s' "Extra Large 32" ;;
                 *) printf '%s' "$CONSOLE_FONT_SIZE" ;;
         esac
 }
@@ -521,10 +529,11 @@ select_console_font_size() {
         local choice="" status=0
         themed_menu choice "Console Font Size" \
                 "Choose the Linux virtual-console font size for this installer session.\n\nLarge fonts are most useful on high-DPI/4K displays." \
-                18 78 6 \
+                19 78 7 \
                 default "Default console font" \
                 16 "Large 16-pixel font" \
-                20 "Large 20-pixel font"
+                20 "Large ~20-pixel font (19/20/22 fallback)" \
+                32 "Extra Large 32-pixel font (recommended for high-DPI)"
         [[ -n "$choice" ]] || return 0
         CONSOLE_FONT_PREFERENCE="$choice"
         CONSOLE_FONT_SIZE="$choice"
@@ -603,7 +612,7 @@ save_installer_profile() {
         local path="${1:-$INSTALLER_PROFILE_FILE}" i
         {
                 echo '# BFSOS installer profile v1 - no passwords or LUKS passphrases are stored.'
-                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_NETWORKMANAGER ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
+                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE ZRAM_MAX_GIB ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
                         printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
                 done
                 for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'; done
@@ -626,7 +635,7 @@ load_installer_profile() {
                 [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
                 eval "value=$raw"
                 case "$key" in
-                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_WIRELESS_TOOLS|INSTALL_NETWORKMANAGER|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP) printf -v "$key" '%s' "$value" ;;
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_WIRELESS_TOOLS|INSTALL_GPM|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|ZRAM_MAX_GIB|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP) printf -v "$key" '%s' "$value" ;;
                         ADDITIONAL_USER) ADDITIONAL_USERS+=("$value") ;;
                         STORAGE) IFS='|' read -r a b c <<<"$value"; STORAGE_DEVICES+=("$a"); STORAGE_FORMATS+=("$b"); STORAGE_MOUNTPOINTS+=("$c") ;;
                 esac
@@ -1212,7 +1221,7 @@ confirm_continue() {
 
 usage() {
         cat <<'USAGE'
-Usage: install-bfs-menu-v50-tracker-fixed-r36.sh [options]
+Usage: install-bfs-menu-v50.sh [options]
 
 The installer may be started as a regular user. It authenticates with sudo
 once, then re-executes the full installer as root.
@@ -3343,6 +3352,33 @@ configure_archive() {
         ARCHIVE_CONFIGURED=yes
 }
 
+detect_console_video_argument() {
+        local status_file="" connector=""
+        CONSOLE_VIDEO_ARG=""
+        [[ -n "$CONSOLE_VIDEO_MODE" ]] || return 0
+        for status_file in /sys/class/drm/card*-*/status; do
+                [[ -r "$status_file" ]] || continue
+                [[ "$(cat "$status_file" 2>/dev/null)" == connected ]] || continue
+                connector="$(basename "${status_file%/status}")"
+                connector="${connector#card*-}"
+                [[ -n "$connector" ]] || continue
+
+                # Do not force a mode the display does not advertise.  The
+                # tested high-DPI default is 1920x1080@60, but lower-resolution
+                # panels should simply keep their native/default console mode.
+                if [[ -r "${status_file%/status}/modes" ]] &&
+                   ! grep -qx "${CONSOLE_VIDEO_MODE%@*}" "${status_file%/status}/modes" 2>/dev/null; then
+                        log "Connected DRM output $connector does not advertise ${CONSOLE_VIDEO_MODE%@*}; leaving console video mode unchanged"
+                        continue
+                fi
+
+                CONSOLE_VIDEO_ARG="video=${connector}:${CONSOLE_VIDEO_MODE}"
+                log "Detected connected DRM console output: $connector; default text-console mode: $CONSOLE_VIDEO_MODE"
+                return 0
+        done
+        log "No suitable connected DRM connector was detected for $CONSOLE_VIDEO_MODE; leaving console video mode unchanged"
+}
+
 configure_system() {
         ask_default HOSTNAME "Hostname" "$HOSTNAME" || return 0
         ask_default TIMEZONE "Timezone" "$TIMEZONE" || return 0
@@ -3486,6 +3522,7 @@ configure_packages() {
                                         wget "Wget download utility" "$([[ "$INSTALL_WGET" == yes ]] && echo on || echo off)" \
                                         wpa_supplicant "WPA/WPA2 wireless supplicant" "$([[ "$INSTALL_WPA_SUPPLICANT" == yes ]] && echo on || echo off)" \
                                         wireless_tools "Legacy iwconfig/iwlist wireless utilities" "$([[ "$INSTALL_WIRELESS_TOOLS" == yes ]] && echo on || echo off)" \
+                                        gpm "Console mouse support" "$([[ "$INSTALL_GPM" == yes ]] && echo on || echo off)" \
                                         </dev/tty
                         )"; then
                                 status=0
@@ -3498,6 +3535,7 @@ configure_packages() {
                         INSTALL_WGET=no
                         INSTALL_WPA_SUPPLICANT=no
                         INSTALL_WIRELESS_TOOLS=no
+                        INSTALL_GPM=no
 
                         [[ " $choice " == *' "git" '* || " $choice " == *' git '* ]] &&
                                 INSTALL_GIT=yes
@@ -3507,6 +3545,8 @@ configure_packages() {
                                 INSTALL_WPA_SUPPLICANT=yes
                         [[ " $choice " == *' "wireless_tools" '* || " $choice " == *' wireless_tools '* ]] &&
                                 INSTALL_WIRELESS_TOOLS=yes
+                        [[ " $choice " == *' "gpm" '* || " $choice " == *' gpm '* ]] &&
+                                INSTALL_GPM=yes
 
                         PACKAGES_CONFIGURED=yes
                         return 0
@@ -3524,18 +3564,20 @@ when the selected storage layout requires them.
   2) $(selection_mark "$INSTALL_WGET") wget
   3) $(selection_mark "$INSTALL_WPA_SUPPLICANT") wpa_supplicant
   4) $(selection_mark "$INSTALL_WIRELESS_TOOLS") wireless_tools
-  5) Done
+  5) $(selection_mark "$INSTALL_GPM") gpm
+  6) Done
 
 EOF_PACKAGES
-                read -r -p "Choose [1-5]: " choice
+                read -r -p "Choose [1-6]: " choice
 
                 case "$choice" in
                         1) toggle_setting INSTALL_GIT ;;
                         2) toggle_setting INSTALL_WGET ;;
                         3) toggle_setting INSTALL_WPA_SUPPLICANT ;;
                         4) toggle_setting INSTALL_WIRELESS_TOOLS ;;
-                        5) PACKAGES_CONFIGURED=yes; return 0 ;;
-                        *) warn "Choose a number from 1 through 5."; sleep 1 ;;
+                        5) toggle_setting INSTALL_GPM ;;
+                        6) PACKAGES_CONFIGURED=yes; return 0 ;;
+                        *) warn "Choose a number from 1 through 6."; sleep 1 ;;
                 esac
         done
 }
@@ -3712,6 +3754,29 @@ The installer authenticates once and all installation actions run as root.
 EOF_MENU
 }
 
+target_mount_tree_complete() {
+        local index="" mp="" expected=""
+        mountpoint -q "$TARGET" || return 1
+
+        # Every configured Btrfs role must be mounted at its real subvolume,
+        # never merely at top-level ID 5.
+        for ((index=0; index<${#BTRFS_MOUNTPOINTS[@]}; index++)); do
+                mp="${BTRFS_MOUNTPOINTS[$index]}"
+                [[ "$mp" == / ]] && expected="$TARGET" || expected="$TARGET$mp"
+                mountpoint -q "$expected" || return 1
+                findmnt -rn -o OPTIONS --target "$expected" 2>/dev/null |
+                        tr ',' '\n' | grep -qx "subvol=/${BTRFS_SUBVOLUMES[$index]}" ||
+                findmnt -rn -o OPTIONS --target "$expected" 2>/dev/null |
+                        tr ',' '\n' | grep -qx "subvol=${BTRFS_SUBVOLUMES[$index]}" || return 1
+        done
+
+        [[ -z "$BOOT_DEV" ]] || mountpoint -q "$TARGET/boot" || return 1
+        if [[ "$BOOT_MODE" == uefi && -n "$EFI_DEV" ]]; then
+                mountpoint -q "$TARGET/boot/efi" || return 1
+        fi
+        return 0
+}
+
 chroot_into_target() {
         force_posix_locale
         clear_screen
@@ -3722,15 +3787,24 @@ chroot_into_target() {
         [[ -n "$ROOT_DEV" ]] ||
                 die "Configure the root filesystem first."
 
-        if ! mountpoint -q "$TARGET"; then
+        # A mounted Btrfs top-level is not enough: separate /usr, /opt,
+        # /home, /var and snapshot subvolumes must be mounted exactly as the
+        # installer recorded them.  If the shell is hidden by an incomplete or
+        # top-level mount, reconstruct the complete canonical target tree.
+        if ! target_mount_tree_complete ||
+           [[ ! -x "$TARGET/bin/bash" && ! -x "$TARGET/usr/bin/bash" ]]; then
+                if findmnt -Rrn "$TARGET" 2>/dev/null | grep -q .; then
+                        umount -R "$TARGET" 2>/dev/null || umount -Rl "$TARGET" 2>/dev/null || true
+                        MOUNTED_BY_SCRIPT=()
+                fi
                 mount_target_filesystems
         fi
 
         [[ -x "$TARGET/bin/bash" || -x "$TARGET/usr/bin/bash" ]] || {
-                warn "No Bash executable exists in $TARGET."
-                warn "Install or extract BFS before entering the chroot."
-                pause_screen
-                return 0
+                dialog_message "Chroot unavailable"                         "The target is mounted, but no usable Bash exists at /bin/bash or /usr/bin/bash.
+
+For Btrfs layouts this usually means a required subvolume was not mounted. The installer attempted to reconstruct the complete target mount tree and still could not verify the shell."
+                return 1
         }
 
         mount_virtual_filesystems
@@ -4975,6 +5049,7 @@ build_package_list() {
         [[ "$INSTALL_WGET" == yes ]] && packages+=(wget)
         [[ "$INSTALL_WPA_SUPPLICANT" == yes ]] && packages+=(wpa_supplicant)
         [[ "$INSTALL_WIRELESS_TOOLS" == yes ]] && packages+=(wireless_tools)
+        [[ "$INSTALL_GPM" == yes ]] && packages+=(gpm)
         if ((${#BTRFS_DEVICES[@]} > 0)); then
                 packages+=(snapper)
         fi
@@ -5019,6 +5094,8 @@ KERNEL_PACKAGE_VALUE="__KERNEL_PACKAGE__"
 INSTALL_SUDO_VALUE="__INSTALL_SUDO__"
 SUDO_MODE_VALUE="__SUDO_MODE__"
 INSTALL_NETWORKMANAGER_VALUE="__INSTALL_NETWORKMANAGER__"
+INSTALL_GPM_VALUE="__INSTALL_GPM__"
+CONSOLE_VIDEO_ARG_VALUE="__CONSOLE_VIDEO_ARG__"
 # INSTALL_CRYPTSETUP_VALUE is retained for compatibility with older template
 # logic; both values are derived automatically from selected LUKS storage.
 INSTALL_CRYPTSETUP_VALUE="__INSTALL_CRYPTSETUP__"
@@ -5115,7 +5192,8 @@ configure_installed_console_font() {
 
         case "$size" in
                 16) patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*') ;;
-                20) patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' '*Terminus*20*' '*20*.psf*') ;;
+                20) patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatGrkCyr-12x22*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*20*.psf*') ;;
+                32) patterns=('latarcyrheb-sun32*' '*sun32*' '*32*.psf*') ;;
                 *)  patterns=() ;;
         esac
 
@@ -5350,11 +5428,35 @@ command -v ports >/dev/null 2>&1 || {
         exit 1
 }
 
+record_package_failure() {
+        local operation="$1" status="$2"
+        mkdir -p /run
+        {
+                printf 'operation=%s\n' "$operation"
+                printf 'status=%s\n' "$status"
+        } > /run/bfs-install-failure
+}
+
+run_package_operation() {
+        local operation="$1"; shift
+        local status=0
+        set +e
+        "$@"
+        status=$?
+        set -e
+        if ((status != 0)); then
+                record_package_failure "$operation" "$status"
+                echo "ERROR: $operation failed with exit status $status" >&2
+                exit "$status"
+        fi
+}
+
+rm -f /run/bfs-install-failure
 log "Synchronizing BFSOS ports tree"
-ports -u
+run_package_operation "ports synchronization (ports -u)" ports -u
 
 log "Running mandatory installed-system upgrade"
-prt-get sysup
+run_package_operation "mandatory package upgrade (prt-get sysup)" prt-get sysup
 
 if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
         read -r -a PACKAGE_LIST_ARRAY <<< "$PACKAGE_LIST_VALUE"
@@ -5374,12 +5476,21 @@ if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
         done
         if ((${#MISSING_PACKAGES[@]} > 0)); then
                 log "Installing missing packages: ${MISSING_PACKAGES[*]}"
-                prt-get depinst "${MISSING_PACKAGES[@]}"
+                run_package_operation "optional package installation (${MISSING_PACKAGES[*]})" prt-get depinst "${MISSING_PACKAGES[@]}"
         else
                 log "All selected packages are already installed"
         fi
 else
         log "No optional packages were selected"
+fi
+
+if [[ "$INSTALL_GPM_VALUE" == yes ]]; then
+        if [[ -f /usr/lib/systemd/system/gpm.service || -f /etc/systemd/system/gpm.service ]]; then
+                offline_systemctl enable gpm.service 2>/dev/null ||
+                        echo "WARNING: gpm was installed but gpm.service could not be enabled automatically." >&2
+        else
+                echo "WARNING: gpm was selected/installed but no gpm.service unit was found." >&2
+        fi
 fi
 
 if [[ "$INSTALL_SUDO_VALUE" == yes ]]; then
@@ -5634,7 +5745,7 @@ strip_bfs_storage_cmdline() {
         local value="$1" token="" result=""
         for token in $value; do
                 case "$token" in
-                        rd.auto|rd.md=*|rd.luks.uuid=*|rd.lvm.lv=*)
+                        rd.auto|rd.md=*|rd.luks.uuid=*|rd.lvm.lv=*|video=*)
                                 ;;
                         *)
                                 result+="${result:+ }$token"
@@ -5666,17 +5777,10 @@ discover_required_lvm_cmdline() {
                 esac
                 [[ -n "$device" && -b "$device" ]] || continue
 
-                need_early=no
-                [[ "$mountpoint" == / || "$mountpoint" == /usr ]] && need_early=yes
-
-                # Filesystems carried by MD -> LUKS -> LVM need the MD/LUKS/LVM
-                # chain available deterministically. This is the topology that
-                # required the manual pre-reboot correction during r26 testing.
-                if lsblk -s -prno TYPE "$device" 2>/dev/null | grep -q '^raid'; then
-                        need_early=yes
-                fi
-                [[ "$need_early" == yes ]] || continue
-
+                # Any filesystem backed by an LV belongs in the generated
+                # rd.lvm.lv list.  Do not infer required LVs from mountpoint
+                # names or hard-coded VG names; carry the actual final fstab/LVM
+                # topology forward verbatim (/, /usr, /opt, /home, /var, etc.).
                 lv_record="$(
                         lvs --noheadings --separator '|' -o vg_name,lv_name "$device" 2>/dev/null |
                                 head -n1 |
@@ -5761,6 +5865,9 @@ configure_grub_storage_cmdline() {
                 *" consoleblank="*) ;;
                 *) default_cmdline="${default_cmdline:+$default_cmdline }consoleblank=1800" ;;
         esac
+        if [[ -n "$CONSOLE_VIDEO_ARG_VALUE" ]]; then
+                cmdline_append_unique default_cmdline "$CONSOLE_VIDEO_ARG_VALUE"
+        fi
 
         if [[ "$AUTO_CRYPTSETUP_VALUE" == yes ]]; then
                 while IFS= read -r uuid; do
@@ -5904,9 +6011,12 @@ set -e
 modprobe zram 2>/dev/null || true
 [[ -b /dev/zram0 ]] || { echo "zram0 device is unavailable" >&2; exit 1; }
 mem_kb="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
-# BFSOS default: ZRAM capacity is twice physical RAM. This is compressed
-# virtual capacity, not preallocated physical memory.
+# BFSOS default: up to twice physical RAM, capped on high-memory systems.
+# ZRAM is compressed virtual capacity, but unbounded 2x sizing is not useful
+# on 128 GiB+ hosts.  The installer default cap is configurable.
 size_bytes=$((mem_kb * 1024 * 2))
+max_bytes=$((__ZRAM_MAX_GIB__ * 1024 * 1024 * 1024))
+(( size_bytes > max_bytes )) && size_bytes=$max_bytes
 if [[ -e /sys/block/zram0/reset ]]; then
         swapoff /dev/zram0 2>/dev/null || true
         echo 1 > /sys/block/zram0/reset 2>/dev/null || true
@@ -6166,6 +6276,14 @@ if [[ "$INSTALL_GRUB_VALUE" == yes ]]; then
                 exit 1
         }
 
+        if [[ -n "$CONSOLE_VIDEO_ARG_VALUE" ]]; then
+                grep -E '^[[:space:]]*linux[[:space:]]' /boot/grub/grub.cfg | grep -qF "$CONSOLE_VIDEO_ARG_VALUE" || {
+                        echo "GRUB verification failed: configured console video argument is missing." >&2
+                        echo "Expected: $CONSOLE_VIDEO_ARG_VALUE" >&2
+                        exit 1
+                }
+        fi
+
         if [[ "$BOOT_MODE_VALUE" == uefi ]]; then
                 [[ -s /boot/efi/EFI/BFS/grubx64.efi ]] || {
                         echo "BFS EFI loader was not installed." >&2
@@ -6247,6 +6365,14 @@ awk '
 ' /etc/fstab ||
         { echo "Generated /etc/fstab failed syntax validation." >&2; exit 1; }
 
+if command -v findmnt >/dev/null 2>&1; then
+        findmnt --verify --verbose >/root/bfs-fstab-verify.log 2>&1 || {
+                cat /root/bfs-fstab-verify.log >&2
+                echo "findmnt verification of the generated fstab failed." >&2
+                exit 1
+        }
+fi
+
 for command in bash sh env sed grep awk find tar gzip xz make gcc g++ ld ar nm strip readelf mount umount ls cp mv rm chmod chown pkgmk pkgadd pkginfo; do
         command -v "$command" >/dev/null 2>&1 || printf 'MISSING COMMAND: %s\n' "$command" >&2
 done
@@ -6289,6 +6415,8 @@ CHROOT
                 -e "s|__INSTALL_SUDO__|$INSTALL_SUDO|g" \
                 -e "s|__SUDO_MODE__|$SUDO_MODE|g" \
                 -e "s|__INSTALL_NETWORKMANAGER__|$INSTALL_NETWORKMANAGER|g" \
+                -e "s|__INSTALL_GPM__|$INSTALL_GPM|g" \
+                -e "s|__CONSOLE_VIDEO_ARG__|$(printf '%s' "$CONSOLE_VIDEO_ARG" | sed 's/[&|]/\&/g')|g" \
                 -e "s|__INSTALL_CRYPTSETUP__|$INSTALL_CRYPTSETUP|g" \
                 -e "s|__AUTO_CRYPTSETUP__|$AUTO_CRYPTSETUP|g" \
                 -e "s|__AUTO_LVM2__|$AUTO_LVM2|g" \
@@ -6298,12 +6426,32 @@ CHROOT
                 -e "s|__CONSOLE_FONT_SIZE__|$CONSOLE_FONT_SIZE|g" \
                 -e "s|__INSTALL_CONSOLE_FONT__|$INSTALL_CONSOLE_FONT|g" \
                 -e "s|__ZRAM_SWAP__|$ZRAM_SWAP|g" \
+                -e "s|__ZRAM_MAX_GIB__|$ZRAM_MAX_GIB|g" \
                 "$TARGET$CHROOT_INSTALLER"
         chmod 0700 "$TARGET$CHROOT_INSTALLER"
 }
 
+show_install_failure_dialog() {
+        local status="$1" marker="$TARGET/run/bfs-install-failure" operation="installation/chroot configuration"
+        local detail="" failed_url=""
+        if [[ -r "$marker" ]]; then
+                operation="$(sed -n 's/^operation=//p' "$marker" | head -n1)"
+        fi
+        if [[ -n "$LOG_FILE" && -r "$LOG_FILE" ]]; then
+                detail="$(tail -n 20 "$LOG_FILE" 2>/dev/null || true)"
+                failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$LOG_FILE" 2>/dev/null | tail -n1 || true)"
+        fi
+        local message="Installation operation failed:\n$operation\n\nExit status: $status"
+        [[ -z "$failed_url" ]] || message+="\n\nLast URL seen:\n$failed_url"
+        [[ -z "$LOG_FILE" ]] || message+="\n\nInstaller log:\n$LOG_FILE"
+        [[ -z "$detail" ]] || message+="\n\nLast output:\n$detail"
+        dialog_message "Installation operation failed" "$message"
+}
+
 run_chroot_installer() {
+        local status=0
         log "Entering BFS chroot"
+        set +e
         chroot "$TARGET" /usr/bin/env -i \
                 HOME=/root \
                 TERM="${TERM:-linux}" \
@@ -6311,6 +6459,13 @@ run_chroot_installer() {
                 LANG=C \
                 LC_ALL=C \
                 /bin/bash "$CHROOT_INSTALLER"
+        status=$?
+        set -e
+        if ((status != 0)); then
+                show_install_failure_dialog "$status"
+                return "$status"
+        fi
+        return 0
 }
 
 
@@ -6404,6 +6559,7 @@ main() {
         force_posix_locale
         sync_system_clock
         load_installer_settings
+        detect_console_video_argument
         if [[ -n "$CONSOLE_FONT_OVERRIDE" ]]; then
                 CONSOLE_FONT_SIZE="$CONSOLE_FONT_OVERRIDE"
         else
@@ -6417,43 +6573,64 @@ main() {
         prepare_target_environment
 
         while true; do
-                INSTALL_CONFIRMED=no
-                installer_menu
-                validate_settings
+                while true; do
+                        INSTALL_CONFIRMED=no
+                        installer_menu
+                        validate_settings
 
-                # Review (option 10) already flows through Ready to install.
-                [[ "$INSTALL_CONFIRMED" == yes ]] && break
+                        # Review (option 10) already flows through Ready to install.
+                        [[ "$INSTALL_CONFIRMED" == yes ]] && break
 
-                # Direct option 11 opens Ready to install; Back returns to menu.
-                if confirm_continue "Begin the BFS installation?"; then
-                        break
+                        # Direct option 11 opens Ready to install; Back returns to menu.
+                        if confirm_continue "Begin the BFS installation?"; then
+                                break
+                        fi
+                done
+
+                format_selected_partitions
+                mount_target_filesystems
+                extract_rootfs
+                fix_installed_bfsos_branding
+                save_base_archive
+                generate_fstab
+                generate_crypttab
+                mount_virtual_filesystems
+                write_chroot_installer
+
+                if ! run_chroot_installer; then
+                        # Keep the process and UI alive.  Avoid reformatting the
+                        # already-created filesystems if the user chooses to retry
+                        # after inspecting/fixing a package/download failure.
+                        ROOT_FORMAT=keep
+                        BOOT_FORMAT=keep
+                        EFI_FORMAT=keep
+                        SWAP_FORMAT=keep
+                        HOME_FORMAT=keep
+                        local i
+                        for ((i=0; i<${#EXTRA_FORMATS[@]}; i++)); do
+                                EXTRA_FORMATS[$i]=keep
+                        done
+                        INSTALL_CONFIRMED=no
+                        dialog_message "Installation paused" \
+                                "Installed-system configuration did not complete.\n\nThe target remains mounted and the full log is preserved. You are being returned to the installer menu. Chroot can be used to inspect the target; a retry will preserve existing filesystem formats rather than formatting them again."
+                        continue
                 fi
+
+                offer_package_cache_cleanup
+                log "Installation complete"
+                offer_final_chroot
+                break
         done
 
-        format_selected_partitions
-        mount_target_filesystems
-        extract_rootfs
-        fix_installed_bfsos_branding
-        save_base_archive
-        generate_fstab
-        generate_crypttab
-        mount_virtual_filesystems
-        write_chroot_installer
-        run_chroot_installer
-
-        offer_package_cache_cleanup
-
-        log "Installation complete"
-
-        offer_final_chroot
-
         if [[ "$LOG_ENABLED" == yes ]]; then
-                printf '
-Live-environment log: %s
-' "$LOG_FILE"
+                printf '\nLive-environment log: %s\n' "$LOG_FILE"
                 close_logging 0
                 copy_log_to_installed_system
         fi
 }
 
+set +e
 main "$@"
+_main_status=$?
+set -e
+exit "$_main_status"

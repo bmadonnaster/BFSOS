@@ -1,15 +1,216 @@
 # BFSOS Installer v50 Test / Fix Tracker
 
 
+### Bootstrap → installer launch time synchronization
+- [x] **IMPLEMENTED in bootstrap r50; regression test pending:** Bootstrap Stage 9 launches the installer with `BFS_TIME_SYNC=no`, so the bootstrap startup sync is reused while standalone installer launches still synchronize normally.
+- The Bootstrap startup already synchronizes the system clock; entering the installer from the same Bootstrap session should not trigger another time sync.
+- Audit both the Stage 9 launch path in `bootstrap.sh` and the installer startup path so Bootstrap can hand off to the installer without causing a duplicate synchronization.
+- Preserve standalone installer behavior as appropriate: launching the installer independently may still need its own startup time synchronization.
+- [ ] **Regression test:** Start Bootstrap, allow its normal startup time sync, then launch Stage 9 and confirm no second time-sync operation occurs during the Bootstrap-to-installer handoff.
+
+
+
+### Bootstrap Stage 8 chroot exit still shows redundant completion pause
+- [x] **FIX IMPLEMENTED in bootstrap r50; regression test pending:** Stage 8 now `continue`s directly back to the Bootstrap menu after its own chroot result handling and cannot fall through into the generic operation-success/pause block.
+- The attempted Stage 8 clean-return fix has not eliminated the actual code path producing this screen.
+- Trace the complete Stage 8/chroot return path, including `_chroot`, `_run_root_stage`, child-script re-entry, and the generic main-menu completion handler, to identify where the success/pause is really emitted.
+- Desired behavior: a normal `exit` from the chroot should return directly to the Bootstrap main menu with no intermediate success screen or Enter prompt.
+- Preserve a readable error/pause only when entering the chroot or the chroot operation actually fails.
+- [ ] **Regression test:** Enter Stage 8, run `exit`, and confirm the Bootstrap menu reappears immediately with no `Operation completed successfully.` or `Press Enter to return to the menu...` screen.
+
+
+
+### Bootstrap Stage 8 chroot availability after normal build
+- [x] **BUG FOUND AND FIXED in bootstrap r48; regression test pending:** Stage 8 incorrectly showed `[NOT AVAILABLE]` after a successful normal Stage 2/3/4 build because `_chroot_available()` only recognized rootfs/toolchain **restore** marker files.
+- A freshly built BFSOS rootfs is already chroot-capable and must not require Stage 6 or Stage 7 to be run first.
+- `_chroot_available()` now accepts any valid built/restored rootfs state marker (`.bfs-stage2-complete`, `.bfs-stage3-complete`, `.bfs-verified`, `.bfs-rootfs-restored`, or `.bfs-toolchain-restored`) together with an executable `/usr/bin/bash` or `/bin/bash`.
+- [ ] **Regression test:** After normal Stages 1 -> 2 -> 4 -> 5 (with or without optional Stage 3), confirm Stage 8 shows `[AVAILABLE]` without restoring an archive, and verify entering/exiting the chroot works normally.
+- [ ] Also verify Stage 8 becomes available after Stage 6 rootfs restore and after Stage 7 toolchain restore when the resulting rootfs contains a usable shell.
+
+
+
+### Bootstrap Stage 5 archive-start dialog
+- [x] **IMPLEMENTED in bootstrap r47; regression test pending:** Selecting Stage 5 from the dialog Bootstrap menu now presents a proper `dialog` confirmation/information box before compression starts.
+- The dialog explains that the verified base rootfs archive will be created and checked and that compression can take several minutes.
+- Canceling the dialog returns to the Bootstrap menu without starting Stage 5.
+- Stage 5 still returns directly to the main menu after success; real failures retain the failure handling.
+
+### Bootstrap Stage 6 restore privilege / chroot-readiness audit
+- [x] **BUG FOUND AND FIXED in bootstrap r47:** Stage 6 was being called directly from the interactive menu even though restoring a rootfs is a privileged/destructive operation. It now uses the same `_run_root_stage` sudo/root path as Stages 2-5 and chroot.
+- [x] `_restore_rootfs()` now explicitly refuses to run unless UID 0.
+- [x] Before clearing the existing rootfs, Stage 6 calls `umountfs` and aborts if bootstrap bind/virtual filesystems cannot be cleanly unmounted.
+- [x] The existing restore logic validates the archive before destruction, extracts it, recreates required compatibility symlinks/directories, verifies `/usr/bin/bash`, `/usr/bin/gcc`, and the package database, and creates `.bfs-rootfs-restored`.
+- [x] The existing chroot availability logic recognizes `.bfs-rootfs-restored` plus a usable bash, so a successful Stage 6 restore makes Stage 8 available without requiring the temporary toolchain restore.
+- [ ] **Regression test:** Run Stage 6 from the non-root interactive menu, confirm sudo/root re-entry occurs, the archive restores cleanly, Stage 8 changes to `AVAILABLE`, and entering/exiting the chroot works.
+
+
+
+### Bootstrap Stage 4 success-screen cleanup
+- [x] **IMPLEMENTED in bootstrap r46; regression test pending:** After successful Stage 4 base-system verification, return directly to the Bootstrap main menu instead of displaying `Operation completed successfully.` followed by `Press Enter to return to the menu...`.
+- Stage 4 failures still report the nonzero exit status and retain the failure pause so the error can be read.
+
+
+
+### Bootstrap archive safety / Stage 5 failure handling
+- [x] **IMPLEMENTED in bootstrap r45:** Stage 5 base-rootfs archive creation now runs with root privileges so protected files in the verified rootfs can be read instead of producing permission-denied tar errors.
+- [x] Stage 5 explicitly unmounts and verifies the bootstrap bind/virtual mounts are gone before creating the archive, including the external sources/packages/build-work mounts.
+- [x] Archive creation now checks the actual `tar` exit status. If compression fails, the partial archive is deleted and Stage 5 returns failure instead of printing a false success message.
+- [x] The completed base archive is immediately tested with `tar -tJf` and sanity-checked for required BFSOS files (`/usr/bin/bash`, `/usr/bin/pkgmk`, `/etc/os-release`).
+- [x] When Stage 5 is entered through sudo from the interactive menu, ownership of the finished archive is returned to the invoking user.
+- [ ] **Regression test:** Re-run Stage 5 and verify no `Permission denied` messages occur, the archive passes validation, and an intentionally forced tar failure is reported as failure with no partial archive retained.
+
+### Bootstrap toolchain archive safety
+- [x] **IMPLEMENTED in bootstrap r45:** Toolchain archive compression no longer dumps the complete verbose tar member list to the interactive terminal.
+- [x] Toolchain archive creation explicitly checks the compression exit status and deletes a partial archive on failure.
+- [x] The archive is verified with `tar -tJf` and sanity-checked for the compiler, linker, and `pkgmk` before Stage 1 reports archive success.
+- [ ] **Regression test:** On the next clean Stage 1 run, verify concise compression output, successful integrity/payload checks, and correct failure handling if archive creation is deliberately interrupted.
+
+### Bootstrap Stage 5 success-screen cleanup
+- [x] **IMPLEMENTED in bootstrap r45:** After a successful Stage 5 base archive operation, return directly to the Bootstrap main menu instead of showing `Operation completed successfully.` / `Press Enter to return to the menu...`.
+- Real Stage 5 failures still report their nonzero status and retain the pause so the error can be read.
+
+### Bootstrap Stage 3 success-screen cleanup
+- [x] **IMPLEMENTED in bootstrap r45:** After a successful Stage 3 rebuild, return directly to the Bootstrap main menu instead of showing the redundant success/pause screen.
+- Stage 2 uses the same direct-return behavior after success.
+
+### Bootstrap time synchronization audit
+- [x] **IMPLEMENTED in bootstrap r45:** Root stages launched from the interactive Bootstrap menu no longer re-run the startup time synchronization when `sudo` re-enters `bootstrap.sh`.
+- A top-level invocation still performs the normal startup synchronization; child stage invocations receive `BFS_SKIP_TIME_SYNC=yes`.
+- This removes the observed duplicate sync before Stage 3 and Stage 4 while preserving clock synchronization when bootstrap is initially launched.
+- [ ] **Regression test:** Run Stages 1-5 through the interactive menu and confirm only the initial bootstrap startup performs time synchronization.
+
+### Bootstrap Stage 3 `build-work` mount cleanup — implementation update
+- [x] **IMPLEMENTED in bootstrap r45:** The installed/final `pkgmk` work directory is now `/var/cache/pkg/build-work/pkgmk-$name`, a removable child directory beneath the bind mount, rather than the bind-mount root `/var/cache/pkg/build-work`.
+- This prevents pkgmk cleanup from attempting to remove the active mount point and producing `Device or resource busy`.
+- [x] The bootstrap unmount helper now returns a real error if a busy bootstrap mount cannot be unmounted instead of repeatedly retrying forever.
+- [ ] **Regression test:** Run Stage 3 and confirm no `rm: cannot remove '/var/cache/pkg/build-work': Device or resource busy` warning appears and all bootstrap mounts are gone afterward.
+
+
+
+### Bootstrap Stage 3 `build-work` mount cleanup
+- [x] **FIX IMPLEMENTED in bootstrap r45; regression test pending:** During Stage 3, `pkgmk` emitted `rm: cannot remove '/var/cache/pkg/build-work': Device or resource busy`, but the package build continued.
+- Investigation confirmed `/tmp/lfs-rootfs/var/cache/pkg/build-work` is an active overlay-backed mount sourced from the live environment/project `build-work` path.
+- This is separate from the locale fixes and was not caused by changing `LC_ALL`/`LANG`.
+- Do not unmount the work directory while a package is actively building.
+- Review the bootstrap Stage 3 mount/setup and cleanup logic after the current build completes.
+- If the `build-work` mount is intentional, cleanup must remove/clean the contents safely without attempting to `rm` the active mount point itself.
+- Ensure cleanup unmounts the work directory at the appropriate end-of-stage/exit path before attempting to remove the mount-point directory.
+- Verify normal completion, failure, interruption, and rerun paths do not leave stale `build-work` mounts behind.
+- [ ] **Regression test:** On the next clean Stage 3 run, confirm there are no `Device or resource busy` cleanup messages and no stale `build-work` mount remains after Stage 3 exits.
+
+
+
+### Bootstrap locale warning root cause and fixes
+- [x] **COMPLETED / ROOT CAUSE IDENTIFIED:** Repeated Stage 3 locale warnings were traced to explicit UTF-8 locale overrides rather than random bootstrap behavior.
+- Upstream `pkgutils 5.40.12` sets `LC_ALL=C.UTF-8` in `pkgmk.in` (`pkgmk`), which is unsafe during early BFSOS bootstrap phases because `C.UTF-8` is not guaranteed to exist yet.
+- The running temporary-toolchain copy of `pkgmk` was corrected from `LC_ALL=C.UTF-8` to `LC_ALL=C`.
+- The BFSOS `ports/core/pkgutils/Pkgfile` was updated so `bootstrap_build()` patches upstream `pkgmk.in` to use `LC_ALL=C` before installing the temporary-toolchain copy.
+- The same pkgutils port also patches the packaged `/usr/bin/pkgmk` in `post_build()` so the installed BFSOS pkgutils package consistently uses the universally available `C` locale.
+- The GCC port was also found to force `LANG=en_US.UTF-8`; `ports/core/gcc/Pkgfile` was changed to use `LANG=C` for bootstrap/build consistency.
+- Keep the global bootstrap environment on `LANG=C`, `LC_ALL=C`, and `LANGUAGE=C`.
+- [ ] **Verification pending on next clean bootstrap/RC run:** confirm Stage 1/2/3 no longer produce the previous flood of `setlocale: LC_ALL: cannot change locale (C.UTF-8)` warnings.
+- If isolated locale warnings remain after a clean rebuild, capture the exact package/log and investigate only that package rather than changing the global locale policy again.
+- These locale fixes should be pushed to both the main BFSOS project and the separate ports repository so the bootstrap and port trees remain consistent.
+
+### Bootstrap Stage 3 locale regression check
+- [ ] During the next clean Stage 3 rebuild, verify that `pkgmk`, GCC, and shell subprocesses inherit plain `C` and that no build-generated environment reintroduces `C.UTF-8` or `en_US.UTF-8`.
+- Check the newly installed temporary-toolchain `pkgmk` with `grep -nE 'LC_ALL|LANG' .../pkgmk` as a regression check after pkgutils is rebuilt.
+
+
+
+### Bootstrap Stage 3 time synchronization
+- [x] **FIX IMPLEMENTED in bootstrap r45; regression test pending:** Remove the redundant time synchronization step from Bootstrap Stage 3.
+- Time is already synchronized when `bootstrap.sh` is initially launched, so Stage 3 should not perform another automatic time sync before rebuilding the base system with the final toolchain.
+- Preserve the initial bootstrap startup time synchronization; this change applies specifically to the extra Stage 3 sync.
+
+
+
+### Pre-1.0 optional software and console usability checks
+- [x] **Installer support implemented in r37; port availability/build regression pending:** GPM is now selectable from Optional Software and included in the package plan when selected.
+- Check whether a `gpm` port already exists in the BFSOS ports tree. If it does not, create and validate a proper GPM port.
+- Add **GPM console mouse support** to the installer Optional Software menu.
+- If selected, install GPM and enable/configure the appropriate systemd service so console mouse selection/paste works on a real text console.
+- Verify that leaving GPM unselected does not alter the default install.
+
+- [ ] **Bare-metal verification of installer console text-size options before BFSOS 1.0.**
+- Verify all existing console font/text-size choices on a real Linux virtual console, not only through QEMU/SPICE or SSH.
+- Confirm that selecting each size changes the installer console immediately and that returning to **Default** restores the expected normal size.
+- Verify the selected persistent font is written correctly to `/etc/vconsole.conf`.
+- After first boot, verify `systemd-vconsole-setup` applies the selected font correctly.
+- Confirm the requested font files actually exist in the base system and that any fallback behavior is sensible and visible rather than silently masking a missing font.
+- Treat broken/nonfunctional text-size selection as a pre-1.0 installer usability bug.
+
+### Bootstrap Stage 2 completion return behavior
+- [x] **FIX IMPLEMENTED in bootstrap r45; regression test pending:** Remove the extra terminal completion/pause screen shown after Bootstrap Stage 2 completes successfully.
+- Current behavior displays:
+  - `Operation completed successfully.`
+  - `Press Enter to return to the menu...`
+- After a successful Stage 2 completion, return directly to the **Bootstrap main menu** instead of requiring an extra Enter keypress.
+- Keep actual Stage 2 success/failure status visible in the Bootstrap menu itself.
+- Do not remove or suppress real error dialogs/messages; this change applies only to the redundant success/pause screen after a successful Stage 2 run.
+
+
+
+### BFSOS 1.0 public-release documentation and post-1.0 installer UX roadmap
+- [ ] **1.0 release/public launch preparation:** After the 1.0 release-candidate storage/RAID/configuration validation is complete and no release-blocking core issues remain, clean up and rewrite the public `README.md` and supporting documentation for the BFSOS 1.0 release.
+- The 1.0 README/docs should clearly explain what BFSOS is, current release/stability status, supported architecture, supported installation/storage configurations, build/install workflow, known limitations, where logs are stored, and how users should report useful bugs/issues.
+- Clearly distinguish the **core BFSOS system** from the broader **non-core ports collection**, which will continue to receive cleanup and tooling work after core 1.0 validation.
+- After BFSOS 1.0 final is published with polished documentation and usable release/install artifacts, consider/prepare a **DistroWatch submission** to bring additional testers and users to the project.
+- Wider public exposure is intended to provide more real-world hardware/configuration coverage and additional bug reports, but should follow—not precede—the 1.0 RC validation cycle.
+
+#### Post-1.0 / target 1.1 timezone and locale selector improvements
+- [ ] **Post-1.0 enhancement (target 1.1):** Replace or enhance the current timezone prompt with a Dialog-driven hierarchical/scrollable selector.
+- Timezone selection should allow the user to choose a region first (for example `America`, `Europe`, `Asia`) and then move through/select the appropriate city/location from a list.
+- Provide consistent **Back**, **Select/Continue**, keyboard navigation, and text-mode fallback behavior matching the rest of the installer.
+- [ ] **Post-1.0 enhancement (target 1.1):** Replace or enhance locale selection with a scrollable Dialog checklist/radiolist based on available locales.
+- Keep `en_US.UTF-8` as the normal/default user locale unless the user chooses another locale.
+- Allow additional locales to be selected/generated when desired, while allowing the system default `LANG` to be chosen separately.
+- **The `C` locale must always remain available and must not be removable/disableable by the locale-selection UI.**
+- Preserve use of the `C` locale for bootstrap/build operations where deterministic output or operation before the full locale environment exists is desirable.
+- These timezone/locale UI improvements are **not BFSOS 1.0 release blockers** unless the existing selectors prove functionally broken during RC testing. Avoid adding unnecessary installer feature risk immediately before 1.0 final.
+- These are installer usability improvements suitable for the **1.x series (preferably 1.1)** rather than requiring a 2.0 release.
+
+
+
+### BFSOS 1.0-rc1 release-candidate milestone
+- [x] **RC1 CANDIDATE CONDITION MET FOR THIS COMPLEX BARE-METAL RUN:** the installation completed and the resulting BFSOS system booted successfully. Remaining storage-matrix/regression tests still gate final 1.0 promotion.
+- The immediate release-candidate priority is validation of the **core operating system, bootstrap, installer, boot path, storage layouts, RAID combinations, encryption/LVM/Btrfs configurations, and other supported installation scenarios**.
+- Over the next several days, test the remaining RAID/storage/configuration combinations and correct any core/bootstrap/installer/boot regressions discovered during those tests.
+- A failure of the current installation to boot is considered a **release-candidate blocker** and must be fixed and retested before promoting the build to 1.0-rc1 status.
+- Minor/non-blocking tracker cleanup can continue through the 1.0 release-candidate cycle while the supported installation configurations are validated.
+- **Non-core ports are not a 1.0-rc1/core release blocker at this stage.** The broader non-core ports tree is known to need substantial cleanup and should be handled after the 1.0 RCs have established that the core OS and supported installation/storage configurations are reliable.
+- After the RAID/configuration matrix is verified through the 1.0 RC cycle and no release-blocking core issues remain, target the final **BFSOS 1.0** release.
+- Following core 1.0 validation, shift development emphasis toward repairing/maintaining the non-core ports collection and developing better **ports management, validation, update, and maintenance tooling**.
+
+
+
+### Bootstrap time synchronization behavior
+- [x] **COMPLETED / VERIFIED:** Synchronize system time once when `bootstrap.sh` starts.
+- Do **not** redundantly synchronize time again before Bootstrap Stage 2 when continuing in the same running bootstrap session.
+- If the machine is rebooted or a new bootstrap session is started, launching `bootstrap.sh` performs the startup time synchronization again.
+- This keeps Stage 2 from doing unnecessary duplicate time-sync work while still ensuring a fresh bootstrap session begins with a corrected clock.
+
+
+
+### Bootstrap Stage 1 toolchain archive compression output
+- [x] **FIX IMPLEMENTED in bootstrap r45; regression test pending:** After Bootstrap Stage 1 verification succeeds, hide/suppress the verbose toolchain archive compression output during normal interactive use.
+- The user does not need to watch the full compression file/progress stream after verification has already completed successfully.
+- Show a concise status such as **Compressing toolchain archive...** while the archive is being created, then report the completed archive path/size or a clear error if compression fails.
+- Preserve detailed compression output in the appropriate bootstrap log for troubleshooting rather than filling the interactive terminal/menu.
+
+
+
 ### Download/package failure messaging in bootstrap and installer
-- [ ] **Pending:** Improve error handling for bad package/source URLs and package-manager failures in both `bootstrap.sh` and the BFSOS installer.
-- **Observed bootstrap failure:** MPC source download returned HTTP 404 and `pkgmk` exited with status 4, causing the bootstrap stage to terminate without a clear menu-level explanation.
-- **Bootstrap requirement:** On source/download/build failure, report the package name, failed URL when available, underlying downloader/build error, exit status, and preserved package log path; then return safely to the bootstrap menu instead of appearing to disappear.
-- **Installer review:** The installer currently invokes `ports -u`, `prt-get sysup`, and `prt-get depinst` directly inside a `set -Eeuo pipefail` script. A download/build failure from those commands can therefore abort the install path without installer-specific context unless explicitly caught.
-- **Installer requirement:** Wrap ports synchronization, mandatory upgrade, and optional package installation failures. Show a clear Dialog/text error containing the failed operation/package when known, useful underlying output, exit status, and installer log path. Preserve the installer log before cleanup/exit.
-- **Regression tests:** Deliberately use a bad source URL once in Bootstrap Stage 1 and once during installer package installation. In both cases verify the UI reports what failed, where the log is, and returns/aborts in a controlled way without silently disappearing.
-
-
+- [x] **IMPLEMENTED in bootstrap r50 / installer r40; regression test pending:** Added menu-level failure dialogs/text fallbacks with exit status, latest log context, and last URL when detectable. Bootstrap failures return to the Bootstrap menu; installer package operations record structured failure context and the parent installer displays it instead of silently dropping to raw terminal output.
+- **Observed bootstrap failure:** MPC source download returned HTTP 404 and `pkgmk` exited with status 4. Bootstrap Stage 1 terminated without a clear menu-level explanation, while Bootstrap Stage 2 later displayed the raw error text but still did not use the normal dialog/menu workflow.
+- **Bootstrap requirement:** Catch source/download/build failures and show a **dialog error box** when Dialog mode is available. The dialog should identify the package or operation, show the failed URL when known, summarize the underlying downloader/build error, include the exit status, and show the preserved package log path.
+- **Bootstrap navigation:** The failure dialog should have a **Continue** button. Selecting Continue must return the user directly to the **Bootstrap main menu** without exiting `bootstrap.sh`.
+- **Installer review:** The installer currently invokes `ports -u`, `prt-get sysup`, and `prt-get depinst` directly inside a strict-error shell path. A download/build failure from those commands can therefore abort the installation path without installer-specific UI/context unless explicitly caught.
+- **Installer requirement:** Catch ports synchronization, mandatory upgrade, and optional package-install failures and show a **dialog error box** with the failed operation/package when known, failed URL when available, useful underlying output, exit status, and installer log path. Preserve the installer log before cleanup.
+- **Installer navigation:** The failure dialog should have a **Continue** button. Selecting Continue must return the user to the **installer main menu/configuration screen**, not terminate the installer or dump directly to the shell.
+- **Text-mode fallback:** If Dialog is unavailable, print the same failure details in text mode, prompt **Press Enter to continue**, then return to the respective main menu.
+- **Do not hide the real error:** The dialog should summarize the failure, but the full raw downloader/build output must remain in the corresponding log for troubleshooting.
+- **Regression tests:** Deliberately use a bad source URL once in Bootstrap Stage 1, once in Bootstrap Stage 2, and once during installer package installation. In all cases verify the error is shown in the appropriate dialog/text fallback, the log path is visible, and Continue returns to the correct main menu without terminating the parent workflow.
 
 ### Bootstrap Stage 3 availability status
 - [x] **COMPLETED / VERIFIED:** Correct Stage 3 (`Rebuild base system with final toolchain`) status logic.
@@ -1276,3 +1477,130 @@ Press Enter to continue...
 - **Installer implementation:** `install-bfs-menu-v50-tracker-fixed-r36.sh`
 - **Tracker status:** All currently listed code/configuration changes through issue 83 have been applied. Items whose final proof requires another install/reboot remain noted as regression tests even though the requested code change is implemented.
 - **Validation performed:** Both updated shell scripts pass `bash -n`. Static checks confirm the new bootstrap short-circuit/return behavior, installer theme labels, storage refresh hooks, sudo password default, Review -> Ready flow, clean final exit, and ZRAM service/sizing changes.
+
+
+## r68 Bare-metal post-install findings — 2026-08-12
+
+### 84. Fix installer post-install chroot ordering / target cleanup
+- [x] **IMPLEMENTED in installer r40; regression test pending**
+- **Observed behavior:** The installation itself completed successfully, but selecting the post-install chroot option returned control to `bootstrap.sh` instead of entering the newly installed BFSOS system.
+- **Root cause found during manual recovery:** By the time chroot was attempted/retried, the installed target had already been fully unmounted and the LVM/LUKS storage stack had been closed. `/mnt/bfs` therefore no longer contained the installed root and `/mnt/bfs/usr/bin/bash` could not be found.
+- **Required fix:** Perform the optional post-install chroot **before** final target unmount, LVM deactivation, LUKS close, RAID teardown, and other final cleanup.
+- Preserve the complete installed mount tree while the user is inside the post-install chroot.
+- Only run final cleanup after the user exits the chroot and chooses to finish/return.
+- If the installer ever has to reconstruct the mount tree before chroot, it must honor the configured Btrfs subvolumes rather than mounting Btrfs top-level ID 5.
+- **Regression test:** Complete an install with separate Btrfs `/`, `/usr`, `/opt`, `/home`, and `/var`, choose the post-install chroot option, confirm `/usr/bin/bash` is available and the chroot opens, exit it, then confirm cleanup occurs and control returns correctly.
+
+### 85. Preserve Btrfs subvolume mounts for post-install chroot
+- [x] **IMPLEMENTED in installer r40; regression test pending**
+- **Observed during manual chroot recovery:** Mounting the raw `/usr` Btrfs LV exposed only `@usr` and `@usr-snapshots`; `/usr/bin/bash` existed at `@usr/bin/bash`, not at the Btrfs top level.
+- The installed layout was confirmed as:
+  - `/` -> `subvol=@`
+  - `/usr` -> `subvol=@usr`
+  - `/opt` -> `subvol=@opt`
+  - `/home` -> `subvol=@home`
+  - `/var` -> `subvol=@var`
+- **Required fix:** Any installer chroot/remount/recovery helper must use the exact subvolume selected/generated for each mountpoint.
+- Do not treat a successfully mounted Btrfs top-level filesystem as sufficient for chroot availability.
+- **Regression test:** Verify the automatic post-install chroot sees `/usr/bin/bash`, `/usr`, `/opt`, `/home`, and `/var` at their normal paths and does not expose `@usr`, `@opt`, `@home`, or `@var` as the mounted filesystem root.
+
+### 86. Include every required LVM LV in generated GRUB `rd.lvm.lv=` arguments
+- [x] **IMPLEMENTED in installer r40; regression test pending**
+- **Observed after installation:** `/etc/default/grub` contained `rd.lvm.lv=` entries for `bfs-root/root`, `bfs-root/usr`, `bfs-raid/home`, and `bfs-raid/var`, but omitted the separately configured `bfs-root/opt` LV.
+- **Manual correction used for this test:** Added `rd.lvm.lv=bfs-root/opt`, rebuilt the initramfs with Dracut, and regenerated `/boot/grub/grub.cfg`.
+- A second manual append accidentally produced `rd.lvm.lv=bfs-root/opt` twice, demonstrating that the permanent installer fix should **generate/deduplicate** the complete argument list rather than blindly append strings.
+- **Required fix:** Build GRUB/dracut LVM arguments from the final configured LV/mountpoint model. Include every LV that must be activated for the installed system and emit each `rd.lvm.lv=<vg>/<lv>` exactly once.
+- At minimum for this tested layout the generated list must contain:
+  - `bfs-root/root`
+  - `bfs-root/usr`
+  - `bfs-root/opt`
+  - `bfs-raid/home`
+  - `bfs-raid/var`
+- Preserve both LUKS UUID arguments and the MD RAID UUID when those layers are configured.
+- **Regression test:** Install with multiple LVs across both encrypted root storage and encrypted MD RAID storage, then verify `/etc/default/grub` and generated `grub.cfg` contain every required LV exactly once before first boot.
+
+### 87. Add final generated boot-configuration validation before installer success
+- [x] **IMPLEMENTED / strengthened in installer r40; regression test pending**
+- The manual post-install audit showed the value of validating the generated boot configuration before reboot.
+- **Required validation:** Before reporting the installation fully ready, verify the generated `fstab`, GRUB kernel command line, initramfs, EFI files, encryption/RAID/LVM references, and Btrfs subvolume mappings.
+- `findmnt --verify --verbose` on this bare-metal install completed with **Success, no errors or warnings detected** after the manual corrections.
+- Verify the expected kernel and initramfs exist in `/boot`, and that UEFI installs contain both the BFSOS GRUB EFI loader and the configured fallback loader when applicable.
+- Treat missing required `rd.luks.uuid`, `rd.md.uuid`, `rd.lvm.lv`, root mapping, or Btrfs root subvolume argument as a pre-reboot error rather than discovering it on first boot.
+- **Regression test:** Run this validation automatically on the next complex RAID + LUKS + LVM + Btrfs installation and confirm it catches an intentionally omitted required boot argument.
+
+### 88. Rework default ZRAM sizing for very high-memory systems
+- [x] **IMPLEMENTED in installer r40; regression test pending**
+- **Observed on this bare-metal test:** The machine has 128 GiB RAM. The current 2x-RAM ZRAM default would imply an extremely large ZRAM configuration, and the installer warned/failed the available-root-space suitability check, so ZRAM was declined for this installation.
+- **Required fix:** Do not scale the default ZRAM size indefinitely as `2 x physical RAM`.
+- Add a sensible maximum/default cap and make the recommendation aware of the installed system/storage configuration.
+- The installer must continue allowing the user to disable ZRAM or explicitly choose an appropriate size.
+- **Regression test:** Test low-memory, typical-memory, and 128 GiB+ systems and confirm the proposed/default ZRAM size remains reasonable and never blocks or destabilizes an otherwise valid installation.
+
+### 89. Console font bare-metal follow-up from this installation
+- [x] **BARE-METAL VERIFIED:** 32-pixel `latarcyrheb-sun32` persists in `/etc/vconsole.conf`; native 4K remained physically small, while 1920x1080 console mode produced a comfortable physical size.
+- The installer large-font option was not selected during this run, so this install does not yet prove the installer text-size selection path.
+- Manual chroot testing confirmed `LatGrkCyr-12x22.psfu.gz` is present and `setfont LatGrkCyr-12x22` succeeds.
+- `/etc/vconsole.conf` was manually changed from `FONT=Lat2-Terminus16` to `FONT=LatGrkCyr-12x22`.
+- After first boot, verify systemd applies `LatGrkCyr-12x22` correctly on the real console.
+- Keep the existing pre-1.0 requirement to test the installer's selectable font sizes separately; the manual change is not a substitute for that installer regression test.
+
+### 90. Bare-metal complex-storage install reached successful completion; first-boot validation pending
+- [x] **BARE-METAL FIRST BOOT PASSED:** complex UEFI + separate `/boot` + LUKS + LVM + Btrfs + MD RAID0 + second LUKS/LVM booted successfully; all intended subvolumes mounted, RAID assembled, SSH/sudo worked, and `systemctl --failed` reported zero failed units.
+- The installer completed without an installation-stage failure on the tested UEFI + separate `/boot` + LUKS + LVM + Btrfs + MD RAID0 + second LUKS/LVM configuration.
+- Post-install inspection confirmed the intended Btrfs subvolumes, RAID/LUKS/LVM layers, EFI files, kernel, initramfs, and `fstab` after the manual GRUB correction.
+- The remaining release-candidate gate for this specific run is the **first bare-metal boot**.
+- If the system boots cleanly, record this complex storage scenario as passed while keeping issues 84-89 as installer/usability fixes or regression work.
+- If first boot fails, treat the boot failure as a 1.0-rc blocker and capture the exact Dracut/GRUB/systemd failure before making additional changes.
+
+
+### 91. Default text-console resolution for high-DPI displays
+- [x] **IMPLEMENTED in installer r40; regression test pending on additional connector types:** installer detects the connected DRM connector and adds a deduplicated 1920x1080@60 console `video=` argument to generated GRUB defaults when a connector is detected.
+- **Bare-metal result:** On the tested 3840x2160 DisplayPort monitor, the console font became very small after the DRM console switched to the native 4K mode.
+- Manually adding `video=DP-1:1920x1080@60` produced a comfortable console size with the 32-pixel font and remained readable after the graphics/DRM handoff.
+- **Planned default:** Add a 1920x1080 text-console video mode to the BFSOS GRUB defaults/GRUB port so new installs do not default to an excessively tiny 4K virtual console.
+- Do not blindly duplicate the argument if it is already present; GRUB command-line generation should deduplicate persistent video arguments.
+- Consider hardware/output-name portability before finalizing the implementation: the tested connector is `DP-1`, so the permanent mechanism should avoid assuming every machine uses that connector name if GRUB/kernel syntax allows a safer generic/default approach.
+- [ ] **Regression test:** Verify 1920x1080 console mode on bare metal, HDMI/DP variants where available, and confirm it does not interfere with later graphical desktop resolution selection.
+
+### 92. Installer console font choices: retain normal sizes and add 32-pixel option
+- [x] **IMPLEMENTED in installer r40; regression test pending:** retained 16 and ~20 choices, added 32-pixel Extra Large using `latarcyrheb-sun32`, and added 19/22-pixel fallbacks for the ~20 choice.
+- Keep the existing **16-pixel** and approximately **20-pixel** console-font choices.
+- Add a new **32-pixel / Extra Large** console-font choice to the installer.
+- **Bare-metal result:** `latarcyrheb-sun32.psfu.gz` is installed, loads successfully with `setfont`, and is much more usable on a 4K physical display when paired with a 1920x1080 text-console resolution.
+- The earlier 22-pixel test (`LatGrkCyr-12x22`) was still effectively microscopic at native 3840x2160, so font size alone is not sufficient on high-DPI consoles.
+- The installer should write the selected persistent font to `/etc/vconsole.conf`.
+- If the Extra Large option is selected, consider pairing it with the installer/GRUB high-DPI console-resolution option rather than changing graphical desktop resolution.
+- [ ] **Regression test:** Test 16, ~20, and 32-pixel choices on bare metal and confirm each persists after reboot and remains readable after the DRM console handoff.
+
+
+### 93. Eliminate hard-coded VG/LV naming assumptions
+- [x] **IMPLEMENTED in installer r40; regression test pending with arbitrary VG/LV names:** GRUB LVM discovery now derives every LV-backed fstab filesystem from the actual LVM metadata and no longer filters by assumed mountpoints/VG names.
+- The installer must treat user-selected valid VG/LV names as authoritative and reuse the exact recorded names everywhere.
+- Arbitrary valid names must flow consistently through LVM creation, mounts, `/etc/fstab`, `/etc/crypttab`, Dracut/initramfs configuration, `/etc/default/grub`, generated `grub.cfg`, post-install chroot/remount logic, and cleanup.
+- Do not reconstruct later boot/storage configuration from assumed names such as `bfs-root`, `bfs-raid`, or `bfs-vg`.
+- Build `rd.lvm.lv=` arguments from the final recorded storage model and emit each required `<vg>/<lv>` exactly once.
+- **Regression test:** Deliberately install using unusual but valid names such as `test-vg-123` and another nonstandard VG name, with multiple LVs and Btrfs subvolumes. Confirm the entire install, post-install chroot, GRUB/dracut generation, cleanup, and first boot succeed without any naming-specific assumptions.
+
+## r72 implementation pass — actionable tracker fixes consolidated
+- [x] `bootstrap-r50-rc-tracker-fixed.sh` passes `bash -n`.
+- [x] `install-bfs-menu-v50-tracker-fixed-r40.sh` passes `bash -n`; the generated chroot heredoc was also rendered with representative values and independently passed `bash -n`.
+- [x] Stage 9 bootstrap-to-installer handoff suppresses duplicate time sync without changing standalone installer behavior.
+- [x] Stage 8 normal chroot exit no longer reaches the generic success/pause handler.
+- [x] Bootstrap build failures now have a Dialog/text failure summary with status, log path/context, and detected URL when available.
+- [x] Installer ports/sysup/optional-package operations now record structured failure context; parent UI reports the failure instead of silently terminating at raw package output.
+- [x] Installer post-install chroot reconstructs the canonical Btrfs mount tree when root is unmounted or Bash is hidden by an incomplete/top-level subvolume mount.
+- [x] GRUB LVM arguments now derive from every actual LV-backed fstab filesystem, fixing omissions such as separate `/opt` and avoiding hard-coded VG names.
+- [x] GRUB storage/video argument generation is idempotent/deduplicated.
+- [x] High-DPI console default is generated by detecting a connected DRM connector and pairing it with 1920x1080@60; no fixed `DP-1` connector is hard-coded globally.
+- [x] Installer font selector now supports Default, 16, ~20 (19/20/22 fallbacks), and 32-pixel Extra Large.
+- [x] ZRAM default remains adaptive but is capped at 32 GiB by default (`BFS_ZRAM_MAX_GIB` can override the cap).
+- [x] GPM is exposed in Optional Software; a valid `gpm` port still needs to be present/verified in the ports tree.
+
+- [x] Post-install chroot mount-tree validation now checks every configured Btrfs mount against its expected subvolume and reconstructs the full tree if any role is missing/wrong.
+- [x] Installer package-failure recovery now returns to the installer menu, preserves the mounted target/logs, and changes format actions to `keep` before a retry so a package/download failure does not immediately reformat the already-created filesystems.
+- [x] `findmnt --verify --verbose` is now part of final installed-system validation when available; its report is preserved at `/root/bfs-fstab-verify.log`.
+- [x] GRUB final validation also verifies the generated console `video=` argument when one was selected.
+- [x] The 1920x1080 console default is only generated for a connected DRM output that advertises 1920x1080, avoiding an unsupported forced mode on lower-resolution displays.
+- [x] GPM service enablement is attempted automatically when GPM is selected and a `gpm.service` unit is provided by the package.
+- [ ] Hardware/build regression tests remain for items that cannot be proven by static script validation alone (archive interruption, clean Stage 3 locale/build-work run, Stage 6 restore, alternate RAID levels, connector variants, unusual VG/LV names, and GPM package build/service behavior).
+

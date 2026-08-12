@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r49 - Stage 8 clean return-to-menu fix
+# BFSOS bootstrap r50 - RC tracker consolidation fixes
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -621,7 +621,9 @@ _launch_bfs_installer() {
     echo "  Base file: $archive"
     echo
     set +e
-    BFS_ARCHIVE="$archive" "$installer"
+    # bootstrap already synchronized the clock.  Preserve standalone installer
+    # time synchronization while avoiding a redundant sync on this handoff.
+    BFS_TIME_SYNC=no BFS_ARCHIVE="$archive" "$installer"
     status=$?
     set -e
     _reset_terminal_ui
@@ -699,6 +701,44 @@ _show_stage5_archive_dialog() {
         clear 2>/dev/null || true
     fi
     return 0
+}
+
+_latest_failure_log() {
+    local stage="${1:-}" directory="" newest=""
+    case "$stage" in
+        1) directory="$TOOLCHAIN_LOG_DIR" ;;
+        2|3|4|5) directory="$BASE_LOG_DIR" ;;
+        *) directory="$LOG_DIR" ;;
+    esac
+    [ -d "$directory" ] || return 1
+    newest="$(find "$directory" -type f -name '*.log' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-)"
+    [ -n "$newest" ] || return 1
+    printf '%s\n' "$newest"
+}
+
+_show_stage_failure_dialog() {
+    local stage="$1" status="$2" logfile="" details="" failed_url=""
+    logfile="$(_latest_failure_log "$stage" 2>/dev/null || true)"
+    if [ -n "$logfile" ] && [ -r "$logfile" ]; then
+        details="$(tail -n 18 "$logfile" 2>/dev/null || true)"
+        failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$logfile" 2>/dev/null | tail -n1 || true)"
+    fi
+    [ -n "$details" ] || details="No package log excerpt was available."
+
+    local message="Bootstrap stage $stage failed with exit status $status."
+    [ -z "$failed_url" ] || message="$message\n\nLast URL seen:\n$failed_url"
+    [ -z "$logfile" ] || message="$message\n\nLog:\n$logfile"
+    message="$message\n\nLast output:\n$details"
+
+    if command -v dialog >/dev/null 2>&1 && [ -r /dev/tty ] && [ -w /dev/tty ]; then
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
+            --title "Bootstrap operation failed" --ok-label "Continue" \
+            --msgbox "$message" 24 96 </dev/tty >/dev/tty 2>&1 || true
+        clear 2>/dev/null || true
+    else
+        printf '\n%s\n' "$message" >&2
+        _pause_menu
+    fi
 }
 
 _run_root_stage() {
@@ -922,6 +962,9 @@ _bootstrap_menu() {
                     echo "Chroot exited with failure status: $status"
                     _pause_menu
                 fi
+                # Do not fall through to the generic operation-success/pause
+                # block after a normal chroot exit.
+                continue
                 ;;
             9)
                 # The installer owns its own UI/result handling. When it exits,
@@ -942,11 +985,11 @@ _bootstrap_menu() {
             esac
             echo
             echo "Operation completed successfully."
+            _pause_menu
         else
-            echo
-            echo "Operation failed with exit status $status."
+            _show_stage_failure_dialog "$choice" "$status"
+            continue
         fi
-        _pause_menu
     done
 }
 
