@@ -312,7 +312,7 @@ f:9ea17d492b0d16ca660e3ede69c84385:elfutils/libeu.patch
 f:61ff7164592158cbdaa2d4054be30d38:eudev/Pkgfile
 f:3e8d13e4a149721df91ff1b7fe098228:eudev/post-install
 f:b81f1c149562e28dce7e85db4f7fa7fd:exfatprogs/Pkgfile
-f:d1890da527eb76689313504ceaebfb47:expat/Pkgfile
+f:29e5e51cb560387aae529de1f1cca783:expat/Pkgfile
 f:c640afc6dce8bd0854fa1b98bee35309:expect/Pkgfile
 f:0ca4d6bb8d572fbcdb13cb36cd34833e:expect/expect-5.45.4-gcc15-1.patch
 f:eec260b9ef8da0d5d6d39f76bd7680bd:f2fs-tools/0001-f2fs-tools-use-stdbool.h-instead-of-bool.patch
