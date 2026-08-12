@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r44 - tracker fixes 75/77
+# BFSOS bootstrap r45 - archive safety, locale/workdir, time-sync and menu cleanup
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -431,7 +431,14 @@ bootstrap_settings_menu() {
 
 case "${1:-menu}" in
     0|stop|kill|-h|--help|help) ;;
-    *) sync_system_clock ;;
+    *)
+        # Synchronize once for a top-level bootstrap invocation.  Root stages
+        # launched from the interactive menu inherit BFS_SKIP_TIME_SYNC=yes so
+        # sudo/subprocess re-entry does not synchronize the clock again.
+        if [ "${BFS_SKIP_TIME_SYNC:-no}" != yes ]; then
+            sync_system_clock
+        fi
+        ;;
 esac
 
 load_bootstrap_settings
@@ -672,7 +679,7 @@ _run_root_stage() {
     local stage="$1"
 
     if [ "$(id -u)" -eq 0 ]; then
-        "$0" "$stage"
+        BFS_SKIP_TIME_SYNC=yes "$0" "$stage"
         return $?
     fi
 
@@ -686,7 +693,7 @@ _run_root_stage() {
     echo "Running: sudo $0 $stage"
     echo
 
-    sudo -- "$0" "$stage"
+    sudo -- env BFS_SKIP_TIME_SYNC=yes "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -871,7 +878,7 @@ _bootstrap_menu() {
             2) set +e; _run_root_stage 2; status=$?; set -e ;;
             3) set +e; _run_root_stage 3; status=$?; set -e ;;
             4) set +e; _run_root_stage 4; status=$?; set -e ;;
-            5) set +e; _compressrootfs; status=$?; set -e ;;
+            5) set +e; _run_root_stage 5; status=$?; set -e ;;
             6) set +e; _restore_rootfs; status=$?; set -e ;;
             7) set +e; _restore_toolchain; status=$?; set -e ;;
             8)
@@ -891,8 +898,18 @@ _bootstrap_menu() {
             11|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
             *) echo "Invalid selection."; sleep 1; continue ;;
         esac
-        echo
-        [ "$status" -eq 0 ] && echo "Operation completed successfully." || echo "Operation failed with exit status $status."
+        # Stages 2, 3, and 5 already report their successful result.  Return
+        # directly to the main menu instead of adding a redundant success pause.
+        if [ "$status" -eq 0 ]; then
+            case "$choice" in
+                2|3|4|5) continue ;;
+            esac
+            echo
+            echo "Operation completed successfully."
+        else
+            echo
+            echo "Operation failed with exit status $status."
+        fi
         _pause_menu
     done
 }
@@ -1751,16 +1768,48 @@ EOF
 
     rm -f "$toolchain_archive"
 
-    (
-        cd "$LFS"
-        XZ_DEFAULTS='-T0' tar -cvJpf "$toolchain_archive" .
-    )
+    echo
+    echo "Compressing verified temporary toolchain archive..."
 
-    tar -tJf "$toolchain_archive" >/dev/null
+    if ! (
+        cd "$LFS"
+        XZ_DEFAULTS='-T0' tar -cJpf "$toolchain_archive" .
+    ); then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive creation failed." >&2
+        return 1
+    fi
+
+    if ! tar -tJf "$toolchain_archive" >/dev/null; then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive verification failed." >&2
+        return 1
+    fi
+
+    # A readable tarball is not enough: verify the expected toolchain payload.
+    if ! tar -tJf "$toolchain_archive" |
+        grep -Eq '^\./tmp/lfs-tools/bin/(gcc|x86_64-lfs-linux-gnu-gcc)$'
+    then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive is missing the compiler." >&2
+        return 1
+    fi
+
+    if ! tar -tJf "$toolchain_archive" | grep -Eq '^\./tmp/lfs-tools/bin/(ld|ld\.bfd)$'; then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive is missing the linker." >&2
+        return 1
+    fi
+
+    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive is missing pkgmk." >&2
+        return 1
+    fi
 
     echo
     echo "Toolchain build completed."
-    echo "Archive created:"
+    echo "Archive created and verified:"
     echo "  $toolchain_archive"
 }
 
@@ -1934,23 +1983,55 @@ EOF
 
 _compressrootfs() {
     local rootfs_archive
+    local owner_uid=""
+    local owner_gid=""
+
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "ERROR: Stage 5 base archive creation must run as root." >&2
+        return 1
+    fi
 
     if [ ! -f "$LFS/.bfs-verified" ]; then
         echo "ERROR: Base system has not passed stage 4 verification." >&2
         echo "Run:" >&2
         echo "  sudo $0 4" >&2
-        exit 1
+        return 1
     fi
+
+    # Never archive active bootstrap bind mounts.  In particular, sources,
+    # packages, and build-work are bind-mounted during Stages 2/3.
+    if ! umountfs; then
+        echo "ERROR: Could not unmount all bootstrap filesystems before archiving." >&2
+        return 1
+    fi
+
+    for mount_path in \
+        "$LFS/dev/pts" \
+        "$LFS/dev" \
+        "$LFS/run" \
+        "$LFS/proc" \
+        "$LFS/sys" \
+        "$LFS/$pkgmkwork" \
+        "$LFS/$pkgmkpkg" \
+        "$LFS/$pkgmksrc"
+    do
+        if mountpoint -q "$mount_path"; then
+            echo "ERROR: Refusing to archive while a bootstrap mount is still active:" >&2
+            echo "  $mount_path" >&2
+            return 1
+        fi
+    done
 
     _ensure_archive_dirs
 
     rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
-
     rm -f "$rootfs_archive"
 
-    (
-        cd "$LFS"
+    echo
+    echo "Compressing verified base rootfs archive..."
 
+    if ! (
+        cd "$LFS"
         XZ_DEFAULTS='-T0' tar \
             --exclude='./var/lib/pkg/rejected' \
             --exclude=".$TOOLS" \
@@ -1960,14 +2041,43 @@ _compressrootfs() {
             --exclude='./proc/*' \
             --exclude='./run/*' \
             --exclude='./root/.cache' \
-            -cvJpf "$rootfs_archive" .
-    )
+            -cJpf "$rootfs_archive" .
+    ); then
+        rm -f "$rootfs_archive"
+        echo "ERROR: Base rootfs archive creation failed." >&2
+        echo "No archive was kept." >&2
+        return 1
+    fi
 
-    tar -tJf "$rootfs_archive" >/dev/null
+    if ! tar -tJf "$rootfs_archive" >/dev/null; then
+        rm -f "$rootfs_archive"
+        echo "ERROR: Base rootfs archive verification failed." >&2
+        echo "No archive was kept." >&2
+        return 1
+    fi
+
+    # Sanity-check a few files required for any usable BFSOS base system.
+    if ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/bash$' ||
+       ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/pkgmk$' ||
+       ! tar -tJf "$rootfs_archive" | grep -q '^\./etc/os-release$'
+    then
+        rm -f "$rootfs_archive"
+        echo "ERROR: Base rootfs archive is readable but missing required files." >&2
+        echo "No archive was kept." >&2
+        return 1
+    fi
+
+    # Stage 5 runs through sudo from the interactive menu.  Return ownership of
+    # the release artifact to the invoking user so it can be managed normally.
+    if [ -n "${SUDO_UID:-}" ] && [ -n "${SUDO_GID:-}" ]; then
+        owner_uid="$SUDO_UID"
+        owner_gid="$SUDO_GID"
+        chown "$owner_uid:$owner_gid" "$rootfs_archive" 2>/dev/null || true
+    fi
 
     echo
     echo "Base rootfs compressed successfully."
-    echo "Archive created:"
+    echo "Archive created and verified:"
     echo "  $rootfs_archive"
 }
 
@@ -2085,12 +2195,15 @@ EOF
     # so without this it falls back to /var/cache/pkg/work inside the small
     # LiveGUI-backed rootfs and GCC can exhaust that filesystem.
     if [ -f "$LFS/etc/pkgmk.conf" ]; then
+        # Never point pkgmk at the bind-mount root itself.  pkgmk removes its
+        # work directory during cleanup; using the mount point directly causes
+        # "Device or resource busy".  Give each port a removable child dir.
         if grep -q '^# *PKGMK_WORK_DIR=' "$LFS/etc/pkgmk.conf"; then
-            sed -i                 's|^# *PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work"|'                 "$LFS/etc/pkgmk.conf"
+            sed -i 's|^# *PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work/pkgmk-$name"|'                 "$LFS/etc/pkgmk.conf"
         elif grep -q '^PKGMK_WORK_DIR=' "$LFS/etc/pkgmk.conf"; then
-            sed -i                 's|^PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work"|'                 "$LFS/etc/pkgmk.conf"
+            sed -i 's|^PKGMK_WORK_DIR=.*|PKGMK_WORK_DIR="/var/cache/pkg/build-work/pkgmk-$name"|'                 "$LFS/etc/pkgmk.conf"
         else
-            printf '\nPKGMK_WORK_DIR="/var/cache/pkg/build-work"\n'                 >> "$LFS/etc/pkgmk.conf"
+            printf '\nPKGMK_WORK_DIR="/var/cache/pkg/build-work/pkgmk-$name"\n'                 >> "$LFS/etc/pkgmk.conf"
         fi
 
         echo "Final pkgmk work directory configured:"
@@ -2400,10 +2513,13 @@ umountfs() {
 }
 
 unmount() {
-    while true; do
-        mountpoint -q "$1" || break
-        umount "$1" 2>/dev/null
+    while mountpoint -q "$1"; do
+        if ! umount "$1" 2>/dev/null; then
+            echo "ERROR: Could not unmount busy bootstrap mount: $1" >&2
+            return 1
+        fi
     done
+    return 0
 }
 
 export LFS=/tmp/lfs-rootfs

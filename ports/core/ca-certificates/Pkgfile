@@ -1,4 +1,4 @@
-cription: Mozilla CA certificate bundle
+# Description: Mozilla CA certificate bundle
 # URL: https://curl.se/docs/caextract.html
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
@@ -7,28 +7,28 @@ version=20260716
 release=2
 
 source=(
-    cacert.pem
+https://curl.se/ca/cacert.pem
 )
 
 bootstrap_build() {
-    install -D -m 0644 \
-        "$SRC/cacert.pem" \
-        "$TOOLS/etc/ssl/cert.pem"
+	install -D -m 0644 \
+		"$SRC/cacert.pem" \
+		"$TOOLS/etc/ssl/cert.pem"
 }
 
 pkg_build() {
-    install -D -m 0644 \
-        "$SRC/cacert.pem" \
-        "$PKG/etc/ssl/cert.pem"
+	install -D -m 0644 \
+		"$SRC/cacert.pem" \
+		"$PKG/etc/ssl/cert.pem"
 
-    install -d -m 0755 \
-        "$PKG/etc/ssl/certs"
+	install -d -m 0755 \
+		"$PKG/etc/ssl/certs"
 
-    ln -sfn \
-        /etc/ssl/cert.pem \
-        "$PKG/etc/ssl/certs/ca-certificates.crt"
+	ln -sfn \
+		/etc/ssl/cert.pem \
+		"$PKG/etc/ssl/certs/ca-certificates.crt"
 
-    ln -sfn \
-        /etc/ssl/cert.pem \
-        "$PKG/etc/ssl/ca-bundle.crt"
+	ln -sfn \
+		/etc/ssl/cert.pem \
+		"$PKG/etc/ssl/ca-bundle.crt"
 }
