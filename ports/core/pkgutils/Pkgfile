@@ -9,12 +9,20 @@ source=(https://crux.nu/files/$name-$version.tar.xz
 	extension)
 
 bootstrap_build() {
+	# BFSOS bootstrap runs before UTF-8 locales are guaranteed to exist.
+	# Upstream pkgutils 5.40.12 forces LC_ALL=C.UTF-8 in pkgmk;
+	# use the universally available C locale instead.
+	sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' pkgmk.in
+
 	sed -i -e 's/ --static//' \
 	       -e 's/ -static//' Makefile
 	make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
 }
 
 post_build() {
+	# BFSOS must keep pkgmk usable even when C.UTF-8 has not been generated.
+	sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' $PKG/usr/bin/pkgmk
+
 	# change some defaults
 	# store sources and packages in /var/cache/pkg
 	sed -i 's,^PKGMK_SOURCE_DIR=.*,PKGMK_SOURCE_DIR="/var/cache/pkg/sources",' $PKG/usr/bin/pkgmk

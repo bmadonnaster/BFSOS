@@ -354,7 +354,7 @@ f:3d333df77302ed89e06a4a8539943b7d:gcc/c89
 f:da96f545b863e57c6ab2598c1ea9a740:gcc/c99
 f:61a057afa31006764b957a483ba90b9d:gcc/gcc-4.7.3-multilib-dirs.patch
 f:7c9128522053af79791bcfdd55834c2a:gcc/gcc-nocheck-fixincludes.patch
-f:bd360a5cb70ebccfc2e30340e1d09834:gcc/Pkgfile
+f:d80069f522ae31c4bf4d52d5ac96aa8f:gcc/Pkgfile
 f:03adaef82b9bcfa87a7eda775de4a1a7:gcc13/Pkgfile
 f:3d333df77302ed89e06a4a8539943b7d:gcc13/c89
 f:da96f545b863e57c6ab2598c1ea9a740:gcc13/c99
@@ -499,7 +499,7 @@ f:fcf2cdda2eb65501bfe00ac2db9c5389:pkgconf/Pkgfile
 f:6fec70b14f238ad94caf5dac367ee427:pkgconf/README
 f:b5bee6aa847bfdcf84ef31229dba32a9:pkgconf/i686-pc-linux-gnu.personality
 f:c6d689e4e8bc7b2b3e13a911bab36e27:pkgconf/x86_64-pc-linux-gnu.personality
-f:2eadad66bcb507405db3e509ba0b55dc:pkgutils/Pkgfile
+f:4603c8d3f4014f70207ccba63ddad299:pkgutils/Pkgfile
 f:d9f6ce295e70b61b39cd43c5605c54a7:pkgutils/extension
 f:468a4d0cd212769920fa6b4fe491ea6e:pkgutils/pkgadd.conf
 f:99bbe0ecb6bb0db1bcbf26f37f888602:pkgutils/pkgutils_add-compress-infopages.patch

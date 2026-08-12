@@ -15,7 +15,7 @@ source=(
     gcc-nocheck-fixincludes.patch
 )
 
-export LANG=en_US.UTF-8
+export LANG=C
 
 keep_static=1
 keep_libtool=1
