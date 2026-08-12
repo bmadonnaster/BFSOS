@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r47 - Stage 5 dialog and Stage 6 root/chroot restore safety
+# BFSOS bootstrap r48 - Stage 8 chroot availability fix
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -666,8 +666,20 @@ _toolchain_restore_complete() {
 }
 
 _chroot_available() {
-    { [ -f "$LFS/.bfs-rootfs-restored" ] || [ -f "$LFS/.bfs-toolchain-restored" ]; } &&
-    { [ -x "$LFS/usr/bin/bash" ] || [ -x "$LFS/bin/bash" ]; }
+    # Chroot is usable whenever a real BFSOS rootfs exists with a working shell.
+    # A freshly built Stage 2/3/4 rootfs should not require an archive restore
+    # marker before Stage 8 becomes available.
+    {
+        [ -f "$LFS/.bfs-stage2-complete" ] ||
+        [ -f "$LFS/.bfs-stage3-complete" ] ||
+        [ -f "$LFS/.bfs-verified" ] ||
+        [ -f "$LFS/.bfs-rootfs-restored" ] ||
+        [ -f "$LFS/.bfs-toolchain-restored" ]
+    } &&
+    {
+        [ -x "$LFS/usr/bin/bash" ] ||
+        [ -x "$LFS/bin/bash" ]
+    }
 }
 
 _pause_menu() {
