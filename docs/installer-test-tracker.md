@@ -1,6 +1,16 @@
 # BFSOS Installer v50 Test / Fix Tracker
 
 
+### Download/package failure messaging in bootstrap and installer
+- [ ] **Pending:** Improve error handling for bad package/source URLs and package-manager failures in both `bootstrap.sh` and the BFSOS installer.
+- **Observed bootstrap failure:** MPC source download returned HTTP 404 and `pkgmk` exited with status 4, causing the bootstrap stage to terminate without a clear menu-level explanation.
+- **Bootstrap requirement:** On source/download/build failure, report the package name, failed URL when available, underlying downloader/build error, exit status, and preserved package log path; then return safely to the bootstrap menu instead of appearing to disappear.
+- **Installer review:** The installer currently invokes `ports -u`, `prt-get sysup`, and `prt-get depinst` directly inside a `set -Eeuo pipefail` script. A download/build failure from those commands can therefore abort the install path without installer-specific context unless explicitly caught.
+- **Installer requirement:** Wrap ports synchronization, mandatory upgrade, and optional package installation failures. Show a clear Dialog/text error containing the failed operation/package when known, useful underlying output, exit status, and installer log path. Preserve the installer log before cleanup/exit.
+- **Regression tests:** Deliberately use a bad source URL once in Bootstrap Stage 1 and once during installer package installation. In both cases verify the UI reports what failed, where the log is, and returns/aborts in a controlled way without silently disappearing.
+
+
+
 ### Bootstrap Stage 3 availability status
 - [x] **COMPLETED / VERIFIED:** Correct Stage 3 (`Rebuild base system with final toolchain`) status logic.
 - Stage 3 now shows **[PENDING]** until the required temporary-toolchain/base-system prerequisite stages are complete.
