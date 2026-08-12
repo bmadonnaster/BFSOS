@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r48 - Stage 8 chroot availability fix
+# BFSOS bootstrap r49 - Stage 8 clean return-to-menu fix
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -911,10 +911,17 @@ _bootstrap_menu() {
             6) set +e; _run_root_stage 6; status=$?; set -e ;;
             7) set +e; _restore_toolchain; status=$?; set -e ;;
             8)
-                # Chroot is an optional action. If it is not currently usable,
-                # simply redraw the menu without an error/success/pause screen.
-                _chroot_available || continue
-                set +e; _run_root_stage 8; status=$?; set -e
+                # A normal `exit` from the chroot is success. Return directly
+                # to the bootstrap menu; only pause when chroot actually fails.
+                set +e
+                _run_root_stage 8
+                status=$?
+                set -e
+                if [ "$status" -ne 0 ]; then
+                    echo
+                    echo "Chroot exited with failure status: $status"
+                    _pause_menu
+                fi
                 ;;
             9)
                 # The installer owns its own UI/result handling. When it exits,
