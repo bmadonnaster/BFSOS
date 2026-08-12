@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r45 - archive safety, locale/workdir, time-sync and menu cleanup
+# BFSOS bootstrap r47 - Stage 5 dialog and Stage 6 root/chroot restore safety
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -675,6 +675,20 @@ _pause_menu() {
     read -r -p "Press Enter to return to the menu..." _
 }
 
+_show_stage5_archive_dialog() {
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -r /dev/tty ] && [ -w /dev/tty ]; then
+        dialog --clear \
+            --backtitle "BFS Linux Bootstrap" \
+            --title "Create base rootfs archive" \
+            --msgbox \
+            "BFSOS will now create and verify the base rootfs archive.\n\nThis can take several minutes depending on system speed and compression workload.\n\nPress OK to begin." \
+            12 68 </dev/tty >/dev/tty 2>&1 || return 1
+        clear 2>/dev/null || true
+    fi
+    return 0
+}
+
 _run_root_stage() {
     local stage="$1"
 
@@ -878,8 +892,11 @@ _bootstrap_menu() {
             2) set +e; _run_root_stage 2; status=$?; set -e ;;
             3) set +e; _run_root_stage 3; status=$?; set -e ;;
             4) set +e; _run_root_stage 4; status=$?; set -e ;;
-            5) set +e; _run_root_stage 5; status=$?; set -e ;;
-            6) set +e; _restore_rootfs; status=$?; set -e ;;
+            5)
+                _show_stage5_archive_dialog || continue
+                set +e; _run_root_stage 5; status=$?; set -e
+                ;;
+            6) set +e; _run_root_stage 6; status=$?; set -e ;;
             7) set +e; _restore_toolchain; status=$?; set -e ;;
             8)
                 # Chroot is an optional action. If it is not currently usable,
@@ -1379,6 +1396,11 @@ _restore_toolchain() {
 _restore_rootfs() {
     local archive
 
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "ERROR: Stage 6 base rootfs restore must run as root." >&2
+        return 1
+    fi
+
     archive="$(
         _latest_archive \
             "$BASE_ARCHIVE_DIR" \
@@ -1398,6 +1420,13 @@ _restore_rootfs() {
     if ! /bin/tar -tJf "$archive" >/dev/null; then
         echo "ERROR: Base rootfs archive is unreadable or damaged." >&2
         exit 1
+    fi
+
+    # Stage 6 is destructive. Make sure no bootstrap bind/virtual filesystem
+    # remains mounted below the rootfs before clearing or extracting it.
+    if ! umountfs; then
+        echo "ERROR: Could not unmount all bootstrap filesystems before restore." >&2
+        return 1
     fi
 
     _clear_rootfs
