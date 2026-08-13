@@ -501,7 +501,7 @@ f:b5bee6aa847bfdcf84ef31229dba32a9:pkgconf/i686-pc-linux-gnu.personality
 f:c6d689e4e8bc7b2b3e13a911bab36e27:pkgconf/x86_64-pc-linux-gnu.personality
 f:5778cc07c8dc928f5b3ebd369ac203eb:pkgutils/Pkgfile
 f:d9f6ce295e70b61b39cd43c5605c54a7:pkgutils/extension
-f:468a4d0cd212769920fa6b4fe491ea6e:pkgutils/pkgadd.conf
+f:579cfe3757424db2ffc44f3cfff70548:pkgutils/pkgadd.conf
 f:99bbe0ecb6bb0db1bcbf26f37f888602:pkgutils/pkgutils_add-compress-infopages.patch
 f:7769542e43a4108de16b45133f28eaea:pkgutils/pkgutils_fix-build-needed-trigger.patch
 f:35020b00b942b9353ad9f9cc7cd18d89:pkgutils/pkgutils_ignore-conflict.patch
