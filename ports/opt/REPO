@@ -491,11 +491,11 @@ f:f539bb8ed5a71f5b669bbc41cfd950c3:glibmm-2.68/Pkgfile
 f:775154d1d650517bc0def9f91e8ab4c8:glibmm/Pkgfile
 f:beee4023487b46aee74016aeca61694a:glslang/Pkgfile
 f:2ecc8c96797fdac87d558f1913facb38:gnupg/Pkgfile
-f:b6da168b24c9daf3975496ae7df6be12:gnutls/Pkgfile
+f:146ee0648a8c9c5d8ef772fedb158cde:gnutls/Pkgfile
 f:305266a462a27d45cc8cd8727de251e5:gobject-introspection/Pkgfile
 f:665ad5f0b903402b86d01f1e54a3a0f1:gparted/Pkgfile
 f:2b23300f3e388995a86d89970ec0114a:gparted/post-install
-f:c9359d2d40b3721e46efbfb180f92943:gpgme/Pkgfile
+f:2be9019805b33d1f51c7622b24080304:gpgme/Pkgfile
 f:74cb832a42d8197c582ca189758cfebd:grantlee/Pkgfile
 f:7639cc3fdaf774430ad78cc200ec9172:graphene/Pkgfile
 f:149d9e9ac49608bba27276fc1c331302:graphite2/Pkgfile
@@ -557,7 +557,7 @@ f:3490b75a3f8958a917b5452a268182ca:libadwaita/Pkgfile
 f:5157a500942ad4a5e7dc27e0f2d11185:libao/Pkgfile
 f:34e629e461fb14c7cfb57a8238c15eea:libaom/Pkgfile
 f:75c3165aa0279219e0e46aff3bb9aa3a:libass/Pkgfile
-f:3b62581b5b5e9ad0841b8fc2947c38d4:libassuan/Pkgfile
+f:33bf569e5936602fe35f127e94ccc8ad:libassuan/Pkgfile
 f:a49d79b977ee248bbf7a4ceaf5f7eb6c:libatasmart/Pkgfile
 f:79159e506bc0a40a0fbb145898a9d4f0:libavif/Pkgfile
 f:9ea9a6fb278858afa379a9474e8d6740:libavif/post-install
@@ -582,7 +582,7 @@ f:9af32aa685497f6cd960605674dad59a:libdvdread/Pkgfile
 f:4686560406eacb0c81c8bbaaf62ef4ab:libedit/Pkgfile
 f:02df5c48f30b5337a80cb3f0c47665c8:libei/Pkgfile
 f:ab0096619db4cb5b3e4efc187ad73731:libexif/Pkgfile
-f:550b53c390ff71ea9a8c15818393aa92:libgcrypt/Pkgfile
+f:a608532e08e52b0552eeee514e817a44:libgcrypt/Pkgfile
 f:604bdf76e3d4c9f15d6f95b11166538b:libglade/Pkgfile
 f:861b78a6b9f53733a618f9743036810a:libgpg-error/Pkgfile
 f:2d9d0e2bf5309a2f92953600f07b6e02:libgsf/Pkgfile
@@ -598,7 +598,7 @@ f:0b3f956403fd8dc84ba39ace81f68bf9:libisofs/Pkgfile
 f:682daf12fd9c6fec63a7671c9e70b396:libjpeg-turbo/Pkgfile
 f:94d2d47a91e82a3d7e25ec5df2a45337:libjxl/Pkgfile
 f:9ea9a6fb278858afa379a9474e8d6740:libjxl/post-install
-f:4e97f1ddad5ce3588950f3590e462542:libksba/Pkgfile
+f:55ba9a2952b79f7406db6de4d4dc6317:libksba/Pkgfile
 f:e34a1081ba5b6935adb558ad52e6256f:libmad/Pkgfile
 f:081e9596b4ddc18952c88d388efe6989:libmad/post-install
 f:0da2e79038b20bc164723fc1c268d67f:libmbim/Pkgfile
@@ -688,7 +688,7 @@ f:d85bd8021a1ffbf5b2e6bc8c49cc0a3b:networkmanager/post-install
 f:5b1c626e73cfb02bef80710c9d29f1c2:newt/Pkgfile
 f:7724757c7b4c8eb750e1003d66560240:nodejs/Pkgfile
 f:6f35bea030879f18394b1de2c469f449:nodejs/unbundle-uv.patch
-f:a348ef7340462a8dd6a1a4641a34510d:npth/Pkgfile
+f:7bc9ae9475b7e6f5878fbe1a7ef0957b:npth/Pkgfile
 f:fbdd62ec1f24d4a66b63f8b058e89f80:nspr/Pkgfile
 f:fccf49481614c2f61bb3078f34c3cfd6:nss/Pkgfile
 f:26b8bbcbe2665487c4fe8401de0a2daf:nss/nss-3.54-standalone-2.patch
@@ -730,7 +730,7 @@ f:1ff88afb89d45c86008d135074207619:pavucontrol/Pkgfile
 f:3c3bd1e39390205a193e3ddfd9db5762:pcre/Pkgfile
 f:5596ebcb839f670d56a666e6710b1802:perl-parse-yapp/Pkgfile
 f:0d6238ff1a674a7528d1c6d97a607a2b:perl-xml-simple/Pkgfile
-f:ba9ffaecb25f77e75f8a5cbd6c6885f5:pinentry/Pkgfile
+f:49d86dfe751ed7e86268055358ee8bb0:pinentry/Pkgfile
 f:488ee366adef66dc3666b8110615c928:pipewire/Pkgfile
 f:1463c1b628c3db98e526d37ec051ae6a:polkit/Pkgfile
 f:bee47815c3a6a8018bcf513abb190b42:polkit/pre-install

@@ -240,7 +240,7 @@ f:04700e70033ff3342ccef13fec786974:glib-32/post-install
 f:d41d8cd98f00b204e9800998ecf8427e:glu-32/.32bit
 f:cfa8e3d5a42eb3b004d25f752b0ddc5f:glu-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:gnutls-32/.32bit
-f:49a9a99365cfe02155ced034bdb72844:gnutls-32/Pkgfile
+f:bde5bd7521a3c03d28108e88f4fb58b3:gnutls-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:graphene-32/.32bit
 f:ded942320a3625aff3204782d5062993:graphene-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:gst-plugins-base-32/.32bit
@@ -352,13 +352,13 @@ f:d89f99e5e2dd1b1790691f9c01bad19f:libevent-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libffi-32/.32bit
 f:ddac5a27d485b1e17fa2a3e425f79af8:libffi-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libgcrypt-32/.32bit
-f:582e33b16edf0df9b226adc0e0312aa4:libgcrypt-32/Pkgfile
+f:7b918284f2ee6d3223bd614c31d3ab29:libgcrypt-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libglvnd-32/.32bit
 f:18148c744428a67ddcc6afc3392415b8:libglvnd-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libgmp-32/.32bit
 f:4b884b0eb324b118493905db2591d697:libgmp-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libgpg-error-32/.32bit
-f:ed27c0c30a8a11e25ec23c7f1df560ee:libgpg-error-32/Pkgfile
+f:d9ab9013781a3a6f39e7051c07f6be15:libgpg-error-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libgudev-32/.32bit
 f:7833ae36440b67730295427bee9d03ad:libgudev-32/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:libice-32/.32bit

@@ -1,46 +1,53 @@
-# Add your top line text here
-# Your line to add at the top here
+# Description: CRUX package management utilities with BFSOS pkgmk extensions
+# URL: https://crux.nu/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+
 name=pkgutils
 version=5.40.12
-release=4
+release=5
+
 source=(https://crux.nu/files/$name-$version.tar.xz
-	pkgadd.conf
-	pkgmk.conf
-	extension)
+        pkgadd.conf
+        pkgmk.conf
+        extension)
 
 bootstrap_build() {
-	# BFSOS bootstrap runs before UTF-8 locales are guaranteed to exist.
-	# Upstream pkgutils 5.40.12 forces LC_ALL=C.UTF-8 in pkgmk;
-	# use the universally available C locale instead.
-	sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' pkgmk.in
+        # BFSOS bootstrap runs before UTF-8 locales are guaranteed to exist.
+        # Upstream pkgutils 5.40.12 forces LC_ALL=C.UTF-8 in pkgmk;
+        # use the universally available C locale instead.
+        sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' pkgmk.in
 
-	sed -i -e 's/ --static//' \
-	       -e 's/ -static//' Makefile
-	make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
+        sed -i -e 's/ --static//' \
+               -e 's/ -static//' Makefile
+
+        make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
 }
 
 post_build() {
-	# BFSOS must keep pkgmk usable even when C.UTF-8 has not been generated.
-	sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' $PKG/usr/bin/pkgmk
+        # BFSOS must keep pkgmk usable even when C.UTF-8 has not been generated.
+        sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' "$PKG/usr/bin/pkgmk"
 
-	# change some defaults
-	# store sources and packages in /var/cache/pkg
-	sed -i 's,^PKGMK_SOURCE_DIR=.*,PKGMK_SOURCE_DIR="/var/cache/pkg/sources",' $PKG/usr/bin/pkgmk
-	sed -i 's,^PKGMK_PACKAGE_DIR=.*,PKGMK_PACKAGE_DIR="/var/cache/pkg/packages",' $PKG/usr/bin/pkgmk
-	sed -i 's,^PKGMK_WORK_DIR=.*,PKGMK_WORK_DIR="/var/cache/pkg/work",' $PKG/usr/bin/pkgmk
-	install -dm777 $PKG/var/cache/pkg/{sources,packages,work}
-	chmod 777 $PKG/var/cache/pkg
+        # Store sources, packages, and normal pkgmk work in /var/cache/pkg.
+        sed -i 's,^PKGMK_SOURCE_DIR=.*,PKGMK_SOURCE_DIR="/var/cache/pkg/sources",' "$PKG/usr/bin/pkgmk"
+        sed -i 's,^PKGMK_PACKAGE_DIR=.*,PKGMK_PACKAGE_DIR="/var/cache/pkg/packages",' "$PKG/usr/bin/pkgmk"
+        sed -i 's,^PKGMK_WORK_DIR=.*,PKGMK_WORK_DIR="/var/cache/pkg/work",' "$PKG/usr/bin/pkgmk"
 
-	# make xz as default compression mode
-	sed -i 's,^PKGMK_COMPRESSION_MODE=.*,PKGMK_COMPRESSION_MODE="xz",' $PKG/usr/bin/pkgmk
+        install -dm777 \
+                "$PKG/var/cache/pkg" \
+                "$PKG/var/cache/pkg/sources" \
+                "$PKG/var/cache/pkg/packages" \
+                "$PKG/var/cache/pkg/work"
 
-	# ignore signature by default
-	sed -i 's,^PKGMK_IGNORE_SIGNATURE=.*,PKGMK_IGNORE_SIGNATURE="yes",' $PKG/usr/bin/pkgmk
+        # Use xz as the default package compression mode.
+        sed -i 's,^PKGMK_COMPRESSION_MODE=.*,PKGMK_COMPRESSION_MODE="xz",' "$PKG/usr/bin/pkgmk"
 
-	# my custom extension script
-	install -Dm644 $SRC/extension $PKG/var/lib/pkgmk/extension
+        # BFSOS currently ignores source signatures by default.
+        sed -i 's,^PKGMK_IGNORE_SIGNATURE=.*,PKGMK_IGNORE_SIGNATURE="yes",' "$PKG/usr/bin/pkgmk"
 
-	# configs
-	install -m644 $SRC/pkgadd.conf $PKG/etc/pkgadd.conf
-	install -m644 $SRC/pkgmk.conf $PKG/etc/pkgmk.conf
+        # BFSOS pkgmk extension.
+        install -Dm644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
+
+        # Configuration.
+        install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"
+        install -m644 "$SRC/pkgmk.conf" "$PKG/etc/pkgmk.conf"
 }
