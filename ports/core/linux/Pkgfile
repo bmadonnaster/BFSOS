@@ -1,5 +1,5 @@
 # Description: Linux kernel, sources and modules
-# URL: https://www.kernel.org/
+# URL: https://cdn.kernel.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: bc bison cpio dracut elfutils flex linux-firmware openssl
 # Optional: pahole
@@ -8,7 +8,7 @@ name=linux
 version=7.1.5
 release=1
 source=(
-    https://www.kernel.org/pub/linux/kernel/v7.x/$name-$version.tar.xz
+    https://cdn.kernel.org/pub/linux/kernel/v7.x/$name-$version.tar.xz
     config
 )
 
