@@ -378,8 +378,8 @@ f:f02419b094ba90195ca922b34a86b0af:glibc/nsswitch.conf
 f:4a3e4243338481bb5e70b74281347ae8:glibc/reenable_DT_HASH.patch
 f:e376f88263ce94361e0bcc3028c7cb97:gmp/Pkgfile
 f:3fca3b5d7ab19d89c26100b45301f361:gperf/Pkgfile
-f:5d03141093a40dfdf89b69453090f4c9:gpm/Pkgfile
 f:7f7d72b794c44c60afc122aca70838e0:gpm/gpm-1.20.7-consolidated-1.patch
+f:37df4689a03010d855b7ac27cb8d4164:gpm/Pkgfile
 f:c87635a48436123f92deb2792cc65b48:gptfdisk/Pkgfile
 f:93dd9e8f4f441c786ae923165a1663a2:grep/Pkgfile
 f:3ec473500c14cb81902678b342ca74da:groff/Pkgfile
