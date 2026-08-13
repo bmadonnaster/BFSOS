@@ -8,7 +8,7 @@
 name=libgcrypt-32
 version=1.11.0
 release=1
-source=(https://www.gnupg.org/ftp/gcrypt/${name%-*}/${name%-*}-$version.tar.bz2)
+source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/${name%-*}-$version.tar.bz2)
 
 build() {
 	cd ${name%-*}-$version

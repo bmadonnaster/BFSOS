@@ -8,7 +8,7 @@
 name=gnutls-32
 version=3.8.9
 release=1
-source=(https://www.gnupg.org/ftp/gcrypt/${name%-*}/v${version:0:3}/${name%-*}-$version.tar.xz)
+source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/v${version:0:3}/${name%-*}-$version.tar.xz)
 
 build() {
 	cd ${name%-*}-${version:0:5}

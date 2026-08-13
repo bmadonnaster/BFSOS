@@ -9,7 +9,7 @@
 name=gpgme
 version=1.24.0
 release=1
-source=(https://www.gnupg.org/ftp/gcrypt/$name/$name-$version.tar.bz2)
+source=(https://mirrors.dotsrc.org/gcrypt/$name/$name-$version.tar.bz2)
 
 pkg_build() {
 

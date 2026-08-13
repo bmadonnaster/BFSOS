@@ -1,7 +1,7 @@
 # Add your top line text here
 # Your line to add at the top here
 # Description:  The libassuan package contains an inter process communication library used by some of the other GnuPG related packages. libassuan's primary use is to allow a client to interact with a non-persistent server. libassuan is not, however, limited to use with GnuPG servers and clients. It was designed to be flexible enough to meet the demands of many transaction based environments with non-persistent servers.
-# URL:          https://www.gnupg.org/ftp/gcrypt/libassuan/
+# URL:          https://mirrors.dotsrc.org/gcrypt/libassuan/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  libgpg-error
 # Optional: texlive install-tl-unx
@@ -9,7 +9,7 @@
 name=libassuan
 version=3.0.2
 release=1
-source=(https://www.gnupg.org/ftp/gcrypt/$name/$name-$version.tar.bz2)
+source=(https://mirrors.dotsrc.org/gcrypt/$name/$name-$version.tar.bz2)
 
 build() {
 	cd $name-$version
