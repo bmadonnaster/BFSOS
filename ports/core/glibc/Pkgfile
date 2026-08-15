@@ -8,8 +8,8 @@ release=1
 
 source=(
     https://ftp.gnu.org/gnu/$name/$name-$version.tar.xz
-    glibc-2.44-upstream_fix-1.patch
     glibc-fhs-1.patch
+    glibc-2.44-upstream_fix-1.patch
     genlocales
     ld.so.conf
     nsswitch.conf
@@ -18,8 +18,8 @@ source=(
 keep_static=1
 
 bootstrap_build() {
-    patch -Np1 -i "$SRC/glibc-fhs-1.patch"
-    patch -Np1 -i "$SRC/glibc-2.44-upstream_fix-1.patch"
+    # Patch sources are applied automatically by files/pkgmk.bootstrap before
+    # this function runs, in source=() order.
 
     #
     # Temporary 32-bit Glibc.

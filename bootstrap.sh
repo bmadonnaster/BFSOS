@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r53 - Ninja ordering + preflight/failure-log fixes
+# BFSOS bootstrap r55 - RC tracker consolidated fixes
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -764,6 +764,37 @@ _show_stage_failure_dialog() {
     fi
 }
 
+_menu_dialog_available() {
+    [ "${BFS_MENU_STAGE:-no}" = yes ] &&
+    command -v dialog >/dev/null 2>&1 &&
+    [ -r /dev/tty ] && [ -w /dev/tty ]
+}
+
+_show_menu_progress() {
+    local title="$1" message="$2"
+    if _menu_dialog_available; then
+        _reset_terminal_ui
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
+            --title "$title" --infobox "$message" 8 72 \
+            </dev/tty >/dev/tty 2>&1 || true
+    else
+        printf '\n%s\n' "$message"
+    fi
+}
+
+_show_menu_success() {
+    local title="$1" message="$2"
+    if _menu_dialog_available; then
+        _reset_terminal_ui
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
+            --title "$title" --ok-label "Continue" --msgbox "$message" 12 82 \
+            </dev/tty >/dev/tty 2>&1 || true
+        _reset_terminal_ui
+    else
+        printf '\n%s\n' "$message"
+    fi
+}
+
 _run_root_stage() {
     local stage="$1"
 
@@ -777,12 +808,14 @@ _run_root_stage() {
         return 1
     }
 
-    echo
-    echo "Stage $stage requires root privileges."
-    echo "Running: sudo $0 $stage"
-    echo
+    if [ "${BFS_MENU_STAGE:-no}" != yes ] || ! command -v dialog >/dev/null 2>&1; then
+        echo
+        echo "Stage $stage requires root privileges."
+        echo "Running: sudo $0 $stage"
+        echo
+    fi
 
-    sudo -- env BFS_SKIP_TIME_SYNC=yes "$0" "$stage"
+    sudo -- env BFS_SKIP_TIME_SYNC=yes BFS_MENU_STAGE="${BFS_MENU_STAGE:-no}" "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -969,21 +1002,21 @@ _bootstrap_menu() {
         STAGE_OPERATION_STARTED_EPOCH="$(date +%s)"
 
         case "$choice" in
-            1) set +e; _buildtoolchain; status=$?; set -e ;;
-            2) set +e; _run_root_stage 2; status=$?; set -e ;;
-            3) set +e; _run_root_stage 3; status=$?; set -e ;;
-            4) set +e; _run_root_stage 4; status=$?; set -e ;;
+            1) set +e; BFS_MENU_STAGE=yes _buildtoolchain; status=$?; set -e ;;
+            2) set +e; BFS_MENU_STAGE=yes _run_root_stage 2; status=$?; set -e ;;
+            3) set +e; BFS_MENU_STAGE=yes _run_root_stage 3; status=$?; set -e ;;
+            4) set +e; BFS_MENU_STAGE=yes _run_root_stage 4; status=$?; set -e ;;
             5)
                 _show_stage5_archive_dialog || continue
-                set +e; _run_root_stage 5; status=$?; set -e
+                set +e; BFS_MENU_STAGE=yes _run_root_stage 5; status=$?; set -e
                 ;;
-            6) set +e; _run_root_stage 6; status=$?; set -e ;;
+            6) set +e; BFS_MENU_STAGE=yes _run_root_stage 6; status=$?; set -e ;;
             7) set +e; _restore_toolchain; status=$?; set -e ;;
             8)
                 # A normal `exit` from the chroot is success. Return directly
                 # to the bootstrap menu; only pause when chroot actually fails.
                 set +e
-                _run_root_stage 8
+                BFS_MENU_STAGE=yes _run_root_stage 8
                 status=$?
                 set -e
                 if [ "$status" -ne 0 ]; then
@@ -1732,8 +1765,8 @@ _buildtoolchain() {
     _ensure_archive_dirs
 
     if [ "$(id -u)" = 0 ]; then
-        echo "temporary toolchain need to build as regular user"
-        exit 1
+        echo "temporary toolchain needs to be built as a regular user" >&2
+        return 1
     fi
 
     _clean_start
@@ -1807,6 +1840,25 @@ EOF
 
         rm -rf /tmp/pkgutils-5.40.12
         tar -xf "$sourcedir/pkgutils-5.40.12.tar.xz" -C /tmp
+
+        # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile.
+        # Prefer a UTF-8 C locale when the live host provides one (GCC 16.2
+        # contains UTF-8 pathnames), but fall back to plain C when it does not.
+        sed -i '/^export LC_ALL=C\.UTF-8$/c\
+_bfs_utf8_locale=""\
+for _bfs_locale in C.UTF-8 C.utf8; do\
+    if locale -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
+        _bfs_utf8_locale="$_bfs_locale"\
+        break\
+    fi\
+done\
+if [ -n "$_bfs_utf8_locale" ]; then\
+    export LC_ALL="$_bfs_utf8_locale"\
+else\
+    export LC_ALL=C\
+fi\
+unset _bfs_utf8_locale _bfs_locale' \
+            /tmp/pkgutils-5.40.12/pkgmk.in
 
         sed -i \
             -e 's/ --static//' \
@@ -1884,8 +1936,7 @@ EOF
 
     rm -f "$toolchain_archive"
 
-    echo
-    echo "Compressing verified temporary toolchain archive..."
+    _show_menu_progress "Creating toolchain archive"         "Compressing verified temporary toolchain archive..."
 
     if ! (
         cd "$LFS"
@@ -1923,10 +1974,7 @@ EOF
         return 1
     fi
 
-    echo
-    echo "Toolchain build completed."
-    echo "Archive created and verified:"
-    echo "  $toolchain_archive"
+    _show_menu_success "Toolchain build complete"         "Toolchain build completed.\n\nArchive created and verified:\n$toolchain_archive"
 }
 
 _verifybase() {
@@ -2143,8 +2191,7 @@ _compressrootfs() {
     rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
     rm -f "$rootfs_archive"
 
-    echo
-    echo "Compressing verified base rootfs archive..."
+    _show_menu_progress "Creating base archive"         "Compressing verified base rootfs archive..."
 
     if ! (
         cd "$LFS"
@@ -2191,10 +2238,7 @@ _compressrootfs() {
         chown "$owner_uid:$owner_gid" "$rootfs_archive" 2>/dev/null || true
     fi
 
-    echo
-    echo "Base rootfs compressed successfully."
-    echo "Archive created and verified:"
-    echo "  $rootfs_archive"
+    _show_menu_success "Base archive complete"         "Base rootfs compressed successfully.\n\nArchive created and verified:\n$rootfs_archive"
 }
 
 _buildbase() {
@@ -2399,15 +2443,19 @@ EOF
                 PATH="$LFSPATH" \
                 pkgin -d "$i" -is -if -im -cf "$pkgmk_conf" \
                 || {
+                    status=$?
+                    _close_active_package_log "$status"
                     umountfs
-                    return 1
+                    return "$status"
                 }
 
             pkgadd -r "$LFS" ${_force:-} -f \
                 "$(ls -1 "$packagedir/$i#"* | tail -n1)" \
                 || {
+                    status=$?
+                    _close_active_package_log "$status"
                     umountfs
-                    return 1
+                    return "$status"
                 }
 
             case $i in
@@ -2561,8 +2609,10 @@ EOF
                 PATH="$LFSPATH" \
                 prt-get update -im -fr -if -fi "$i" \
                 || {
+                    status=$?
+                    _close_active_package_log "$status"
                     umountfs
-                    return 1
+                    return "$status"
                 }
 
             _close_active_package_log 0

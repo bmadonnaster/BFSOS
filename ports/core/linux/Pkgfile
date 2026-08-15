@@ -6,10 +6,11 @@
 
 name=linux
 version=7.1.8
-release=1
+release=2
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v7.x/$name-$version.tar.xz
     config
+    bfsos-storage.conf
 )
 
 pkg_build() {
@@ -144,10 +145,12 @@ pkg_build() {
         echo "Kernel configuration error: CONFIG_DM_CRYPT was not built as a module." >&2
         return 1
     }
-    grep -q '^CONFIG_MD_RAID456=m$' .config || {
-        echo "Kernel configuration error: CONFIG_MD_RAID456 was not built as a module." >&2
-        return 1
-    }
+    for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+        grep -q "^CONFIG_${md_option}=m$" .config || {
+            echo "Kernel configuration error: CONFIG_${md_option} was not built as a module." >&2
+            return 1
+        }
+    done
 
     kernver="$(make -s kernelrelease)"
 
@@ -173,9 +176,11 @@ pkg_build() {
     install -Dm644 .config \
         "$PKG/boot/config-$kernver"
 
-    install -d "$PKG/lib/modules"
-    printf '%s\n' "$kernver" \
-        > "$PKG/lib/modules/KERNELVERSION"
+    # Distribution Dracut policy: md personalities remain modular, but every
+    # BFSOS initramfs must contain the storage personalities exposed by the
+    # installer so host-only detection cannot silently omit them.
+    install -Dm644 "$SRC/bfsos-storage.conf" \
+        "$PKG/usr/lib/dracut/dracut.conf.d/50-bfsos-storage.conf"
 
     rm -rf "$PKG/lib/firmware"
 

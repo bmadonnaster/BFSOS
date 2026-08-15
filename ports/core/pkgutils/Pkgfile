@@ -4,7 +4,7 @@
 
 name=pkgutils
 version=5.40.12
-release=6
+release=7
 
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
@@ -12,10 +12,23 @@ source=(https://crux.nu/files/$name-$version.tar.xz
         extension)
 
 bootstrap_build() {
-        # BFSOS bootstrap runs before UTF-8 locales are guaranteed to exist.
-        # Upstream pkgutils 5.40.12 forces LC_ALL=C.UTF-8 in pkgmk;
-        # use the universally available C locale instead.
-        sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' pkgmk.in
+        # Select a UTF-8 C locale when the current environment provides one
+        # (needed by libarchive for archives such as GCC), but retain a plain-C
+        # fallback for early chroot phases where no UTF-8 locale exists yet.
+        sed -i '/^export LC_ALL=C\.UTF-8$/c\
+_bfs_utf8_locale=""\
+for _bfs_locale in C.UTF-8 C.utf8; do\
+    if locale -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
+        _bfs_utf8_locale="$_bfs_locale"\
+        break\
+    fi\
+done\
+if [ -n "$_bfs_utf8_locale" ]; then\
+    export LC_ALL="$_bfs_utf8_locale"\
+else\
+    export LC_ALL=C\
+fi\
+unset _bfs_utf8_locale _bfs_locale' pkgmk.in
 
         sed -i -e 's/ --static//' \
                -e 's/ -static//' Makefile
@@ -24,8 +37,23 @@ bootstrap_build() {
 }
 
 post_build() {
-        # BFSOS must keep pkgmk usable even when C.UTF-8 has not been generated.
-        sed -i 's/^export LC_ALL=C\.UTF-8$/export LC_ALL=C/' "$PKG/usr/bin/pkgmk"
+        # Final/installed pkgmk needs a UTF-8-capable C locale for archives
+        # containing non-ASCII pathnames (notably GCC). Support both common
+        # spellings and fall back to plain C only if neither exists.
+        sed -i '/^export LC_ALL=C\.UTF-8$/c\
+_bfs_utf8_locale=""\
+for _bfs_locale in C.UTF-8 C.utf8; do\
+    if locale -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
+        _bfs_utf8_locale="$_bfs_locale"\
+        break\
+    fi\
+done\
+if [ -n "$_bfs_utf8_locale" ]; then\
+    export LC_ALL="$_bfs_utf8_locale"\
+else\
+    export LC_ALL=C\
+fi\
+unset _bfs_utf8_locale _bfs_locale' "$PKG/usr/bin/pkgmk"
 
         # Store sources, packages, and normal pkgmk work in /var/cache/pkg.
         sed -i 's,^PKGMK_SOURCE_DIR=.*,PKGMK_SOURCE_DIR="/var/cache/pkg/sources",' "$PKG/usr/bin/pkgmk"
