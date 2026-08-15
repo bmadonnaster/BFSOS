@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFSOS installer - v50 tracker fixes r40 (RC tracker consolidation through 93)
+# BFSOS installer - v50 tracker fixes r41 (GRUB/LVM regression #95)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -5757,7 +5757,8 @@ strip_bfs_storage_cmdline() {
 
 discover_required_lvm_cmdline() {
         local source="" mountpoint="" fstype="" options="" dump="" passno=""
-        local device="" lv_record="" vg="" lv="" need_early=no
+        local device="" device_real="" source_uuid=""
+        local lv_record="" vg="" lv="" lv_path="" lv_real="" lv_uuid=""
 
         command -v lvs >/dev/null 2>&1 || return 0
         [[ -r /etc/fstab ]] || return 0
@@ -5766,34 +5767,50 @@ discover_required_lvm_cmdline() {
                 [[ -n "$source" && "$source" != \#* ]] || continue
 
                 device=""
+                source_uuid=""
                 case "$source" in
                         UUID=*)
+                                source_uuid="${source#UUID=}"
                                 command -v blkid >/dev/null 2>&1 &&
-                                        device="$(blkid -U "${source#UUID=}" 2>/dev/null || true)"
+                                        device="$(blkid -U "$source_uuid" 2>/dev/null || true)"
                                 ;;
                         /dev/*)
                                 device="$source"
+                                command -v blkid >/dev/null 2>&1 &&
+                                        source_uuid="$(blkid -s UUID -o value "$device" 2>/dev/null || true)"
+                                ;;
+                        *)
+                                continue
                                 ;;
                 esac
-                [[ -n "$device" && -b "$device" ]] || continue
 
-                # Any filesystem backed by an LV belongs in the generated
-                # rd.lvm.lv list.  Do not infer required LVs from mountpoint
-                # names or hard-coded VG names; carry the actual final fstab/LVM
-                # topology forward verbatim (/, /usr, /opt, /home, /var, etc.).
-                lv_record="$(
-                        lvs --noheadings --separator '|' -o vg_name,lv_name "$device" 2>/dev/null |
-                                head -n1 |
-                                sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
-                )"
-                [[ -n "$lv_record" ]] || continue
+                device_real=""
+                [[ -n "$device" ]] && device_real="$(readlink -f "$device" 2>/dev/null || true)"
 
-                IFS='|' read -r vg lv <<< "$lv_record"
-                vg="${vg//[[:space:]]/}"
-                lv="${lv//[[:space:]]/}"
-                [[ -n "$vg" && -n "$lv" ]] || continue
-                printf '%s/%s
-' "$vg" "$lv"
+                # Do not ask `lvs` to resolve the fstab device as a positional
+                # LV selector.  Device-mapper may expose the same LV through
+                # /dev/mapper/<escaped>, /dev/<vg>/<lv>, or /dev/dm-N, and the
+                # selector lookup proved unreliable for non-root LVs on real
+                # hardware.  Instead inventory every LV and match the fstab
+                # filesystem by canonical block-device path and, independently,
+                # by the filesystem UUID stored in fstab.
+                while IFS='|' read -r vg lv lv_path; do
+                        vg="$(printf '%s' "$vg" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                        lv="$(printf '%s' "$lv" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                        lv_path="$(printf '%s' "$lv_path" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                        [[ -n "$vg" && -n "$lv" && -n "$lv_path" ]] || continue
+
+                        lv_real="$(readlink -f "$lv_path" 2>/dev/null || true)"
+                        lv_uuid=""
+                        command -v blkid >/dev/null 2>&1 &&
+                                lv_uuid="$(blkid -s UUID -o value "$lv_path" 2>/dev/null || true)"
+
+                        if [[ -n "$device_real" && -n "$lv_real" && "$device_real" == "$lv_real" ]] ||
+                           [[ -n "$source_uuid" && -n "$lv_uuid" && "$source_uuid" == "$lv_uuid" ]]; then
+                                printf '%s/%s\n' "$vg" "$lv"
+                                break
+                        fi
+                done < <(lvs --noheadings --separator '|' -o vg_name,lv_name,lv_path 2>/dev/null || true)
         done < /etc/fstab
 }
 
