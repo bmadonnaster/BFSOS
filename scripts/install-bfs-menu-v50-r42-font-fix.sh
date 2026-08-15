@@ -88,7 +88,7 @@ sync_system_clock() {
         return 0
 }
 
-# BFSOS installer - v50 tracker fixes r41 (GRUB/LVM regression #95)
+# BFSOS installer - v50 tracker fixes r42 (console-font persistence + RC validation)
 #
 # Assumptions:
 #   - Run from a Linux live environment as root.
@@ -464,24 +464,25 @@ report_installer_interface_mode() {
         return 0
 }
 
+console_font_patterns_for_size() {
+        local size="$1"
+        case "$size" in
+                # Prefer the exact fonts shipped by the BFSOS base system first.
+                16) printf '%s\n' 'Lat2-Terminus16*' 'LatGrkCyr-8x16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*' ;;
+                # BFSOS currently ships LatGrkCyr-12x22 as its practical ~20px font.
+                # Put it first so a generic/wrong 16px fallback can never win.
+                20) printf '%s\n' 'LatGrkCyr-12x22*' 'Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*22*.psf*' '*20*.psf*' '*19*.psf*' ;;
+                32) printf '%s\n' 'latarcyrheb-sun32*' '*sun32*' '*32*.psf*' ;;
+                *) return 1 ;;
+        esac
+}
+
 find_console_font_for_size() {
         local size="$1" dir="" candidate=""
         local -a dirs=(/usr/share/consolefonts /usr/share/kbd/consolefonts /lib/kbd/consolefonts)
         local -a patterns=()
 
-        case "$size" in
-                16)
-                        patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*')
-                        ;;
-                20)
-                        patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatGrkCyr-12x22*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*20*.psf*')
-                        ;;
-                32)
-                        patterns=('latarcyrheb-sun32*' '*sun32*' '*32*.psf*')
-                        ;;
-                *) return 1 ;;
-        esac
-
+        mapfile -t patterns < <(console_font_patterns_for_size "$size") || return 1
         for dir in "${dirs[@]}"; do
                 [[ -d "$dir" ]] || continue
                 for candidate in "${patterns[@]}"; do
@@ -544,6 +545,20 @@ select_console_font_size() {
         fi
         apply_console_font "$choice"
         save_installer_settings
+
+        # Make the chosen/persistent value explicit so a mistaken selection is
+        # visible immediately instead of being discovered only after reboot.
+        if [[ "$choice" == default ]]; then
+                dialog_message "Console font"                         "Console font selection: Default\n\nNo custom large-font selection will be persisted."
+        else
+                local selected_font=""
+                selected_font="$(find_console_font_for_size "$choice" || true)"
+                if [[ -n "$selected_font" ]]; then
+                        dialog_message "Console font"                                 "Selected size: $(console_font_display_name)\nFont found: $(basename "$selected_font")\n\nThis size will be persisted to the installed system."
+                else
+                        dialog_message "Console font"                                 "Selected size: $(console_font_display_name)\n\nNo matching font was found in the live environment. The installed-system step will check again and warn if unavailable."
+                fi
+        fi
 }
 
 select_installer_theme() {
@@ -5183,16 +5198,17 @@ configure_installed_console_font() {
         local dir="" pattern=""
         local -a patterns=()
 
-        # Preserve the existing BFS default unless the user explicitly asked
-        # for the selected large installer font to persist after installation.
+        # Keep the BFSOS normal console default unless the user explicitly
+        # selected a persistent large font.
         if [[ "$INSTALL_CONSOLE_FONT_VALUE" != yes || "$size" == default ]]; then
                 printf 'FONT=Lat2-Terminus16\n' > /etc/vconsole.conf
+                log "Installed console font: default (Lat2-Terminus16)"
                 return 0
         fi
 
         case "$size" in
-                16) patterns=('Lat2-Terminus16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*') ;;
-                20) patterns=('Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatGrkCyr-12x22*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*20*.psf*') ;;
+                16) patterns=('Lat2-Terminus16*' 'LatGrkCyr-8x16*' 'Uni2-Terminus16*' 'ter-v16n*' '*Terminus*16*' '*16*.psf*') ;;
+                20) patterns=('LatGrkCyr-12x22*' 'Lat2-Terminus20*' 'Uni2-Terminus20*' 'ter-v20n*' 'LatArCyrHeb-19*' 'lat4-19*' '*Terminus*20*' '*22*.psf*' '*20*.psf*' '*19*.psf*') ;;
                 32) patterns=('latarcyrheb-sun32*' '*sun32*' '*32*.psf*') ;;
                 *)  patterns=() ;;
         esac
@@ -5208,6 +5224,7 @@ configure_installed_console_font() {
         if [[ -z "$font" ]]; then
                 echo "WARNING: Requested ${size}-pixel installed console font was unavailable; using Lat2-Terminus16." >&2
                 printf 'FONT=Lat2-Terminus16\n' > /etc/vconsole.conf
+                log "Installed console font fallback: requested size=$size; wrote Lat2-Terminus16"
                 return 0
         fi
 
@@ -5216,6 +5233,13 @@ configure_installed_console_font() {
         base="${base%.psfu}"
         base="${base%.psf}"
         printf 'FONT=%s\n' "$base" > /etc/vconsole.conf
+        log "Installed console font: requested size=$size; wrote FONT=$base from $font"
+
+        # Validate exactly what we persisted before declaring configuration done.
+        if ! grep -qx "FONT=$base" /etc/vconsole.conf; then
+                echo "ERROR: /etc/vconsole.conf did not preserve the selected console font ($base)." >&2
+                return 1
+        fi
 }
 
 configure_installed_console_font
