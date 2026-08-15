@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r50 - RC tracker consolidation fixes
+# BFSOS bootstrap r52 - Ninja/pkgconf ordering + Dialog failure cleanup
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -731,10 +731,15 @@ _show_stage_failure_dialog() {
     message="$message\n\nLast output:\n$details"
 
     if command -v dialog >/dev/null 2>&1 && [ -r /dev/tty ] && [ -w /dev/tty ]; then
+        # Package/build output is streamed live while a stage runs.  Once a
+        # handled failure occurs, clear that terminal output before drawing the
+        # failure dialog so the same error is not presented both as raw text
+        # and again inside the Dialog UI.
+        _reset_terminal_ui
         dialog --clear --backtitle "BFS Linux Bootstrap" \
             --title "Bootstrap operation failed" --ok-label "Continue" \
             --msgbox "$message" 24 96 </dev/tty >/dev/tty 2>&1 || true
-        clear 2>/dev/null || true
+        _reset_terminal_ui
     else
         printf '\n%s\n' "$message" >&2
         _pause_menu
@@ -2669,7 +2674,11 @@ ncurses
 readline
 m4
 bc
+# pkgconf 3.x now builds with Meson, and Meson requires Ninja.
+# Build/install Ninja here while the temporary-toolchain Python 3 is still
+# available on PATH, then pkgconf can use its bundled Meson source normally.
 binutils
+ninja
 pkgconf
 libxcrypt
 gmp
@@ -2737,7 +2746,6 @@ libarchive
 cmake
 boost
 meson
-ninja
 kmod
 linux-pam
 shadow
