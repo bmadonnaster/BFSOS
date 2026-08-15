@@ -1,36 +1,21 @@
-syntax: glob
-
-**/*~
-target/
-.idea/
 # BFS generated/downloaded build data
 /packages/*
 /sources/*
 /archives/*
-# Installer logs
-bfs-install*.log
-# Build logs
-logs/toolchain/*
-logs/base/*
+
+# Runtime/generated files
 .bfs*
-.bootstrap.pid 
-bfs-installer-profile.conf 
-# Build and installer logs
+.bootstrap.pid
+bfs-installer-profile.conf
+bfs-install*.log
 
-logs/toolchain/*
-logs/base/*
-logs/installer/*
+# Ignore everything under logs/
+/logs/**
 
-# Keep the directories
-
-!logs/toolchain/.gitkeep
-!logs/base/.gitkeep
-!logs/installer/.gitkeep
-# Keep the directories
-!logs/toolchain/.gitkeep
-!logs/base/.gitkeep
-# You may want to ignore .wasm files, which are binary files.
-# We are commenting out the line below, which means that we are keeping a
-# binary file in the source control, because we want the .wasm file to appear
-# in Github Pages.
-##-- docs/*.wasm
+# Keep only the log directory placeholders
+!/logs/toolchain/
+!/logs/toolchain/.gitkeep
+!/logs/base/
+!/logs/base/.gitkeep
+!/logs/installer/
+!/logs/installer/.gitkeep
