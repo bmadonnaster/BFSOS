@@ -1,6 +1,6 @@
 name=shadow
-version=4.19.4
-release=2
+version=4.20.2
+release=1
 
 source=(
     https://github.com/$name-maint/$name/releases/download/$version/$name-$version.tar.xz

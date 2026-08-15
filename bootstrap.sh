@@ -1508,9 +1508,6 @@ _restore_rootfs() {
         /usr/bin/ln -s usr/lib32 "$LFS/lib32"
     fi
 
-    if [ -d "$LFS/usr/libx32" ] && [ ! -e "$LFS/libx32" ]; then
-        /usr/bin/ln -s usr/libx32 "$LFS/libx32"
-    fi
 
     /usr/bin/mkdir -p \
         "$LFS/dev/pts" \
@@ -1716,7 +1713,6 @@ _buildtoolchain() {
     export BOOTSTRAP=1
     export LFS_TGT=x86_64-lfs-linux-gnu
     export LFS_TGT32=i686-lfs-linux-gnu
-    export LFS_TGTX32=x86_64-lfs-linux-gnux32
 
     # The temporary toolchain must physically live inside the BFS rootfs:
     #
@@ -2209,10 +2205,9 @@ _buildbase() {
                 ;;
         esac
 
-        mkdir -pv "$LFS/usr/lib32" "$LFS/usr/libx32"
+        mkdir -pv "$LFS/usr/lib32"
 
         ln -sv usr/lib32 "$LFS/lib32"
-        ln -sv usr/libx32 "$LFS/libx32"
 
         ln -svf \
             "$TOOLS/lib/libgcc_s.so" \
@@ -2650,7 +2645,7 @@ zlib
 xz
 libtirpc
 libnsl
-python
+python3
 sed
 tar
 texinfo
@@ -2709,7 +2704,7 @@ gettext
 elfutils
 libffi
 sqlite
-python
+python3
 coreutils
 check
 diffutils

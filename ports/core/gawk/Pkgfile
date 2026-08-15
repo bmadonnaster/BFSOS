@@ -4,12 +4,16 @@
 # Depends on:
 
 name=gawk
-version=5.4.0
-release=2
+version=5.4.1
+release=1
 
 source=(
     https://ftp.gnu.org/gnu/$name/$name-$version.tar.xz
 )
+
+pre_build() {
+    sed -i 's/extras//' Makefile.in
+}
 
 post_build() {
     local man_dir="$PKG/usr/share/man/man1"

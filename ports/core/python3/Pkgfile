@@ -1,17 +1,21 @@
 # Add your top line text here
 # Your line to add at the top here
-name=python
-version=3.14.6
+name=python3
+version=3.14.7
 release=1
-source=(https://www.$name.org/ftp/$name/$version/Python-$version.tar.xz
-	 Python-3.14.6-consolidated_fixes-1.patch
-	pyconfig.h)
+source=(
+    https://www.python.org/ftp/python/$version/Python-$version.tar.xz
+    https://www.linuxfromscratch.org/patches/downloads/Python/Python-$version-openssl_4-1.patch
+    pyconfig.h
+)
+
 build_opt="--without-ensurepip
 	--enable-shared
 	--with-system-expat
 	--with-system-ffi
 	--enable-optimizations
-	--disable-test-modules"
+	--disable-test-modules
+	--without-static-libpython"
 
 bootstrap_opt="--without-ensurepip --disable-test-modules --without-static-libpython"
 

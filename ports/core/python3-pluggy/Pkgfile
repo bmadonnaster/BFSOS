@@ -8,5 +8,5 @@ release=1
 source=(https://files.pythonhosted.org/packages/source/p/pluggy/pluggy-${version}.tar.gz)
 pkg_build() {
 python3 -m build --wheel --no-isolation
-python -m installer --destdir="$PKG" dist/*.whl
+python3 -m installer --destdir="$PKG" dist/*.whl
 }

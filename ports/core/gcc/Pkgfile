@@ -4,15 +4,13 @@
 # Depends on:
 
 name=gcc
-version=16.1.0
-release=2
+version=16.2.0
+release=1
 
 source=(
     https://ftp.gnu.org/gnu/gcc/gcc-$version/gcc-$version.tar.xz
     c89
     c99
-    gcc-4.7.3-multilib-dirs.patch
-    gcc-nocheck-fixincludes.patch
 )
 
 export LANG=C
@@ -53,7 +51,7 @@ bootstrap_build() {
             gcc/config/i386/t-linux64
 
         echo \
-            'MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32 mx32=../libx32' \
+            'MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32' \
             >> gcc/config/i386/t-linux64
 
         mkdir -v build
@@ -65,10 +63,14 @@ bootstrap_build() {
             --with-mpfr="$TOOLS" \
             --target="$LFS_TGT" \
             --prefix="$TOOLS" \
-            --with-glibc-version=2.11 \
+            --with-glibc-version=2.44 \
             --with-sysroot="$LFS" \
             --with-newlib \
             --without-headers \
+            --enable-default-pie \
+            --enable-default-ssp \
+            --disable-fixincludes \
+            --enable-initfini-array \
             --with-local-prefix="$TOOLS" \
             --with-native-system-header-dir="$TOOLS/include" \
             --disable-nls \
@@ -175,7 +177,7 @@ bootstrap_build() {
             gcc/config/i386/t-linux64
 
         echo \
-            'MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32 mx32=../libx32' \
+            'MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32' \
             >> gcc/config/i386/t-linux64
 
         mkdir -v build

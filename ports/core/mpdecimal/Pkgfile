@@ -5,14 +5,16 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 
 name=mpdecimal
-version=2.5.1
+version=4.0.1
 release=1
 source=(https://sources.buildroot.net/$name/$name-$version.tar.gz)
 
 pkg_build() {
 
 
-	./configure --prefix=/usr
+	./configure --prefix=/usr \
+		--disable-static \
+		--docdir=/usr/share/doc/$name-$version
 
 	make
 	make DESTDIR=$PKG install

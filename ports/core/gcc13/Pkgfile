@@ -2,7 +2,7 @@
 # Your line to add at the top here
 name=gcc13
 version=13.3.0
-release=1
+release=2
 source=(https://ftp.gnu.org/gnu/gcc/gcc-$version/gcc-$version.tar.xz
 	c89
 	c99)
@@ -24,7 +24,7 @@ bootstrap_build() {
 		
 		sed -i -e 's@/lib/ld-linux.so.2@/lib32/ld-linux.so.2@g' gcc/config/i386/linux64.h
 		sed -i -e '/MULTILIB_OSDIRNAMES/d' gcc/config/i386/t-linux64
-		echo "MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32 mx32=../libx32" >> gcc/config/i386/t-linux64
+		echo "MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32" >> gcc/config/i386/t-linux64
 		
 		mkdir -v build
 		cd       build
@@ -106,7 +106,7 @@ bootstrap_build() {
 		
 		sed -i -e 's@/lib/ld-linux.so.2@/lib32/ld-linux.so.2@g' gcc/config/i386/linux64.h
 		sed -i -e '/MULTILIB_OSDIRNAMES/d' gcc/config/i386/t-linux64
-		echo "MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32 mx32=../libx32" >> gcc/config/i386/t-linux64
+		echo "MULTILIB_OSDIRNAMES = m64=../lib m32=../lib32" >> gcc/config/i386/t-linux64
 		
 		mkdir -v build
 		cd       build

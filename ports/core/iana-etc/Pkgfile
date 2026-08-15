@@ -5,7 +5,7 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 
 name=iana-etc
-version=20260617
+version=20260723
 release=1
 source=(services protocols update.sh)
 
