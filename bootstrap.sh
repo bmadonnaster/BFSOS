@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r52 - Ninja/pkgconf ordering + Dialog failure cleanup
+# BFSOS bootstrap r53 - Ninja ordering + preflight/failure-log fixes
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -454,6 +454,7 @@ ACTIVE_LOG_TEE_PID=""
 ACTIVE_LOG_STDOUT_FD=7
 ACTIVE_LOG_STDERR_FD=8
 CURRENT_BASE_LOGS=()
+STAGE_OPERATION_STARTED_EPOCH=0
 
 mkdir -p "$TOOLCHAIN_LOG_DIR" "$BASE_LOG_DIR"
 
@@ -704,16 +705,33 @@ _show_stage5_archive_dialog() {
 }
 
 _latest_failure_log() {
-    local stage="${1:-}" directory="" newest=""
+    local stage="${1:-}" directory="" newest="" started="${STAGE_OPERATION_STARTED_EPOCH:-0}"
+
     case "$stage" in
         1) directory="$TOOLCHAIN_LOG_DIR" ;;
         2|3|4|5) directory="$BASE_LOG_DIR" ;;
         *) directory="$LOG_DIR" ;;
     esac
+
     [ -d "$directory" ] || return 1
-    newest="$(find "$directory" -type f -name '*.log' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-)"
+
+    newest="$(
+        find "$directory" -type f -name '*.log' -printf '%T@ %p
+' 2>/dev/null |
+            awk -v started="$started" '$1 >= started { $1=""; sub(/^ /,""); print }' |
+            while IFS= read -r path; do
+                [ -n "$path" ] || continue
+                printf '%s %s
+' "$(stat -c '%Y' "$path" 2>/dev/null || printf 0)" "$path"
+            done |
+            sort -nr |
+            head -n1 |
+            cut -d' ' -f2-
+    )"
+
     [ -n "$newest" ] || return 1
-    printf '%s\n' "$newest"
+    printf '%s
+' "$newest"
 }
 
 _show_stage_failure_dialog() {
@@ -944,6 +962,12 @@ _bootstrap_menu() {
     while true; do
         choice="$(_select_bootstrap_menu_choice)"
         status=0
+
+        # Limit failure-dialog log discovery to this operation.  If a stage fails
+        # during preflight before opening a new package log, do not display an
+        # unrelated log from an earlier failure.
+        STAGE_OPERATION_STARTED_EPOCH="$(date +%s)"
+
         case "$choice" in
             1) set +e; _buildtoolchain; status=$?; set -e ;;
             2) set +e; _run_root_stage 2; status=$?; set -e ;;
@@ -2660,6 +2684,9 @@ curl
 libarchive
 util-linux
 "
+# pkgconf 3.x builds with Meson, and Meson requires Ninja.
+# Keep Ninja before pkgconf in Stage 2.  Do not place comments inside the
+# quoted basepkg list because they become package names during word splitting.
 basepkg="
 aaa_filesystem
 linux-headers
@@ -2674,9 +2701,6 @@ ncurses
 readline
 m4
 bc
-# pkgconf 3.x now builds with Meson, and Meson requires Ninja.
-# Build/install Ninja here while the temporary-toolchain Python 3 is still
-# available on PATH, then pkgconf can use its bundled Meson source normally.
 binutils
 ninja
 pkgconf
