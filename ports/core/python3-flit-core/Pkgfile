@@ -1,17 +1,27 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: Simplified packaging of Python modules
-# URL: https://github.com/takluyver/flit
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:
+# Description: Core build backend for Flit
+# URL: https://pypi.org/project/flit-core/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: python3
+
 name=python3-flit-core
 version=4.0.2
 release=1
-source=(https://github.com/takluyver/flit/archive/$version/flit-$version.tar.gz)
+
+source=(https://pypi.org/packages/source/f/flit-core/flit_core-$version.tar.gz)
 
 pkg_build() {
     PIP_CONFIG_FILE=/dev/null /usr/bin/pip3 wheel \
-        -w dist --no-cache-dir --no-build-isolation --no-deps .
+        -w dist \
+        --no-cache-dir \
+        --no-build-isolation \
+        --no-deps \
+        .
+
     PIP_CONFIG_FILE=/dev/null /usr/bin/pip3 install \
-        --no-index --find-links dist --root="$PKG" --ignore-installed --no-deps flit_core
+        --no-index \
+        --find-links dist \
+        --root="$PKG" \
+        --ignore-installed \
+        --no-deps \
+        flit_core
 }

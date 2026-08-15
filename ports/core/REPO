@@ -294,7 +294,7 @@ f:5821a1e5b9ee9b33df6dd48820ae8484:flex/Pkgfile
 f:d8c7cbf997c7e1ed066cd2b9081623a5:python3-pyproject-hooks/Pkgfile
 f:b07af2a281085536b9652bea34883ef0:elfutils/Pkgfile
 f:9ea17d492b0d16ca660e3ede69c84385:elfutils/libeu.patch
-f:c46d62d6f724a2a69dc955db3016942e:python3-flit-core/Pkgfile
+f:e23761f4b4e0519a7fe7fcb135c487ee:python3-flit-core/Pkgfile
 f:8db1b6e3a3c9213a4d8e8ea42677965b:python3-urllib3/Pkgfile
 f:387d5f6d00d2be01ecb87216cac0f88c:python3/pyconfig.h
 f:020863f62864f888bccfcb0524289e18:python3/Setup.local
