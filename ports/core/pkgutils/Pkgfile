@@ -59,13 +59,16 @@ unset _bfs_utf8_locale _bfs_locale' "$PKG/usr/bin/pkgmk"
         # Store sources, packages, and normal pkgmk work in /var/cache/pkg.
         sed -i 's,^PKGMK_SOURCE_DIR=.*,PKGMK_SOURCE_DIR="/var/cache/pkg/sources",' "$PKG/usr/bin/pkgmk"
         sed -i 's,^PKGMK_PACKAGE_DIR=.*,PKGMK_PACKAGE_DIR="/var/cache/pkg/packages",' "$PKG/usr/bin/pkgmk"
-        sed -i 's,^PKGMK_WORK_DIR=.*,PKGMK_WORK_DIR="/var/cache/pkg/work",' "$PKG/usr/bin/pkgmk"
+        sed -i 's,^PKGMK_WORK_DIR=.*,PKGMK_WORK_DIR="/var/cache/pkg/build-work",' "$PKG/usr/bin/pkgmk"
+
+        # Keep the cache parent root-owned; only build-data directories
+        # are writable by the dedicated pkgmk account (UID/GID 82).
+        install -dm755 -o 0 -g 0 "$PKG/var/cache/pkg"
 
         install -dm775 -o 82 -g 82 \
-                "$PKG/var/cache/pkg" \
                 "$PKG/var/cache/pkg/sources" \
                 "$PKG/var/cache/pkg/packages" \
-                "$PKG/var/cache/pkg/work"
+                "$PKG/var/cache/pkg/build-work"
 
         install -dm775 -o 82 -g 82 "$PKG/var/cache/ccache"
 
