@@ -9,8 +9,7 @@ release=2
 keep_static=1
 
 source=(
-    https://mirrors.edge.kernel.org/yocto-sources/$name-$version.tar.gz
-)
+    https://download.savannah.gnu.org/releases/acl/acl-$version.tar.xz)
 
 post_build() {
     find "$PKG" -type f -name '*.la' -delete

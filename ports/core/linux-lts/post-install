@@ -1,0 +1,59 @@
+#!/bin/sh
+set -eu
+
+RAID_DRIVERS="linear raid0 raid1 raid10 raid456"
+
+kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%T@ %f\n' 2>/dev/null |
+    sort -nr | head -n1 | sed 's/^[^ ]* vmlinuz-//')"
+
+if [ -z "$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
+    echo "linux-lts post-install: unable to determine newly installed kernel release" >&2
+    exit 1
+fi
+
+kernel_image="/boot/vmlinuz-$kver"
+initramfs_image="/boot/initramfs-$kver.img"
+
+depmod -a "$kver"
+
+if [ "${BFS_INSTALLER_RUNNING:-no}" = yes ]; then
+    echo "BFSOS installer detected; deferring LTS initramfs/bootloader regeneration."
+    exit 0
+fi
+
+command -v dracut >/dev/null 2>&1 || {
+    echo "ERROR: dracut is required to finalize $kver" >&2
+    exit 1
+}
+
+echo "Generating $initramfs_image with BFSOS md RAID drivers"
+dracut --force --force-drivers "$RAID_DRIVERS" "$initramfs_image" "$kver"
+
+if command -v lsinitrd >/dev/null 2>&1; then
+    image_listing="$(lsinitrd "$initramfs_image" 2>/dev/null || true)"
+    for driver in $RAID_DRIVERS; do
+        printf '%s\n' "$image_listing" | grep -qE "/${driver}\\.ko([.]|$)" || {
+            echo "ERROR: LTS initramfs is missing required md driver: $driver" >&2
+            exit 1
+        }
+    done
+fi
+
+ln -sfn "$(basename "$kernel_image")" /boot/vmlinuz-BFS-LTS
+ln -sfn "$(basename "$initramfs_image")" /boot/initramfs-BFS-LTS.img
+
+running_kver="$(uname -r 2>/dev/null || true)"
+for image in /boot/initramfs-*-BFS-LTS.img; do
+    [ -e "$image" ] || continue
+    old_kver=${image#/boot/initramfs-}
+    old_kver=${old_kver%.img}
+    [ "$old_kver" = "$kver" ] && continue
+    [ "$old_kver" = "$running_kver" ] && continue
+    [ -d "/lib/modules/$old_kver" ] || rm -f -- "$image"
+done
+
+if command -v grub-mkconfig >/dev/null 2>&1 && [ -d /boot/grub ]; then
+    grub-mkconfig -o /boot/grub/grub.cfg
+fi
+
+echo "Linux LTS $kver post-install completed."

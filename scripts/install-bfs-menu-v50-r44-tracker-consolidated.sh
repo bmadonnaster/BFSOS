@@ -146,8 +146,8 @@ AUTO_MDADM=no
 KEEP_MOUNTS="${BFS_KEEP_MOUNTS:-no}"
 FINAL_CHROOT="${BFS_FINAL_CHROOT:-no}"
 GRUB_FALLBACK="${BFS_GRUB_FALLBACK:-no}"
-ZRAM_SWAP="${BFS_ZRAM_SWAP:-auto}"
-ZRAM_MAX_GIB="${BFS_ZRAM_MAX_GIB:-32}"
+ZRAM_SWAP="${BFS_ZRAM_SWAP:-no}"
+ZRAM_SIZE_SPEC="${BFS_ZRAM_SIZE_SPEC:-200%}"
 CONSOLE_VIDEO_MODE="${BFS_CONSOLE_VIDEO_MODE:-1920x1080@60}"
 CONSOLE_VIDEO_ARG=""
 CLEAR_PACKAGE_CACHE="${BFS_CLEAR_PACKAGE_CACHE:-ask}"
@@ -628,7 +628,7 @@ save_installer_profile() {
         local path="${1:-$INSTALLER_PROFILE_FILE}" i
         {
                 echo '# BFSOS installer profile v1 - no passwords or LUKS passphrases are stored.'
-                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE ZRAM_MAX_GIB ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
+                for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE ZRAM_SIZE_SPEC ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
                         printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
                 done
                 for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'; done
@@ -651,7 +651,7 @@ load_installer_profile() {
                 [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
                 eval "value=$raw"
                 case "$key" in
-                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_WIRELESS_TOOLS|INSTALL_GPM|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|ZRAM_MAX_GIB|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP) printf -v "$key" '%s' "$value" ;;
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_WIRELESS_TOOLS|INSTALL_GPM|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|ZRAM_SIZE_SPEC|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP) printf -v "$key" '%s' "$value" ;;
                         ADDITIONAL_USER) ADDITIONAL_USERS+=("$value") ;;
                         STORAGE) IFS='|' read -r a b c <<<"$value"; STORAGE_DEVICES+=("$a"); STORAGE_FORMATS+=("$b"); STORAGE_MOUNTPOINTS+=("$c") ;;
                 esac
@@ -2251,10 +2251,37 @@ create_raid_array() {
                 [[ "$bitmap_choice" == yes ]] && bitmap_args=(--bitmap=internal) || bitmap_args=(--bitmap=none)
         fi
 
+        # Refuse to hand already-consumed devices to mdadm.  A live ISO may
+        # auto-assemble arrays from stale member metadata (often as /dev/md127),
+        # which otherwise makes mdadm --create fail through the global ERR trap.
+        local member="" holder="" holder_name="" busy_detail=""
+        for member in "${members[@]}"; do
+                if findmnt -rn -S "$member" >/dev/null 2>&1; then
+                        busy_detail+="$member is mounted or otherwise in use.\n"
+                fi
+                if [[ -d "/sys/class/block/${member##*/}/holders" ]]; then
+                        for holder in /sys/class/block/${member##*/}/holders/*; do
+                                [[ -e "$holder" ]] || continue
+                                holder_name="${holder##*/}"
+                                busy_detail+="$member is held by /dev/$holder_name.\n"
+                        done
+                fi
+        done
+        if [[ -n "$busy_detail" ]]; then
+                dialog_message "RAID members are busy" "One or more selected RAID members are already in use:\n\n$busy_detail\nStop/close the existing storage layer or choose different members, then retry. No new array was created."
+                return 0
+        fi
+
         if [[ "$raid_level" == linear ]]; then
-                mdadm --create "$array_device" --run --force --level=linear --raid-devices="${#members[@]}" "${members[@]}"
+                if ! mdadm --create "$array_device" --run --force --level=linear --raid-devices="${#members[@]}" "${members[@]}"; then
+                        dialog_message "RAID creation failed" "mdadm could not create $array_device.\n\nCheck whether any selected member still contains active RAID/LUKS/LVM state, then retry."
+                        return 0
+                fi
         else
-                mdadm --create "$array_device" --run --force --level="$raid_level" --raid-devices="${#members[@]}" "${bitmap_args[@]}" "${members[@]}"
+                if ! mdadm --create "$array_device" --run --force --level="$raid_level" --raid-devices="${#members[@]}" "${bitmap_args[@]}" "${members[@]}"; then
+                        dialog_message "RAID creation failed" "mdadm could not create $array_device.\n\nCheck whether any selected member still contains active RAID/LUKS/LVM state, then retry."
+                        return 0
+                fi
         fi
         refresh_storage_state
 
@@ -2822,14 +2849,15 @@ storage_menu() {
                 themed_menu choice \
                         "Storage setup" \
                         "Use only the storage tools you need. Existing partitions may be assigned directly." \
-                        21 84 11 \
+                        22 84 12 \
                         1 "Partition disks with cfdisk (optional)" \
                         2 "Create or assemble software RAID (optional)" \
                         3 "Configure LUKS encryption (optional)" \
                         4 "Configure LVM (optional)" \
                         5 "Assign filesystems and mount points (required)" \
-                        6 "Show current storage devices" \
-                        7 "Return to main menu"
+                        6 "Configure ZRAM swap (optional) [$ZRAM_SWAP, $ZRAM_SIZE_SPEC]" \
+                        7 "Show current storage devices" \
+                        8 "Return to main menu"
                 status=$?
                 set -e
                 [[ -n "$choice" ]] || return 0
@@ -2840,8 +2868,9 @@ storage_menu() {
                         3) luks_menu ;;
                         4) lvm_menu ;;
                         5) configure_disks ;;
-                        6) show_current_storage_dialog ;;
-                        7) return 0 ;;
+                        6) configure_zram_menu ;;
+                        7) show_current_storage_dialog ;;
+                        8) return 0 ;;
                         *) warn "Choose a valid storage option."; sleep 1 ;;
                 esac
         done
@@ -3183,7 +3212,7 @@ configure_disks() {
 
                 if [[ "$confirmed" == yes ]]; then
                         DISKS_CONFIGURED=yes
-                        configure_zram_preference
+                        validate_zram_settings
                         return 0
                 fi
         done
@@ -3298,18 +3327,60 @@ confirm_detected_archive() {
 
 
 
-configure_zram_preference() {
-        if [[ -n "$SWAP_DEV" ]]; then
-                ZRAM_SWAP=no
-                return 0
-        fi
-        if [[ "$ZRAM_SWAP" == yes || "$ZRAM_SWAP" == no ]]; then
-                return 0
-        fi
-        ZRAM_SWAP=yes
-        ask_yes_no ZRAM_SWAP \
-                "No disk-backed swap is configured. Enable compressed ZRAM swap on the installed system?" \
-                yes || return 0
+validate_zram_settings() {
+        [[ "$ZRAM_SWAP" == yes || "$ZRAM_SWAP" == no ]] || ZRAM_SWAP=no
+        [[ "$ZRAM_SWAP" == no ]] && return 0
+        [[ "$ZRAM_SIZE_SPEC" =~ ^([1-9][0-9]{0,2})%$ ||
+           "$ZRAM_SIZE_SPEC" =~ ^[1-9][0-9]*([.][0-9]+)?[GM]$ ]] || {
+                warn "Invalid ZRAM size '$ZRAM_SIZE_SPEC'; using 200%."
+                ZRAM_SIZE_SPEC=200%
+        }
+}
+
+configure_zram_menu() {
+        local choice="" custom="" status=0
+        while true; do
+                themed_menu choice \
+                        "ZRAM swap" \
+                        "ZRAM is optional compressed swap in RAM. Current: $ZRAM_SWAP  Size: $ZRAM_SIZE_SPEC" \
+                        19 76 10 \
+                        1 "Enable ZRAM" \
+                        2 "Disable ZRAM" \
+                        3 "Size: 50% of RAM" \
+                        4 "Size: 100% of RAM" \
+                        5 "Size: 150% of RAM" \
+                        6 "Size: 200% of RAM" \
+                        7 "Custom size (for example 8G or 4096M)" \
+                        8 "Return to Storage setup"
+                [[ -n "$choice" ]] || return 0
+                case "$choice" in
+                        1) ZRAM_SWAP=yes ;;
+                        2) ZRAM_SWAP=no ;;
+                        3) ZRAM_SWAP=yes; ZRAM_SIZE_SPEC=50% ;;
+                        4) ZRAM_SWAP=yes; ZRAM_SIZE_SPEC=100% ;;
+                        5) ZRAM_SWAP=yes; ZRAM_SIZE_SPEC=150% ;;
+                        6) ZRAM_SWAP=yes; ZRAM_SIZE_SPEC=200% ;;
+                        7)
+                                custom=""
+                                set +e
+                                themed_inputbox custom "ZRAM custom size" \
+                                        "Enter a fixed ZRAM size such as 8G or 4096M." \
+                                        "$ZRAM_SIZE_SPEC"
+                                status=$?
+                                set -e
+                                ((status == 0)) || continue
+                                custom="${custom^^}"
+                                custom="${custom//[[:space:]]/}"
+                                if [[ "$custom" =~ ^[1-9][0-9]*([.][0-9]+)?[GM]$ ]]; then
+                                        ZRAM_SWAP=yes
+                                        ZRAM_SIZE_SPEC="$custom"
+                                else
+                                        dialog_message "ZRAM size" "Invalid size '$custom'. Use values such as 8G or 4096M."
+                                fi
+                                ;;
+                        8) return 0 ;;
+                esac
+        done
 }
 
 configure_archive() {
@@ -3477,8 +3548,8 @@ configure_kernel() {
                 "Kernel selection" \
                 "Choose the kernel package for the installed system." \
                 16 72 7 \
-                1 "linux" \
-                2 "linux-lts" \
+                1 "linux (current BFSOS kernel)" \
+                2 "linux-lts (6.12 LTS, Debian patches, broad x86_64 support included)" \
                 3 "Do not install a kernel"
 
         [[ -n "$choice" ]] || return 0
@@ -4179,7 +4250,7 @@ generate_crypttab() {
 
 validate_settings() {
         detect_storage_requirements
-        configure_zram_preference
+        validate_zram_settings
         [[ "$DISKS_CONFIGURED" == yes ]] || die "Disk and filesystem setup is incomplete."
         [[ "$ARCHIVE_CONFIGURED" == yes ]] || die "Base archive selection is incomplete."
         [[ "$SYSTEM_CONFIGURED" == yes ]] || die "System settings are incomplete."
@@ -4391,6 +4462,8 @@ Detected Storage Features
 Encrypted targets:    $AUTO_CRYPTSETUP
 LVM detected:         $AUTO_LVM2
 mdraid detected:      $AUTO_MDADM
+ZRAM swap:            $ZRAM_SWAP
+ZRAM size:            $(if [[ "$ZRAM_SWAP" == yes ]]; then printf '%s' "$ZRAM_SIZE_SPEC"; else printf '%s' "disabled"; fi)
 SUMMARY
 
                 show_btrfs_review
@@ -4422,6 +4495,7 @@ Kernel:               $KERNEL_PACKAGE
 RAID:                 ${AUTO_MDADM:-no}
 LUKS:                 ${AUTO_CRYPTSETUP:-no}
 LVM:                  ${AUTO_LVM2:-no}
+ZRAM:                 $ZRAM_SWAP $(if [[ "$ZRAM_SWAP" == yes ]]; then printf '(%s)' "$ZRAM_SIZE_SPEC"; fi)
 
 Warnings
 --------
@@ -5126,6 +5200,7 @@ BTRFS_MOUNTPOINTS_VALUE="__BTRFS_MOUNTPOINTS__"
 CONSOLE_FONT_SIZE_VALUE="__CONSOLE_FONT_SIZE__"
 INSTALL_CONSOLE_FONT_VALUE="__INSTALL_CONSOLE_FONT__"
 ZRAM_SWAP_VALUE="__ZRAM_SWAP__"
+ZRAM_SIZE_SPEC_VALUE="__ZRAM_SIZE_SPEC__"
 
 log() { printf '\n==> %s\n' "$*"; }
 
@@ -6066,12 +6141,26 @@ set -e
 modprobe zram 2>/dev/null || true
 [[ -b /dev/zram0 ]] || { echo "zram0 device is unavailable" >&2; exit 1; }
 mem_kb="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
-# BFSOS default: up to twice physical RAM, capped on high-memory systems.
-# ZRAM is compressed virtual capacity, but unbounded 2x sizing is not useful
-# on 128 GiB+ hosts.  The installer default cap is configurable.
-size_bytes=$((mem_kb * 1024 * 2))
-max_bytes=$((__ZRAM_MAX_GIB__ * 1024 * 1024 * 1024))
-(( size_bytes > max_bytes )) && size_bytes=$max_bytes
+size_spec="__ZRAM_SIZE_SPEC__"
+case "$size_spec" in
+        *%)
+                percent=${size_spec%%%}
+                size_bytes=$((mem_kb * 1024 * percent / 100))
+                ;;
+        *G)
+                value=${size_spec%G}
+                size_bytes=$(awk -v v="$value" 'BEGIN { printf "%.0f", v * 1024 * 1024 * 1024 }')
+                ;;
+        *M)
+                value=${size_spec%M}
+                size_bytes=$(awk -v v="$value" 'BEGIN { printf "%.0f", v * 1024 * 1024 }')
+                ;;
+        *)
+                echo "Invalid BFSOS ZRAM size: $size_spec" >&2
+                exit 1
+                ;;
+esac
+(( size_bytes > 0 )) || { echo "Calculated ZRAM size is zero" >&2; exit 1; }
 if [[ -e /sys/block/zram0/reset ]]; then
         swapoff /dev/zram0 2>/dev/null || true
         echo 1 > /sys/block/zram0/reset 2>/dev/null || true
@@ -6499,7 +6588,7 @@ CHROOT
                 -e "s|__CONSOLE_FONT_SIZE__|$CONSOLE_FONT_SIZE|g" \
                 -e "s|__INSTALL_CONSOLE_FONT__|$INSTALL_CONSOLE_FONT|g" \
                 -e "s|__ZRAM_SWAP__|$ZRAM_SWAP|g" \
-                -e "s|__ZRAM_MAX_GIB__|$ZRAM_MAX_GIB|g" \
+                -e "s|__ZRAM_SIZE_SPEC__|$ZRAM_SIZE_SPEC|g" \
                 "$TARGET$CHROOT_INSTALLER"
         chmod 0700 "$TARGET$CHROOT_INSTALLER"
 }

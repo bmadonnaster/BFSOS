@@ -8,7 +8,7 @@
 name=python3-markupsafe
 version=3.0.3
 release=1
-source=(https://pypi.io/packages/source/m/markupsafe/markupsafe-$version.tar.gz)
+source=(https://pypi.org/packages/source/M/MarkupSafe/markupsafe-$version.tar.gz)
 
 pkg_build() {
 

@@ -6,9 +6,9 @@
 # Depends on:  
 
 name=lfs-bootscripts
-version=20220327
+version=20250827
 release=1
-source=(http://www.linuxfromscratch.org/lfs/downloads/development/lfs-bootscripts-$version.tar.xz
+source=(https://www.linuxfromscratch.org/lfs/downloads/development/lfs-bootscripts-$version.tar.xz
 	lfs-bootscripts_add-support-uefi.patch
 	clock
 	console

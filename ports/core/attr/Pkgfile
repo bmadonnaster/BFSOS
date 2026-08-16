@@ -3,7 +3,7 @@
 name=attr
 version=2.6.0
 release=1
-source=(https://mirrors.edge.kernel.org/yocto-sources/$name-$version.tar.gz)
+source=(https://download.savannah.gnu.org/releases/attr/attr-$version.tar.gz)
 pkg_build() {
     ./configure \
         --prefix=/usr \

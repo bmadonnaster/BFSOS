@@ -1,0 +1,172 @@
+# Description: Linux 6.12 LTS compatibility kernel with Debian patches and broad x86_64 hardware support
+# URL: https://www.kernel.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: bc bison cpio dracut elfutils flex linux-firmware openssl
+# Optional: pahole
+
+name=linux-lts
+version=6.12.101
+release=1
+
+debian_revision=1
+source=(
+    https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}.orig.tar.xz
+    https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}-${debian_revision}.debian.tar.xz
+)
+
+apply_debian_patch_series() {
+    local patch_root="$SRC/debian/patches"
+    local series="$patch_root/series"
+    local line="" patch_name=""
+
+    [[ -r "$series" ]] || {
+        echo "Debian kernel patch series was not extracted: $series" >&2
+        return 1
+    }
+
+    echo "Applying Debian Linux $version patch series..."
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line="${line%%#*}"
+        [[ -n "${line//[[:space:]]/}" ]] || continue
+        # Debian series lines are: patch-name [patch options such as -p1].
+        # shellcheck disable=SC2086
+        set -- $line
+        patch_name=$1
+        shift
+        echo "  PATCH $patch_name"
+        if (( $# == 0 )); then
+            set -- -p1
+        fi
+        patch --batch --forward "$@" < "$patch_root/$patch_name" || return 1
+    done < "$series"
+}
+
+pkg_build() {
+    local kernver=""
+
+    apply_debian_patch_series
+    make mrproper
+
+    # This flavor is intentionally a broad x86_64 compatibility kernel.  Start
+    # from allmodconfig so practical hardware drivers are enabled as modules,
+    # then enforce BFSOS boot/storage requirements and turn off costly debug
+    # facilities that are inappropriate for a normal distribution kernel.
+    make allmodconfig
+
+    scripts/config --set-str LOCALVERSION "-BFS-LTS"
+    scripts/config --disable LOCALVERSION_AUTO
+    scripts/config --disable WERROR
+    scripts/config --disable DEBUG_INFO
+    scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+    scripts/config --disable DEBUG_KERNEL
+    scripts/config --disable KASAN
+    scripts/config --disable KCSAN
+    scripts/config --disable UBSAN
+
+    # Core x86_64 boot/platform support.
+    scripts/config --enable 64BIT
+    scripts/config --enable X86_64
+    scripts/config --enable RELOCATABLE
+    scripts/config --enable RANDOMIZE_BASE
+    scripts/config --enable EFI
+    scripts/config --enable EFI_STUB
+    scripts/config --enable EFI_PARTITION
+    scripts/config --enable BLK_DEV_INITRD
+    scripts/config --enable DEVTMPFS
+    scripts/config --enable DEVTMPFS_MOUNT
+    scripts/config --enable PCI
+    scripts/config --enable PCI_MSI
+    scripts/config --enable IOMMU_SUPPORT
+    scripts/config --enable IA32_EMULATION
+
+    # Common root/storage filesystems are built in so the compatibility kernel
+    # can reach a normal BFSOS root independently of host-only driver guesses.
+    scripts/config --enable EXT4_FS
+    scripts/config --enable XFS_FS
+    scripts/config --enable BTRFS_FS
+    scripts/config --enable F2FS_FS
+    scripts/config --enable VFAT_FS
+    scripts/config --enable EFIVAR_FS
+
+    # Storage transports commonly used on x86_64 systems.
+    scripts/config --enable SCSI
+    scripts/config --enable BLK_DEV_SD
+    scripts/config --enable ATA
+    scripts/config --enable SATA_AHCI
+    scripts/config --enable BLK_DEV_NVME
+
+    # BFSOS installer storage stack. Keep personalities modular; the shared
+    # Dracut policy force-includes them in every BFSOS initramfs.
+    scripts/config --enable MD
+    scripts/config --module MD_LINEAR
+    scripts/config --module MD_RAID0
+    scripts/config --module MD_RAID1
+    scripts/config --module MD_RAID10
+    scripts/config --module MD_RAID456
+    scripts/config --module BLK_DEV_DM
+    scripts/config --module DM_CRYPT
+    scripts/config --module DM_INTEGRITY
+    scripts/config --module DM_VERITY
+    scripts/config --module DM_SNAPSHOT
+    scripts/config --module DM_THIN_PROVISIONING
+    scripts/config --module DM_CACHE
+    scripts/config --module DM_WRITECACHE
+    scripts/config --module DM_MIRROR
+    scripts/config --module DM_RAID
+    scripts/config --module DM_MULTIPATH
+
+    # Optional compressed swap exposed by the installer.
+    scripts/config --module ZRAM
+
+    # Console and graphics fallback support.
+    scripts/config --enable DRM
+    scripts/config --enable DRM_SIMPLEDRM
+    scripts/config --enable DRM_FBDEV_EMULATION
+    scripts/config --enable FRAMEBUFFER_CONSOLE
+
+    # Networking fundamentals; allmodconfig supplies the broad device-driver set.
+    scripts/config --enable NET
+    scripts/config --enable INET
+    scripts/config --enable IPV6
+
+    make olddefconfig
+
+    for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+        grep -q "^CONFIG_${md_option}=m$" .config || {
+            echo "linux-lts config error: CONFIG_${md_option} is not modular" >&2
+            return 1
+        }
+    done
+    grep -q '^CONFIG_ZRAM=m$' .config || {
+        echo "linux-lts config error: CONFIG_ZRAM is not modular" >&2
+        return 1
+    }
+
+    kernver="$(make -s kernelrelease)"
+    case "$kernver" in
+        *-BFS-LTS) ;;
+        *) echo "Unexpected LTS kernel release: $kernver" >&2; return 1 ;;
+    esac
+
+    echo "Building broad-support LTS kernel release: $kernver"
+    make bzImage modules
+    make INSTALL_MOD_PATH="$PKG" modules_install
+
+    install -Dm644 arch/x86/boot/bzImage "$PKG/boot/vmlinuz-$kernver"
+    install -Dm644 System.map "$PKG/boot/System.map-$kernver"
+    install -Dm644 .config "$PKG/boot/config-$kernver"
+
+    rm -rf "$PKG/lib/firmware"
+
+    make clean
+    make prepare scripts
+    install -d "$PKG/usr/src"
+    mv "$SRC/linux-$version" "$PKG/usr/src/linux-$kernver"
+    ln -sfn "linux-$kernver" "$PKG/usr/src/linux-lts"
+
+    rm -f "$PKG/lib/modules/$kernver/build" "$PKG/lib/modules/$kernver/source"
+    ln -s "/usr/src/linux-$kernver" "$PKG/lib/modules/$kernver/build"
+    ln -s "/usr/src/linux-$kernver" "$PKG/lib/modules/$kernver/source"
+
+    find -L "$PKG/usr/src/linux-$kernver" -type l -delete 2>/dev/null || true
+}

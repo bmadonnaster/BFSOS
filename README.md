@@ -15,6 +15,8 @@ BFSOS is an x86_64 source-built Linux distribution maintained by Brian Madonna. 
 - Dracut initramfs generation and GRUB bootloader support.
 - UEFI and legacy BIOS installation paths.
 - Installer support for Btrfs subvolumes/snapshots, LUKS, LVM, md RAID (linear/JBOD, RAID0, RAID1, RAID10, RAID4/5/6), and combinations of those layers.
+- Kernel selection between the current BFSOS kernel and a broad-support Linux 6.12 LTS flavor carrying the Debian 6.12 patch series.
+- Optional installer-managed ZRAM swap with explicit enable/disable and configurable sizing.
 
 ## Repository layout
 

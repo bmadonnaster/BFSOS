@@ -6,11 +6,12 @@
 
 name=dracut
 version=111
-release=2
+release=3
 
 source=(
     https://github.com/dracut-ng/dracut-ng/archive/refs/tags/$version.tar.gz
     bfs.conf
+    bfsos-storage.conf
 )
 
 build_opt=(
@@ -40,4 +41,11 @@ pkg_build() {
     install -Dm644 \
         "$SRC/bfs.conf" \
         "$PKG/etc/dracut.conf.d/bfs.conf"
+
+    # Distribution-wide storage policy.  Keep this in the Dracut package so
+    # the current and LTS kernel packages can coexist without file ownership
+    # conflicts while every manual/kernel/installer Dracut invocation sees it.
+    install -Dm644 \
+        "$SRC/bfsos-storage.conf" \
+        "$PKG/usr/lib/dracut/dracut.conf.d/40-bfsos-md-drivers.conf"
 }

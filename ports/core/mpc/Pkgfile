@@ -3,4 +3,4 @@
 name=mpc
 version=1.4.1
 release=1
-source=(https://ftp.gnu.org/gnu/$name/$name-$version.tar.xz)
+source=(https://ftpmirror.gnu.org/mpc/mpc-$version.tar.xz)

@@ -1043,7 +1043,7 @@ _bootstrap_menu() {
         # directly to the main menu instead of adding a redundant success pause.
         if [ "$status" -eq 0 ]; then
             case "$choice" in
-                2|3|4|5) continue ;;
+                1|2|3|4|5) continue ;;
             esac
             echo
             echo "Operation completed successfully."

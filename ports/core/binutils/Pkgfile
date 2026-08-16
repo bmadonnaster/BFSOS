@@ -3,7 +3,7 @@
 name=binutils
 version=2.47
 release=1
-source=(https://sourceware.org/pub/$name/releases/$name-$version.tar.xz)
+source=(https://sourceware.org/pub/binutils/releases/binutils-$version.tar.xz)
 
 bootstrap_build() {
 	mkdir -v build

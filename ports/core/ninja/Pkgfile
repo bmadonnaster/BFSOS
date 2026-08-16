@@ -9,7 +9,7 @@
 name=ninja
 version=1.13.2
 release=1
-source=(https://github.com/$name-build/$name/archive/v$version/$name-v$version.tar.gz)
+source=(https://github.com/ninja-build/ninja/archive/v$version/ninja-$version.tar.gz)
 
 pkg_build() {
 	

@@ -8,7 +8,7 @@
 name=libxcrypt
 version=4.5.2
 release=1
-source=(https://github.com/besser82/$name/releases/download/v$version/$name-$version.tar.xz)
+source=(https://github.com/besser82/libxcrypt/releases/download/v$version/libxcrypt-$version.tar.xz)
 build_opt="--enable-hashes=strong,glibc --enable-obsolete-api=no --disable-failure-tokens"
 pre_build() {
 sed -i '/strchr/s/const//' lib/crypt-{sm3,gost}-yescrypt.c

@@ -7,8 +7,7 @@ version=2.42.2
 release=2
 
 source=(
-    https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-$version.tar.xz
-)
+    https://www.kernel.org/pub/linux/utils/util-linux/v${version%.*}/util-linux-$version.tar.xz)
 
 build_type=configure_build
 

@@ -6,11 +6,10 @@
 
 name=linux
 version=7.1.8
-release=2
+release=3
 source=(
-    https://cdn.kernel.org/pub/linux/kernel/v7.x/$name-$version.tar.xz
+    https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz
     config
-    bfsos-storage.conf
 )
 
 pkg_build() {
@@ -100,8 +99,9 @@ pkg_build() {
     # Storage stack used by the BFS installer.
     #
     # Keep the MD core enabled, with the actual RAID personalities as modules.
-    # Dracut will pull the required modules into the initramfs when a system
-    # boots from or depends on MD/LVM/LUKS storage.
+    # Keep MD personalities modular. BFSOS installs a Dracut policy that
+    # force-includes every installer-supported personality in each initramfs,
+    # avoiding fragile host-only auto-detection.
     scripts/config --enable MD
     scripts/config --module MD_LINEAR
     scripts/config --module MD_RAID0
@@ -179,8 +179,6 @@ pkg_build() {
     # Distribution Dracut policy: md personalities remain modular, but every
     # BFSOS initramfs must contain the storage personalities exposed by the
     # installer so host-only detection cannot silently omit them.
-    install -Dm644 "$SRC/bfsos-storage.conf" \
-        "$PKG/usr/lib/dracut/dracut.conf.d/50-bfsos-storage.conf"
 
     rm -rf "$PKG/lib/firmware"
 

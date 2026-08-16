@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=5
+release=6
 
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
