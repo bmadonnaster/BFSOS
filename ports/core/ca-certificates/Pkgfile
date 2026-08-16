@@ -4,7 +4,7 @@
 
 name=ca-certificates
 version=20260716
-release=2
+release=3
 
 source=(
 https://curl.se/ca/cacert.pem
@@ -25,7 +25,7 @@ pkg_build() {
 		"$PKG/etc/ssl/certs"
 
 	ln -sfn \
-		/etc/ssl/cert.pem \
+		../cert.pem \
 		"$PKG/etc/ssl/certs/ca-certificates.crt"
 
 	ln -sfn \

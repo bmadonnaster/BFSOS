@@ -148,6 +148,10 @@ FINAL_CHROOT="${BFS_FINAL_CHROOT:-no}"
 GRUB_FALLBACK="${BFS_GRUB_FALLBACK:-no}"
 ZRAM_SWAP="${BFS_ZRAM_SWAP:-no}"
 ZRAM_SIZE_SPEC="${BFS_ZRAM_SIZE_SPEC:-200%}"
+BUILD_JOBS="${BFS_BUILD_JOBS:-inherited}"
+BUILD_OPT="${BFS_BUILD_OPT:-inherited}"
+BUILD_CCACHE="${BFS_CCACHE:-inherited}"
+BUILD_CCACHE_SIZE="${BFS_CCACHE_SIZE:-inherited}"
 CONSOLE_VIDEO_MODE="${BFS_CONSOLE_VIDEO_MODE:-1920x1080@60}"
 CONSOLE_VIDEO_ARG=""
 CLEAR_PACKAGE_CACHE="${BFS_CLEAR_PACKAGE_CACHE:-ask}"
@@ -233,6 +237,10 @@ load_installer_settings() {
                         CONSOLE_FONT_PREFERENCE) CONSOLE_FONT_PREFERENCE="$value" ;;
                         INSTALL_CONSOLE_FONT) INSTALL_CONSOLE_FONT="$value" ;;
                         LOG_ENABLED) LOG_ENABLED="$value" ;;
+                        BUILD_JOBS) BUILD_JOBS="$value" ;;
+                        BUILD_OPT) BUILD_OPT="$value" ;;
+                        BUILD_CCACHE) BUILD_CCACHE="$value" ;;
+                        BUILD_CCACHE_SIZE) BUILD_CCACHE_SIZE="$value" ;;
                 esac
         done < "$INSTALLER_SETTINGS_FILE"
 }
@@ -243,6 +251,10 @@ BFS_THEME=$BFS_THEME
 CONSOLE_FONT_PREFERENCE=$CONSOLE_FONT_PREFERENCE
 INSTALL_CONSOLE_FONT=$INSTALL_CONSOLE_FONT
 LOG_ENABLED=$LOG_ENABLED
+BUILD_JOBS=$BUILD_JOBS
+BUILD_OPT=$BUILD_OPT
+BUILD_CCACHE=$BUILD_CCACHE
+BUILD_CCACHE_SIZE=$BUILD_CCACHE_SIZE
 EOF_SETTINGS
 }
 
@@ -889,6 +901,30 @@ storage_reset_menu() {
         esac
 }
 
+compiler_build_settings_menu() {
+        local choice="" value=""
+        while true; do
+                themed_menu choice "Compiler / Build Settings" \
+                        "Inherited keeps Bootstrap/base pkgmk.conf values; installer changes override only the installed system." \
+                        22 96 8 \
+                        1 "Build jobs: $BUILD_JOBS" \
+                        2 "Optimization: $BUILD_OPT" \
+                        3 "ccache: $BUILD_CCACHE" \
+                        4 "ccache size: $BUILD_CCACHE_SIZE" \
+                        5 "Restore inherited Bootstrap/base values" \
+                        6 "Back"
+                case "$choice" in
+                        1) themed_inputbox value "Build jobs" "Enter inherited, auto, or a positive job count." "$BUILD_JOBS" && BUILD_JOBS="$value" ;;
+                        2) themed_menu value "Optimization" "Choose installed-system compiler tuning." 18 80 5 1 "inherited" 2 "portable (-O2 -march=x86-64 -pipe)" 3 "native (-O2 -march=native -mtune=native -pipe)" 4 "Back"; case "$value" in 1) BUILD_OPT=inherited;;2) BUILD_OPT=portable;;3) BUILD_OPT=native;;esac ;;
+                        3) [[ "$BUILD_CCACHE" == yes ]] && BUILD_CCACHE=no || BUILD_CCACHE=yes ;;
+                        4) themed_inputbox value "ccache size" "Enter inherited, auto, 20G, 64G, etc. Auto = 20G in VMs; physical-RAM-sized on bare metal." "$BUILD_CCACHE_SIZE" && BUILD_CCACHE_SIZE="$value" ;;
+                        5) BUILD_JOBS=inherited; BUILD_OPT=inherited; BUILD_CCACHE=inherited; BUILD_CCACHE_SIZE=inherited ;;
+                        *) save_installer_settings; return 0 ;;
+                esac
+                save_installer_settings
+        done
+}
+
 installer_settings_menu() {
         local choice="" status=0 path=""
         while true; do
@@ -898,11 +934,12 @@ installer_settings_menu() {
                         1 "Theme: $(theme_display_name)" \
                         2 "Console font: $(console_font_display_name)" \
                         3 "Logging: $LOG_ENABLED" \
-                        4 "Save current configuration" \
-                        5 "Save configuration as..." \
-                        6 "Load configuration..." \
-                        7 "Reset/deactivate existing storage..." \
-                        8 "Back to main menu"
+                        4 "Compiler / build settings" \
+                        5 "Save current configuration" \
+                        6 "Save configuration as..." \
+                        7 "Load configuration..." \
+                        8 "Reset/deactivate existing storage..." \
+                        9 "Back to main menu"
                 [[ -n "$choice" ]] || return 0
                 case "$choice" in
                         1) select_installer_theme ;;
@@ -911,11 +948,12 @@ installer_settings_menu() {
                                 [[ "$LOG_ENABLED" == yes ]] && LOG_ENABLED=no || LOG_ENABLED=yes
                                 save_installer_settings
                                 ;;
-                        4) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
-                        5) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
-                        6) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
-                        7) storage_reset_menu ;;
-                        8) return 0 ;;
+                        4) compiler_build_settings_menu ;;
+                        5) save_installer_profile "$INSTALLER_PROFILE_FILE" ;;
+                        6) path=""; profile_path_dialog path "Save configuration as" && save_installer_profile "$path" ;;
+                        7) path=""; profile_path_dialog path "Load configuration" && load_installer_profile "$path" ;;
+                        8) storage_reset_menu ;;
+                        9) return 0 ;;
                         *) warn "Invalid settings selection."; sleep 1 ;;
                 esac
         done
@@ -5201,6 +5239,10 @@ CONSOLE_FONT_SIZE_VALUE="__CONSOLE_FONT_SIZE__"
 INSTALL_CONSOLE_FONT_VALUE="__INSTALL_CONSOLE_FONT__"
 ZRAM_SWAP_VALUE="__ZRAM_SWAP__"
 ZRAM_SIZE_SPEC_VALUE="__ZRAM_SIZE_SPEC__"
+BUILD_JOBS_VALUE="__BUILD_JOBS__"
+BUILD_OPT_VALUE="__BUILD_OPT__"
+BUILD_CCACHE_VALUE="__BUILD_CCACHE__"
+BUILD_CCACHE_SIZE_VALUE="__BUILD_CCACHE_SIZE__"
 
 log() { printf '\n==> %s\n' "$*"; }
 
@@ -5566,6 +5608,9 @@ run_package_operation "ports synchronization (ports -u)" ports -u
 
 log "Running mandatory installed-system upgrade"
 run_package_operation "mandatory package upgrade (prt-get sysup)" prt-get sysup
+
+log "Ensuring BFSOS package-build safety/cache tooling is installed"
+run_package_operation "mandatory build tooling (fakeroot/ccache)" prt-get depinst fakeroot fmt xxhash ccache
 
 if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
         read -r -a PACKAGE_LIST_ARRAY <<< "$PACKAGE_LIST_VALUE"
@@ -6203,6 +6248,38 @@ EOF_ZRAM_SERVICE
         log "Configured ZRAM swap for boot"
 }
 
+configure_pkgmk_build_settings() {
+        local conf=/etc/pkgmk.conf jobs flags size kb gib
+        [[ -f "$conf" ]] || return 0
+        [[ "$BUILD_JOBS_VALUE" == inherited ]] || {
+                jobs="$BUILD_JOBS_VALUE"; [[ "$jobs" == auto ]] && jobs="$(nproc)"
+                sed -i "s|^export JOBS=.*|export JOBS=$jobs|; s|^export MAKEFLAGS=.*|export MAKEFLAGS=\"-j \$JOBS\"|" "$conf"
+        }
+        case "$BUILD_OPT_VALUE" in
+                portable) flags='-O2 -march=x86-64 -pipe' ;;
+                native) flags='-O2 -march=native -mtune=native -pipe' ;;
+                *) flags='' ;;
+        esac
+        [[ -z "$flags" ]] || sed -i "s|^export CFLAGS=.*|export CFLAGS=\"$flags\"|; s|^export CXXFLAGS=.*|export CXXFLAGS=\"\${CFLAGS}\"|" "$conf"
+        if [[ "$BUILD_CCACHE_VALUE" == yes ]]; then
+                grep -q '^export PATH="/usr/lib/ccache:' "$conf" || printf '\nexport PATH="/usr/lib/ccache:$PATH"\n' >> "$conf"
+        elif [[ "$BUILD_CCACHE_VALUE" == no ]]; then
+                sed -i '\|^export PATH="/usr/lib/ccache:|d' "$conf"
+        fi
+        if [[ "$BUILD_CCACHE_SIZE_VALUE" != inherited && "$BUILD_CCACHE_VALUE" != no ]] && command -v ccache >/dev/null 2>&1; then
+                size="$BUILD_CCACHE_SIZE_VALUE"
+                if [[ "$size" == auto ]]; then
+                        if command -v systemd-detect-virt >/dev/null 2>&1 && systemd-detect-virt -q; then size=20G; else
+                                kb=$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo); gib=$(( (kb + 1048575) / 1048576 )); size="${gib}G"
+                        fi
+                fi
+                install -d -m 0775 -o pkgmk -g pkgmk /var/cache/ccache
+                CCACHE_DIR=/var/cache/ccache ccache --set-config="max_size=$size"
+                chown -R pkgmk:pkgmk /var/cache/ccache
+        fi
+}
+
+configure_pkgmk_build_settings
 configure_zram_swap
 
 configure_dracut_storage_modules() {
@@ -6589,6 +6666,10 @@ CHROOT
                 -e "s|__INSTALL_CONSOLE_FONT__|$INSTALL_CONSOLE_FONT|g" \
                 -e "s|__ZRAM_SWAP__|$ZRAM_SWAP|g" \
                 -e "s|__ZRAM_SIZE_SPEC__|$ZRAM_SIZE_SPEC|g" \
+                -e "s|__BUILD_JOBS__|$BUILD_JOBS|g" \
+                -e "s|__BUILD_OPT__|$BUILD_OPT|g" \
+                -e "s|__BUILD_CCACHE__|$BUILD_CCACHE|g" \
+                -e "s|__BUILD_CCACHE_SIZE__|$BUILD_CCACHE_SIZE|g" \
                 "$TARGET$CHROOT_INSTALLER"
         chmod 0700 "$TARGET$CHROOT_INSTALLER"
 }

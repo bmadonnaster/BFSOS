@@ -99,17 +99,61 @@ DIALOGRC_FILE=""
 ORIGINAL_DIALOGRC="${DIALOGRC-}"
 BFS_THEME="${BFS_BOOTSTRAP_THEME:-slackware}"
 
+BFS_BUILD_JOBS="auto"
+BFS_BUILD_OPT="portable"
+BFS_CCACHE="yes"
+BFS_CCACHE_SIZE="auto"
+BFS_BUILD_SETTINGS_CHANGED="no"
+
+_apply_build_settings() {
+    local jobs="$BFS_BUILD_JOBS"
+    [ "$jobs" = auto ] && jobs="$(nproc 2>/dev/null || echo 1)"
+    export MAKEFLAGS="-j$jobs"
+    case "$BFS_BUILD_OPT" in
+        native) export CFLAGS="-O2 -march=native -mtune=native -pipe" ;;
+        custom:*) export CFLAGS="${BFS_BUILD_OPT#custom:}" ;;
+        *) export CFLAGS="-O2 -march=x86-64 -pipe" ;;
+    esac
+    export CXXFLAGS="$CFLAGS"
+    if [ "$BFS_CCACHE" = yes ]; then export PATH="/usr/lib/ccache:$PATH"; fi
+}
+
 load_bootstrap_settings() {
-    # Classic Slackware is the bootstrap default on every new invocation.
-    # Theme changes are session-local so stale settings from an earlier test
-    # cannot unexpectedly make Debian or another theme the startup default.
     BFS_THEME="${BFS_BOOTSTRAP_THEME:-slackware}"
+    if [ -r "$BOOTSTRAP_SETTINGS_FILE" ]; then
+        # shellcheck disable=SC1090
+        . "$BOOTSTRAP_SETTINGS_FILE"
+    fi
+    _apply_build_settings
 }
 
 save_bootstrap_settings() {
     cat > "$BOOTSTRAP_SETTINGS_FILE" <<EOF_SETTINGS
-BFS_THEME=$BFS_THEME
+BFS_BUILD_JOBS='$BFS_BUILD_JOBS'
+BFS_BUILD_OPT='$BFS_BUILD_OPT'
+BFS_CCACHE='$BFS_CCACHE'
+BFS_CCACHE_SIZE='$BFS_CCACHE_SIZE'
+BFS_BUILD_SETTINGS_CHANGED='$BFS_BUILD_SETTINGS_CHANGED'
 EOF_SETTINGS
+    _apply_build_settings
+}
+
+compiler_build_settings_menu() {
+    local jobs opt cache size
+    printf '\nCompiler / Build Settings\n=========================\n'
+    printf 'Jobs [auto or number] (current %s): ' "$BFS_BUILD_JOBS"; read -r jobs; [ -z "$jobs" ] || BFS_BUILD_JOBS="$jobs"
+    printf 'Optimization [portable/native/custom] (current %s): ' "$BFS_BUILD_OPT"; read -r opt
+    case "$opt" in
+        native) BFS_BUILD_OPT=native ;;
+        portable) BFS_BUILD_OPT=portable ;;
+        custom) printf 'CFLAGS: '; read -r opt; [ -z "$opt" ] || BFS_BUILD_OPT="custom:$opt" ;;
+        '') ;;
+    esac
+    printf 'ccache [yes/no] (current %s): ' "$BFS_CCACHE"; read -r cache; case "$cache" in yes|no) BFS_CCACHE="$cache";; esac
+    printf 'ccache size [auto/20G/etc.] (current %s): ' "$BFS_CCACHE_SIZE"; read -r size; [ -z "$size" ] || BFS_CCACHE_SIZE="$size"
+    BFS_BUILD_SETTINGS_CHANGED=yes
+    save_bootstrap_settings
+    echo "Build settings saved; customized values will carry into the base pkgmk.conf."
 }
 
 write_dialog_theme_classic() {
@@ -353,7 +397,7 @@ select_bootstrap_theme() {
     return 0
 }
 
-bootstrap_settings_menu() {
+bootstrap_theme_settings_menu() {
     local choice="" status=0
 
     while true; do
@@ -426,6 +470,25 @@ bootstrap_settings_menu() {
 
         # Keep the user in Settings so another theme can be previewed.
         # Back returns to the main menu with no success/pause screen.
+    done
+}
+
+
+bootstrap_settings_menu() {
+    local choice=""
+    while true; do
+        echo
+        echo "Bootstrap Settings"
+        echo "  1) Interface theme"
+        echo "  2) Compiler / build settings"
+        echo "  3) Back"
+        printf "Choose [1-3]: "
+        read -r choice </dev/tty 2>/dev/null || read -r choice
+        case "$choice" in
+            1) bootstrap_theme_settings_menu ;;
+            2) compiler_build_settings_menu ;;
+            3|"") return 0 ;;
+        esac
     done
 }
 
@@ -2331,7 +2394,7 @@ export LC_ALL=C
 export LANGUAGE=C
 
 export CPPFLAGS="-I/usr/include"
-export CFLAGS="-O2 -march=x86-64 -pipe"
+export CFLAGS="$CFLAGS"
 export CXXFLAGS="\${CFLAGS}"
 export LDFLAGS="-L/usr/lib -Wl,-rpath-link,/usr/lib"
 export LIBRARY_PATH="/usr/lib"
@@ -2339,7 +2402,7 @@ export LIBRARY_PATH="/usr/lib"
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
-export JOBS=$(nproc)
+export JOBS=${BFS_BUILD_JOBS/auto/$(nproc)}
 export MAKEFLAGS="-j \$JOBS"
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
@@ -2354,6 +2417,16 @@ EOF
     # so without this it falls back to /var/cache/pkg/work inside the small
     # LiveGUI-backed rootfs and GCC can exhaust that filesystem.
     if [ -f "$LFS/etc/pkgmk.conf" ]; then
+        if [ "$BFS_BUILD_SETTINGS_CHANGED" = yes ]; then
+            jobs="$BFS_BUILD_JOBS"; [ "$jobs" = auto ] && jobs="$(nproc)"
+            sed -i -e "s|^export CFLAGS=.*|export CFLAGS=\"$CFLAGS\"|" \
+                   -e "s|^export CXXFLAGS=.*|export CXXFLAGS=\"\${CFLAGS}\"|" \
+                   -e "s|^export JOBS=.*|export JOBS=$jobs|" \
+                   -e "s|^export MAKEFLAGS=.*|export MAKEFLAGS=\"-j \$JOBS\"|" \
+                   "$LFS/etc/pkgmk.conf"
+            printf '\n# BFSOS inherited build settings\nexport BFS_CCACHE=%s\nexport BFS_CCACHE_SIZE=%s\n' \
+                "$BFS_CCACHE" "$BFS_CCACHE_SIZE" >> "$LFS/etc/pkgmk.conf"
+        fi
         # Never point pkgmk at the bind-mount root itself.  pkgmk removes its
         # work directory during cleanup; using the mount point directly causes
         # "Device or resource busy".  Give each port a removable child dir.
@@ -2818,6 +2891,9 @@ python3-wheel
 libuv
 libarchive
 cmake
+fmt
+xxhash
+ccache
 boost
 meson
 kmod
@@ -2845,6 +2921,7 @@ util-linux
 dbus
 procps-ng
 e2fsprogs
+fakeroot
 pkgutils
 dialog
 prt-get
@@ -2877,6 +2954,25 @@ buildworkdir="$PWD/build-work"
 pkgmkpkg="var/cache/pkg/packages"
 pkgmksrc="var/cache/pkg/sources"
 pkgmkwork="var/cache/pkg/build-work"
+
+
+bootstrap_settings_menu() {
+    local choice=""
+    while true; do
+        echo
+        echo "Bootstrap Settings"
+        echo "  1) Interface theme"
+        echo "  2) Compiler / build settings"
+        echo "  3) Back"
+        printf "Choose [1-3]: "
+        read -r choice </dev/tty 2>/dev/null || read -r choice
+        case "$choice" in
+            1) bootstrap_theme_settings_menu ;;
+            2) compiler_build_settings_menu ;;
+            3|"") return 0 ;;
+        esac
+    done
+}
 
 case "${1:-menu}" in
     menu|"")

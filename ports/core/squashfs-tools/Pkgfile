@@ -6,7 +6,7 @@
 # Depends on:  zlib lzo xz lz4
 
 name=squashfs-tools
-version=4.5
+version=4.7.5
 release=1
 source=(https://downloads.sourceforge.net/squashfs/squashfs$version.tar.gz
 	squashfs-tools-$version-symlink_install.patch)

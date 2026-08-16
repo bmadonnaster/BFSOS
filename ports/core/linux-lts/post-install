@@ -39,8 +39,6 @@ if command -v lsinitrd >/dev/null 2>&1; then
     done
 fi
 
-ln -sfn "$(basename "$kernel_image")" /boot/vmlinuz-BFS-LTS
-ln -sfn "$(basename "$initramfs_image")" /boot/initramfs-BFS-LTS.img
 
 running_kver="$(uname -r 2>/dev/null || true)"
 for image in /boot/initramfs-*-BFS-LTS.img; do
@@ -51,6 +49,11 @@ for image in /boot/initramfs-*-BFS-LTS.img; do
     [ "$old_kver" = "$running_kver" ] && continue
     [ -d "/lib/modules/$old_kver" ] || rm -f -- "$image"
 done
+
+
+# Remove generic kernel aliases: grub-mkconfig can enumerate them as
+# separate kernels without pairing the matching initramfs.
+rm -f /boot/vmlinuz-BFS-LTS /boot/initramfs-BFS-LTS.img
 
 if command -v grub-mkconfig >/dev/null 2>&1 && [ -d /boot/grub ]; then
     grub-mkconfig -o /boot/grub/grub.cfg

@@ -248,19 +248,5 @@ if [ ! "$(command -v build)" ]; then
 			rm -rf $PKG/usr/doc
 		fi
 		
-		# runit service
-		for s in ${sv[@]}; do
-			[ -f $SRC/$s ] || exit 1
-			case $s in
-					 run) install -Dm755 $SRC/$s $PKG/etc/sv/$name/run
-						  ln -s /run/runit/supervise.$name $PKG/etc/sv/$name/supervise;;
-				  finish) install -Dm755 $SRC/$s $PKG/etc/sv/$name/finish;;
-				   *.run) install -Dm755 $SRC/$s $PKG/etc/sv/${s%.*}/run
-						  ln -s /run/runit/supervise.${s%.*} $PKG/etc/sv/${s%.*}/supervise;;
-				*.finish) install -Dm755 $SRC/$s $PKG/etc/sv/${s%.*}/finish;;
-					 *.*) install -Dm644 $SRC/$s $PKG/etc/sv/${s%%.*}/${s#*.};;
-					   *) install -Dm644 $SRC/$s $PKG/etc/sv/$name/$s;;
-			esac
-		done
 	}
 fi

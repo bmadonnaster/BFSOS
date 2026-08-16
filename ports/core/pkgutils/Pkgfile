@@ -4,12 +4,13 @@
 
 name=pkgutils
 version=5.40.12
-release=7
+release=8
 
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
-        extension)
+        extension
+        bfs-pkgmk)
 
 bootstrap_build() {
         # Select a UTF-8 C locale when the current environment provides one
@@ -60,11 +61,13 @@ unset _bfs_utf8_locale _bfs_locale' "$PKG/usr/bin/pkgmk"
         sed -i 's,^PKGMK_PACKAGE_DIR=.*,PKGMK_PACKAGE_DIR="/var/cache/pkg/packages",' "$PKG/usr/bin/pkgmk"
         sed -i 's,^PKGMK_WORK_DIR=.*,PKGMK_WORK_DIR="/var/cache/pkg/work",' "$PKG/usr/bin/pkgmk"
 
-        install -dm777 \
+        install -dm775 -o 82 -g 82 \
                 "$PKG/var/cache/pkg" \
                 "$PKG/var/cache/pkg/sources" \
                 "$PKG/var/cache/pkg/packages" \
                 "$PKG/var/cache/pkg/work"
+
+        install -dm775 -o 82 -g 82 "$PKG/var/cache/ccache"
 
         # Use xz as the default package compression mode.
         sed -i 's,^PKGMK_COMPRESSION_MODE=.*,PKGMK_COMPRESSION_MODE="xz",' "$PKG/usr/bin/pkgmk"
@@ -74,6 +77,8 @@ unset _bfs_utf8_locale _bfs_locale' "$PKG/usr/bin/pkgmk"
 
         # BFSOS pkgmk extension.
         install -Dm644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
+        install -Dm755 "$SRC/bfs-pkgmk" "$PKG/usr/bin/bfs-pkgmk"
+        install -dm755 -o 82 -g 82 "$PKG/var/lib/pkgmk"
 
         # Configuration.
         install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"

@@ -48,8 +48,6 @@ if command -v lsinitrd >/dev/null 2>&1; then
     done
 fi
 
-ln -sfn "$(basename "$kernel_image")" /boot/vmlinuz-BFS-Linux
-ln -sfn "$(basename "$initramfs_image")" /boot/initramfs-BFS-Linux.img
 
 # Remove only initramfs images whose matching installed module tree no longer
 # exists. Never remove the new image or the running kernel's image.
@@ -69,6 +67,11 @@ done
 # Clean the helper used by older BFSOS kernel packages after no code depends on
 # it anymore.
 rm -f /lib/modules/KERNELVERSION
+
+
+# Remove generic kernel aliases: grub-mkconfig can enumerate them as
+# separate kernels without pairing the matching initramfs.
+rm -f /boot/vmlinuz-BFS-Linux /boot/initramfs-BFS-Linux.img
 
 if command -v grub-mkconfig >/dev/null 2>&1 && [ -d /boot/grub ]; then
     echo "Regenerating GRUB configuration"
