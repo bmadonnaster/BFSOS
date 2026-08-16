@@ -24,6 +24,6 @@ post_build() {
 	install -d $PKG/var/lib/pkg
 	install -d $PKG/etc/ports
 	cp	-rf $SRC/*.httpup $PKG/etc/ports
-	install -d /var/log/pkgbuild/
+	install -d "$PKG/var/log/pkgbuild/"
 	touch $PKG/var/lib/pkg/prt-get.locker
 }
