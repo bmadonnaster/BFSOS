@@ -6,12 +6,13 @@
 
 name=linux-lts
 version=6.12.101
-release=1
+release=2
 
 debian_revision=1
 source=(
     https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}.orig.tar.xz
     https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}-${debian_revision}.debian.tar.xz
+    gcc16-const-cast.patch
 )
 
 apply_debian_patch_series() {
@@ -45,6 +46,11 @@ pkg_build() {
     local kernver=""
 
     apply_debian_patch_series
+
+    # GCC 16 removed the legacy CONST_CAST* plugin macros.
+    # Backport the upstream kernel compatibility fix.
+    patch -Np1 -i "$SRC/gcc16-const-cast.patch"
+
     make mrproper
 
     # This flavor is intentionally a broad x86_64 compatibility kernel.  Start
