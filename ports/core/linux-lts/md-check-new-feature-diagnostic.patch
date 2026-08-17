@@ -1,27 +1,34 @@
-From: BFSOS diagnostic build
-Subject: [DIAGNOSTIC ONLY] md: allow bypassing unknown v1 superblock padding
+From: Li Nan <linan122@xxxxxxxxxx>
+Subject: [DIAGNOSTIC ONLY] md: add check_new_feature module parameter
 
-This reproduces the upstream check_new_feature diagnostic control used to
-test older kernels that reject MD v1.x superblocks after newer kernels have
-written metadata into formerly reserved pad3 fields.
+Backport form intended for Linux stable 5.15 through 6.16.
+Upstream commit: 9c47127a807da3e36ce80f7c83a1134a291fc021
 
-DO NOT ship with check_new_feature disabled by default.  Bypassing unknown
-metadata can risk corruption.  This patch exists only to prove whether the
-BFSOS 6.12.101 boot failure is the pad3/new-feature compatibility case.
+This is for BFSOS diagnostic testing only.  Strict checking remains enabled
+by default.  To test the suspected compatibility path, boot once with:
 
+    md.check_new_feature=0
+
+Do not ship with that parameter disabled by default.
+
+diff --git a/drivers/md/md.c b/drivers/md/md.c
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@
+@@ -339,6 +339,7 @@ static int start_readonly;
+  * so all the races disappear.
+  */
  static bool create_on_open = true;
 +static bool check_new_feature = true;
-@@
--	if (sb->pad0 ||
--	    sb->pad3[0] ||
+
+ /*
+  * We have a system wide 'event count' that is incremented
+@@ -1735,9 +1736,13 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
+ 	}
+ 	if (sb->pad0 ||
+ 	    sb->pad3[0] ||
 -	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1])))
 -		/* Some padding is non-zero, might be a new feature */
 -		return -EINVAL;
-+	if (sb->pad0 ||
-+	    sb->pad3[0] ||
 +	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1]))) {
 +		pr_warn("Some padding is non-zero on %pg, might be a new feature\n",
 +			rdev->bdev);
@@ -29,6 +36,13 @@ BFSOS 6.12.101 boot failure is the pad3/new-feature compatibility case.
 +			return -EINVAL;
 +		pr_warn("check_new_feature is disabled, data corruption possible\n");
 +	}
-@@
+
+ 	rdev->preferred_minor = 0xffff;
+ 	rdev->data_offset = le64_to_cpu(sb->data_offset);
+@@ -10422,6 +10427,7 @@ module_param_call(start_ro, set_ro, get_ro, NULL, S_IRUSR|S_IWUSR);
+ module_param(start_dirty_degraded, int, S_IRUGO|S_IWUSR);
+ module_param_call(new_array, add_named_array, NULL, NULL, S_IWUSR);
  module_param(create_on_open, bool, S_IRUSR|S_IWUSR);
 +module_param(check_new_feature, bool, 0600);
+ MODULE_LICENSE("GPL");
+ MODULE_DESCRIPTION("MD RAID framework");
