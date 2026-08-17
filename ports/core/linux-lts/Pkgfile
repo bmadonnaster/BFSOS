@@ -124,7 +124,6 @@ pkg_build() {
     # kernel without usable console output before the initramfs can load them.
     scripts/config --enable VT
     scripts/config --enable VT_CONSOLE
-    scripts/config --enable HW_CONSOLE
     scripts/config --enable SERIAL_8250
     scripts/config --enable FB
     scripts/config --enable DRM
@@ -142,7 +141,7 @@ pkg_build() {
 
     # Refuse to build if allmodconfig/dependency resolution turned any of the
     # early console path back into modules.
-    for console_option in VT VT_CONSOLE HW_CONSOLE SERIAL_8250 FB DRM FRAMEBUFFER_CONSOLE; do
+    for console_option in VT VT_CONSOLE SERIAL_8250 FB DRM FRAMEBUFFER_CONSOLE; do
         grep -q "^CONFIG_${console_option}=y$" .config || {
             echo "linux-lts config error: CONFIG_${console_option} is not built in" >&2
             return 1
