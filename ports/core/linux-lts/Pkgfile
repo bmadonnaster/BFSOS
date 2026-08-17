@@ -46,11 +46,6 @@ pkg_build() {
     local kernver=""
 
     apply_debian_patch_series
-
-    # GCC 16 removed the legacy CONST_CAST* plugin macros.
-    # Backport the upstream kernel compatibility fix.
-    patch -Np1 -i "$SRC/gcc16-const-cast.patch"
-
     make mrproper
 
     # This flavor is intentionally a broad x86_64 compatibility kernel.  Start

@@ -1,6 +1,6 @@
 --- a/scripts/gcc-plugins/gcc-common.h
 +++ b/scripts/gcc-plugins/gcc-common.h
-@@ -309,7 +309,9 @@ typedef const gimple *const_gimple_ptr;
+@@ -338,7 +338,9 @@
  #define gimple gimple_ptr
  #define const_gimple const_gimple_ptr
  #undef CONST_CAST_GIMPLE
@@ -8,6 +8,6 @@
 +#define CONST_CAST_GIMPLE(X) const_cast<gimple>((X))
 +#undef CONST_CAST_TREE
 +#define CONST_CAST_TREE(X) const_cast<tree>((X))
+ #endif
  
- inline void debug_gimple_stmt(const_gimple_ptr s)
- {
+ /* gimple related */
