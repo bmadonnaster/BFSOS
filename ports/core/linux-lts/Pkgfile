@@ -54,8 +54,8 @@ pkg_build() {
     # facilities that are inappropriate for a normal distribution kernel.
     make allmodconfig
 
-    scripts/config --set-str LOCALVERSION "-BFS-LTS"
-    scripts/config --disable LOCALVERSION_AUTO
+    scripts/config --set-str CONFIG_LOCALVERSION "-BFS-LTS"
+    scripts/config --disable CONFIG_LOCALVERSION_AUTO
     scripts/config --disable WERROR
     scripts/config --disable DEBUG_INFO
     scripts/config --disable DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
@@ -131,6 +131,7 @@ pkg_build() {
     scripts/config --enable IPV6
 
     make olddefconfig
+    make syncconfig
 
     for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
         grep -q "^CONFIG_${md_option}=m$" .config || {
