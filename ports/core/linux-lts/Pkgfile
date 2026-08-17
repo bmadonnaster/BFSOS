@@ -143,16 +143,22 @@ pkg_build() {
         return 1
     }
 
-    base_kernver="$(make -s kernelrelease)"
-    case "$base_kernver" in
-        "$version"|"$version-BFS-LTS") ;;
-        *) echo "Unexpected LTS base kernel release: $base_kernver" >&2; return 1 ;;
-    esac
-    kernver="$version-BFS-LTS"
+    kernver="$(make -s kernelrelease)"
+    if [ "$kernver" != "$version-BFS-LTS" ]; then
+        echo "Unexpected LTS kernel release: $kernver" >&2
+        return 1
+    fi
 
     echo "Building broad-support LTS kernel release: $kernver"
-    make LOCALVERSION=-BFS-LTS bzImage modules
-    make LOCALVERSION=-BFS-LTS INSTALL_MOD_PATH="$PKG" modules_install
+    make bzImage modules
+    make INSTALL_MOD_PATH="$PKG" modules_install
+
+    if [ ! -d "$PKG/lib/modules/$kernver" ]; then
+        echo "linux-lts packaging error: modules_install did not create $PKG/lib/modules/$kernver" >&2
+        echo "Module directories actually created:" >&2
+        find "$PKG/lib/modules" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null >&2 || true
+        return 1
+    fi
 
     install -Dm644 arch/x86/boot/bzImage "$PKG/boot/vmlinuz-$kernver"
     install -Dm644 System.map "$PKG/boot/System.map-$kernver"
