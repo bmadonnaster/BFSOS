@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.12.101
-release=3
+release=4
 
 debian_revision=1
 source=(
@@ -99,14 +99,19 @@ pkg_build() {
     scripts/config --enable SATA_AHCI
     scripts/config --enable BLK_DEV_NVME
 
-    # BFSOS installer storage stack. Keep personalities modular; the shared
-    # Dracut policy force-includes them in every BFSOS initramfs.
+    # BFSOS boot-critical MD RAID stack.  Keep the MD core and all RAID
+    # personalities supported for root/storage topologies built into the
+    # kernel.  Root RAID must not depend on Dracut successfully carrying or
+    # loading these modules before LUKS/LVM discovery.
     scripts/config --enable MD
-    scripts/config --module MD_LINEAR
-    scripts/config --module MD_RAID0
-    scripts/config --module MD_RAID1
-    scripts/config --module MD_RAID10
-    scripts/config --module MD_RAID456
+    scripts/config --enable BLK_DEV_MD
+    scripts/config --enable MD_BITMAP
+    scripts/config --enable MD_BITMAP_FILE
+    scripts/config --enable MD_LINEAR
+    scripts/config --enable MD_RAID0
+    scripts/config --enable MD_RAID1
+    scripts/config --enable MD_RAID10
+    scripts/config --enable MD_RAID456
     scripts/config --module BLK_DEV_DM
     scripts/config --module DM_CRYPT
     scripts/config --module DM_INTEGRITY
@@ -176,9 +181,9 @@ pkg_build() {
         }
     done
 
-    for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
-        grep -q "^CONFIG_${md_option}=m$" .config || {
-            echo "linux-lts config error: CONFIG_${md_option} is not modular" >&2
+    for md_option in MD BLK_DEV_MD MD_BITMAP MD_BITMAP_FILE MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+        grep -q "^CONFIG_${md_option}=y$" .config || {
+            echo "linux-lts config error: CONFIG_${md_option} is not built in" >&2
             return 1
         }
     done
