@@ -1,11 +1,10 @@
-From: Li Nan <linan122@xxxxxxxxxx>
-Subject: [DIAGNOSTIC ONLY] md: add check_new_feature module parameter
+From: BFSOS diagnostic build
+Subject: [DIAGNOSTIC ONLY] md: allow testing newer v1.x metadata on Linux 6.12
 
-Backport form intended for Linux stable 5.15 through 6.16.
-Upstream commit: 9c47127a807da3e36ce80f7c83a1134a291fc021
+This is a diagnostic-only backport for BFSOS Linux 6.12.101.
 
-This is for BFSOS diagnostic testing only.  Strict checking remains enabled
-by default.  To test the suspected compatibility path, boot once with:
+Strict checking remains enabled by default.  To test the suspected
+newer-MD-metadata compatibility path, boot once with:
 
     md.check_new_feature=0
 
@@ -14,15 +13,17 @@ Do not ship with that parameter disabled by default.
 diff --git a/drivers/md/md.c b/drivers/md/md.c
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -339,6 +339,7 @@ static int start_readonly;
+@@ -322,6 +322,9 @@ static int start_readonly;
   * so all the races disappear.
   */
  static bool create_on_open = true;
 +static bool check_new_feature = true;
++module_param(check_new_feature, bool, 0600);
++
 
  /*
   * We have a system wide 'event count' that is incremented
-@@ -1735,9 +1736,13 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
+@@ -1706,9 +1709,13 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
  	}
  	if (sb->pad0 ||
  	    sb->pad3[0] ||
@@ -39,10 +40,3 @@ diff --git a/drivers/md/md.c b/drivers/md/md.c
 
  	rdev->preferred_minor = 0xffff;
  	rdev->data_offset = le64_to_cpu(sb->data_offset);
-@@ -10422,6 +10427,7 @@ module_param_call(start_ro, set_ro, get_ro, NULL, S_IRUSR|S_IWUSR);
- module_param(start_dirty_degraded, int, S_IRUGO|S_IWUSR);
- module_param_call(new_array, add_named_array, NULL, NULL, S_IWUSR);
- module_param(create_on_open, bool, S_IRUSR|S_IWUSR);
-+module_param(check_new_feature, bool, 0600);
- MODULE_LICENSE("GPL");
- MODULE_DESCRIPTION("MD RAID framework");
