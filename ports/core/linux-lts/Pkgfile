@@ -20,9 +20,6 @@ pkg_build() {
 
     make mrproper
 
-    # DIAGNOSTIC ONLY: add the upstream MD compatibility switch.  Leave its
-    # default strict; boot testing must explicitly pass md.check_new_feature=0.
-    patch -Np1 -i "$SRC/md-check-new-feature-diagnostic.patch"
 
     # Start from the known-good BFSOS Current-kernel configuration.  The
     # supplied config is intentionally used as the compatibility baseline so
