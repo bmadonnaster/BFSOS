@@ -1,10 +1,59 @@
 #!/bin/sh
 set -eu
-if [ "$(id -u)" -eq 0 ] \
-   && command -v runuser >/dev/null 2>&1 \
-   && command -v fakeroot >/dev/null 2>&1 \
-   && id pkgmk >/dev/null 2>&1; then
-    exec runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
-        CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@"
+
+start_epoch="$(date +%s)"
+start_stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+status=0
+
+# Prefer a persistent pkgmk-owned history location.  Fall back to /tmp only
+# during very early/bootstrap contexts where /var/lib/pkgmk is unavailable.
+history_dir="/var/lib/pkgmk"
+history_file="$history_dir/build-times.log"
+if ! mkdir -p "$history_dir" 2>/dev/null; then
+    history_file="/tmp/bfs-pkgmk-build-times.log"
 fi
-exec pkgmk "$@"
+
+run_pkgmk() {
+    if [ "$(id -u)" -eq 0 ] \
+       && command -v runuser >/dev/null 2>&1 \
+       && command -v fakeroot >/dev/null 2>&1 \
+       && id pkgmk >/dev/null 2>&1; then
+        runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
+            CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@"
+    else
+        pkgmk "$@"
+    fi
+}
+
+set +e
+run_pkgmk "$@"
+status=$?
+set -e
+
+end_epoch="$(date +%s)"
+elapsed=$((end_epoch - start_epoch))
+
+# Best-effort package identity from the current Pkgfile; timing must never
+# convert a successful package build into a failure.
+pkg_name="unknown"
+pkg_version="unknown"
+pkg_release="unknown"
+if [ -r ./Pkgfile ]; then
+    pkg_name="$(sed -n 's/^name=//p' ./Pkgfile | head -n1 | tr -d '"'"'" || true)"
+    pkg_version="$(sed -n 's/^version=//p' ./Pkgfile | head -n1 | tr -d '"'"'" || true)"
+    pkg_release="$(sed -n 's/^release=//p' ./Pkgfile | head -n1 | tr -d '"'"'" || true)"
+fi
+
+line="$(printf '%s\tpkgmk\t%s\t%s\t%s\tstatus=%s\telapsed_seconds=%s\n' \
+    "$start_stamp" "$pkg_name" "$pkg_version" "$pkg_release" "$status" "$elapsed")"
+
+if [ -w "$history_file" ] || { [ ! -e "$history_file" ] && [ -w "$(dirname "$history_file")" ]; }; then
+    printf '%s' "$line" >> "$history_file" 2>/dev/null || true
+elif command -v runuser >/dev/null 2>&1 && id pkgmk >/dev/null 2>&1; then
+    printf '%s' "$line" | runuser -u pkgmk -- sh -c 'cat >> /var/lib/pkgmk/build-times.log' 2>/dev/null || true
+fi
+
+printf 'BFSOS package timing: %s-%s-%s: %ss (status %s)\n' \
+    "$pkg_name" "$pkg_version" "$pkg_release" "$elapsed" "$status"
+
+exit "$status"

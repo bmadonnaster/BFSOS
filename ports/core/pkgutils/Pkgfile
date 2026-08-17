@@ -4,7 +4,7 @@
 
 name=pkgutils
 version=5.40.12
-release=8
+release=9
 
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
@@ -82,6 +82,8 @@ unset _bfs_utf8_locale _bfs_locale' "$PKG/usr/bin/pkgmk"
         install -Dm644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
         install -Dm755 "$SRC/bfs-pkgmk" "$PKG/usr/bin/bfs-pkgmk"
         install -dm755 -o 82 -g 82 "$PKG/var/lib/pkgmk"
+        install -Dm664 /dev/null "$PKG/var/lib/pkgmk/build-times.log"
+        chown 82:82 "$PKG/var/lib/pkgmk/build-times.log"
 
         # Configuration.
         install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"
