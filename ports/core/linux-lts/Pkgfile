@@ -6,11 +6,12 @@
 
 name=linux-lts
 version=6.12.101
-release=6
+release=6.diag1
 
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${version}.tar.xz
     gcc16-const-cast.patch
+    md-check-new-feature-diagnostic.patch
     config
 )
 
@@ -18,6 +19,10 @@ pkg_build() {
     local kernver=""
 
     make mrproper
+
+    # DIAGNOSTIC ONLY: add the upstream MD compatibility switch.  Leave its
+    # default strict; boot testing must explicitly pass md.check_new_feature=0.
+    patch -Np1 -i "$SRC/md-check-new-feature-diagnostic.patch"
 
     # Start from the known-good BFSOS Current-kernel configuration.  The
     # supplied config is intentionally used as the compatibility baseline so

@@ -1,0 +1,34 @@
+From: BFSOS diagnostic build
+Subject: [DIAGNOSTIC ONLY] md: allow bypassing unknown v1 superblock padding
+
+This reproduces the upstream check_new_feature diagnostic control used to
+test older kernels that reject MD v1.x superblocks after newer kernels have
+written metadata into formerly reserved pad3 fields.
+
+DO NOT ship with check_new_feature disabled by default.  Bypassing unknown
+metadata can risk corruption.  This patch exists only to prove whether the
+BFSOS 6.12.101 boot failure is the pad3/new-feature compatibility case.
+
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@
+ static bool create_on_open = true;
++static bool check_new_feature = true;
+@@
+-	if (sb->pad0 ||
+-	    sb->pad3[0] ||
+-	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1])))
+-		/* Some padding is non-zero, might be a new feature */
+-		return -EINVAL;
++	if (sb->pad0 ||
++	    sb->pad3[0] ||
++	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1]))) {
++		pr_warn("Some padding is non-zero on %pg, might be a new feature\n",
++			rdev->bdev);
++		if (check_new_feature)
++			return -EINVAL;
++		pr_warn("check_new_feature is disabled, data corruption possible\n");
++	}
+@@
+ module_param(create_on_open, bool, S_IRUSR|S_IWUSR);
++module_param(check_new_feature, bool, 0600);
