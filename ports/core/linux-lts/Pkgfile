@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.12.101
-release=4
+release=5
 
 debian_revision=1
 source=(
@@ -105,8 +105,6 @@ pkg_build() {
     # loading these modules before LUKS/LVM discovery.
     scripts/config --enable MD
     scripts/config --enable BLK_DEV_MD
-    scripts/config --enable MD_BITMAP
-    scripts/config --enable MD_BITMAP_FILE
     scripts/config --enable MD_LINEAR
     scripts/config --enable MD_RAID0
     scripts/config --enable MD_RAID1
@@ -181,7 +179,7 @@ pkg_build() {
         }
     done
 
-    for md_option in MD BLK_DEV_MD MD_BITMAP MD_BITMAP_FILE MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+    for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
         grep -q "^CONFIG_${md_option}=y$" .config || {
             echo "linux-lts config error: CONFIG_${md_option} is not built in" >&2
             return 1

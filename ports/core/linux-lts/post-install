@@ -18,7 +18,7 @@ depmod -a "$kver"
 # Root-on-MD is a supported BFSOS boot topology.  The LTS kernel therefore
 # carries the MD core and supported RAID personalities built in rather than
 # depending on initramfs module inclusion/load ordering.
-for md_option in MD BLK_DEV_MD MD_BITMAP MD_BITMAP_FILE MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
     grep -q "^CONFIG_${md_option}=y$" "$kernel_config" || {
         echo "ERROR: $kernel_config does not have CONFIG_${md_option}=y" >&2
         exit 1
