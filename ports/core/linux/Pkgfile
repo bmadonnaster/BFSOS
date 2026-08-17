@@ -54,6 +54,15 @@ pkg_build() {
     scripts/config --enable DMIID
     scripts/config --enable SYSFB_SIMPLEFB
 
+    # Keep the known-good BFSOS early-console path built in.  These are
+    # explicit so future Kconfig reconciliation cannot silently turn a
+    # boot-visible console dependency into a module or disable it.
+    scripts/config --enable VT
+    scripts/config --enable VT_CONSOLE
+    scripts/config --enable SERIAL_8250
+    scripts/config --enable SERIAL_8250_CONSOLE
+    scripts/config --enable AGP
+    scripts/config --enable FB
     scripts/config --enable DRM
     scripts/config --enable DRM_PANIC
     scripts/config --enable DRM_FBDEV_EMULATION
@@ -145,6 +154,12 @@ pkg_build() {
         echo "Kernel configuration error: CONFIG_DM_CRYPT was not built as a module." >&2
         return 1
     }
+    for console_option in VT VT_CONSOLE SERIAL_8250 SERIAL_8250_CONSOLE AGP FB DRM DRM_SIMPLEDRM FRAMEBUFFER_CONSOLE; do
+        grep -q "^CONFIG_${console_option}=y$" .config || {
+            echo "Kernel configuration error: CONFIG_${console_option} is not built in." >&2
+            return 1
+        }
+    done
     for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
         grep -q "^CONFIG_${md_option}=m$" .config || {
             echo "Kernel configuration error: CONFIG_${md_option} was not built as a module." >&2

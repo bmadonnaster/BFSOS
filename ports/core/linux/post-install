@@ -36,7 +36,7 @@ if ! command -v dracut >/dev/null 2>&1; then
 fi
 
 echo "Generating $initramfs_image with BFSOS md RAID drivers"
-dracut --force --force-drivers "$RAID_DRIVERS" "$initramfs_image" "$kver"
+dracut --force --omit "fido2 systemd-cryptsetup" --force-drivers "$RAID_DRIVERS" "$initramfs_image" "$kver"
 
 if command -v lsinitrd >/dev/null 2>&1; then
     image_listing="$(lsinitrd "$initramfs_image" 2>/dev/null || true)"
