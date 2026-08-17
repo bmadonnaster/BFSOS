@@ -119,7 +119,14 @@ pkg_build() {
     # Optional compressed swap exposed by the installer.
     scripts/config --module ZRAM
 
-    # Console and graphics fallback support.
+    # Early console and graphics support must be built in.  allmodconfig
+    # otherwise tends to make several of these modular, which can leave the
+    # kernel without usable console output before the initramfs can load them.
+    scripts/config --enable VT
+    scripts/config --enable VT_CONSOLE
+    scripts/config --enable HW_CONSOLE
+    scripts/config --enable SERIAL_8250
+    scripts/config --enable FB
     scripts/config --enable DRM
     scripts/config --enable DRM_SIMPLEDRM
     scripts/config --enable DRM_FBDEV_EMULATION
@@ -132,6 +139,15 @@ pkg_build() {
 
     make olddefconfig
     make syncconfig
+
+    # Refuse to build if allmodconfig/dependency resolution turned any of the
+    # early console path back into modules.
+    for console_option in VT VT_CONSOLE HW_CONSOLE SERIAL_8250 FB DRM FRAMEBUFFER_CONSOLE; do
+        grep -q "^CONFIG_${console_option}=y$" .config || {
+            echo "linux-lts config error: CONFIG_${console_option} is not built in" >&2
+            return 1
+        }
+    done
 
     for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
         grep -q "^CONFIG_${md_option}=m$" .config || {
