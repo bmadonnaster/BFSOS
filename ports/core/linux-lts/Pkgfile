@@ -6,13 +6,14 @@
 
 name=linux-lts
 version=6.12.101
-release=2
+release=3
 
 debian_revision=1
 source=(
     https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}.orig.tar.xz
     https://security.debian.org/debian-security/pool/updates/main/l/linux/linux_${version}-${debian_revision}.debian.tar.xz
     gcc16-const-cast.patch
+    config
 )
 
 apply_debian_patch_series() {
@@ -48,11 +49,12 @@ pkg_build() {
     apply_debian_patch_series
     make mrproper
 
-    # This flavor is intentionally a broad x86_64 compatibility kernel.  Start
-    # from allmodconfig so practical hardware drivers are enabled as modules,
-    # then enforce BFSOS boot/storage requirements and turn off costly debug
-    # facilities that are inappropriate for a normal distribution kernel.
-    make allmodconfig
+    # Start from the known-good BFSOS Current-kernel configuration.  The
+    # supplied config is intentionally used as the compatibility baseline so
+    # the LTS flavor keeps the same proven EFI/console/virtio/storage behavior
+    # instead of inheriting thousands of unrelated allmodconfig differences.
+    # olddefconfig below reconciles version-specific symbols for Linux 6.12.
+    cp "$SRC/config" .config
 
     scripts/config --set-str CONFIG_LOCALVERSION "-BFS-LTS"
     scripts/config --disable CONFIG_LOCALVERSION_AUTO
@@ -63,6 +65,7 @@ pkg_build() {
     scripts/config --disable KASAN
     scripts/config --disable KCSAN
     scripts/config --disable UBSAN
+    scripts/config --disable CMDLINE_BOOL
 
     # Core x86_64 boot/platform support.
     scripts/config --enable 64BIT
@@ -119,20 +122,33 @@ pkg_build() {
     # Optional compressed swap exposed by the installer.
     scripts/config --module ZRAM
 
-    # Early console and graphics support must be built in.  allmodconfig
-    # otherwise tends to make several of these modular, which can leave the
+    # Early console and graphics support must be built in.  Keep these
+    # explicit so version reconciliation cannot make them modular or disable
     # kernel without usable console output before the initramfs can load them.
     scripts/config --enable VT
     scripts/config --enable VT_CONSOLE
     scripts/config --enable SERIAL_8250
+    scripts/config --enable SERIAL_8250_CONSOLE
     scripts/config --enable AGP
     scripts/config --enable FB
+    scripts/config --enable FB_EFI
     scripts/config --enable DRM
     scripts/config --enable DRM_SIMPLEDRM
     scripts/config --enable DRM_FBDEV_EMULATION
     scripts/config --enable FRAMEBUFFER_CONSOLE
+    scripts/config --enable FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER
 
-    # Networking fundamentals; allmodconfig supplies the broad device-driver set.
+    # QEMU/KVM and generic virtio boot path.  These are deliberately built in
+    # so the kernel can reach the initramfs and retain a usable early console
+    # without depending on modules from that same initramfs.
+    scripts/config --enable VIRTIO
+    scripts/config --enable VIRTIO_PCI
+    scripts/config --enable VIRTIO_PCI_LIB
+    scripts/config --enable VIRTIO_PCI_LIB_LEGACY
+    scripts/config --enable VIRTIO_BLK
+    scripts/config --enable VIRTIO_CONSOLE
+
+    # Networking fundamentals; the supplied distro-style baseline carries the broad device-driver set.
     scripts/config --enable NET
     scripts/config --enable INET
     scripts/config --enable IPV6
@@ -141,13 +157,21 @@ pkg_build() {
     make syncconfig
 
     echo "===== BFSOS LTS console configuration ====="
-    grep -E '^CONFIG_(VT|VT_CONSOLE|SERIAL_8250|FB|DRM|DRM_SIMPLEDRM|DRM_FBDEV_EMULATION|FRAMEBUFFER_CONSOLE)=' .config || true
+    grep -E '^CONFIG_(VT|VT_CONSOLE|SERIAL_8250|SERIAL_8250_CONSOLE|FB|FB_EFI|DRM|DRM_SIMPLEDRM|DRM_FBDEV_EMULATION|FRAMEBUFFER_CONSOLE|FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER|VIRTIO|VIRTIO_PCI|VIRTIO_BLK|VIRTIO_CONSOLE)=' .config || true
 
-    # Refuse to build if allmodconfig/dependency resolution turned any of the
+    # Refuse to build if dependency resolution turned any of the
     # early console path back into modules.
-    for console_option in VT VT_CONSOLE SERIAL_8250 AGP FB DRM DRM_SIMPLEDRM FRAMEBUFFER_CONSOLE; do
+    for console_option in VT VT_CONSOLE SERIAL_8250 SERIAL_8250_CONSOLE AGP FB FB_EFI DRM DRM_SIMPLEDRM FRAMEBUFFER_CONSOLE FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER; do
         grep -q "^CONFIG_${console_option}=y$" .config || {
             echo "linux-lts config error: CONFIG_${console_option} is not built in" >&2
+            return 1
+        }
+    done
+
+
+    for virtio_option in VIRTIO VIRTIO_PCI VIRTIO_BLK VIRTIO_CONSOLE; do
+        grep -q "^CONFIG_${virtio_option}=y$" .config || {
+            echo "linux-lts config error: CONFIG_${virtio_option} is not built in" >&2
             return 1
         }
     done
