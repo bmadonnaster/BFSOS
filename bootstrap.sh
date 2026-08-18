@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r56 - Dialog settings regression fix
+# BFSOS bootstrap r57 - Dialog settings + bootstrap-safe ccache policy
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -105,6 +105,62 @@ BFS_CCACHE="yes"
 BFS_CCACHE_SIZE="auto"
 BFS_BUILD_SETTINGS_CHANGED="no"
 
+_resolve_ccache_size() {
+    local requested="${BFS_CCACHE_SIZE:-auto}"
+    local mem_kib=0 mem_gib=1
+
+    if [ "$requested" != auto ]; then
+        printf '%s\n' "$requested"
+        return 0
+    fi
+
+    # BFSOS default policy:
+    #   VM -> 20G
+    #   bare metal -> physical RAM rounded down to GiB
+    if command -v systemd-detect-virt >/dev/null 2>&1 &&
+       systemd-detect-virt --quiet 2>/dev/null; then
+        printf '%s\n' "20G"
+        return 0
+    fi
+
+    if [ -r /proc/meminfo ]; then
+        mem_kib="$(awk '/^MemTotal:/ {print $2; exit}' /proc/meminfo 2>/dev/null || printf '0')"
+    fi
+    case "$mem_kib" in
+        ''|*[!0-9]*) mem_kib=0 ;;
+    esac
+    if [ "$mem_kib" -gt 0 ]; then
+        mem_gib=$((mem_kib / 1024 / 1024))
+        [ "$mem_gib" -lt 1 ] && mem_gib=1
+    fi
+    printf '%sG\n' "$mem_gib"
+}
+
+_prepare_target_ccache() {
+    local resolved_size=""
+
+    [ "${BFS_CCACHE:-yes}" = yes ] || return 0
+
+    resolved_size="$(_resolve_ccache_size)"
+    mkdir -p "$LFS/var/cache/ccache"
+
+    cat > "$LFS/var/cache/ccache/ccache.conf" <<EOF_CCACHE
+# Managed by BFSOS bootstrap.
+# ccache is intentionally disabled for Stage 1 and becomes active only after
+# the BFSOS ccache package and /usr/lib/ccache compiler wrappers exist.
+max_size = $resolved_size
+EOF_CCACHE
+
+    # Once the dedicated pkgmk account exists, keep the cache owned by it.
+    if chroot "$LFS" /usr/bin/getent passwd pkgmk >/dev/null 2>&1; then
+        chown -R 82:82 "$LFS/var/cache/ccache" 2>/dev/null || true
+        chmod 0775 "$LFS/var/cache/ccache" 2>/dev/null || true
+    fi
+
+    printf 'BFSOS ccache policy: enabled after BFSOS ccache is installed; max size %s\n' \
+        "$resolved_size"
+}
+
 _apply_build_settings() {
     local jobs="$BFS_BUILD_JOBS"
     [ "$jobs" = auto ] && jobs="$(nproc 2>/dev/null || echo 1)"
@@ -115,7 +171,11 @@ _apply_build_settings() {
         *) export CFLAGS="-O2 -march=x86-64 -pipe" ;;
     esac
     export CXXFLAGS="$CFLAGS"
-    if [ "$BFS_CCACHE" = yes ]; then export PATH="/usr/lib/ccache:$PATH"; fi
+
+    # Do NOT prepend /usr/lib/ccache here.  bootstrap.sh initially runs in a
+    # foreign live environment, and Stage 1 must never pick up host ccache
+    # wrappers.  Stage 2/3 enable BFSOS ccache from pkgmk.conf only after the
+    # target's own /usr/bin/ccache and /usr/lib/ccache wrappers exist.
 }
 
 load_bootstrap_settings() {
@@ -2121,6 +2181,10 @@ export LC_ALL=C
 export LANGUAGE=C
 export MAKEFLAGS=-j$(nproc)
 
+# Stage 1 temporary toolchain is deliberately uncached.  Never inherit a
+# live-host /usr/lib/ccache wrapper path into the bootstrap compiler chain.
+export BFS_CCACHE=no
+
 PKGMK_SOURCE_DIR=$sourcedir
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
 
@@ -2620,6 +2684,14 @@ _buildbase() {
     cp ports/core/pkgutils/extension \
         "$LFS/var/lib/pkgmk"
 
+    # Create the target ccache configuration now.  During Stage 2 the compiler
+    # wrapper path remains inactive until the BFSOS ccache package is actually
+    # installed.  Stage 3 can use the already-installed target ccache from its
+    # first normal package build.
+    _prepare_target_ccache
+
+    resolved_ccache_size="$(_resolve_ccache_size)"
+
     cat > "$LFS/tmp/pkgmk.conf" <<EOF
 export LANG=C
 export LC_ALL=C
@@ -2636,6 +2708,18 @@ export PKG_CONFIG_LIBDIR="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
 export JOBS=${BFS_BUILD_JOBS/auto/$(nproc)}
 export MAKEFLAGS="-j \$JOBS"
+
+# Bootstrap-safe ccache policy.  The live host is never used.  This condition
+# becomes true only after the BFSOS ccache package has installed both ccache
+# itself and its compiler-wrapper directory inside the target rootfs.
+export BFS_CCACHE="$BFS_CCACHE"
+export BFS_CCACHE_SIZE="$resolved_ccache_size"
+export CCACHE_DIR="/var/cache/ccache"
+if [ "\$BFS_CCACHE" = yes ] &&
+   [ -x /usr/bin/ccache ] &&
+   [ -x /usr/lib/ccache/gcc ]; then
+    export PATH="/usr/lib/ccache:\$PATH"
+fi
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
@@ -2656,9 +2740,42 @@ EOF
                    -e "s|^export JOBS=.*|export JOBS=$jobs|" \
                    -e "s|^export MAKEFLAGS=.*|export MAKEFLAGS=\"-j \$JOBS\"|" \
                    "$LFS/etc/pkgmk.conf"
-            printf '\n# BFSOS inherited build settings\nexport BFS_CCACHE=%s\nexport BFS_CCACHE_SIZE=%s\n' \
-                "$BFS_CCACHE" "$BFS_CCACHE_SIZE" >> "$LFS/etc/pkgmk.conf"
+            # Replace the BFSOS bootstrap-managed ccache block rather than
+            # appending duplicate settings on every Stage 2/3 run.
+            sed -i '/^# BEGIN BFSOS BOOTSTRAP CCACHE$/,/^# END BFSOS BOOTSTRAP CCACHE$/d' \
+                "$LFS/etc/pkgmk.conf"
+            cat >> "$LFS/etc/pkgmk.conf" <<EOF_INSTALLED_CCACHE
+
+# BEGIN BFSOS BOOTSTRAP CCACHE
+export BFS_CCACHE="$BFS_CCACHE"
+export BFS_CCACHE_SIZE="$resolved_ccache_size"
+export CCACHE_DIR="/var/cache/ccache"
+if [ "\$BFS_CCACHE" = yes ] &&
+   [ -x /usr/bin/ccache ] &&
+   [ -x /usr/lib/ccache/gcc ]; then
+    export PATH="/usr/lib/ccache:\$PATH"
+fi
+# END BFSOS BOOTSTRAP CCACHE
+EOF_INSTALLED_CCACHE
         fi
+        # Ensure an existing installed pkgmk.conf has the target-only ccache
+        # policy even when build settings were left at their saved/default values.
+        if ! grep -q '^# BEGIN BFSOS BOOTSTRAP CCACHE$' "$LFS/etc/pkgmk.conf"; then
+            cat >> "$LFS/etc/pkgmk.conf" <<EOF_INSTALLED_CCACHE_DEFAULT
+
+# BEGIN BFSOS BOOTSTRAP CCACHE
+export BFS_CCACHE="$BFS_CCACHE"
+export BFS_CCACHE_SIZE="$resolved_ccache_size"
+export CCACHE_DIR="/var/cache/ccache"
+if [ "\$BFS_CCACHE" = yes ] &&
+   [ -x /usr/bin/ccache ] &&
+   [ -x /usr/lib/ccache/gcc ]; then
+    export PATH="/usr/lib/ccache:\$PATH"
+fi
+# END BFSOS BOOTSTRAP CCACHE
+EOF_INSTALLED_CCACHE_DEFAULT
+        fi
+
         # Never point pkgmk at the bind-mount root itself.  pkgmk removes its
         # work directory during cleanup; using the mount point directly causes
         # "Device or resource busy".  Give each port a removable child dir.
@@ -2691,6 +2808,10 @@ export PKG_CONFIG_LIBDIR="/tmp/systemd-util-linux-pc:/usr/lib/pkgconfig:/usr/sha
 
 export JOBS=$(nproc)
 export MAKEFLAGS="-j \$JOBS"
+
+# Keep the special systemd bootstrap transaction uncached.
+export BFS_CCACHE=no
+export CCACHE_DISABLE=1
 
 PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
