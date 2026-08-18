@@ -2956,23 +2956,6 @@ pkgmksrc="var/cache/pkg/sources"
 pkgmkwork="var/cache/pkg/build-work"
 
 
-bootstrap_settings_menu() {
-    local choice=""
-    while true; do
-        echo
-        echo "Bootstrap Settings"
-        echo "  1) Interface theme"
-        echo "  2) Compiler / build settings"
-        echo "  3) Back"
-        printf "Choose [1-3]: "
-        read -r choice </dev/tty 2>/dev/null || read -r choice
-        case "$choice" in
-            1) bootstrap_theme_settings_menu ;;
-            2) compiler_build_settings_menu ;;
-            3|"") return 0 ;;
-        esac
-    done
-}
 
 case "${1:-menu}" in
     menu|"")
