@@ -3,4 +3,4 @@
 name=make
 version=4.4.1
 release=1
-source=(https://ftpmirror.gnu.org/make/make-$version.tar.gz)
+source=(https://ftp.gnu.org/gnu/make/make-$version.tar.gz)

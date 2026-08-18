@@ -2207,13 +2207,17 @@ EOF
         sed -i '/^export LC_ALL=C\.UTF-8$/c\
 _bfs_utf8_locale=""\
 _bfs_locale_cmd=""\
-if [ -x /usr/bin/locale ]; then\
-    _bfs_locale_cmd=/usr/bin/locale\
-elif command -v locale >/dev/null 2>&1; then\
-    _bfs_locale_cmd="$(command -v locale)"\
-fi\
+_bfs_pkgmk_path="$(readlink -f "$0" 2>/dev/null || printf "%s" "$0")"\
+case "$_bfs_pkgmk_path" in\
+    */tmp/lfs-tools/*) [ -x /tmp/lfs-tools/bin/locale ] && _bfs_locale_cmd=/tmp/lfs-tools/bin/locale ;;;\
+    *) [ -x /usr/bin/locale ] && _bfs_locale_cmd=/usr/bin/locale ;;;\
+esac\
+[ -n "$_bfs_locale_cmd" ] || [ ! -x /usr/bin/locale ] || _bfs_locale_cmd=/usr/bin/locale\
+[ -n "$_bfs_locale_cmd" ] || _bfs_locale_cmd="$(command -v locale 2>/dev/null || true)"\
 for _bfs_locale in C.UTF-8 C.utf8; do\
-    if [ -n "$_bfs_locale_cmd" ] && "$_bfs_locale_cmd" -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
+    if [ -n "$_bfs_locale_cmd" ] && \
+       "$_bfs_locale_cmd" -a 2>/dev/null | grep -Fxiq "$_bfs_locale" && \
+       LC_ALL="$_bfs_locale" "$_bfs_locale_cmd" charmap 2>/dev/null | grep -Fxiq UTF-8; then\
         _bfs_utf8_locale="$_bfs_locale"\
         break\
     fi\
@@ -2223,7 +2227,7 @@ if [ -n "$_bfs_utf8_locale" ]; then\
 else\
     export LC_ALL=C\
 fi\
-unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd' \
+unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
             /tmp/pkgutils-5.40.12/pkgmk.in
 
         sed -i \
@@ -2263,10 +2267,11 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd' \
 
         _start_package_log toolchain "$i"
 
-        set +e
-        pkgmk -d -is -if -cf /tmp/bootstrap.conf
-        status=$?
-        set -e
+        if pkgmk -d -is -if -cf /tmp/bootstrap.conf; then
+            status=0
+        else
+            status=$?
+        fi
 
         _close_active_package_log "$status"
 
@@ -2287,6 +2292,17 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd' \
     done
 
     rm -f /tmp/bootstrap.conf
+
+    echo
+    echo "Verifying temporary-toolchain UTF-8 locale..."
+    if [ ! -s "$TOOLS/lib/locale/locale-archive" ]; then
+        echo "ERROR: Temporary glibc locale archive is missing: $TOOLS/lib/locale/locale-archive" >&2
+        return 1
+    fi
+    if ! LC_ALL=C.utf8 "$TOOLS/bin/locale" charmap 2>/dev/null | grep -Fxiq UTF-8; then
+        echo "ERROR: Temporary glibc cannot use C.utf8." >&2
+        return 1
+    fi
 
     echo
     echo "Running 32-bit and 64-bit temporary-toolchain verification..."
@@ -2337,6 +2353,12 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd' \
     if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing pkgmk." >&2
+        return 1
+    fi
+
+    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/lib/locale/locale-archive$'; then
+        rm -f "$toolchain_archive"
+        echo "ERROR: Temporary toolchain archive is missing the UTF-8 locale archive." >&2
         return 1
     fi
 
@@ -2889,6 +2911,23 @@ EOF
 
             case $i in
                 glibc)
+                    echo "Generating target C.UTF-8 locale before later package extraction..."
+                    if chroot "$LFS" \
+                        env -i \
+                        HOME=/root \
+                        TERM="${TERM:-dumb}" \
+                        PATH="$LFSPATH" \
+                        /bin/sh -c 'mkdir -p /usr/lib/locale && /usr/bin/localedef -i C -f UTF-8 C.UTF-8 && LC_ALL=C.utf8 /usr/bin/locale charmap | grep -Fxiq UTF-8'
+                    then
+                        :
+                    else
+                        status=$?
+                        echo "ERROR: Failed to generate/validate the target C.UTF-8 locale after glibc installation." >&2
+                        _close_active_package_log "$status"
+                        umountfs
+                        return "$status"
+                    fi
+
                     cat << EOF > "$LFS/tmp/glibc-postinstall"
 #!/bin/sh
 set -e

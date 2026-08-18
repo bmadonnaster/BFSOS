@@ -4,7 +4,7 @@ name=coreutils
 version=9.11
 release=1
 source=(
-    https://ftpmirror.gnu.org/coreutils/coreutils-$version.tar.xz
+    https://ftp.gnu.org/gnu/coreutils/coreutils-$version.tar.xz
     https://www.linuxfromscratch.org/patches/lfs/development/coreutils-9.11-i18n-1.patch
 )
 
