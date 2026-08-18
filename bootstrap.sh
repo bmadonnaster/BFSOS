@@ -2206,8 +2206,14 @@ EOF
         # contains UTF-8 pathnames), but fall back to plain C when it does not.
         sed -i '/^export LC_ALL=C\.UTF-8$/c\
 _bfs_utf8_locale=""\
+_bfs_locale_cmd=""\
+if [ -x /usr/bin/locale ]; then\
+    _bfs_locale_cmd=/usr/bin/locale\
+elif command -v locale >/dev/null 2>&1; then\
+    _bfs_locale_cmd="$(command -v locale)"\
+fi\
 for _bfs_locale in C.UTF-8 C.utf8; do\
-    if locale -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
+    if [ -n "$_bfs_locale_cmd" ] && "$_bfs_locale_cmd" -a 2>/dev/null | grep -Fxiq "$_bfs_locale"; then\
         _bfs_utf8_locale="$_bfs_locale"\
         break\
     fi\
@@ -2217,7 +2223,7 @@ if [ -n "$_bfs_utf8_locale" ]; then\
 else\
     export LC_ALL=C\
 fi\
-unset _bfs_utf8_locale _bfs_locale' \
+unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd' \
             /tmp/pkgutils-5.40.12/pkgmk.in
 
         sed -i \
