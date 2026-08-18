@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r55 - RC tracker consolidated fixes
+# BFSOS bootstrap r56 - Dialog settings regression fix
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -139,21 +139,228 @@ EOF_SETTINGS
 }
 
 compiler_build_settings_menu() {
-    local jobs opt cache size
-    printf '\nCompiler / Build Settings\n=========================\n'
-    printf 'Jobs [auto or number] (current %s): ' "$BFS_BUILD_JOBS"; read -r jobs; [ -z "$jobs" ] || BFS_BUILD_JOBS="$jobs"
-    printf 'Optimization [portable/native/custom] (current %s): ' "$BFS_BUILD_OPT"; read -r opt
-    case "$opt" in
-        native) BFS_BUILD_OPT=native ;;
-        portable) BFS_BUILD_OPT=portable ;;
-        custom) printf 'CFLAGS: '; read -r opt; [ -z "$opt" ] || BFS_BUILD_OPT="custom:$opt" ;;
-        '') ;;
-    esac
-    printf 'ccache [yes/no] (current %s): ' "$BFS_CCACHE"; read -r cache; case "$cache" in yes|no) BFS_CCACHE="$cache";; esac
-    printf 'ccache size [auto/20G/etc.] (current %s): ' "$BFS_CCACHE_SIZE"; read -r size; [ -z "$size" ] || BFS_CCACHE_SIZE="$size"
-    BFS_BUILD_SETTINGS_CHANGED=yes
-    save_bootstrap_settings
-    echo "Build settings saved; customized values will carry into the base pkgmk.conf."
+    local choice="" status=0 value="" current_flags=""
+
+    while true; do
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] &&
+           [ -w /dev/tty ]; then
+            set +e
+            choice="$(
+                dialog --stdout --clear \
+                    --backtitle "BFS Linux Bootstrap" \
+                    --title "Compiler / Build Settings" \
+                    --ok-label "Select" \
+                    --cancel-label "Back" \
+                    --menu \
+                    "Current settings:\n\nJobs: $BFS_BUILD_JOBS\nOptimization: $BFS_BUILD_OPT\nccache: $BFS_CCACHE\nccache size: $BFS_CCACHE_SIZE" \
+                    22 82 8 \
+                    jobs "Parallel build jobs" \
+                    optimization "Compiler optimization policy" \
+                    ccache "Enable or disable ccache" \
+                    ccache-size "Configure ccache maximum size" \
+                    defaults "Restore BFSOS build defaults" \
+                    </dev/tty 2>/dev/tty
+            )"
+            status=$?
+            set -e
+            [ "$status" -eq 0 ] || return 0
+
+            case "$choice" in
+                jobs)
+                    set +e
+                    value="$(
+                        dialog --stdout --clear \
+                            --backtitle "BFS Linux Bootstrap" \
+                            --title "Parallel Build Jobs" \
+                            --ok-label "Apply" \
+                            --cancel-label "Back" \
+                            --inputbox \
+                            "Enter auto or a positive job count.\n\nCurrent: $BFS_BUILD_JOBS" \
+                            12 66 "$BFS_BUILD_JOBS" \
+                            </dev/tty 2>/dev/tty
+                    )"
+                    status=$?
+                    set -e
+                    [ "$status" -eq 0 ] || continue
+                    case "$value" in
+                        auto) BFS_BUILD_JOBS=auto ;;
+                        ''|*[!0-9]*)
+                            dialog --clear --backtitle "BFS Linux Bootstrap" \
+                                --title "Invalid job count" \
+                                --msgbox "Use auto or a positive integer." 8 50 \
+                                </dev/tty >/dev/tty 2>&1 || true
+                            continue
+                            ;;
+                        0)
+                            dialog --clear --backtitle "BFS Linux Bootstrap" \
+                                --title "Invalid job count" \
+                                --msgbox "Job count must be greater than zero." 8 50 \
+                                </dev/tty >/dev/tty 2>&1 || true
+                            continue
+                            ;;
+                        *) BFS_BUILD_JOBS="$value" ;;
+                    esac
+                    ;;
+                optimization)
+                    set +e
+                    value="$(
+                        dialog --stdout --clear \
+                            --backtitle "BFS Linux Bootstrap" \
+                            --title "Compiler Optimization" \
+                            --ok-label "Apply" \
+                            --cancel-label "Back" \
+                            --radiolist \
+                            "Choose the compiler optimization policy." \
+                            18 82 5 \
+                            portable "Portable BFSOS x86_64 defaults" \
+                                "$([ "$BFS_BUILD_OPT" = portable ] && echo on || echo off)" \
+                            native "Optimize for this CPU (-march=native)" \
+                                "$([ "$BFS_BUILD_OPT" = native ] && echo on || echo off)" \
+                            custom "Enter custom CFLAGS/CXXFLAGS" \
+                                "$([[ "$BFS_BUILD_OPT" = custom:* ]] && echo on || echo off)" \
+                            </dev/tty 2>/dev/tty
+                    )"
+                    status=$?
+                    set -e
+                    [ "$status" -eq 0 ] || continue
+                    case "$value" in
+                        portable|native)
+                            BFS_BUILD_OPT="$value"
+                            ;;
+                        custom)
+                            current_flags=""
+                            [[ "$BFS_BUILD_OPT" = custom:* ]] && current_flags="${BFS_BUILD_OPT#custom:}"
+                            set +e
+                            value="$(
+                                dialog --stdout --clear \
+                                    --backtitle "BFS Linux Bootstrap" \
+                                    --title "Custom Compiler Flags" \
+                                    --ok-label "Apply" \
+                                    --cancel-label "Back" \
+                                    --inputbox \
+                                    "Enter the complete CFLAGS/CXXFLAGS value." \
+                                    11 82 "$current_flags" \
+                                    </dev/tty 2>/dev/tty
+                            )"
+                            status=$?
+                            set -e
+                            [ "$status" -eq 0 ] || continue
+                            [ -n "$value" ] || continue
+                            BFS_BUILD_OPT="custom:$value"
+                            ;;
+                    esac
+                    ;;
+                ccache)
+                    set +e
+                    if dialog --clear \
+                        --backtitle "BFS Linux Bootstrap" \
+                        --title "ccache" \
+                        --yes-label "Enable" \
+                        --no-label "Disable" \
+                        --yesno \
+                        "Enable ccache for applicable BFSOS package builds?\n\nCurrent: $BFS_CCACHE" \
+                        11 66 </dev/tty >/dev/tty 2>&1; then
+                        BFS_CCACHE=yes
+                        status=0
+                    else
+                        status=$?
+                        [ "$status" -eq 1 ] && BFS_CCACHE=no
+                    fi
+                    set -e
+                    [ "$status" -le 1 ] || continue
+                    ;;
+                ccache-size)
+                    set +e
+                    value="$(
+                        dialog --stdout --clear \
+                            --backtitle "BFS Linux Bootstrap" \
+                            --title "ccache Size" \
+                            --ok-label "Apply" \
+                            --cancel-label "Back" \
+                            --inputbox \
+                            "Enter auto or a ccache size such as 20G, 64G, or 500M.\n\nCurrent: $BFS_CCACHE_SIZE" \
+                            12 72 "$BFS_CCACHE_SIZE" \
+                            </dev/tty 2>/dev/tty
+                    )"
+                    status=$?
+                    set -e
+                    [ "$status" -eq 0 ] || continue
+                    [ -n "$value" ] || continue
+                    BFS_CCACHE_SIZE="$value"
+                    ;;
+                defaults)
+                    set +e
+                    if dialog --clear \
+                        --backtitle "BFS Linux Bootstrap" \
+                        --title "Restore Build Defaults" \
+                        --yes-label "Restore" \
+                        --no-label "Cancel" \
+                        --yesno \
+                        "Restore BFSOS build defaults?\n\nJobs: auto\nOptimization: portable\nccache: yes\nccache size: auto" \
+                        13 66 </dev/tty >/dev/tty 2>&1; then
+                        BFS_BUILD_JOBS=auto
+                        BFS_BUILD_OPT=portable
+                        BFS_CCACHE=yes
+                        BFS_CCACHE_SIZE=auto
+                    fi
+                    set -e
+                    ;;
+            esac
+
+            BFS_BUILD_SETTINGS_CHANGED=yes
+            save_bootstrap_settings
+        else
+            printf '\nCompiler / Build Settings\n=========================\n'
+            printf '1) Build jobs           : %s\n' "$BFS_BUILD_JOBS"
+            printf '2) Optimization         : %s\n' "$BFS_BUILD_OPT"
+            printf '3) ccache               : %s\n' "$BFS_CCACHE"
+            printf '4) ccache size          : %s\n' "$BFS_CCACHE_SIZE"
+            printf '5) Restore defaults\n'
+            printf '6) Back\n'
+            printf 'Choose [1-6]: '
+            read -r choice </dev/tty 2>/dev/null || read -r choice
+            case "$choice" in
+                1)
+                    printf 'Jobs [auto or number]: '
+                    read -r value
+                    [ -z "$value" ] || BFS_BUILD_JOBS="$value"
+                    ;;
+                2)
+                    printf 'Optimization [portable/native/custom]: '
+                    read -r value
+                    case "$value" in
+                        portable|native) BFS_BUILD_OPT="$value" ;;
+                        custom)
+                            printf 'CFLAGS: '
+                            read -r value
+                            [ -z "$value" ] || BFS_BUILD_OPT="custom:$value"
+                            ;;
+                    esac
+                    ;;
+                3)
+                    printf 'ccache [yes/no]: '
+                    read -r value
+                    case "$value" in yes|no) BFS_CCACHE="$value" ;; esac
+                    ;;
+                4)
+                    printf 'ccache size [auto/20G/etc.]: '
+                    read -r value
+                    [ -z "$value" ] || BFS_CCACHE_SIZE="$value"
+                    ;;
+                5)
+                    BFS_BUILD_JOBS=auto
+                    BFS_BUILD_OPT=portable
+                    BFS_CCACHE=yes
+                    BFS_CCACHE_SIZE=auto
+                    ;;
+                6|"") return 0 ;;
+                *) continue ;;
+            esac
+            BFS_BUILD_SETTINGS_CHANGED=yes
+            save_bootstrap_settings
+        fi
+    done
 }
 
 write_dialog_theme_classic() {
@@ -475,19 +682,44 @@ bootstrap_theme_settings_menu() {
 
 
 bootstrap_settings_menu() {
-    local choice=""
+    local choice="" status=0
+
     while true; do
-        echo
-        echo "Bootstrap Settings"
-        echo "  1) Interface theme"
-        echo "  2) Compiler / build settings"
-        echo "  3) Back"
-        printf "Choose [1-3]: "
-        read -r choice </dev/tty 2>/dev/null || read -r choice
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] &&
+           [ -w /dev/tty ]; then
+            set +e
+            choice="$(
+                dialog --stdout --clear \
+                    --backtitle "BFS Linux Bootstrap" \
+                    --title "Bootstrap Settings" \
+                    --ok-label "Select" \
+                    --cancel-label "Back" \
+                    --menu \
+                    "Choose a settings category." \
+                    15 72 6 \
+                    1 "Interface theme" \
+                    2 "Compiler / build settings" \
+                    </dev/tty 2>/dev/tty
+            )"
+            status=$?
+            set -e
+            [ "$status" -eq 0 ] || return 0
+        else
+            clear 2>/dev/null || true
+            echo "Bootstrap Settings"
+            echo "  1) Interface theme"
+            echo "  2) Compiler / build settings"
+            echo "  3) Back"
+            printf "Choose [1-3]: "
+            read -r choice </dev/tty 2>/dev/null || read -r choice
+        fi
+
         case "$choice" in
             1) bootstrap_theme_settings_menu ;;
             2) compiler_build_settings_menu ;;
             3|"") return 0 ;;
+            *) continue ;;
         esac
     done
 }
