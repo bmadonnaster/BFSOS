@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r57 - Dialog settings + bootstrap-safe ccache policy
+# BFSOS bootstrap r58 - Dialog settings + bootstrap-safe ccache policy
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -1236,6 +1236,14 @@ _dialog_stage3_status() {
     fi
 }
 
+_dialog_verification_status() {
+    if _required_stage_complete _verification_complete; then
+        printf '%s' '\Z3PASSED!\Zn'
+    else
+        printf '%s' '\Z1PENDING\Zn'
+    fi
+}
+
 _dialog_action_status() {
     if "$@"; then
         printf '%s' '\Z2AVAILABLE\Zn'
@@ -1260,7 +1268,7 @@ _show_bootstrap_menu() {
     printf '  %s3)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || { _base_stage2_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; })"
     printf '  %s4)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sPASSED!%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s5)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Create/compress base rootfs archive (required)' "$(_rootfs_archive_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s6)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
@@ -1318,7 +1326,7 @@ _select_bootstrap_menu_choice() {
                 1 "$(_dialog_menu_description 'Build temporary toolchain (required)' "$(_dialog_required_status _toolchain_complete)")" \
                 2 "$(_dialog_menu_description 'Build base system with temporary toolchain (required)' "$(_dialog_required_status _base_stage2_complete)")" \
                 3 "$(_dialog_menu_description 'Rebuild base system with final toolchain (optional)' "$(_dialog_stage3_status)")" \
-                4 "$(_dialog_menu_description 'Verify completed base system (required)' "$(_dialog_required_status _verification_complete)")" \
+                4 "$(_dialog_menu_description 'Verify completed base system (required)' "$(_dialog_verification_status)")" \
                 5 "$(_dialog_menu_description 'Create/compress base rootfs archive (required)' "$(_dialog_stage_status _rootfs_archive_complete)")" \
                 6 "$(_dialog_menu_description 'Restore newest base rootfs archive' "$(_dialog_action_status _rootfs_archive_complete)")" \
                 7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
@@ -2861,6 +2869,20 @@ EOF
         LFSPATH=$LFSPATH:$TOOLS/bin
     fi
 
+    STAGE_BUILD_PATH="$LFSPATH"
+    if [ "${1:-}" = rebuild ] && [ "${BFS_CCACHE:-yes}" = yes ]; then
+        STAGE_BUILD_PATH="/usr/lib/ccache:$LFSPATH"
+        echo "Stage 3 ccache preflight..."
+        if ! chroot "$LFS" env -i HOME=/root PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                /bin/sh -c 'test -x /usr/bin/ccache && test -x /usr/lib/ccache/gcc && test -x /usr/lib/ccache/g++'; then
+            echo "ERROR: Stage 3 is configured to use ccache, but the BFSOS ccache binary/compiler wrappers are missing." >&2
+            return 1
+        fi
+        echo "Stage 3 ccache statistics before rebuild:"
+        chroot "$LFS" env -i HOME=/root PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                CCACHE_DIR=/var/cache/ccache /usr/bin/ccache -s 2>/dev/null || true
+    fi
+
     mountfs
 
     for i in $basepkg; do
@@ -3074,7 +3096,8 @@ EOF
                 LANG=C \
                 LC_ALL=C \
                 LANGUAGE=C \
-                PATH="$LFSPATH" \
+                PATH="$STAGE_BUILD_PATH" \
+                CCACHE_DIR=/var/cache/ccache \
                 prt-get update -im -fr -if -fi "$i" \
                 || {
                     status=$?
@@ -3089,6 +3112,12 @@ EOF
 
     if [ "${1:-}" != rebuild ]; then
         _copy_base_logs_into_rootfs
+    fi
+
+    if [ "${1:-}" = rebuild ] && [ "${BFS_CCACHE:-yes}" = yes ]; then
+        echo "Stage 3 ccache statistics after rebuild:"
+        chroot "$LFS" env -i HOME=/root PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                CCACHE_DIR=/var/cache/ccache /usr/bin/ccache -s 2>/dev/null || true
     fi
 
     umountfs

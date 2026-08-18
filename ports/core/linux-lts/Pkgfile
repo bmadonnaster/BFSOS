@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.12.101
-release=6.diag1
+release=6.diag2
 
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${version}.tar.xz

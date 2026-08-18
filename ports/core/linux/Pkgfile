@@ -6,7 +6,7 @@
 
 name=linux
 version=7.1.8
-release=3
+release=4
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz
     config
