@@ -2762,6 +2762,12 @@ PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
 PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 
+# Match the installed BFSOS downloader policy during Stage 2/3: go directly
+# to Pkgfile sources, resume partial downloads, and detect dead/stalled links.
+PKGMK_SOURCE_MIRRORS=()
+PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused --retry-all-errors"
+
 . /var/lib/pkgmk/extension
 EOF
 
