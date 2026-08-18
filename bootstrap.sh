@@ -2700,9 +2700,9 @@ _buildbase() {
     resolved_ccache_size="$(_resolve_ccache_size)"
 
     cat > "$LFS/tmp/pkgmk.conf" <<EOF
-export LANG=C
-export LC_ALL=C
-export LANGUAGE=C
+# Do not force LC_ALL=C here.
+# pkgmk selects a UTF-8-capable C locale when available so libarchive can
+# extract source archives containing UTF-8 pathnames.
 
 export CPPFLAGS="-I/usr/include"
 export CFLAGS="$CFLAGS"
@@ -2799,9 +2799,8 @@ EOF_INSTALLED_CCACHE_DEFAULT
     fi
 
     cat > "$LFS/tmp/pkgmk.systemd-bootstrap.conf" <<EOF
-export LANG=C
-export LC_ALL=C
-export LANGUAGE=C
+# Do not force LC_ALL=C here.
+# Preserve pkgmk's archive-safe locale selection.
 
 # systemd needs these before final util-linux exists.
 export CFLAGS="-O2 -march=x86-64 -pipe"
@@ -2870,9 +2869,6 @@ EOF
                 env -i \
                 HOME=/root \
                 TERM="${TERM:-dumb}" \
-                LANG=C \
-                LC_ALL=C \
-                LANGUAGE=C \
                 PATH="$LFSPATH" \
                 pkgin -d "$i" -is -if -im -cf "$pkgmk_conf" \
                 || {
