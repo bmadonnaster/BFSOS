@@ -21,8 +21,8 @@ _bfs_utf8_locale=""\
 _bfs_locale_cmd=""\
 _bfs_pkgmk_path="$(readlink -f "$0" 2>/dev/null || printf "%s" "$0")"\
 case "$_bfs_pkgmk_path" in\
-    */tmp/lfs-tools/*) [ -x /tmp/lfs-tools/bin/locale ] && _bfs_locale_cmd=/tmp/lfs-tools/bin/locale ;;;\
-    *) [ -x /usr/bin/locale ] && _bfs_locale_cmd=/usr/bin/locale ;;;\
+    */tmp/lfs-tools/*) [ -x /tmp/lfs-tools/bin/locale ] && _bfs_locale_cmd=/tmp/lfs-tools/bin/locale ;;\
+    *) [ -x /usr/bin/locale ] && _bfs_locale_cmd=/usr/bin/locale ;;\
 esac\
 [ -n "$_bfs_locale_cmd" ] || [ ! -x /usr/bin/locale ] || _bfs_locale_cmd=/usr/bin/locale\
 [ -n "$_bfs_locale_cmd" ] || _bfs_locale_cmd="$(command -v locale 2>/dev/null || true)"\
@@ -56,8 +56,8 @@ _bfs_utf8_locale=""\
 _bfs_locale_cmd=""\
 _bfs_pkgmk_path="$(readlink -f "$0" 2>/dev/null || printf "%s" "$0")"\
 case "$_bfs_pkgmk_path" in\
-    */tmp/lfs-tools/*) [ -x /tmp/lfs-tools/bin/locale ] && _bfs_locale_cmd=/tmp/lfs-tools/bin/locale ;;;\
-    *) [ -x /usr/bin/locale ] && _bfs_locale_cmd=/usr/bin/locale ;;;\
+    */tmp/lfs-tools/*) [ -x /tmp/lfs-tools/bin/locale ] && _bfs_locale_cmd=/tmp/lfs-tools/bin/locale ;;\
+    *) [ -x /usr/bin/locale ] && _bfs_locale_cmd=/usr/bin/locale ;;\
 esac\
 [ -n "$_bfs_locale_cmd" ] || [ ! -x /usr/bin/locale ] || _bfs_locale_cmd=/usr/bin/locale\
 [ -n "$_bfs_locale_cmd" ] || _bfs_locale_cmd="$(command -v locale 2>/dev/null || true)"\
