@@ -2176,9 +2176,10 @@ _buildtoolchain() {
     echo "  $TOOLS -> ${LFS}${TOOLS}"
 
     cat > /tmp/bootstrap.conf <<EOF
-export LANG=C
-export LC_ALL=C
-export LANGUAGE=C
+# Do not override LC_ALL here.
+# The temporary pkgmk dynamically selects C.UTF-8/C.utf8 when available
+# so libarchive can extract UTF-8 source pathnames, falling back to C
+# only when the host has no UTF-8 C locale.
 export MAKEFLAGS=-j$(nproc)
 
 # Stage 1 temporary toolchain is deliberately uncached.  Never inherit a
