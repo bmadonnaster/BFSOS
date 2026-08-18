@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# r50: checkpoint/ERR-trap hardening on top of full fresh-process recovery.
+# r51: stable MD recovery identity, fstab validator, timing/UI, and failure-status fixes.
 # BFSOS installer r43 - tracker consolidation / Dracut RAID / resume fixes
 set -Eeuo pipefail
 
@@ -202,10 +202,13 @@ STORAGE_SUBVOLUMES=()
 # installer process has exited. Passphrases are never persisted.
 RECOVERY_MD_ARRAYS=()
 RECOVERY_MD_MEMBERS=()
+RECOVERY_MD_UUIDS=()
 RECOVERY_LUKS_DEVICES=()
 RECOVERY_LUKS_MAPPINGS=()
 RECOVERY_VGS=()
 PROFILE_RECOVERY_MODE=no
+RESUME_STATE_PRESENT=no
+SESSION_FAILURE_STATUS=0
 AVAILABLE_PATHS=()
 AVAILABLE_TYPES=()
 AVAILABLE_SIZES=()
@@ -700,6 +703,7 @@ capture_recovery_storage_topology() {
 
         RECOVERY_MD_ARRAYS=()
         RECOVERY_MD_MEMBERS=()
+        RECOVERY_MD_UUIDS=()
         RECOVERY_LUKS_DEVICES=()
         RECOVERY_LUKS_MAPPINGS=()
         RECOVERY_VGS=()
@@ -730,8 +734,13 @@ capture_recovery_storage_topology() {
                                                                 awk '$0 ~ /(active sync|spare|rebuilding)/ {print $NF}' |
                                                                 paste -sd, - || true)"
                                                 fi
+                                                local md_uuid=""
+                                                md_uuid="$(mdadm --detail "$array" 2>/dev/null |
+                                                        sed -n 's/^[[:space:]]*UUID[[:space:]]*:[[:space:]]*//p' |
+                                                        head -n1)"
                                                 RECOVERY_MD_ARRAYS+=("$array")
                                                 RECOVERY_MD_MEMBERS+=("$members")
+                                                RECOVERY_MD_UUIDS+=("$md_uuid")
                                         fi
                                         ;;
                                 crypt)
@@ -778,7 +787,7 @@ save_installer_profile() {
                 done
                 for ((i=0;i<${#RECOVERY_MD_ARRAYS[@]};i++)); do
                         printf 'RECOVERY_MD='
-                        profile_quote "${RECOVERY_MD_ARRAYS[$i]}|${RECOVERY_MD_MEMBERS[$i]:-}"
+                        profile_quote "${RECOVERY_MD_ARRAYS[$i]}|${RECOVERY_MD_MEMBERS[$i]:-}|${RECOVERY_MD_UUIDS[$i]:-}"
                         printf '\n'
                 done
                 for ((i=0;i<${#RECOVERY_LUKS_MAPPINGS[@]};i++)); do
@@ -835,18 +844,107 @@ rebuild_btrfs_layout_from_saved_plan() {
         done
 }
 
+md_array_uuid() {
+        local array="$1"
+        mdadm --detail "$array" 2>/dev/null |
+                sed -n 's/^[[:space:]]*UUID[[:space:]]*:[[:space:]]*//p' |
+                head -n1
+}
+
+md_array_members_sorted() {
+        local array="$1"
+        mdadm --detail "$array" 2>/dev/null |
+                awk '$0 ~ /(active sync|spare|rebuilding)/ {print $NF}' |
+                while IFS= read -r member; do
+                        readlink -f "$member" 2>/dev/null || printf '%s\n' "$member"
+                done |
+                sort -u
+}
+
+saved_md_members_sorted() {
+        local members_csv="$1" member=""
+        local -a members=()
+        IFS=',' read -r -a members <<<"$members_csv"
+        for member in "${members[@]}"; do
+                [[ -n "$member" ]] || continue
+                readlink -f "$member" 2>/dev/null || printf '%s\n' "$member"
+        done | sort -u
+}
+
+find_active_md_array() {
+        local wanted_uuid="$1" members_csv="$2" candidate="" candidate_uuid=""
+        local wanted_members="" candidate_members=""
+        local -a candidates=()
+
+        shopt -s nullglob
+        candidates=(/dev/md[0-9]* /dev/md/*)
+        shopt -u nullglob
+
+        wanted_members="$(saved_md_members_sorted "$members_csv")"
+        for candidate in "${candidates[@]}"; do
+                [[ -b "$candidate" ]] || continue
+                mdadm --detail "$candidate" >/dev/null 2>&1 || continue
+
+                if [[ -n "$wanted_uuid" ]]; then
+                        candidate_uuid="$(md_array_uuid "$candidate")"
+                        if [[ -n "$candidate_uuid" && "$candidate_uuid" == "$wanted_uuid" ]]; then
+                                printf '%s\n' "$candidate"
+                                return 0
+                        fi
+                fi
+
+                [[ -n "$wanted_members" ]] || continue
+                candidate_members="$(md_array_members_sorted "$candidate")"
+                if [[ -n "$candidate_members" && "$candidate_members" == "$wanted_members" ]]; then
+                        printf '%s\n' "$candidate"
+                        return 0
+                fi
+        done
+        return 1
+}
+
+adopt_recovered_md_path() {
+        local saved="$1" active="$2" i=""
+        [[ -n "$saved" && -n "$active" ]] || return 0
+        [[ "$saved" != "$active" ]] || return 0
+
+        log "Resume: saved MD device $saved is active as $active; adopting active path"
+
+        for ((i=0; i<${#RECOVERY_LUKS_DEVICES[@]}; i++)); do
+                if [[ "${RECOVERY_LUKS_DEVICES[$i]}" == "$saved" ]] ||
+                   [[ "$(readlink -m "${RECOVERY_LUKS_DEVICES[$i]}" 2>/dev/null || true)" == \
+                      "$(readlink -m "$saved" 2>/dev/null || true)" ]]; then
+                        RECOVERY_LUKS_DEVICES[$i]="$active"
+                fi
+        done
+}
+
 recover_saved_md_arrays() {
-        local i array members_csv member status=0
+        local i array members_csv member wanted_uuid="" active_array=""
         local -a members=()
         command -v mdadm >/dev/null 2>&1 || return 0
 
         for ((i=0; i<${#RECOVERY_MD_ARRAYS[@]}; i++)); do
                 array="${RECOVERY_MD_ARRAYS[$i]}"
+                members_csv="${RECOVERY_MD_MEMBERS[$i]:-}"
+                wanted_uuid="${RECOVERY_MD_UUIDS[$i]:-}"
                 [[ -n "$array" ]] || continue
+
+                # The kernel/live environment is free to auto-assemble an MD
+                # array under a different node (for example saved md0 -> md127).
+                # Adopt an already-active array by persistent UUID first, then
+                # by the exact saved member set for older r49/r50 profiles.
+                active_array="$(find_active_md_array "$wanted_uuid" "$members_csv" 2>/dev/null || true)"
+                if [[ -n "$active_array" ]]; then
+                        adopt_recovered_md_path "$array" "$active_array"
+                        RECOVERY_MD_ARRAYS[$i]="$active_array"
+                        continue
+                fi
+
                 if [[ -b "$array" ]] && mdadm --detail "$array" >/dev/null 2>&1; then
                         continue
                 fi
-                members_csv="${RECOVERY_MD_MEMBERS[$i]:-}"
+
                 IFS=',' read -r -a members <<<"$members_csv"
                 if ((${#members[@]} == 0)) || [[ -z "${members[0]:-}" ]]; then
                         dialog_message "Resume storage recovery" "Cannot safely assemble saved MD array $array because its member list was not persisted.\n\nNo destructive action was taken."
@@ -858,14 +956,24 @@ recover_saved_md_arrays() {
                                 return 1
                         }
                 done
+
                 log "Resume: assembling saved MD array $array"
                 if ! mdadm --assemble "$array" "${members[@]}"; then
-                        dialog_message "Resume storage recovery" "Could not assemble saved MD array:\n$array\n\nNo destructive action was taken."
+                        # A race with live-environment auto-assembly can make the
+                        # members busy between discovery and assembly. Re-scan
+                        # once for an equivalent active array before failing.
+                        active_array="$(find_active_md_array "$wanted_uuid" "$members_csv" 2>/dev/null || true)"
+                        if [[ -n "$active_array" ]]; then
+                                adopt_recovered_md_path "$array" "$active_array"
+                                RECOVERY_MD_ARRAYS[$i]="$active_array"
+                                continue
+                        fi
+                        dialog_message "Resume storage recovery" "Could not assemble saved MD array:\n$array\n\nNo equivalent active MD array matching the saved UUID/member set was found.\n\nNo destructive action was taken."
                         return 1
                 fi
         done
         command -v udevadm >/dev/null 2>&1 && udevadm settle || true
-        return "$status"
+        return 0
 }
 
 recover_saved_luks_mappings() {
@@ -950,7 +1058,7 @@ load_installer_profile() {
         [[ -f "$path" ]] || { dialog_message "Configuration profile" "Profile not found:\n$path"; return 1; }
         ADDITIONAL_USERS=()
         STORAGE_DEVICES=(); STORAGE_FORMATS=(); STORAGE_MOUNTPOINTS=(); STORAGE_SUBVOLUMES=()
-        RECOVERY_MD_ARRAYS=(); RECOVERY_MD_MEMBERS=()
+        RECOVERY_MD_ARRAYS=(); RECOVERY_MD_MEMBERS=(); RECOVERY_MD_UUIDS=()
         RECOVERY_LUKS_DEVICES=(); RECOVERY_LUKS_MAPPINGS=(); RECOVERY_VGS=()
 
         while IFS= read -r line || [[ -n "$line" ]]; do
@@ -971,9 +1079,10 @@ load_installer_profile() {
                                 STORAGE_SUBVOLUMES+=("$d")
                                 ;;
                         RECOVERY_MD)
-                                IFS='|' read -r a b <<<"$value"
+                                IFS='|' read -r a b c <<<"$value"
                                 RECOVERY_MD_ARRAYS+=("$a")
                                 RECOVERY_MD_MEMBERS+=("$b")
+                                RECOVERY_MD_UUIDS+=("$c")
                                 ;;
                         RECOVERY_LUKS)
                                 IFS='|' read -r a b <<<"$value"
@@ -1056,14 +1165,17 @@ save_resume_state() {
 load_resume_state_if_present() {
         [[ -s "$INSTALLER_RESUME_FILE" ]] || return 0
 
+        RESUME_STATE_PRESENT=yes
         PROFILE_RECOVERY_MODE=yes
         if ! load_installer_profile "$INSTALLER_RESUME_FILE" yes; then
                 PROFILE_RECOVERY_MODE=no
+                SESSION_FAILURE_STATUS=1
                 dialog_message "Resume previous installation" \
                         "A previous incomplete installation was detected, but its saved storage stack could not be reconstructed automatically.\n\nNo destructive recovery action was taken. Review the storage error, reactivate the required layers if appropriate, and retry."
                 return 0
         fi
         PROFILE_RECOVERY_MODE=no
+        SESSION_FAILURE_STATUS=0
 
         ROOT_FORMAT=keep
         BOOT_FORMAT=keep
@@ -1079,6 +1191,7 @@ load_resume_state_if_present() {
 
 clear_resume_state() {
         rm -f "$INSTALLER_RESUME_FILE"
+        RESUME_STATE_PRESENT=no
 }
 
 profile_path_dialog() {
@@ -4529,6 +4642,22 @@ menu_status() {
         esac
 }
 
+install_menu_label() {
+        if [[ "$RESUME_STATE_PRESENT" == yes || -s "$INSTALLER_RESUME_FILE" ]]; then
+                printf '%s' "Install / Retry BFS"
+        else
+                printf '%s' "Install BFS"
+        fi
+}
+
+install_menu_status() {
+        if [[ "$RESUME_STATE_PRESENT" == yes || -s "$INSTALLER_RESUME_FILE" ]]; then
+                printf '%s' "RETRY AVAILABLE"
+        else
+                available_status installer_ready
+        fi
+}
+
 show_main_menu() {
         clear_screen
 
@@ -4710,8 +4839,8 @@ installer_menu() {
                                         )" \
                                         11 "$(
                                                 dialog_menu_description \
-                                                        'Install BFS (root)' \
-                                                        "$(available_status installer_ready)"
+                                                        "$(install_menu_label) (root)" \
+                                                        "$(install_menu_status)"
                                         )" \
                                         12 "$(
                                                 dialog_menu_description \
@@ -5827,7 +5956,7 @@ validate_fstab_syntax() {
                         next
                 }
 
-                $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+                $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/|tmpfs$|proc$|sysfs$|devpts$|devtmpfs$|none$|overlay$|cgroup2?$|efivarfs$|securityfs$|debugfs$|tracefs$|pstore$|configfs$|fusectl$|mqueue$|hugetlbfs$|ramfs$)/ {
                         printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
                         failed=1
                 }
@@ -6330,6 +6459,21 @@ record_package_failure() {
         cp /run/bfs-install-failure /var/lib/bfs-installer/last_failure 2>/dev/null || true
 }
 
+human_elapsed() {
+        local total="${1:-0}" h=0 m=0 s=0
+        [[ "$total" =~ ^[0-9]+$ ]] || total=0
+        h=$((total / 3600))
+        m=$(((total % 3600) / 60))
+        s=$((total % 60))
+        if ((h > 0)); then
+                printf '%dh %02dm %02ds' "$h" "$m" "$s"
+        elif ((m > 0)); then
+                printf '%dm %02ds' "$m" "$s"
+        else
+                printf '%ds' "$s"
+        fi
+}
+
 run_package_operation() {
         local operation="$1"; shift
         local status=0 start=0 end=0 elapsed=0
@@ -6345,7 +6489,7 @@ run_package_operation() {
         printf '%s\tinstaller\t%s\tstatus=%s\telapsed_seconds=%s\n' \
                 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$operation" "$status" "$elapsed" \
                 >> /var/log/pkgbuild/build-times.log
-        printf 'Timing: %s completed in %ss (status %s)\n' "$operation" "$elapsed" "$status"
+        printf 'Timing: %s completed in %s (status %s)\n' "$operation" "$(human_elapsed "$elapsed")" "$status"
         if ((status != 0)); then
                 record_package_failure "$operation" "$status"
                 echo "ERROR: $operation failed with exit status $status" >&2
@@ -7393,7 +7537,7 @@ awk '
                 next
         }
 
-        $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+        $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/|tmpfs$|proc$|sysfs$|devpts$|devtmpfs$|none$|overlay$|cgroup2?$|efivarfs$|securityfs$|debugfs$|tracefs$|pstore$|configfs$|fusectl$|mqueue$|hugetlbfs$|ramfs$)/ {
                 printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
                 failed=1
         }
@@ -7511,7 +7655,11 @@ show_install_failure_dialog() {
         fi
         if [[ -n "$LOG_FILE" && -r "$LOG_FILE" ]]; then
                 detail="$(tail -n 20 "$LOG_FILE" 2>/dev/null || true)"
-                failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$LOG_FILE" 2>/dev/null | tail -n1 || true)"
+                case "$operation" in
+                        *download*|*source*|*ports*|*package*|*upgrade*|*depinst*|*sysup*)
+                                failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$LOG_FILE" 2>/dev/null | tail -n1 || true)"
+                                ;;
+                esac
         fi
         local message="Installation operation failed:\n$operation\n\nExit status: $status"
         [[ -z "$failed_url" ]] || message+="\n\nLast URL seen:\n$failed_url"
@@ -7725,6 +7873,7 @@ main() {
                 write_chroot_installer
 
                 if ! run_chroot_installer; then
+                        SESSION_FAILURE_STATUS=1
                         for state in packages_complete system_config_complete bootloader_complete; do
                                 if [[ -f "$TARGET/var/lib/bfs-installer/$state" ]]; then
                         checkpoint_mark "$state"
@@ -7756,6 +7905,7 @@ main() {
                 done
                 offer_package_cache_cleanup
                 clear_resume_state
+                SESSION_FAILURE_STATUS=0
                 log "Installation complete"
                 offer_final_chroot
                 break
@@ -7763,9 +7913,10 @@ main() {
 
         if [[ "$LOG_ENABLED" == yes ]]; then
                 printf '\nLive-environment log: %s\n' "$LOG_FILE"
-                close_logging 0
+                close_logging "$SESSION_FAILURE_STATUS"
                 copy_log_to_installed_system
         fi
+        return "$SESSION_FAILURE_STATUS"
 }
 
 set +e
