@@ -334,8 +334,8 @@ f:7fc6f3be2076ff63f51b9ad7681ad2b3:pkgutils/pkgutils_remove-libtool.patch
 f:2f6fefa754b2e5c98666b0894b8b8b66:pkgutils/bfs-pkgmk
 f:c61558519a244c581abce1f32d9117ca:pkgutils/extension
 f:866c79b2f5d306557423100326652126:pkgutils/pkgadd.conf
-f:3b27f2e3dd2f060a5b64405260a1d8fd:pkgutils/Pkgfile
-f:784ec9c44fa7837dddf37c405a710f02:pkgutils/pkgmk.conf
+f:bae612647a6899e4a7b77639596caca5:pkgutils/Pkgfile
+f:bf8345966b3c9569ed0a417007a2cdba:pkgutils/pkgmk.conf
 f:79e4d02d92a73e5349066d975907514b:aaa_filesystem/rustc.sh
 f:d713701b894685e338c42f2cf8af338f:aaa_filesystem/vte.sh
 f:00122dbb9f213a88cce34e90dc5572ac:aaa_filesystem/debuginfod.csh
@@ -378,7 +378,7 @@ f:e0cd1cef276b1c745924d4cfa4ab8ae7:gawk/Pkgfile
 f:aa9f8dea284039c54d796f88d05ca732:python3-docutils/Pkgfile
 f:3d333df77302ed89e06a4a8539943b7d:gcc/c89
 f:da96f545b863e57c6ab2598c1ea9a740:gcc/c99
-f:53f087f60784c853601c8edd9cdef578:gcc/Pkgfile
+f:a6670931a2974f47858928ac41335fe9:gcc/Pkgfile
 f:faa600a1b0349fe78b0eb463cab444df:httpup/httpup
 f:bcc784ef2c28fde12be5fb83075ebc03:httpup/Pkgfile
 f:d2139faf17f7fe1f29190b055dbd136d:libmnl/Pkgfile
@@ -489,13 +489,13 @@ f:fa4d64c3bb6cb1ee862b5282fc1e8a6e:wpa_supplicant/openssl-4-asn1.patch
 f:dace26d9323391e9bc9f647964536f4a:wpa_supplicant/wpa_supplicant.conf
 f:296cc2f59c79cdd5f682dc98d93c3096:wpa_supplicant/Pkgfile
 f:8acd3be096d23ef8ecd82397b7f1d65d:rdfind/Pkgfile
-f:c51b9b0bc84835d1776d5bfe5f0c2090:linux/config
 f:4798013e47b2a8acece461015b5a49c5:linux/Pkgfile.backup
 f:88a2a50e3caee7181d1905f7763d70d9:linux/generate-config.sh
 f:1ccf9a860d789a5512daeb9da791efbc:linux/.config
 f:d41d8cd98f00b204e9800998ecf8427e:linux/.nostrip
-f:ef5c1213d09d31cf80a7d0ba0561b971:linux/Pkgfile
 f:15448e49de40600d2fab363cf1644334:linux/post-install
+f:f4a90731f44bffd6e620f9c94dc1c5bb:linux/Pkgfile
+f:cd001cc261b736529255eddaa7f3cc33:linux/config
 f:a4f09016f2a063353f800057d432e7b8:grep/Pkgfile
 f:f310b4264eefc509872b9b741c744e06:e2fsprogs/Pkgfile
 f:b31b5578b2bc572072daa0c53393689b:coreutils/Pkgfile
@@ -543,9 +543,9 @@ f:2ea46c0b3443fd27ebc8ef530e7d25d3:python3-mako/Pkgfile
 f:d41d8cd98f00b204e9800998ecf8427e:linux-lts/.nostrip
 f:61d45796c4c45bdabe365f57c14268ce:linux-lts/post-install
 f:88a245cf5bf7d4dadecaed7e0fb93f92:linux-lts/gcc16-const-cast.patch
-f:2e69558fc72472c3735ce826d66be855:linux-lts/config
 f:2dfe02223fe0cceb61887a29546bc74e:linux-lts/md-check-new-feature-diagnostic.patch
-f:e528e5baa0e2bcda659bab8cd5d3e9c1:linux-lts/Pkgfile
+f:54e693feff7123ab28904abd276dd7a8:linux-lts/Pkgfile
+f:8782d9b095fd8033578ab4eff2091567:linux-lts/config
 f:1f63bd53af3dc68a4961c9c2dde8ca7c:ccache/Pkgfile
 f:e09c51e72a7a563cff8340a74a9c7441:ccache/README
 f:6315ff771c71f6ae2518c77eaf2823f4:ccache/post-install
