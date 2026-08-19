@@ -878,7 +878,8 @@ f:0ca4d6bb8d572fbcdb13cb36cd34833e:expect/expect-5.45.4-gcc15-1.patch
 f:6cd53418405ef072ce9e73b62e646010:freetype2/Pkgfile
 f:2641ae8f463a4672f1346bdfd9448bb3:fuse2/Pkgfile
 f:3bd63711298f0d01d342271d7b4f23bb:fuse2/fuse2-0007-util-ulockmgr_server.c-conditionally-define-closefro.patch
-f:72547cec10180b915479692ccf81b3ef:git/Pkgfile
+f:8a8e5c3c46a029a2e969bf04b56f3f86:git/Pkgfile
+f:07297ac00d466c0c7c94afeaa16bc903:git/git
 f:37df4689a03010d855b7ac27cb8d4164:gpm/Pkgfile
 f:7f7d72b794c44c60afc122aca70838e0:gpm/gpm-1.20.7-consolidated-1.patch
 f:1cfd852d3156960549753c4cc3b06d83:isl/Pkgfile

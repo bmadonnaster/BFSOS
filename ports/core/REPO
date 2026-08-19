@@ -234,8 +234,9 @@ f:98a4274b648c11287a0c76a9e2aeeaea:python3-wheel/Pkgfile
 f:4bd0d6e35a964d9b8a66556ac070626f:python3-six/Pkgfile
 f:23d5ea8c0124e00d294f5f1bd5a97ce4:util-linux/Pkgfile
 f:adc649c698f554d3d64848f18d2bb352:python3-pytz/Pkgfile
-f:68e269e26f8454bb9e9fcbd0c1ca9ffe:prt-utils/Pkgfile
+f:cdac5b3b7368eacc567abaeace84505c:prt-utils/Pkgfile
 f:156f314630b38707bf4492a8d938f8a1:prt-utils/README
+f:f7a59fbeffbaecae9d7daf595c3032e2:prt-utils/prt-utils-release-1.3.7.tar.gz
 f:cb9300683daafd8a123dcf1a5f9b88b9:sed/Pkgfile
 f:0547de240d7c028130ecf1a6d5c8a466:procps-ng/Pkgfile
 f:3e72cc88a34b9ebf1699f208d72336e7:less/Pkgfile
