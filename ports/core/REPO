@@ -333,7 +333,7 @@ f:7769542e43a4108de16b45133f28eaea:pkgutils/pkgutils_fix-build-needed-trigger.pa
 f:99bbe0ecb6bb0db1bcbf26f37f888602:pkgutils/pkgutils_add-compress-infopages.patch
 f:7fc6f3be2076ff63f51b9ad7681ad2b3:pkgutils/pkgutils_remove-libtool.patch
 f:2f6fefa754b2e5c98666b0894b8b8b66:pkgutils/bfs-pkgmk
-f:51a8f3f460410b94583520af2af25afd:pkgutils/extension
+f:197cc307ba270adf167704f50178e487:pkgutils/extension
 f:866c79b2f5d306557423100326652126:pkgutils/pkgadd.conf
 f:bf8345966b3c9569ed0a417007a2cdba:pkgutils/pkgmk.conf
 f:897097d12f563f19b3670b355f445ad2:pkgutils/Pkgfile

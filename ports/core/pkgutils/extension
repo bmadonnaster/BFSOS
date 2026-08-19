@@ -167,31 +167,25 @@ if [ ! "$(command -v build)" ]; then
 					*) s=${renames[$n]};;
 				esac
 			fi
-			# Detect the extracted source directory name.
-			# Downloaded sources normally live in PKGMK_SOURCE_DIR, while
-			# local port sources may exist only in the pkgmk work directory.
+			# Detect the extracted source directory.
 			srcdir="$name-$version"
+			
 			if [ ! -d "$srcdir" ]; then
-			        case "$s" in
-			                *.tar|*.tar.gz|*.tar.Z|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.txz|*.tar.zst|*.tzst|*.tar.lz4|*.tar.lzma|*.tar.lz|*.zip|*.rpm|*.7z)
-			                        archive="${s##*/}"
+			        srcdir=""
+			        for candidate in */; do
+			                [ -d "$candidate" ] || continue
+			                candidate="${candidate%/}"
 			
-			                        if [ -r "$PKGMK_SOURCE_DIR/$archive" ]; then
-			                                archive_path="$PKGMK_SOURCE_DIR/$archive"
-			                        elif [ -r "$archive" ]; then
-			                                archive_path="$archive"
-			                        else
-			                                echo "unable to locate source archive '$archive'" >&2
-			                                return 1
-			                        fi
+			                if [ -n "$srcdir" ]; then
+			                        # More than one directory: do not guess.
+			                        srcdir=""
+			                        break
+			                fi
 			
-			                        srcdir="$(bsdtar -tf "$archive_path" |
-			                                awk -F/ 'NF && $1 != "." && $1 != "" { print $1; exit }')"
-			                        ;;
-			        esac
+			                srcdir="$candidate"
+			        done
 			fi
 			
-			# cd into extracted source directory
 			if [ -n "$srcdir" ] && [ -d "$srcdir" ]; then
 			        cd "$srcdir" || return 1
 			fi
