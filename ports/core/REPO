@@ -333,10 +333,10 @@ f:7769542e43a4108de16b45133f28eaea:pkgutils/pkgutils_fix-build-needed-trigger.pa
 f:99bbe0ecb6bb0db1bcbf26f37f888602:pkgutils/pkgutils_add-compress-infopages.patch
 f:7fc6f3be2076ff63f51b9ad7681ad2b3:pkgutils/pkgutils_remove-libtool.patch
 f:2f6fefa754b2e5c98666b0894b8b8b66:pkgutils/bfs-pkgmk
-f:c61558519a244c581abce1f32d9117ca:pkgutils/extension
+f:51a8f3f460410b94583520af2af25afd:pkgutils/extension
 f:866c79b2f5d306557423100326652126:pkgutils/pkgadd.conf
-f:bae612647a6899e4a7b77639596caca5:pkgutils/Pkgfile
 f:bf8345966b3c9569ed0a417007a2cdba:pkgutils/pkgmk.conf
+f:897097d12f563f19b3670b355f445ad2:pkgutils/Pkgfile
 f:79e4d02d92a73e5349066d975907514b:aaa_filesystem/rustc.sh
 f:d713701b894685e338c42f2cf8af338f:aaa_filesystem/vte.sh
 f:00122dbb9f213a88cce34e90dc5572ac:aaa_filesystem/debuginfod.csh
