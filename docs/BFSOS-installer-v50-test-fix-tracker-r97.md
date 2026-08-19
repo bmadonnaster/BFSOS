@@ -1,5 +1,194 @@
 # BFSOS Installer v50 Test / Fix Tracker
 
+## r97 implementation / recovery UX + completed-install lifecycle — 2026-08-18
+
+- **Installer r52 created:** `scripts/install-bfs-menu-v50-r52-recovery-ux-complete-state.sh`.
+- **r51 cold-recovery runtime PASSED:** from a cold Gentoo live boot, the existing six-disk RAID6 had auto-assembled under a different MD node; r51 successfully adopted the active array, requested the required LUKS passphrase(s), activated the saved LVM VGs/LVs, and restored the saved Btrfs/filesystem layout without manual storage reconstruction.
+- **Recovery prompt order fixed:** the installer now displays **Previous installation detected** and explains the non-destructive MD -> LUKS -> LVM -> filesystem recovery process **before** any LUKS password prompt. The dialog explicitly warns that encrypted storage may request passphrases and that passphrases are never stored.
+- **Completed-install detection implemented:** after storage recovery, r52 reloads persistent target checkpoints and distinguishes a genuinely incomplete installation from stale resume metadata. A target is considered complete only when `base_extracted`, `accounts_configured`, `packages_complete`, `system_config_complete`, and `bootloader_complete` are all present, the BFSOS base sanity checks pass, and selected GRUB boot artifacts exist.
+- **Observed completed target:** the recovered/boot-tested installation contained all five completion checkpoints, no `last_failure`, `/boot/grub/grub.cfg`, the BFS EFI loader, kernel `7.1.8-BFS-Linux`, and its initramfs. Therefore offering Install / Retry was incorrect for that target.
+- **Stale resume lifecycle fixed:** when a recovered target is already complete, r52 clears the stale resume file, reports **Installation already complete**, and does not ask the user to rerun installation.
+- **Main-menu completed state:** option 11 becomes **Installation Complete [COMPLETE]** for the recovered completed target. Selecting it only explains that no retry is required; it cannot accidentally restart the install transaction. Chroot remains available for inspection.
+- **Incomplete recovery behavior retained:** if any required completion checkpoint/sanity check is missing, the installer reports **Recovery complete** and presents the normal **Install / Retry [RETRY AVAILABLE]** path.
+- **Static validation:** `bash -n` passes for r52.
+- **Next clean-cycle test:** rebuild the BFSOS base from a fresh Bootstrap, perform a full new install, boot the installed system, then cold-boot the live environment and verify recovery both (a) during an intentionally incomplete installation and (b) against the fully completed installation where stale retry state must not be offered.
+- **Remaining MD layout coverage:** the installer explicitly supports Linear/JBOD, RAID0, RAID1, RAID4, RAID5, RAID6, and RAID10. The tracker still records RAID6 as the recently runtime-confirmed creation path; do not mark the other RAID levels complete solely from static support. Linear/JBOD is a useful next storage-layout test, but it is not the only historically pending RAID-level regression unless the other levels have been runtime-tested outside this tracker.
+
+
+## r96 implementation / cold-recovery + final-validator pass — 2026-08-18
+
+- **Installer r51 created:** `scripts/install-bfs-menu-v50-r51-md-identity-fstab-status-fixes.sh`.
+- **Cold MD recovery root cause confirmed:** Gentoo auto-assembled the saved six-member RAID6 as `/dev/md127` in `auto-read-only` state. r50 then tried to assemble the same members into the saved pathname `/dev/md0`; `mdadm` reported every member busy. Recovery was running, but it incorrectly treated the MD device node as persistent identity.
+- **Stable MD identity fix:** r51 adopts an already-active MD array by persisted MD UUID when available, with an exact normalized member-set fallback for older r49/r50 resume profiles that did not save an MD UUID. If the array is found under a different node (`md0` -> `md127`), r51 rewrites the in-memory dependent LUKS backing-device path and continues recovery instead of trying to assemble the members twice.
+- **Future resume profiles now persist MD UUIDs** in addition to saved array path/member topology; no secret material is added.
+- **Race-safe MD recovery:** if an explicit assemble loses a race with live-environment auto-assembly and returns busy, r51 performs one stable-identity re-scan before declaring recovery failure.
+- **Failure/status propagation fixed:** unresolved recovery or chroot/install failure sets a session failure status. Exiting after such a failure can no longer produce a misleading `Result: SUCCESS / Exit status: 0`; a later fully successful retry clears the failure state.
+- **fstab false failure fixed:** both generated-fstab validation paths now accept `tmpfs` and other standard pseudo-filesystem source tokens. The booted-system audit proved line 37 (`tmpfs /var/cache/pkg/build-work tmpfs ...`) was valid and the installed system booted successfully.
+- **Failure-dialog URL noise reduced:** the installer no longer scrapes an arbitrary historical URL for generic configuration/final-validation failures. URL display is limited to operations whose name indicates download/source/ports/package/upgrade work.
+- **Install/Retry UI implemented:** when persistent resume state exists, option 11 is labeled **`Install / Retry BFS (root)`** with **`RETRY AVAILABLE`**; fresh installs retain the normal Install label.
+- **Human-readable installer package timing implemented:** status output now renders `42s`, `8m 17s`, `48m 13s`, `1h 06m 42s` style durations while the machine-readable build-times log keeps raw `elapsed_seconds`.
+- **Static validation:** `bash -n` passes for r51.
+- **Runtime regression next:** cold Gentoo boot with the array auto-assembled as `/dev/md127` -> launch r51 -> verify it adopts md127 -> prompts for both required LUKS passphrases -> activates saved VGs -> mounts exact Btrfs subvolumes/boot filesystems -> presents Install / Retry without manual storage reconstruction.
+
+### Corrected r95 diagnosis
+- The r95 statement that r50 merely detected the prior installation without attempting reconstruction was incomplete. The clean cold-boot log proves r50 did enter `Resume: reconstructing saved storage stack`; it failed specifically at the MD layer because the active array pathname changed from saved `/dev/md0` to auto-assembled `/dev/md127`.
+- Observed log sequence: `Resume: reconstructing saved storage stack` -> `Resume: assembling saved MD array /dev/md0` -> all six saved member partitions reported `busy - skipping`.
+- The non-destructive stop behavior passed: r50 did not wipe/recreate anything when recovery failed.
+
+
+## r95 cold-relaunch recovery regression — 2026-08-18
+
+- [x] **ROOT CAUSE IDENTIFIED / FIX IMPLEMENTED in r51 — COLD RELAUNCH STORAGE RECOVERY:** The initial r50 observation appeared to show detection without reconstruction; later cold-boot logging proved recovery did start but failed at the MD layer because the saved `/dev/md0` array had auto-assembled as `/dev/md127`. r51 now matches/adopts MD arrays by stable identity instead of pathname.
+- Detection alone is not recovery. After accepting the previous-installation prompt, recovery must read the saved recovery profile and reconstruct the target sufficiently for checkpoint validation and `Install / Retry`.
+- Required recovery order for the current layered-storage case: assemble required MD arrays (for example `md0`) → open required LUKS mappings (prompt for passphrases only when mappings are closed) → activate required LVM VGs/LVs → mount the saved root filesystem and correct Btrfs subvolume (`@`) → mount separate saved filesystems/subvolumes (`@usr`, `@opt`, `@home`, `@var`) → mount `/boot` and `/boot/efi` → validate persistent installer checkpoints/state.
+- Do **not** ask the user to re-enter disk selections, RAID membership, VG/LV names, mountpoints, filesystem choices, or Btrfs subvolume names when those values exist in the saved recovery profile.
+- After successful reconstruction, return to the main menu with the retry state clearly visible as **`Install / Retry`** / **`RETRY AVAILABLE`**.
+- Recovery failures must identify the layer that could not be restored and must not silently fall through to a normal fresh-install path.
+- **Regression test:** complete enough of an installation to persist recovery state, fully unmount `/mnt/bfs`, close/deactivate storage layers (or reboot the live environment), relaunch the installer, accept previous-installation recovery, and verify automatic MD → LUKS → LVM → Btrfs/filesystem remount reconstruction before retry.
+- **Observed r50 failure:** previous installation was detected successfully, user selected OK, no storage was mounted/opened, and the installer simply displayed the main menu.
+
+
+## r94 UI finding — human-readable elapsed times — 2026-08-18
+
+- [ ] **HUMAN-READABLE COMMAND/PACKAGE ELAPSED TIMES:** Long operations currently report raw seconds (observed: `2893s (status 0)`). Format elapsed time as hours/minutes/seconds when appropriate, e.g. `42s`, `8m 17s`, `48m 13s`, `1h 06m 42s`, while preserving `(status N)`.
+- Apply consistently to installer/build/download/package timing.
+- **Regression test:** verify <1 minute, >1 minute, and >1 hour formatting without changing exit-status handling.
+
+
+## r93 cleanup / recovery-state policy — 2026-08-18
+
+- [ ] **FAILURE / RETRY CLEANUP POLICY:** When installation fails or returns to the menu for retry, preserve the active target storage stack rather than automatically dismantling it. Keep the target filesystems mounted, LVM active, required LUKS mappings open, and required MD arrays assembled so the user can inspect the failed installation and immediately retry.
+- [ ] **SUCCESS CLEANUP POLICY:** After a fully successful installation, cleanly unmount the target filesystem tree and release storage layers opened/activated by the installer in safe reverse dependency order. Track ownership so the installer does not blindly close/deactivate unrelated storage that was already active before it started.
+- [ ] **QUIT WITH ACTIVE TARGET:** If the user chooses Quit while an installer/recovery target is still mounted or otherwise active, explicitly ask whether to **leave target storage mounted/open for recovery** or **cleanly close the installer target**. Make the consequences clear before changing storage state.
+- [ ] **OWNERSHIP-AWARE TEARDOWN:** Maintain per-run ownership/state for mounts, LVM VGs, LUKS mappings, and MD arrays. Cleanup should normally tear down only layers that the installer itself mounted/opened/activated/assembled during that run, unless the user explicitly requests full target teardown.
+- [ ] **SAFE TEARDOWN ORDER:** For explicit cleanup, unmount target filesystems/subvolumes first, then deactivate installer-owned LVM, close installer-owned LUKS mappings, and finally stop installer-owned MD arrays when appropriate. Never stop an array while dependent mappings/filesystems remain active.
+- [ ] **RECOVERY REGRESSION TESTS:** Test (1) package/install failure leaves target inspectable and retryable, (2) successful installation performs clean teardown, (3) Quit with active target offers preserve-vs-cleanup choice, and (4) pre-existing storage layers are not accidentally dismantled.
+
+
+## r92 UI finding — Install / Retry menu labeling — 2026-08-18
+
+- [ ] **MAIN-MENU RETRY LABEL CLARITY:** When resumable/failed installer state exists, change the normal `Install BFS (root)` menu entry to **`Install / Retry BFS (root)`** so it is immediately clear that the same action resumes/retries the interrupted installation rather than blindly starting over.
+- When no resumable state exists, retain the normal **`Install BFS (root)`** label.
+- When retry state exists, change the menu status from `[AVAILABLE]` to **`[RETRY AVAILABLE]`** (or equivalently explicit wording) so recovery state is visible without entering the install action.
+- The retry label/status must be driven by actual detected resumable state/checkpoints, not merely by files existing under the target mount.
+- **Regression test:** verify fresh install shows the normal Install label/status; interrupt an installation after a persistent checkpoint is written, relaunch, and verify the main menu visibly changes to the retry form before selecting Install.
+
+
+## r91 implementation / r49 runtime checkpoint regression — 2026-08-18
+
+- **Installer r50 created:** `scripts/install-bfs-menu-v50-r50-checkpoint-errexit-fix.sh`.
+- **Runtime diagnosis corrected:** r49 did **not** fail because it skipped reopening LUKS in the latest test. The log showed `Target filesystem plan is already mounted correctly; reusing it for installer retry`, which means the manually reopened `cryptroot`/`cryptraid`, VGs, and Btrfs subvolume mounts were already active and correctly recognized.
+- **Actual r49 crash:** the installer ERR trap fired on a false `[[ -f "$TARGET/var/lib/bfs-installer/$state" ]]` test while scanning optional checkpoint marker files. A missing checkpoint is normal state, not an error.
+- **Fix:** all affected checkpoint-marker scans now use explicit `if [[ -f ... ]]; then checkpoint_mark ...; fi` control flow. Missing `packages_complete`, `system_config_complete`, or `bootloader_complete` markers therefore remain ordinary incomplete-state results and cannot trigger the ERR trap.
+- **Static validation:** `bash -n` passes for r50.
+- **Runtime regression required:** with only `base_extracted`, `accounts_configured`, and `last_failure` present, relaunch/retry must reuse the mounted target and proceed to the next incomplete install/package stage without exiting on a missing checkpoint file.
+
+
+## r90 implementation / full relaunch-recovery pass — 2026-08-18
+
+- **Installer r49 created:** `scripts/install-bfs-menu-v50-r49-full-relaunch-recovery.sh`.
+- **Fresh-process storage recovery implemented:** resume profiles now persist the non-secret MD member topology, LUKS backing-device/mapping names, and LVM VG names. On relaunch, recovery runs in dependency order: saved MD arrays -> saved LUKS mappings -> saved VGs -> filesystem/Btrfs subvolume mounts -> leaf-device/checkpoint validation. LUKS passphrases are never written to disk.
+- **Resume state is now saved before the chroot/package transaction**, not only after a caught failure, so an abrupt installer exit during package installation still leaves enough topology for the next launch.
+- **Btrfs recovery metadata implemented:** profile v2 stores the expected data subvolume for each filesystem assignment. r49 also reconstructs the deterministic r48-era names (`@`, `@usr`, `@opt`, `@home`, `@var`, etc.) when loading an older profile that lacks the fourth STORAGE field.
+- **Mount-plan validation hardened:** retry/recovery now validates the Btrfs subvolume identity, not merely device-to-mountpoint matching, so a top-level ID 5 mount is not mistaken for the installed filesystem.
+- **Checkpoint recovery hardened:** after the exact storage tree is mounted, r49 reloads persistent target checkpoints. If `base_extracted` is missing but `/usr/bin/bash`, `/usr/bin/pkgmk`, and `/etc/os-release` prove a valid existing base, the checkpoint is safely restored rather than forcing re-extraction.
+- **Declining re-extraction is non-fatal:** choosing No keeps a valid existing BFSOS base and continues; an invalid/unknown existing tree is preserved and returned to the menu without terminating the installer.
+- **Profile validation deduplicated:** repeated references to the same missing LV/device are canonicalized and displayed once.
+- **Startup ordering fixed:** when a resume file exists, r49 loads/reconstructs recovery state before any clean-start unmount logic can dismantle the very target it is trying to resume.
+- **Static validation:** `bash -n` passes for r49. Runtime regression is still required for fresh-process MD/LUKS/LVM/Btrfs recovery, LUKS prompts, checkpoint recognition, and interrupted-download continuation.
+
+
+## r89 relaunch-recovery runtime findings — 2026-08-18
+
+### Fresh-process recovery must restore the full saved storage stack before validating leaf devices
+- [x] **FIX IMPLEMENTED in installer r49; runtime regression pending (2026-08-18):** A fresh r48 launch loaded the saved profile while the previous install's MD/LUKS/LVM stack was inactive and immediately reported saved LV paths as missing.
+- **Runtime proof:** `mdadm --assemble --scan` successfully reassembled the saved six-disk RAID6 as `/dev/md0` with all six members healthy (`[UUUUUU]`). The saved LUKS containers on `/dev/vda3` and `/dev/md0` were intact; after reopening `cryptroot` and `cryptraid`, the saved `bfs-root` and `bfs-raid` LVM stacks became available again.
+- **Required recovery order:** load saved profile/state -> assemble only saved MD arrays -> reopen only saved LUKS mappings -> scan/activate only saved VGs/LVs -> restore filesystem/subvolume mounts -> validate saved leaf devices/checkpoints -> resume the next incomplete installer stage.
+- Recovery must be **non-destructive** and must never recreate RAID, LUKS, PVs, VGs, LVs, filesystems, or signatures merely to resume.
+- Do not store LUKS passphrases. Prompt securely for each required saved mapping that is not already open.
+- Every step must be idempotent: already-active arrays/mappings/VGs should be verified and reused rather than torn down/recreated.
+- If any layer cannot be restored, show the exact failed layer/device and return to a recovery/menu path without formatting or wiping anything.
+
+### Recovery must restore Btrfs subvolume mount options for every Btrfs filesystem
+- [x] **FIX IMPLEMENTED in installer r49; runtime regression pending (2026-08-18):** Reopening the correct block devices was not enough. Mounting the Btrfs filesystems without their saved subvolume options exposed the Btrfs top-level trees instead of the installed system.
+- **Observed root behavior:** `/dev/bfs-root/root` mounted without `subvol=@` appeared as Btrfs top level (`subvolid=5`) and showed `@`/`@snapshots` rather than the installed root.
+- **Observed separate-filesystem behavior:** `/dev/bfs-root/usr` mounted without `subvol=@usr` showed `@usr` and `@usr-snapshots` directories; `bash` and `pkgmk` appeared missing even though the installed `/usr` data was intact inside `@usr`.
+- **Confirmed correct saved layout:**
+  - `/` -> `/dev/bfs-root/root`, `subvol=@`
+  - `/usr` -> `/dev/bfs-root/usr`, `subvol=@usr`
+  - `/opt` -> `/dev/bfs-root/opt`, `subvol=@opt`
+  - `/home` -> `/dev/bfs-raid/home`, `subvol=@home`
+  - `/var` -> `/dev/bfs-raid/var`, `subvol=@var`
+- After remounting with the correct subvolumes, `bash`, `pkgmk`, and `/etc/os-release` were all present and the installer checkpoint files became visible.
+- **Required state persistence:** the resume profile/checkpoint data must preserve filesystem type, device, mountpoint, Btrfs subvolume/subvolume ID or canonical subvolume name, and any other mount options required to reconstruct the exact prior filesystem view.
+- **Regression test:** relaunch with all Btrfs filesystems inactive, reconstruct the saved stack, mount all five saved Btrfs filesystems using their recorded subvolumes, and verify the installed tree/checkpoints are visible before validation continues.
+
+### Fresh-process relaunch does not honor existing `base_extracted` checkpoint
+- [x] **FIX IMPLEMENTED in installer r49; runtime regression pending (2026-08-18):** After manually reconstructing the storage stack and mounting all Btrfs subvolumes correctly, the target contained valid installer state:
+  - `base_extracted`
+  - `accounts_configured`
+  - `last_failure`
+  - `/usr/bin/bash` present
+  - `/usr/bin/pkgmk` present
+  - `/etc/os-release` present
+- Despite that, a fresh r48 launch still proceeded to the base-extraction path and displayed **`Extract into it anyway?`**.
+- **Required behavior:** once the saved target is reconstructed and mounted correctly, detect and trust a valid `base_extracted` checkpoint after sanity-checking required base-system files. Skip base extraction automatically and advance to the next incomplete checkpoint.
+- If the checkpoint file is missing but the target clearly contains a valid extracted BFSOS base, offer an explicit safe recovery choice such as **Use existing base / Re-extract / Cancel**, with **Use existing base** as the non-destructive recovery path.
+- Never force users to overwrite a valid partially installed rootfs merely because the installer process was restarted.
+
+### Declining re-extraction is incorrectly treated as fatal installation cancellation
+- [x] **FIX IMPLEMENTED in installer r49; runtime regression pending (2026-08-18):** When r48 reached the existing-files warning during base extraction, choosing **No** to `Extract into it anyway?` resulted in `ERROR: Installation cancelled.` and a fatal installer exit.
+- **Required behavior:** in recovery mode, **No** must mean **keep the existing extracted base and continue/re-evaluate checkpoints**, not terminate the installer.
+- Distinguish a user explicitly cancelling the entire installation from declining a destructive/redundant re-extraction step.
+- **Regression test:** with `base_extracted` already complete, force the extraction confirmation path and choose No; installer must remain alive, preserve the target, and continue from the next incomplete stage.
+
+### Profile validation missing-device list must be deduplicated
+- [x] **FIX IMPLEMENTED in installer r49; runtime regression pending (2026-08-18):** The r48 Profile validation dialog listed the same saved LV paths more than once (including `/dev/bfs-root/root` and `/dev/bfs-raid/home`).
+- Canonicalize and deduplicate device paths before validation/reporting. Preserve deterministic ordering so the warning remains easy to audit.
+- The same saved device may legitimately be referenced by several installer fields; that must not create duplicate warning rows.
+
+## r88 runtime recovery findings — 2026-08-18
+
+### Relaunch recovery must reconstruct MD RAID -> LUKS -> LVM before profile device validation
+- [ ] **CONFIRMED RECOVERY BUG (2026-08-18):** After the previous installer process exited and its cleanup deactivated the VGs/stopped the MD array, r48 loaded the saved profile and immediately reported saved LV paths such as `/dev/bfs-root/root`, `/dev/bfs-root/usr`, `/dev/bfs-root/opt`, `/dev/bfs-raid/home`, and `/dev/bfs-raid/var` as missing.
+- **Root cause:** profile validation currently checks saved leaf block-device paths before reconstructing the storage dependency stack that creates those paths.
+- **Runtime confirmation:** `mdadm --assemble --scan` successfully reassembled `/dev/md0` as RAID6 with all six members healthy (`[UUUUUU]`). `lsblk` then showed `/dev/vda3` and `/dev/md0` as intact `crypto_LUKS` containers. `pvs`, `vgs`, and `lvs` remained empty because the saved LUKS mappings had not yet been reopened.
+- **Required relaunch order:** load saved profile -> assemble only the saved MD arrays -> reopen only the saved LUKS mappings -> scan/activate the saved LVM VGs -> validate saved LV/device paths -> mount the saved target filesystem plan -> resume installation.
+- **LUKS safety:** never persist passphrases. On relaunch, prompt securely for each saved mapping that is required and not already open. Reuse an already-open mapping only after verifying that it corresponds to the expected backing device.
+- **MD/LVM safety:** recovery must be non-destructive. Do not recreate arrays, PVs, VGs, LVs, filesystems, or signatures. Assemble/activate only storage recorded by the saved installer state and verify identity/topology before reuse.
+- **Idempotence:** every recovery step must tolerate components that are already active. A same-process retry and a fresh-process relaunch should converge on the same valid storage state without unnecessary teardown.
+- **Failure handling:** if a required array cannot be assembled, a LUKS mapping cannot be opened, or a VG/LV cannot be activated, return to a clear recovery screen without formatting/wiping anything and identify the exact layer that failed.
+- **Regression test:** terminate/relaunch the installer after RAID6 + LUKS + LVM have been configured, with MD stopped and VGs inactive. Verify the installer reconstructs the saved stack in dependency order, prompts for required LUKS passphrases, restores the saved LVs, mounts the target, and resumes without requiring Storage Setup to be redone.
+
+### Profile validation missing-device list contains duplicate LV paths
+- [ ] **CONFIRMED UI/VALIDATION BUG (2026-08-18):** The r48 Profile validation dialog listed `/dev/bfs-root/root` and `/dev/bfs-raid/home` more than once while reporting unavailable saved devices.
+- **Required fix:** canonicalize and deduplicate saved block-device paths before existence checks and before rendering the missing-device dialog. Preserve deterministic ordering so the warning is easy to audit.
+- **Regression test:** load a profile in which the same LV is referenced by multiple installer roles/state fields and verify each missing device is displayed exactly once.
+
+## r87 implementation / installer-recovery pass — 2026-08-18
+
+- **Installer r48 created:** `scripts/install-bfs-menu-v50-r48-recovery-lvm-download-fixes.sh`.
+- **Same-process Install / Retry recovery hardened:** when the target's selected filesystem plan is already mounted correctly after a chroot/package failure, r48 reuses it instead of unmounting and remounting the target. This directly addresses the observed `umount: /mnt/bfs: target is busy` -> fatal exit on retry.
+- **Download behavior hardened:** pkgutils release 11 removes the third-party flat distfile mirror that caused misleading first-attempt 404s, retains partial-file continuation, adds stalled-transfer detection, and retries truncated/interrupted transfers including curl error 18. Bootstrap Stage 2/3 generated pkgmk configuration now uses the same policy.
+- **404 diagnosis corrected:** the logged 404s before `linux-firmware`, `wpa_supplicant`, and `rdfind` were consistent with the configured flat mirror being tried before the actual Pkgfile source. The actual Pkgfile URLs were not replaced merely because of those mirror misses; the default flat mirror was removed instead.
+- **LVM sizing made explicit:** ambiguous bare values such as `50%` are rejected. Users must choose `%FREE` or `%VG`; percentage requests are checked against free extents, never silently clamped, and the calculated effective allocation is shown for confirmation before `lvcreate`.
+- **Static validation:** updated Bootstrap, pkgutils Pkgfile, and installer r48 pass `bash -n`. Runtime interrupted-download/resume and LVM UI tests remain required.
+
+## r84 implementation / regression-audit pass — 2026-08-18
+
+- **Installer r47 created:** `scripts/install-bfs-menu-v50-r47-tracker-fixes.sh`.
+- **Kernel-selection crash fixed:** `kernel_pkgfile_version()` now initializes locals in nounset-safe steps, validates the requested port name, and returns `unknown` instead of aborting for missing/malformed data. Static `bash -u` tests returned live versions for `linux`/`linux-lts` and `unknown` for missing/blank requests.
+- **ZRAM review/visibility completed:** the final pre-install review already contained ZRAM state/size and is retained; the Current storage devices view now adds configured/active ZRAM; the ZRAM menu marks the active size with `[CURRENT]`.
+- **MD stale-signature regression repaired:** after a new MD array is created, the installer now inspects the array itself for surviving filesystem/LUKS/LVM signatures and offers Keep, Remove, or Cancel. LVM VGs exposed by stale metadata are deactivated before an explicitly approved removal. The new MD array itself remains active.
+- **Partition-screen safety improvement:** disks whose partition tables actually changed during the current installer session are marked `[MODIFIED THIS SESSION]`; simply opening/exiting `cfdisk` does not mark the disk because before/after kernel-visible partition fingerprints are compared.
+- **Bootstrap Stage 3 ccache hardened:** when ccache is enabled, Stage 3 now verifies the BFSOS ccache binary/wrappers before rebuilding, prepends `/usr/lib/ccache` to the Stage-3 build PATH from the first package, and prints ccache statistics before/after the rebuild.
+- **Bootstrap verification status:** successful option 4 now displays bright-yellow `[PASSED!]` rather than green `[COMPLETE]` in both Dialog and text menus.
+- **GCC branding fixed:** final GCC now uses `--with-pkgversion="BFSOS"`; the package release is bumped to `2`. The shipped default/LTS kernel config compiler-text fields were also refreshed to `gcc (BFSOS) 16.2.0` (kernel releases bumped to force fresh packages). Attribution comments elsewhere in core/non-core ports were intentionally not rewritten.
+- **Last-night regression audit:** no malformed `;;;` case terminators remain in `bootstrap.sh` or `ports/core/pkgutils/Pkgfile`; both scripts parse with `bash -n`. Temporary-toolchain and target UTF-8 locale generation/validation code remains present. The current clean test reached Stage 2 and GCC 16.2 extracted successfully without the previous pathname error, confirming the critical temporary-glibc locale fix in real use. RAID6 creation also reached a live six-member array without the old post-create `wipefs` busy crash, confirming that ordering fix for RAID6.
+- **Still requires runtime testing:** failed-download installer resume, storage deactivation/MD stop, Back-navigation paths, all RAID levels other than the newly retested RAID6, ccache hit/miss activity across a full Stage 3, archive restore locale verification, and hardware/bare-metal/release/post-1.0 items.
+- **Audit report:** `docs/BFSOS-r84-static-regression-audit-20260818.md` records the static regression checks and the remaining live tests.
+
+
 ## r74 implementation pass — 2026-08-18
 
 - **Installer r46 created:** `scripts/install-bfs-menu-v50-r46-tracker-fixes.sh`.
@@ -62,8 +251,8 @@
 
 
 ### Installer failed download / package failure — resume path confirmed broken
-- [x] **FIX IMPLEMENTED in installer r46; RELEASE-BLOCKING runtime regression test pending:** package/download failure execution is now captured in conditional status paths, persistent failure/checkpoint state is written in the target, and a non-secret resume profile is left beside the installer so relaunch can reconstruct the previous selections instead of exiting immediately.
-- **Resume test result:** FAILED. The current installer cannot recover by simply being relaunched after this failed-download state.
+- [x] **RECOVERY HARDENED through installer r48; RELEASE-BLOCKING runtime regression still required:** package/download failures are captured, resume/checkpoint state is preserved, and r48 additionally reuses an already-correct target mount plan on same-process Install / Retry instead of triggering the fatal busy-unmount path seen in the linux-firmware test.
+- **Latest observed test result (r47): FAILED.** Continue -> Install after the interrupted linux-firmware download reached a busy-target remount failure. r48 contains a direct fix for that same-process retry path; relaunch-after-process-exit remains a separate runtime test because encrypted/LVM layers may require user reactivation.
 - **Startup/resume audit required:** Trace persisted checkpoint/state loading, target mount/state detection, storage topology reconstruction, startup validation, and all `set -e`/ERR-trap/nonzero-return paths that run before the main installer menu is restored.
 - **Required relaunch behavior:** A relaunch after an interrupted package phase must reconstruct the prior configuration, validate/remount the existing target as needed, force completed filesystem format actions to `keep`, and return to the installer menu with **Install / Retry** available rather than terminating.
 - **Existing intended behavior:** The installer already has a checkpoint/resume design intended to preserve completed destructive/setup stages and allow a later **Install / Retry** to continue from the failed/incomplete package transaction.
@@ -77,13 +266,151 @@
 
 
 ### Installer MD RAID creation — signature/wipe ordering is backwards for all RAID levels
-- [x] **FIX IMPLEMENTED in installer r46; runtime regression pending:** the common MD RAID path now checks/clears approved stale signatures on member devices **before** `mdadm --create`; the post-create `wipefs -a "$array_device"` operation was removed.
+- [x] **FIX IMPLEMENTED in installer r46; RAID6 runtime regression PASSED 2026-08-18:** the common MD RAID path checks/clears approved stale signatures on member devices **before** `mdadm --create`; the post-create `wipefs -a "$array_device"` operation was removed. A new six-member RAID6 was created and remained active without the prior `wipefs: Device or resource busy` abort. Other RAID levels still need regression coverage.
 - **Scope:** Treat this as a common `create_raid_array()` bug affecting every MD RAID level that uses this path (RAID0/1/5/6/10 and any other supported MD level), not as a RAID6-only issue.
 - **Observed failure:** `mdadm` reports the new array started successfully, followed immediately by `wipefs` failing to probe the active array because it is busy.
 - **Required ordering:** Select member devices -> detect stale filesystem/RAID signatures on the member devices -> ask the user for erase confirmation when needed -> clear approved stale signatures/old MD metadata from the member devices -> run `mdadm --create` -> allow the newly created `/dev/mdX` to remain active for subsequent filesystem/LUKS/LVM setup.
 - **Do not:** Run a blanket post-create `wipefs -a` on the newly active `/dev/mdX`.
 - **Safety:** Signature confirmation must identify exactly which member device/signature will be erased. Never wipe unrelated devices or an already-created active array merely as part of RAID creation.
 - **Regression tests:** Exercise every installer-supported MD RAID level. Test both clean member disks and members containing stale filesystem/MD signatures. Confirm the erase question occurs before array creation, the approved member signatures are cleared, `mdadm --create` succeeds, `/dev/mdX` remains active, and the installer continues without a `wipefs` busy failure.
+
+
+
+
+
+
+
+
+
+
+
+
+### Installer package-download failure — partial download lost and recovery remount path aborts
+- [x] **FIX IMPLEMENTED in installer r48 / runtime regression pending (2026-08-18):** During optional package installation, `linux-firmware` failed after an interrupted large download. r48 now recognizes when the selected target filesystem plan is already mounted correctly and reuses it for Install / Retry rather than forcing the unmount/remount path that previously hit a busy `/mnt/bfs` and terminated the installer.
+- **Observed linux-firmware failure:** Primary kernel.org URL returned HTTP 404; a subsequent transfer then downloaded about 104 MiB of a ~609 MiB archive before curl exited with error 18 (`end of response ... bytes missing`).
+- [x] **Download-resume code hardened:** BFSOS pkgmk configuration keeps `--continue-at -`, adds stalled-transfer detection (`--speed-limit 1024 --speed-time 30`), and uses bounded `--retry-all-errors` retries so curl error 18/truncated transfers can retry from the partial file. Runtime verification with a deliberately interrupted large file is still required.
+- **Retry policy:** Distinguish hard failures such as HTTP 404 from transient transport failures such as truncated responses/timeouts. Hard-failed URLs should advance quickly to the next valid source; interrupted transfers should retry/resume the same source a limited number of times before falling back.
+- **Integrity:** Never trust a resumed/partial file without the normal pkgmk checksum/signature verification after the complete file is assembled.
+- **Installer recovery bug:** After the package failure, the installer entered a target-filesystem remount/recovery path and attempted to unmount `/mnt/bfs`; `umount` reported `target is busy`, followed by `ERROR: Could not unmount /dev/bfs-root/root from /mnt/bfs`, and the installer terminated.
+- [x] **Required recovery behavior implemented in r48:** A canonicalized mount-plan check verifies root/boot/EFI/home/extra assignments. If they already match, r48 reuses the live target and proceeds directly back into the retry path without destructive storage teardown.
+- **Busy-target handling:** Detect processes/chroots/mounts keeping `/mnt/bfs` busy, report them meaningfully if cleanup is genuinely required, and never convert a recoverable package-download failure into a full installer exit merely because the target is already mounted.
+- **State preservation:** Preserve completed package installs. In this run many dependencies/optional packages had already installed successfully before `linux-firmware` failed; retry should resume at the failed/incomplete package rather than reinstalling completed work.
+- **Regression test:** Force an interrupted large package download after >100 MiB is received. Verify the partial file is retained, retry resumes rather than restarting, installer stays alive, storage remains intact, completed packages are not redundantly reinstalled, and the failed package can be retried to completion.
+
+### Installer source URLs — stale 404 primaries still present for linux-firmware, wpa_supplicant, and rdfind
+- [x] **ROOT CAUSE CORRECTED / CONFIG FIX IMPLEMENTED (2026-08-18):** The initial 404s seen before several otherwise-successful downloads were caused by the configured flat `PKGMK_SOURCE_MIRRORS` cache being tried before the real Pkgfile URL. pkgutils release 11 disables that third-party flat mirror by default, so healthy upstream URLs are attempted directly.
+- **Observed log behavior:** `linux-firmware`, `wpa_supplicant`, and `rdfind` each showed an initial 404 while the flat mirror policy was enabled. Subsequent behavior showed the real source could still be attempted; do not mislabel the Pkgfile URL as stale solely from the mirror miss.
+- [x] **Required action completed for this regression:** Remove the misleading default flat mirror rather than rewriting valid package source URLs. Keep source URLs independently maintainable and verify them when a failure is demonstrably from the source host itself.
+- Keep backup/fallback handling, but the first configured URL should be expected to work under normal conditions.
+- **Regression test:** Clear cached sources and build each affected package; verify the primary URL succeeds without an initial 404 and fallback is only used when intentionally simulated.
+
+### LVM percentage sizing — mixed fixed-size and percentage LVs produce confusing allocation
+- [x] **FIX IMPLEMENTED in installer r48 / runtime UI regression pending (2026-08-18):** Ambiguous bare percentages are no longer accepted. The LVM UI requires explicit `%FREE` or `%VG`, validates requested extents against current free extents, refuses over-allocation instead of silently clamping, and shows the effective allocation before creation.
+- **Observed live test:** `bfs-root` VG was approximately `246.98 GiB`. User selected `root = 100G`, `usr = 50%`, and `opt = 50%`. Resulting LVs were approximately:
+  - `root = 100.00 GiB`
+  - `usr = 123.49 GiB`
+  - `opt = 23.49 GiB`
+- **Likely current behavior:** `usr = 50%` appears to have been calculated against the original total VG size (`246.98 / 2 ≈ 123.49 GiB`), leaving only `23.49 GiB` for `opt`; the final percentage request then appears to have been reduced/clamped to the remaining free space.
+- **UX problem:** Two `50%` selections alongside a fixed `100G` LV do not intuitively communicate that one LV may receive ~123.49 GiB while the other receives only ~23.49 GiB. The installer must not silently reinterpret or clamp percentage requests without making the result explicit.
+- **Implemented semantics:** `%FREE` means a percentage of the currently free extents at the moment the LV is created; `%VG` means a percentage of total VG extents. A bare `50%` is rejected with an explanation rather than silently interpreted. A future declarative multi-LV planner could provide pooled percentage shares, but r48 removes the unsafe ambiguity from the current imperative workflow.
+- If percentages intentionally mean `%VG` rather than a share of remaining free space, label that explicitly in the UI and reject/resolve combinations whose requested total exceeds available extents instead of silently shrinking the last LV.
+- [x] **Pre-creation review implemented for each LV:** Before `lvcreate`, r48 shows the requested percentage/fixed size and, for percentage requests, the calculated effective MiB/extents, then requires confirmation.
+- **Validation:** Ensure rounding to physical extents cannot over-allocate the VG, and never depend on creation order to produce materially different results unless the UI explicitly describes sequential allocation.
+- **Regression tests:** Test fixed-only, percentage-only, and mixed layouts, including `100G + 50% + 50%`, reversed LV order, percentages totaling under/at/over 100%, and very small remaining free-space cases.
+
+### Final pre-install review — include ZRAM configuration
+- [x] **IMPLEMENTED / STATICALLY VERIFIED in installer r47 (2026-08-18):** The final **BFS Installation review** includes the selected ZRAM Enabled/Disabled state and configured size.
+- **Required review fields:** Show whether ZRAM is **Enabled/Disabled** and, when enabled, the configured size (for example `100% of RAM`, `200% of RAM`, or the exact custom size).
+- If the installer computes an effective size from a percentage, the review may also show the resolved size in GiB/MiB where practical.
+- The review must reflect the currently selected installer settings, not merely the live environment's current `/dev/zram0` state.
+- If ZRAM is disabled, show that explicitly rather than omitting the entry.
+- Keep the ZRAM review near other memory/swap/storage settings so the user can verify it before committing to installation.
+- **Regression test:** Configure several predefined ZRAM percentages, a custom size, and Disabled; open the final review each time and verify the displayed ZRAM state/size exactly matches the installer configuration.
+
+### Kernel selection crashes installer — `kernel_pkgfile_version()` uses unbound `package`
+- [x] **FIXED in installer r47 / nounset static regression passed (2026-08-18):** The r46 kernel-selection crash from an unbound `package` local is corrected; runtime Dialog regression remains to be exercised.
+- **Observed failure:** `line 3728: package: unbound variable`.
+- Installer error report identifies:
+  - Function: `configure_kernel`
+  - Failing command: `linux_version="$(kernel_pkgfile_version linux)"`
+  - Caller: line 3739
+  - Exit status: `1`
+- **Likely defect location:** `kernel_pkgfile_version()` around line 3728 references shell variable `package` without safely initializing it from the function argument (for example `local package="${1:-}"`) before use. With `set -u`/nounset active, this immediately aborts the installer.
+- **Required fix:** Audit the entire `kernel_pkgfile_version()` helper and its callers. Explicitly initialize every local variable before reference, validate the requested kernel package/port name, and make missing/malformed Pkgfile/version information return a safe fallback instead of terminating the installer.
+- Dynamic kernel-version display must remain informational/UI logic and **must never be capable of crashing the installer**.
+- Verify both normal/default kernel and LTS kernel lookups, including the requested LTS description/branding behavior.
+- **Regression tests:**
+  1. Open kernel selection with valid default and LTS Pkgfiles and verify both versions display correctly.
+  2. Test a missing Pkgfile, missing `version=` field, empty value, and malformed value; installer must remain running and show a sensible `unknown`/unavailable fallback.
+  3. Run with nounset (`set -u`) enabled and confirm no unbound-variable failure.
+  4. Back out of kernel selection and re-enter it repeatedly without installer termination.
+
+### Current storage devices view — include configured ZRAM swap
+- [x] **IMPLEMENTED in installer r47; runtime UI regression pending (2026-08-18):** Current storage devices now includes configured/active ZRAM state and size.
+- **Current behavior:** The storage tree shows physical disks, partitions, MD RAID, LUKS mappings, LVM PV/LVs, filesystems, etc., but the configured ZRAM device is absent.
+- **Desired behavior:** Show the ZRAM swap device (normally `/dev/zram0`) with a clear type/status such as `zram swap`, its configured/effective size, and whether it is currently active if that information is available.
+- If ZRAM is configured for installation but has not yet been instantiated in the live environment, show a separate concise entry such as `ZRAM swap: enabled, 100% of RAM (configured)` rather than pretending a `/dev/zram0` device already exists.
+- Keep ZRAM visually distinct from persistent block storage so users do not mistake it for a disk/partition.
+- The displayed size/state should update after changing the ZRAM configuration.
+- **Regression test:** Enable/disable ZRAM and test predefined/custom sizes; reopen Current storage devices and verify the displayed ZRAM state and size match the installer configuration.
+
+### ZRAM size menu — clearly mark the currently selected size
+- [x] **IMPLEMENTED in installer r47; runtime UI regression pending (2026-08-18):** The current predefined/custom ZRAM size is marked `[CURRENT]` directly in the menu.
+- **Observed behavior:** With ZRAM enabled at 100%, the choices `50%`, `100%`, `150%`, `200%`, and `Custom` all look identical. The blue highlight only indicates the current cursor position and can therefore be mistaken for the configured value.
+- **Desired behavior:** Add an unmistakable marker to the active configuration, for example `Size: 100% of RAM [SELECTED]` or `[CURRENT]`, and update it immediately whenever the user chooses another size.
+- If a custom size is active, show the actual configured custom value and mark the Custom entry as selected/current.
+- Keep the header summary, but make the menu state independently understandable without relying on the header.
+- Consider using the same selected/current-state convention on other installer option menus where cursor highlight and configured value can otherwise be confused.
+- **Regression test:** Select each predefined ZRAM size and a custom size, return to/reopen the screen, and confirm exactly one choice clearly reflects the persisted current configuration.
+
+### Newly created MD RAID — detect surviving LVM metadata and ask whether to preserve or remove it
+
+- **LIVE TEST UPDATE (2026-08-18):** Stale LVM signatures from the previous crashed installation were detected/cleared as expected during the new installer test. Continue testing the full Keep/Remove/Cancel branches independently, but the stale-signature cleanup path has now succeeded in a real reused-storage scenario.
+- [x] **IMPLEMENTED in installer r47; runtime Keep/Remove/Cancel regression pending (2026-08-18):** New MD arrays are inspected for surviving signatures including LVM metadata and the user is explicitly offered Keep, Remove, or Cancel.
+- **Observed during testing:** A newly created RAID6 `/dev/md0` immediately appeared as an `LVM2_member` and caused the old `bfs-raid` VG with `home` and `var` LVs to reactivate, even though the RAID member disks had just been repartitioned/recreated.
+- **Detection:** Inspect the newly available `/dev/mdX` with appropriate non-destructive signature/LVM discovery (`wipefs` read-only inspection, `pvs`, etc.) before using it for LUKS, a new PV, formatting, or other destructive operations.
+- **If existing LVM is detected:** Present an explicit choice explaining that existing LVM metadata/logical volumes were found on the RAID device:
+  - **Keep existing LVM** — preserve the PV/VG/LVs and do not wipe or overwrite their metadata.
+  - **Remove existing LVM** — clearly warn that the existing VG/LVs and their data will be destroyed; deactivate the affected VG/LVs safely, then remove the stale LVM signature/metadata from the selected MD device only.
+  - **Cancel / Back** — make no changes.
+- Never automatically destroy an existing LVM signature merely because the MD array was newly created; surviving metadata may contain data the user intentionally wants to recover or reuse.
+- If the user chooses removal, verify that no LV is mounted/in use, deactivate the correct VG, operate only on the explicitly selected `/dev/mdX`, refresh LVM/device state, and confirm that `LVM2_member` is gone while the MD array itself remains active.
+- After removal, refresh subsequent device selectors so `/dev/mdX` becomes available for workflows such as **RAID -> LUKS -> LVM**.
+- **Regression test:** Recreate an MD array whose data area still contains a valid LVM PV/VG, confirm the installer detects it, test Keep/Remove/Cancel independently, and verify no unrelated disk or VG is modified.
+
+### Installer partition-disk screen — identify disks modified during current session
+- [x] **IMPLEMENTED in installer r47; runtime UI regression pending (2026-08-18):** Partition disks whose kernel-visible partition layout changed are marked `[MODIFIED THIS SESSION]`.
+- **Current problem:** The screen lists only device path and size (for example `/dev/vda 250G`), so after editing several similarly sized disks it is easy to lose track of which devices were already changed.
+- **Preferred behavior:** Keep modified disks visible, but append a clear status marker such as **`[MODIFIED]`**, **`[PARTITIONED]`**, or **`[CHANGED THIS SESSION]`** after the device/size. Do not silently remove a disk from the list merely because `cfdisk`/`fdisk` wrote a partition table; disappearing entries could make the user think a disk vanished or failed.
+- **Detection/state:** Track devices opened through the installer partition editor and mark a disk only after the partitioning tool exits successfully and the kernel sees a changed partition table. Where practical, compare the before/after partition-table state so simply opening and exiting without changes does not falsely mark the disk modified.
+- **Refresh:** Run the normal partition-table/device refresh (`partprobe`/`udevadm settle` or installer equivalent) after leaving the partition editor, then redraw the list with the updated status.
+- **Optional enhancement:** Show a concise partition summary for modified disks (for example partition count or key partition sizes/types) in a detail/status view without overcrowding the primary selector.
+- **Persistence scope:** The marker only needs to represent changes made during the current installer session; it does not need to imply that an existing disk from before installer startup was modified by BFSOS.
+- **Regression test:** On a VM/system with many similar disks, edit multiple disks, return to the partition-disk selector after each edit, and verify each actually changed disk is clearly marked while untouched disks remain unmarked and all disks remain selectable.
+
+### Bootstrap Stage 3 — ensure ccache is used for the entire rebuild
+- [x] **IMPLEMENTATION HARDENED in bootstrap r84; full Stage-3 statistics regression pending (2026-08-18):** ccache preflight, wrapper PATH from the first Stage-3 package, and before/after statistics are now enforced when ccache is enabled.
+- Stage 3 should inherit/use the configured ccache setting consistently across every applicable package build.
+- Verify `CC`, `CXX`, compiler wrappers/PATH ordering, and `pkgmk.conf` handling so individual ports cannot unintentionally bypass ccache unless a package explicitly requires it.
+- Preserve any intentional package-specific ccache exclusions and document why they are necessary.
+- Add/check ccache statistics before and after Stage 3 so a test run can confirm cache hits/misses are actually being recorded.
+- **Regression test:** Run Stage 3 with ccache enabled, confirm applicable package builds invoke ccache, and verify `ccache -s` shows Stage-3 activity.
+
+### Bootstrap verification status — show bright-yellow `[PASSED!]`
+- [x] **IMPLEMENTED in bootstrap r84; runtime menu redraw regression pending (2026-08-18):** successful verification now renders bright-yellow `[PASSED!]`.
+- **Current behavior:** The Bootstrap menu shows option 4 as green `[COMPLETE]`, which looks the same as ordinary completed build stages.
+- **Desired behavior:** A successful verification should display **bright yellow `[PASSED!]`** in the right-hand status column.
+- Keep build-stage completion states separate from verification results: stages may remain `[COMPLETE]`, while the verification/check result uses `[PASSED!]`.
+- Ensure the status survives normal menu redraws and accurately reflects the most recent successful verification rather than being cosmetic-only.
+- **Regression test:** Run option 4 successfully, return to the Bootstrap menu, and confirm option 4 displays bright-yellow `[PASSED!]` with alignment matching the other status fields.
+
+### GCC version branding — `Linux From Scratch` string appears in BFSOS compiler output
+- [x] **ROOT CAUSE FOUND / FIXED in r84 (2026-08-18):** `ports/core/gcc/Pkgfile` explicitly passed `--with-pkgversion="Linux From Scratch"`; it now passes `--with-pkgversion="BFSOS"`.
+- **Observed behavior:** The compiler version banner is carrying the vendor/package branding string `Linux From Scratch` instead of BFSOS/BFS Linux branding or the normal upstream GCC banner.
+- **Required investigation:** Determine exactly where the `Linux From Scratch` vendor string is being injected. Audit the GCC `Pkgfile`, bootstrap GCC pass configuration flags, GCC spec/configure options, patches, environment variables, and any copied LFS-era bootstrap code that may set a package version/vendor suffix.
+- **Likely areas to inspect:** GCC configure arguments such as `--with-pkgversion=...`, any `PKGVERSION`/vendor definitions, Stage 1/2/3 GCC build functions, and the final installed GCC package build.
+- **Desired behavior:** Replace the stale LFS branding with an appropriate BFSOS/BFS Linux identifier, or leave the upstream GCC banner unbranded if that is preferable. Ensure Stage 1 temporary compilers and the final installed compiler do not accidentally retain unrelated distro branding.
+- **Regression test:** After rebuilding GCC, verify `gcc --version` and `g++ --version` no longer display `Linux From Scratch` and that the selected BFSOS/upstream branding is consistent across the final installed compiler.
 
 ### Bootstrap archive safety / Stage 5 failure handling
 - [x] **IMPLEMENTED in bootstrap r45:** Stage 5 base-rootfs archive creation now runs with root privileges so protected files in the verified rootfs can be read instead of producing permission-denied tar errors.
@@ -257,7 +584,7 @@
 - **Regression tests:** Deliberately use a bad source URL once in Bootstrap Stage 1, once in Bootstrap Stage 2, and once during installer package installation. In all cases verify the error is shown in the appropriate dialog/text fallback, the log path is visible, and Continue returns to the correct main menu without terminating the parent workflow.
 
 ### pkgmk source URL fallback / backup mirrors
-- [~] **PARTIAL IMPLEMENTATION (2026-08-18):** The 29 core GNU Pkgfiles that used `ftpmirror.gnu.org` now use canonical `https://ftp.gnu.org/gnu/...` paths, eliminating dependence on the slow redirector observed during testing. A consistent backup-source URL policy is still required in the pkgmk download layer.
+- [~] **PARTIAL IMPLEMENTATION UPDATED (2026-08-18):** The 29 core GNU Pkgfiles use canonical `https://ftp.gnu.org/gnu/...` paths. pkgutils release 11 now removes the noisy third-party flat mirror and hardens resumable/retry behavior for direct sources. Path-preserving automatic GNU host fallback (`ftp.gnu.org/gnu` -> `mirrors.kernel.org/gnu`) is still pending because CRUX `PKGMK_SOURCE_MIRRORS` is intentionally flat.
 - **r74 remaining work:** The current pkgmk mirror mechanism is filename/flat-cache based; the requested `mirrors.kernel.org/gnu` alternate host requires path-preserving URL substitution. Do not claim full completion merely by adding unused variables to `pkgmk.conf`.
 - **Goal:** A slow, unreachable, or failed primary source must not force the user to wait through repeated retries when a known-good alternate source exists.
 - **GNU source policy:** For GNU-hosted distfiles, preserve the original package path and support ordered alternate hosts. Current candidates tested successfully with `autoconf-2.73.tar.xz` are `https://ftp.gnu.org/gnu/` and `https://mirrors.kernel.org/gnu/`. Avoid relying on `ftpmirror.gnu.org` as the only source because its redirect/mirror selection can stall for a long time at 0 bytes.
@@ -1545,7 +1872,7 @@ Press Enter to continue...
 - [x] **pkgmk environment policy implemented:** generated package-build configs/chroot calls no longer force plain C over `pkgmk` locale selection; non-package deterministic helper operations may still use C.
 - [x] **pkgmk detection hardening implemented in pkgutils release 10 and initial-bootstrap patch:** locale selection now checks both locale enumeration and an actual `locale charmap` call, preferring the temporary-toolchain locale command when the running `pkgmk` is under `/tmp/lfs-tools`.
 - **Manual workaround result:** After generating the UTF-8 locale for the temporary toolchain, GCC 16.2 successfully extracted; the previous UTF-8 pathname errors disappeared. This confirms the locale-path/toolchain mismatch as the extraction failure's cause.
-- [ ] **Regression test — fresh Bootstrap 1:** Verify `/tmp/lfs-tools/lib/locale/locale-archive` (or equivalent temporary locale storage) exists, temporary-libc `LC_ALL=C.utf8` reports `UTF-8`, and temporary `bsdtar` emits no default-locale warning.
-- [ ] **Regression test — Bootstrap 2:** Build GCC 16.2 from a clean work directory and verify extraction completes without `Pathname can't be converted from UTF-8 to current locale`, `Failed to set default locale`, or `setlocale` warnings.
+- [x] **Regression test — fresh Bootstrap 1 / effective runtime proof PASSED 2026-08-18:** the clean Stage 1 temporary toolchain proceeded into Stage 2 with the temporary UTF-8 locale fix in place; Stage 2 temporary-toolchain bsdtar subsequently extracted GCC 16.2 successfully. The explicit archive-path check remains in Bootstrap code.
+- [x] **Regression test — Bootstrap 2 PASSED 2026-08-18:** GCC 16.2 extracted successfully during the clean Stage 2 run without the previous pathname-conversion failure.
 - [ ] **Regression test — archive restore:** Restore a freshly created Stage 1 toolchain archive and repeat the temporary `bsdtar` UTF-8 test before beginning Stage 2.
 - [ ] **Regression test — Stage 3/final system:** Verify the target/final `C.utf8` locale remains usable after glibc/pkgutils rebuild and final-system `bsdtar` can extract the GCC source without locale/pathname errors.

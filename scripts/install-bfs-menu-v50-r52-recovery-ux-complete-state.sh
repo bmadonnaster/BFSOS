@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# r47: tracker follow-up fixes: kernel lookup, ZRAM visibility, MD stale-signature recovery, partition markers.
+# r52: recovery UX ordering and completed-install state handling.
 # BFSOS installer r43 - tracker consolidation / Dracut RAID / resume fixes
 set -Eeuo pipefail
 
@@ -196,6 +196,20 @@ BTRFS_MOUNTPOINTS=()
 BTRFS_SUBVOLUMES=()
 BTRFS_SNAPSHOT_SUBVOLUMES=()
 BTRFS_CONFIG_NAMES=()
+STORAGE_SUBVOLUMES=()
+
+# Non-secret topology required to reconstruct a failed installation after the
+# installer process has exited. Passphrases are never persisted.
+RECOVERY_MD_ARRAYS=()
+RECOVERY_MD_MEMBERS=()
+RECOVERY_MD_UUIDS=()
+RECOVERY_LUKS_DEVICES=()
+RECOVERY_LUKS_MAPPINGS=()
+RECOVERY_VGS=()
+PROFILE_RECOVERY_MODE=no
+RESUME_STATE_PRESENT=no
+INSTALLATION_ALREADY_COMPLETE=no
+SESSION_FAILURE_STATUS=0
 AVAILABLE_PATHS=()
 AVAILABLE_TYPES=()
 AVAILABLE_SIZES=()
@@ -648,46 +662,476 @@ select_installer_theme() {
 }
 profile_quote() { printf '%q' "$1"; }
 
+append_unique() {
+        local array_name="$1" value="$2" existing=""
+        [[ -n "$value" ]] || return 0
+        local -n array_ref="$array_name"
+        for existing in "${array_ref[@]}"; do
+                [[ "$existing" == "$value" ]] && return 0
+        done
+        array_ref+=("$value")
+}
+
+storage_subvolume_for_mountpoint() {
+        local format="${1:-}" mountpoint="${2:-}" name=""
+        [[ "$format" == btrfs ]] || return 0
+        case "$mountpoint" in
+                /) printf '%s' "@" ;;
+                /home) printf '%s' "@home" ;;
+                *)
+                        name="${mountpoint#/}"
+                        name="${name//\//-}"
+                        name="${name//[^a-zA-Z0-9_.-]/-}"
+                        [[ -n "$name" ]] || name=root
+                        printf '@%s' "$name"
+                        ;;
+        esac
+}
+
+refresh_storage_subvolume_metadata() {
+        local i subvol=""
+        STORAGE_SUBVOLUMES=()
+        for ((i=0; i<${#STORAGE_DEVICES[@]}; i++)); do
+                subvol="$(storage_subvolume_for_mountpoint \
+                        "${STORAGE_FORMATS[$i]:-}" "${STORAGE_MOUNTPOINTS[$i]:-}")"
+                STORAGE_SUBVOLUMES+=("$subvol")
+        done
+}
+
+capture_recovery_storage_topology() {
+        local dev="" ancestor="" type="" array="" members="" mapping="" backing="" vg=""
+        local -a selected=()
+
+        RECOVERY_MD_ARRAYS=()
+        RECOVERY_MD_MEMBERS=()
+        RECOVERY_MD_UUIDS=()
+        RECOVERY_LUKS_DEVICES=()
+        RECOVERY_LUKS_MAPPINGS=()
+        RECOVERY_VGS=()
+
+        selected=("${STORAGE_DEVICES[@]}")
+        for dev in "$ROOT_DEV" "$BOOT_DEV" "$EFI_DEV" "$SWAP_DEV" "$HOME_DEV" "${EXTRA_DEVICES[@]}"; do
+                [[ -n "$dev" ]] && selected+=("$dev")
+        done
+
+        for dev in "${selected[@]}"; do
+                [[ -b "$dev" ]] || continue
+
+                # Canonical LV paths make the VG name available directly.
+                if command -v lvs >/dev/null 2>&1; then
+                        vg="$(lvs --noheadings -o vg_name "$dev" 2>/dev/null | xargs 2>/dev/null || true)"
+                        [[ -n "$vg" ]] && append_unique RECOVERY_VGS "$vg"
+                fi
+
+                while read -r ancestor type; do
+                        [[ -n "$ancestor" ]] || continue
+                        case "$type" in
+                                raid*)
+                                        array="$(readlink -f "$ancestor" 2>/dev/null || printf '%s' "$ancestor")"
+                                        if ! printf '%s\n' "${RECOVERY_MD_ARRAYS[@]}" | grep -Fxq "$array"; then
+                                                members=""
+                                                if command -v mdadm >/dev/null 2>&1; then
+                                                        members="$(mdadm --detail "$array" 2>/dev/null |
+                                                                awk '$0 ~ /(active sync|spare|rebuilding)/ {print $NF}' |
+                                                                paste -sd, - || true)"
+                                                fi
+                                                local md_uuid=""
+                                                md_uuid="$(mdadm --detail "$array" 2>/dev/null |
+                                                        sed -n 's/^[[:space:]]*UUID[[:space:]]*:[[:space:]]*//p' |
+                                                        head -n1)"
+                                                RECOVERY_MD_ARRAYS+=("$array")
+                                                RECOVERY_MD_MEMBERS+=("$members")
+                                                RECOVERY_MD_UUIDS+=("$md_uuid")
+                                        fi
+                                        ;;
+                                crypt)
+                                        mapping="$(dmsetup info -C --noheadings -o name "$ancestor" 2>/dev/null |
+                                                xargs 2>/dev/null || true)"
+                                        [[ -n "$mapping" ]] || mapping="$(basename "$ancestor")"
+                                        backing="$(cryptsetup status "$mapping" 2>/dev/null |
+                                                sed -n 's/^[[:space:]]*device:[[:space:]]*//p' |
+                                                head -n1)"
+                                        [[ -n "$backing" ]] || continue
+                                        local seen=no j
+                                        for ((j=0; j<${#RECOVERY_LUKS_MAPPINGS[@]}; j++)); do
+                                                if [[ "${RECOVERY_LUKS_MAPPINGS[$j]}" == "$mapping" ]]; then
+                                                        seen=yes
+                                                        break
+                                                fi
+                                        done
+                                        if [[ "$seen" == no ]]; then
+                                                RECOVERY_LUKS_DEVICES+=("$backing")
+                                                RECOVERY_LUKS_MAPPINGS+=("$mapping")
+                                        fi
+                                        ;;
+                        esac
+                done < <(lsblk -spno PATH,TYPE "$dev" 2>/dev/null || true)
+        done
+}
+
 save_installer_profile() {
         local path="${1:-$INSTALLER_PROFILE_FILE}" quiet="${2:-no}" i
+        refresh_storage_subvolume_metadata
+        capture_recovery_storage_topology
         {
-                echo '# BFSOS installer profile v1 - no passwords or LUKS passphrases are stored.'
+                echo '# BFSOS installer profile v2 - no passwords or LUKS passphrases are stored.'
                 for name in HOSTNAME TIMEZONE LOCALE USERNAME BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE ZRAM_SIZE_SPEC BUILD_JOBS BUILD_OPT BUILD_CCACHE BUILD_CCACHE_SIZE BUILD_TMPFS BUILD_TMPFS_SIZE ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
                         printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
                 done
-                for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'; done
+                for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do
+                        printf 'ADDITIONAL_USER='; profile_quote "${ADDITIONAL_USERS[$i]}"; printf '\n'
+                done
                 for ((i=0;i<${#STORAGE_DEVICES[@]};i++)); do
-                        printf 'STORAGE='; profile_quote "${STORAGE_DEVICES[$i]}|${STORAGE_FORMATS[$i]}|${STORAGE_MOUNTPOINTS[$i]}"; printf '\n'
+                        printf 'STORAGE='
+                        profile_quote "${STORAGE_DEVICES[$i]}|${STORAGE_FORMATS[$i]}|${STORAGE_MOUNTPOINTS[$i]}|${STORAGE_SUBVOLUMES[$i]:-}"
+                        printf '\n'
+                done
+                for ((i=0;i<${#RECOVERY_MD_ARRAYS[@]};i++)); do
+                        printf 'RECOVERY_MD='
+                        profile_quote "${RECOVERY_MD_ARRAYS[$i]}|${RECOVERY_MD_MEMBERS[$i]:-}|${RECOVERY_MD_UUIDS[$i]:-}"
+                        printf '\n'
+                done
+                for ((i=0;i<${#RECOVERY_LUKS_MAPPINGS[@]};i++)); do
+                        printf 'RECOVERY_LUKS='
+                        profile_quote "${RECOVERY_LUKS_DEVICES[$i]}|${RECOVERY_LUKS_MAPPINGS[$i]}"
+                        printf '\n'
+                done
+                for vg in "${RECOVERY_VGS[@]}"; do
+                        printf 'RECOVERY_VG='; profile_quote "$vg"; printf '\n'
                 done
         } >"$path"
         INSTALLER_PROFILE_FILE="$path"
         [[ "$quiet" == yes ]] || dialog_message "Configuration profile" "Saved installer configuration to:\n$path\n\nPasswords and LUKS passphrases were not saved."
 }
 
+deduplicated_missing_devices() {
+        local dev="" canonical=""
+        local -A seen=()
+        for dev in "$@"; do
+                [[ -n "$dev" ]] || continue
+                canonical="$(readlink -m "$dev" 2>/dev/null || printf '%s' "$dev")"
+                [[ -n "${seen[$canonical]:-}" ]] && continue
+                seen["$canonical"]=1
+                [[ -b "$dev" ]] || printf '%s\n' "$dev"
+        done
+}
+
+rebuild_btrfs_layout_from_saved_plan() {
+        local i subvol="" snapshot="" name="" mp="" dev="" fmt=""
+        BTRFS_DEVICES=()
+        BTRFS_MOUNTPOINTS=()
+        BTRFS_SUBVOLUMES=()
+        BTRFS_SNAPSHOT_SUBVOLUMES=()
+        BTRFS_CONFIG_NAMES=()
+
+        for ((i=0; i<${#STORAGE_DEVICES[@]}; i++)); do
+                dev="${STORAGE_DEVICES[$i]}"
+                fmt="${STORAGE_FORMATS[$i]}"
+                mp="${STORAGE_MOUNTPOINTS[$i]}"
+                [[ "$fmt" == btrfs ]] || continue
+                subvol="${STORAGE_SUBVOLUMES[$i]:-}"
+                [[ -n "$subvol" ]] || subvol="$(storage_subvolume_for_mountpoint "$fmt" "$mp")"
+                case "$subvol" in
+                        @) snapshot="@snapshots"; name=root ;;
+                        @home) snapshot="@home-snapshots"; name=home ;;
+                        @*) name="${subvol#@}"; snapshot="@${name}-snapshots" ;;
+                        *) name="$(sanitize_btrfs_name "$mp")"; snapshot="@${name}-snapshots" ;;
+                esac
+                BTRFS_DEVICES+=("$dev")
+                BTRFS_MOUNTPOINTS+=("$mp")
+                BTRFS_SUBVOLUMES+=("$subvol")
+                BTRFS_SNAPSHOT_SUBVOLUMES+=("$snapshot")
+                BTRFS_CONFIG_NAMES+=("$name")
+        done
+}
+
+md_array_uuid() {
+        local array="$1"
+        mdadm --detail "$array" 2>/dev/null |
+                sed -n 's/^[[:space:]]*UUID[[:space:]]*:[[:space:]]*//p' |
+                head -n1
+}
+
+md_array_members_sorted() {
+        local array="$1"
+        mdadm --detail "$array" 2>/dev/null |
+                awk '$0 ~ /(active sync|spare|rebuilding)/ {print $NF}' |
+                while IFS= read -r member; do
+                        readlink -f "$member" 2>/dev/null || printf '%s\n' "$member"
+                done |
+                sort -u
+}
+
+saved_md_members_sorted() {
+        local members_csv="$1" member=""
+        local -a members=()
+        IFS=',' read -r -a members <<<"$members_csv"
+        for member in "${members[@]}"; do
+                [[ -n "$member" ]] || continue
+                readlink -f "$member" 2>/dev/null || printf '%s\n' "$member"
+        done | sort -u
+}
+
+find_active_md_array() {
+        local wanted_uuid="$1" members_csv="$2" candidate="" candidate_uuid=""
+        local wanted_members="" candidate_members=""
+        local -a candidates=()
+
+        shopt -s nullglob
+        candidates=(/dev/md[0-9]* /dev/md/*)
+        shopt -u nullglob
+
+        wanted_members="$(saved_md_members_sorted "$members_csv")"
+        for candidate in "${candidates[@]}"; do
+                [[ -b "$candidate" ]] || continue
+                mdadm --detail "$candidate" >/dev/null 2>&1 || continue
+
+                if [[ -n "$wanted_uuid" ]]; then
+                        candidate_uuid="$(md_array_uuid "$candidate")"
+                        if [[ -n "$candidate_uuid" && "$candidate_uuid" == "$wanted_uuid" ]]; then
+                                printf '%s\n' "$candidate"
+                                return 0
+                        fi
+                fi
+
+                [[ -n "$wanted_members" ]] || continue
+                candidate_members="$(md_array_members_sorted "$candidate")"
+                if [[ -n "$candidate_members" && "$candidate_members" == "$wanted_members" ]]; then
+                        printf '%s\n' "$candidate"
+                        return 0
+                fi
+        done
+        return 1
+}
+
+adopt_recovered_md_path() {
+        local saved="$1" active="$2" i=""
+        [[ -n "$saved" && -n "$active" ]] || return 0
+        [[ "$saved" != "$active" ]] || return 0
+
+        log "Resume: saved MD device $saved is active as $active; adopting active path"
+
+        for ((i=0; i<${#RECOVERY_LUKS_DEVICES[@]}; i++)); do
+                if [[ "${RECOVERY_LUKS_DEVICES[$i]}" == "$saved" ]] ||
+                   [[ "$(readlink -m "${RECOVERY_LUKS_DEVICES[$i]}" 2>/dev/null || true)" == \
+                      "$(readlink -m "$saved" 2>/dev/null || true)" ]]; then
+                        RECOVERY_LUKS_DEVICES[$i]="$active"
+                fi
+        done
+}
+
+recover_saved_md_arrays() {
+        local i array members_csv member wanted_uuid="" active_array=""
+        local -a members=()
+        command -v mdadm >/dev/null 2>&1 || return 0
+
+        for ((i=0; i<${#RECOVERY_MD_ARRAYS[@]}; i++)); do
+                array="${RECOVERY_MD_ARRAYS[$i]}"
+                members_csv="${RECOVERY_MD_MEMBERS[$i]:-}"
+                wanted_uuid="${RECOVERY_MD_UUIDS[$i]:-}"
+                [[ -n "$array" ]] || continue
+
+                # The kernel/live environment is free to auto-assemble an MD
+                # array under a different node (for example saved md0 -> md127).
+                # Adopt an already-active array by persistent UUID first, then
+                # by the exact saved member set for older r49/r50 profiles.
+                active_array="$(find_active_md_array "$wanted_uuid" "$members_csv" 2>/dev/null || true)"
+                if [[ -n "$active_array" ]]; then
+                        adopt_recovered_md_path "$array" "$active_array"
+                        RECOVERY_MD_ARRAYS[$i]="$active_array"
+                        continue
+                fi
+
+                if [[ -b "$array" ]] && mdadm --detail "$array" >/dev/null 2>&1; then
+                        continue
+                fi
+
+                IFS=',' read -r -a members <<<"$members_csv"
+                if ((${#members[@]} == 0)) || [[ -z "${members[0]:-}" ]]; then
+                        dialog_message "Resume storage recovery" "Cannot safely assemble saved MD array $array because its member list was not persisted.\n\nNo destructive action was taken."
+                        return 1
+                fi
+                for member in "${members[@]}"; do
+                        [[ -b "$member" ]] || {
+                                dialog_message "Resume storage recovery" "Saved MD member is unavailable:\n$member\n\nRequired array: $array"
+                                return 1
+                        }
+                done
+
+                log "Resume: assembling saved MD array $array"
+                if ! mdadm --assemble "$array" "${members[@]}"; then
+                        # A race with live-environment auto-assembly can make the
+                        # members busy between discovery and assembly. Re-scan
+                        # once for an equivalent active array before failing.
+                        active_array="$(find_active_md_array "$wanted_uuid" "$members_csv" 2>/dev/null || true)"
+                        if [[ -n "$active_array" ]]; then
+                                adopt_recovered_md_path "$array" "$active_array"
+                                RECOVERY_MD_ARRAYS[$i]="$active_array"
+                                continue
+                        fi
+                        dialog_message "Resume storage recovery" "Could not assemble saved MD array:\n$array\n\nNo equivalent active MD array matching the saved UUID/member set was found.\n\nNo destructive action was taken."
+                        return 1
+                fi
+        done
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        return 0
+}
+
+recover_saved_luks_mappings() {
+        local i backing mapping pass="" actual=""
+        command -v cryptsetup >/dev/null 2>&1 || {
+                ((${#RECOVERY_LUKS_MAPPINGS[@]} == 0)) && return 0
+                dialog_message "Resume storage recovery" "cryptsetup is required to reopen the saved encrypted storage."
+                return 1
+        }
+
+        for ((i=0; i<${#RECOVERY_LUKS_MAPPINGS[@]}; i++)); do
+                backing="${RECOVERY_LUKS_DEVICES[$i]}"
+                mapping="${RECOVERY_LUKS_MAPPINGS[$i]}"
+                [[ -n "$backing" && -n "$mapping" ]] || continue
+
+                if cryptsetup status "$mapping" >/dev/null 2>&1; then
+                        actual="$(cryptsetup status "$mapping" 2>/dev/null |
+                                sed -n 's/^[[:space:]]*device:[[:space:]]*//p' | head -n1)"
+                        if [[ "$(readlink -f "$actual" 2>/dev/null || printf '%s' "$actual")" != \
+                              "$(readlink -f "$backing" 2>/dev/null || printf '%s' "$backing")" ]]; then
+                                dialog_message "Resume storage recovery" "Existing mapping /dev/mapper/$mapping does not point to the saved backing device $backing.\n\nRecovery stopped without changing it."
+                                return 1
+                        fi
+                        continue
+                fi
+
+                [[ -b "$backing" ]] || {
+                        dialog_message "Resume storage recovery" "Saved LUKS backing device is unavailable:\n$backing\n\nMapping: $mapping"
+                        return 1
+                }
+
+                dialog_password pass "Resume encrypted storage" \
+                        "Enter the passphrase to reopen:\n\n$backing\nas /dev/mapper/$mapping" || return 1
+                if ! printf '%s' "$pass" | cryptsetup open --key-file - "$backing" "$mapping"; then
+                        pass=""
+                        dialog_message "Resume storage recovery" "Could not reopen $backing as /dev/mapper/$mapping.\n\nNo destructive action was taken."
+                        return 1
+                fi
+                pass=""
+                append_unique OPENED_LUKS_BY_SCRIPT "$mapping"
+                command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        done
+        return 0
+}
+
+recover_saved_vgs() {
+        local vg=""
+        command -v vgchange >/dev/null 2>&1 || {
+                ((${#RECOVERY_VGS[@]} == 0)) && return 0
+                dialog_message "Resume storage recovery" "LVM tools are required to activate the saved volume groups."
+                return 1
+        }
+        command -v vgscan >/dev/null 2>&1 && vgscan --mknodes >/dev/null 2>&1 || true
+        for vg in "${RECOVERY_VGS[@]}"; do
+                [[ -n "$vg" ]] || continue
+                log "Resume: activating saved LVM volume group $vg"
+                if ! vgchange -ay "$vg" >/dev/null; then
+                        dialog_message "Resume storage recovery" "Could not activate saved LVM volume group:\n$vg\n\nNo destructive action was taken."
+                        return 1
+                fi
+                append_unique ACTIVATED_VGS_BY_SCRIPT "$vg"
+        done
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        return 0
+}
+
+recover_saved_storage_stack() {
+        log "Resume: reconstructing saved storage stack"
+        recover_saved_md_arrays || return 1
+        recover_saved_luks_mappings || return 1
+        recover_saved_vgs || return 1
+        apply_storage_selections || return 1
+        rebuild_btrfs_layout_from_saved_plan
+        mount_or_reuse_target_filesystems || return 1
+        return 0
+}
+
 load_installer_profile() {
-        local path="${1:-$INSTALLER_PROFILE_FILE}" quiet="${2:-no}" line key raw value a b c missing="" dev
+        local path="${1:-$INSTALLER_PROFILE_FILE}" quiet="${2:-no}" line key raw value a b c d missing="" dev
+        local -a missing_candidates=()
+
         [[ -f "$path" ]] || { dialog_message "Configuration profile" "Profile not found:\n$path"; return 1; }
-        ADDITIONAL_USERS=(); STORAGE_DEVICES=(); STORAGE_FORMATS=(); STORAGE_MOUNTPOINTS=()
+        ADDITIONAL_USERS=()
+        STORAGE_DEVICES=(); STORAGE_FORMATS=(); STORAGE_MOUNTPOINTS=(); STORAGE_SUBVOLUMES=()
+        RECOVERY_MD_ARRAYS=(); RECOVERY_MD_MEMBERS=(); RECOVERY_MD_UUIDS=()
+        RECOVERY_LUKS_DEVICES=(); RECOVERY_LUKS_MAPPINGS=(); RECOVERY_VGS=()
+
         while IFS= read -r line || [[ -n "$line" ]]; do
                 [[ -z "$line" || "$line" == \#* || "$line" != *=* ]] && continue
                 key="${line%%=*}"; raw="${line#*=}"
-                # Decode only shell %q produced by this installer; reject command syntax.
                 [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
                 eval "value=$raw"
                 case "$key" in
-                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_WIRELESS_TOOLS|INSTALL_GPM|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|ZRAM_SIZE_SPEC|BUILD_JOBS|BUILD_OPT|BUILD_CCACHE|BUILD_CCACHE_SIZE|BUILD_TMPFS|BUILD_TMPFS_SIZE|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP) printf -v "$key" '%s' "$value" ;;
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_GPM|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|ZRAM_SIZE_SPEC|BUILD_JOBS|BUILD_OPT|BUILD_CCACHE|BUILD_CCACHE_SIZE|BUILD_TMPFS|BUILD_TMPFS_SIZE|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP)
+                                printf -v "$key" '%s' "$value"
+                                ;;
                         ADDITIONAL_USER) ADDITIONAL_USERS+=("$value") ;;
-                        STORAGE) IFS='|' read -r a b c <<<"$value"; STORAGE_DEVICES+=("$a"); STORAGE_FORMATS+=("$b"); STORAGE_MOUNTPOINTS+=("$c") ;;
+                        STORAGE)
+                                IFS='|' read -r a b c d <<<"$value"
+                                STORAGE_DEVICES+=("$a")
+                                STORAGE_FORMATS+=("$b")
+                                STORAGE_MOUNTPOINTS+=("$c")
+                                STORAGE_SUBVOLUMES+=("$d")
+                                ;;
+                        RECOVERY_MD)
+                                IFS='|' read -r a b c <<<"$value"
+                                RECOVERY_MD_ARRAYS+=("$a")
+                                RECOVERY_MD_MEMBERS+=("$b")
+                                RECOVERY_MD_UUIDS+=("$c")
+                                ;;
+                        RECOVERY_LUKS)
+                                IFS='|' read -r a b <<<"$value"
+                                RECOVERY_LUKS_DEVICES+=("$a")
+                                RECOVERY_LUKS_MAPPINGS+=("$b")
+                                ;;
+                        RECOVERY_VG) append_unique RECOVERY_VGS "$value" ;;
                 esac
         done <"$path"
-        for dev in "${STORAGE_DEVICES[@]}" "$ROOT_DEV" "$BOOT_DEV" "$EFI_DEV" "$SWAP_DEV" "$HOME_DEV"; do
-                [[ -z "$dev" || -b "$dev" ]] || missing+="$dev\\n"
+
+        # Profiles written by r48 and earlier did not store explicit subvolume
+        # names. Reconstruct the deterministic BFSOS names for compatibility.
+        while ((${#STORAGE_SUBVOLUMES[@]} < ${#STORAGE_DEVICES[@]})); do
+                STORAGE_SUBVOLUMES+=("")
         done
+        for ((a=0; a<${#STORAGE_DEVICES[@]}; a++)); do
+                if [[ -z "${STORAGE_SUBVOLUMES[$a]}" ]]; then
+                        STORAGE_SUBVOLUMES[$a]="$(storage_subvolume_for_mountpoint \
+                                "${STORAGE_FORMATS[$a]}" "${STORAGE_MOUNTPOINTS[$a]}")"
+                fi
+        done
+
+        if [[ "$PROFILE_RECOVERY_MODE" == yes ]]; then
+                # New r49 profiles have enough non-secret topology to restore
+                # inactive MD/LUKS/LVM layers. Old r48 profiles may not; if the
+                # leaf devices are already active, recovery can still continue.
+                if ((${#RECOVERY_MD_ARRAYS[@]} || ${#RECOVERY_LUKS_MAPPINGS[@]} || ${#RECOVERY_VGS[@]})); then
+                        recover_saved_storage_stack || return 1
+                else
+                        apply_storage_selections >/dev/null 2>&1 || true
+                        rebuild_btrfs_layout_from_saved_plan
+                        if [[ -n "$ROOT_DEV" && -b "$ROOT_DEV" ]]; then
+                                mount_or_reuse_target_filesystems || return 1
+                        fi
+                fi
+        fi
+
+        missing_candidates=("${STORAGE_DEVICES[@]}" "$ROOT_DEV" "$BOOT_DEV" "$EFI_DEV" "$SWAP_DEV" "$HOME_DEV")
+        while IFS= read -r dev; do
+                [[ -n "$dev" ]] && missing+="$dev\\n"
+        done < <(deduplicated_missing_devices "${missing_candidates[@]}")
+
         if [[ -n "$missing" ]]; then
                 dialog_message "Profile validation" "Loaded profile, but these saved block devices are not currently present:\n\n$missing\nReview Storage before installing."
                 DISKS_CONFIGURED=no
         elif ((${#STORAGE_DEVICES[@]})); then
                 apply_storage_selections || true
+                rebuild_btrfs_layout_from_saved_plan
                 DISKS_CONFIGURED=yes
         fi
         recalculate_configuration_status
@@ -719,12 +1163,49 @@ save_resume_state() {
         save_installer_profile "$INSTALLER_RESUME_FILE" yes
 }
 
+persistent_installation_complete() {
+        local state=""
+        target_has_valid_base_system || return 1
+
+        for state in base_extracted accounts_configured packages_complete system_config_complete bootloader_complete; do
+                [[ -f "$TARGET/var/lib/bfs-installer/$state" ]] || return 1
+        done
+
+        # A completed bootloader checkpoint must correspond to real boot files
+        # when GRUB was selected. Avoid declaring stale markers complete.
+        if [[ "$INSTALL_GRUB" == yes ]]; then
+                [[ -s "$TARGET/boot/grub/grub.cfg" ]] || return 1
+                if [[ "$BOOT_MODE" == uefi ]]; then
+                        [[ -s "$TARGET/boot/efi/EFI/BFS/grubx64.efi" ]] || return 1
+                fi
+        fi
+
+        return 0
+}
+
 load_resume_state_if_present() {
         [[ -s "$INSTALLER_RESUME_FILE" ]] || return 0
-        # A failed install deliberately leaves this non-secret profile behind.
-        # Load it automatically so relaunching the installer reconstructs the
-        # previous target selections instead of starting from an empty state.
-        load_installer_profile "$INSTALLER_RESUME_FILE" yes || return 0
+
+        RESUME_STATE_PRESENT=yes
+        INSTALLATION_ALREADY_COMPLETE=no
+
+        # Explain recovery before any storage work or LUKS password prompt.
+        # This avoids surprising the user with a cryptsetup prompt before they
+        # have been told that a previous installation is being restored.
+        dialog_message "Previous installation detected" \
+                "A previous BFSOS installation state was found.\n\nThe installer will now reconstruct its saved non-secret storage topology in dependency order (MD RAID -> LUKS -> LVM -> filesystems/Btrfs subvolumes).\n\nIf encrypted storage is closed, you will be asked for the required LUKS passphrase(s). Passphrases are never stored.\n\nNo formatting, repartitioning, RAID creation, or other destructive recovery action will be performed."
+
+        PROFILE_RECOVERY_MODE=yes
+        if ! load_installer_profile "$INSTALLER_RESUME_FILE" yes; then
+                PROFILE_RECOVERY_MODE=no
+                SESSION_FAILURE_STATUS=1
+                dialog_message "Resume previous installation" \
+                        "A previous installation was detected, but its saved storage stack could not be reconstructed automatically.\n\nNo destructive recovery action was taken. Review the storage error, reactivate the required layers if appropriate, and retry."
+                return 0
+        fi
+        PROFILE_RECOVERY_MODE=no
+        SESSION_FAILURE_STATUS=0
+
         ROOT_FORMAT=keep
         BOOT_FORMAT=keep
         EFI_FORMAT=keep
@@ -732,11 +1213,28 @@ load_resume_state_if_present() {
         HOME_FORMAT=keep
         local i
         for ((i=0; i<${#EXTRA_FORMATS[@]}; i++)); do EXTRA_FORMATS[$i]=keep; done
-        dialog_message "Resume previous installation" "A previous incomplete installation was detected. Its non-secret configuration has been restored. Existing filesystem selections are forced to KEEP. Review storage state, reopen any required LUKS/LVM layers, then use Install / Retry."
+
+        # The storage tree is now available. Restore the persistent checkpoint
+        # view before deciding whether this is a real retry or merely stale
+        # resume metadata left by a completed installation.
+        restore_persistent_install_checkpoints
+
+        if persistent_installation_complete; then
+                INSTALLATION_ALREADY_COMPLETE=yes
+                SESSION_FAILURE_STATUS=0
+                clear_resume_state
+                dialog_message "Installation already complete" \
+                        "Storage recovery completed successfully.\n\nAll persistent installer completion checkpoints are present and the installed BFSOS base/boot files passed sanity checks.\n\nNo Install / Retry action is required. Stale resume metadata has been cleared.\n\nThe recovered target remains available for inspection or chroot during this installer session."
+                return 0
+        fi
+
+        dialog_message "Recovery complete" \
+                "The saved storage topology was restored successfully.\n\nExisting filesystems are forced to KEEP. The installation is incomplete, so use Install / Retry to continue from the first unfinished checkpoint."
 }
 
 clear_resume_state() {
         rm -f "$INSTALLER_RESUME_FILE"
+        RESUME_STATE_PRESENT=no
 }
 
 profile_path_dialog() {
@@ -3070,8 +3568,8 @@ lvm_menu() {
                                 select_existing_vg vg_name || continue
                                 ask_default lv_name "Logical-volume name" "home" || continue
                                 ask_default lv_size \
-                                        "LV size: 10G, 50%, 50%VG, 50%FREE, or 100%FREE (bare % means %VG)" \
-                                        "50%" || continue
+                                        "LV size: 10G, 50%FREE, 50%VG, or 100%FREE. Use %FREE for remaining free space; %VG means total VG size." \
+                                        "50%FREE" || continue
 
                                 [[ "$vg_name" =~ ^[A-Za-z0-9+_.-]+$ ]] || {
                                         warn "Invalid volume-group name: $vg_name"
@@ -3087,26 +3585,52 @@ lvm_menu() {
                                 normalized_size="${lv_size^^}"
                                 normalized_size="${normalized_size//[[:space:]]/}"
 
-                                # Friendly shorthand: LVM itself rejects 50%, but users
-                                # naturally expect it to mean 50% of the volume group.
+                                # Bare percentages were ambiguous and previously meant %VG,
+                                # which produced surprising allocations when mixed with fixed-size
+                                # LVs. Require the user to state whether a percentage applies to
+                                # the total VG or the currently free extents.
                                 if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%$ ]]; then
-                                        normalized_size="${normalized_size%%%}%VG"
+                                        dialog_message "LVM logical volume" \
+                                                "Ambiguous size '$lv_size'.\n\nUse ${BASH_REMATCH[1]}%FREE for a percentage of the currently free space, or ${BASH_REMATCH[1]}%VG for a percentage of the entire volume group.\n\nNo logical volume was created."
+                                        continue
                                 fi
 
                                 if [[ "$normalized_size" =~ ^([1-9][0-9]?|100)%(VG|FREE)$ ]]; then
-                                        if ! lvm_run lvcreate -l "$normalized_size" -n "$lv_name" "$vg_name"; then
+                                        local extents_total extents_free requested_extents effective_mib basis percent
+                                        extents_total="$(vgs --noheadings --units m --nosuffix -o vg_extent_count "$vg_name" 2>/dev/null | awk '{print int($1)}')"
+                                        extents_free="$(vgs --noheadings --units m --nosuffix -o vg_free_count "$vg_name" 2>/dev/null | awk '{print int($1)}')"
+                                        percent="${BASH_REMATCH[1]}"
+                                        basis="${BASH_REMATCH[2]}"
+                                        if [[ "$basis" == FREE ]]; then
+                                                requested_extents=$(( extents_free * percent / 100 ))
+                                        else
+                                                requested_extents=$(( extents_total * percent / 100 ))
+                                        fi
+                                        (( requested_extents > 0 )) || {
+                                                dialog_message "LVM logical volume" "The requested size resolves to zero allocatable extents. No logical volume was created."
+                                                continue
+                                        }
+                                        if (( requested_extents > extents_free )); then
+                                                dialog_message "LVM logical volume" \
+                                                        "Requested size: $normalized_size\nAvailable free extents: $extents_free\nRequired extents: $requested_extents\n\nThe request does not fit. Nothing will be silently clamped; choose a smaller size."
+                                                continue
+                                        fi
+                                        effective_mib="$(vgs --noheadings --units m --nosuffix -o vg_extent_size "$vg_name" 2>/dev/null | awk -v n="$requested_extents" '{printf "%.2f", $1*n}')"
+                                        confirm "Create logical volume '$lv_name' in '$vg_name'?\n\nRequested: $normalized_size\nEffective allocation: approximately ${effective_mib} MiB ($requested_extents extents)" || continue
+                                        if ! lvm_run lvcreate -l "$requested_extents" -n "$lv_name" "$vg_name"; then
                                                 warn "lvcreate failed. Check the requested percentage and free space; the installer will continue."
                                                 pause_screen
                                                 continue
                                         fi
                                 elif [[ "$normalized_size" =~ ^[1-9][0-9]*([.][0-9]+)?[KMGTPE]$ ]]; then
+                                        confirm "Create logical volume '$lv_name' in '$vg_name'?\n\nRequested size: $normalized_size" || continue
                                         if ! lvm_run lvcreate -L "$normalized_size" -n "$lv_name" "$vg_name"; then
                                                 warn "lvcreate failed. Check the requested size and free space; the installer will continue."
                                                 pause_screen
                                                 continue
                                         fi
                                 else
-                                        warn "Invalid LV size '$lv_size'. Use values such as 10G, 50%, 50%VG, 50%FREE, or 100%FREE."
+                                        warn "Invalid LV size '$lv_size'. Use values such as 10G, 50%VG, 50%FREE, or 100%FREE."
                                         pause_screen
                                         continue
                                 fi
@@ -4161,6 +4685,26 @@ menu_status() {
         esac
 }
 
+install_menu_label() {
+        if [[ "$INSTALLATION_ALREADY_COMPLETE" == yes ]]; then
+                printf '%s' "Installation Complete"
+        elif [[ "$RESUME_STATE_PRESENT" == yes || -s "$INSTALLER_RESUME_FILE" ]]; then
+                printf '%s' "Install / Retry BFS"
+        else
+                printf '%s' "Install BFS"
+        fi
+}
+
+install_menu_status() {
+        if [[ "$INSTALLATION_ALREADY_COMPLETE" == yes ]]; then
+                printf '%s' "COMPLETE"
+        elif [[ "$RESUME_STATE_PRESENT" == yes || -s "$INSTALLER_RESUME_FILE" ]]; then
+                printf '%s' "RETRY AVAILABLE"
+        else
+                available_status installer_ready
+        fi
+}
+
 show_main_menu() {
         clear_screen
 
@@ -4169,8 +4713,7 @@ show_main_menu() {
                   BFS Linux Installer
 ============================================================
 
-Configure each section, then select Install BFS.
-The installer authenticates once and all installation actions run as root.
+$(if [[ "$INSTALLATION_ALREADY_COMPLETE" == yes ]]; then printf "%s\n" "Recovered installation is already complete; use Chroot for inspection or Quit."; else printf "%s\n" "Configure each section, then select Install BFS." "The installer authenticates once and all installation actions run as root."; fi)
 
   1) Storage assignment         [$(menu_status "$DISKS_CONFIGURED")]
   2) Base archive               [$(menu_status "$ARCHIVE_CONFIGURED")]
@@ -4342,8 +4885,8 @@ installer_menu() {
                                         )" \
                                         11 "$(
                                                 dialog_menu_description \
-                                                        'Install BFS (root)' \
-                                                        "$(available_status installer_ready)"
+                                                        "$(install_menu_label) (root)" \
+                                                        "$(install_menu_status)"
                                         )" \
                                         12 "$(
                                                 dialog_menu_description \
@@ -4421,6 +4964,11 @@ installer_menu() {
                                 fi
                                 ;;
                         11)
+                                if [[ "$INSTALLATION_ALREADY_COMPLETE" == yes ]]; then
+                                        dialog_message "Installation already complete" \
+                                                "This recovered BFSOS installation is already complete. No retry is required.\n\nUse Chroot into target for inspection, or Quit when finished."
+                                        continue
+                                fi
                                 if installer_ready; then
                                         INSTALL_CONFIRMED=no
                                         return 0
@@ -5066,6 +5614,33 @@ mount_device() {
         record_mount "$destination"
 }
 
+canonical_mount_source() {
+        local source="${1:-}"
+        source="${source%%[*}"
+        readlink -f "$source" 2>/dev/null || printf '%s' "$source"
+}
+
+device_mounted_at() {
+        local device="$1" destination="$2" mounted_source=""
+        mountpoint -q "$destination" || return 1
+        mounted_source="$(findmnt -rn -M "$destination" -o SOURCE 2>/dev/null | head -n1)"
+        [[ -n "$mounted_source" ]] || return 1
+        [[ "$(canonical_mount_source "$mounted_source")" == "$(canonical_mount_source "$device")" ]]
+}
+
+target_mount_plan_is_active() {
+        target_mount_tree_complete
+}
+
+mount_or_reuse_target_filesystems() {
+        if target_mount_plan_is_active; then
+                log "Target filesystem plan is already mounted correctly; reusing it for installer retry"
+                [[ -z "$SWAP_DEV" ]] || swapon --show=NAME --noheadings 2>/dev/null | grep -Fxq "$SWAP_DEV" || swapon "$SWAP_DEV" 2>/dev/null || true
+                return 0
+        fi
+        mount_target_filesystems
+}
+
 mount_target_filesystems() {
         local index="" device="" mountpoint_name="" record=""
         local -a records=()
@@ -5265,6 +5840,21 @@ path_is_or_contains_mount() {
         return 1
 }
 
+target_has_valid_base_system() {
+        [[ -x "$TARGET/usr/bin/bash" ]] &&
+        [[ -x "$TARGET/usr/bin/pkgmk" ]] &&
+        [[ -f "$TARGET/etc/os-release" ]]
+}
+
+restore_persistent_install_checkpoints() {
+        local state=""
+        for state in base_extracted accounts_configured packages_complete system_config_complete bootloader_complete; do
+                if [[ -f "$TARGET/var/lib/bfs-installer/$state" ]]; then
+                        checkpoint_mark "$state"
+                fi
+        done
+}
+
 extract_rootfs() {
         local entry has_existing_content=no
         log "Extracting BFS root filesystem"
@@ -5283,10 +5873,20 @@ extract_rootfs() {
 
         if [[ "$has_existing_content" == yes ]]; then
                 warn "$TARGET contains existing files."
-                confirm "Extract into it anyway?" || die "Installation cancelled."
+                if ! confirm "Extract into it anyway?"; then
+                        if target_has_valid_base_system; then
+                                log "Existing valid BFSOS base retained after user declined re-extraction"
+                                return 2
+                        fi
+                        dialog_message "Base extraction skipped"                                 "The target contains existing files, but it did not pass the BFSOS base-system sanity check.
+
+Nothing was overwritten. Review the target or choose re-extraction explicitly."
+                        return 3
+                fi
         fi
 
         tar --xattrs --acls --numeric-owner -xpf "$ARCHIVE" -C "$TARGET"
+        return 0
 }
 
 
@@ -5407,7 +6007,7 @@ validate_fstab_syntax() {
                         next
                 }
 
-                $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+                $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/|tmpfs$|proc$|sysfs$|devpts$|devtmpfs$|none$|overlay$|cgroup2?$|efivarfs$|securityfs$|debugfs$|tracefs$|pstore$|configfs$|fusectl$|mqueue$|hugetlbfs$|ramfs$)/ {
                         printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
                         failed=1
                 }
@@ -5910,6 +6510,21 @@ record_package_failure() {
         cp /run/bfs-install-failure /var/lib/bfs-installer/last_failure 2>/dev/null || true
 }
 
+human_elapsed() {
+        local total="${1:-0}" h=0 m=0 s=0
+        [[ "$total" =~ ^[0-9]+$ ]] || total=0
+        h=$((total / 3600))
+        m=$(((total % 3600) / 60))
+        s=$((total % 60))
+        if ((h > 0)); then
+                printf '%dh %02dm %02ds' "$h" "$m" "$s"
+        elif ((m > 0)); then
+                printf '%dm %02ds' "$m" "$s"
+        else
+                printf '%ds' "$s"
+        fi
+}
+
 run_package_operation() {
         local operation="$1"; shift
         local status=0 start=0 end=0 elapsed=0
@@ -5925,7 +6540,7 @@ run_package_operation() {
         printf '%s\tinstaller\t%s\tstatus=%s\telapsed_seconds=%s\n' \
                 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$operation" "$status" "$elapsed" \
                 >> /var/log/pkgbuild/build-times.log
-        printf 'Timing: %s completed in %ss (status %s)\n' "$operation" "$elapsed" "$status"
+        printf 'Timing: %s completed in %s (status %s)\n' "$operation" "$(human_elapsed "$elapsed")" "$status"
         if ((status != 0)); then
                 record_package_failure "$operation" "$status"
                 echo "ERROR: $operation failed with exit status $status" >&2
@@ -6973,7 +7588,7 @@ awk '
                 next
         }
 
-        $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/)/ {
+        $1 !~ /^(UUID=|LABEL=|PARTUUID=|PARTLABEL=|\/dev\/|tmpfs$|proc$|sysfs$|devpts$|devtmpfs$|none$|overlay$|cgroup2?$|efivarfs$|securityfs$|debugfs$|tracefs$|pstore$|configfs$|fusectl$|mqueue$|hugetlbfs$|ramfs$)/ {
                 printf "Invalid fstab source on line %d: %s\n", NR, $1 > "/dev/stderr"
                 failed=1
         }
@@ -7091,7 +7706,11 @@ show_install_failure_dialog() {
         fi
         if [[ -n "$LOG_FILE" && -r "$LOG_FILE" ]]; then
                 detail="$(tail -n 20 "$LOG_FILE" 2>/dev/null || true)"
-                failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$LOG_FILE" 2>/dev/null | tail -n1 || true)"
+                case "$operation" in
+                        *download*|*source*|*ports*|*package*|*upgrade*|*depinst*|*sysup*)
+                                failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$LOG_FILE" 2>/dev/null | tail -n1 || true)"
+                                ;;
+                esac
         fi
         local message="Installation operation failed:\n$operation\n\nExit status: $status"
         [[ -z "$failed_url" ]] || message+="\n\nLast URL seen:\n$failed_url"
@@ -7209,6 +7828,7 @@ offer_final_chroot() {
 }
 
 main() {
+        local extraction_status=0
         parse_arguments "$@"
         require_root "$@"
         force_posix_locale
@@ -7225,9 +7845,16 @@ main() {
         report_installer_interface_mode
         setup_logging
         require_commands
-        prepare_target_environment
         checkpoint_reset
-        load_resume_state_if_present
+        if [[ -s "$INSTALLER_RESUME_FILE" ]]; then
+                # A resume profile must be read before any clean-start unmount.
+                # Otherwise a valid recovered target is destroyed before its
+                # MD/LUKS/LVM/Btrfs topology can be inspected and reused.
+                mkdir -p "$TARGET"
+                load_resume_state_if_present
+        else
+                prepare_target_environment
+        fi
 
         while true; do
                 while true; do
@@ -7245,28 +7872,63 @@ main() {
                 done
 
                 format_selected_partitions
-                mount_target_filesystems
-                if [[ -f "$TARGET/var/lib/bfs-installer/base_extracted" ]]; then
-                        checkpoint_mark base_extracted
-                fi
-                if ! checkpoint_done base_extracted; then
-                        extract_rootfs
-                        fix_installed_bfsos_branding
-                        save_base_archive
-                        checkpoint_mark base_extracted
+                # format_selected_partitions rebuilds Btrfs layout only from
+                # the current format actions. On resume those actions are KEEP,
+                # so reconstruct the saved subvolume plan explicitly.
+                rebuild_btrfs_layout_from_saved_plan
+                mount_or_reuse_target_filesystems
+                restore_persistent_install_checkpoints
+
+                if ! checkpoint_done base_extracted && target_has_valid_base_system; then
+                        log "Resume: valid BFSOS base detected; restoring base_extracted checkpoint"
                         mkdir -p "$TARGET/var/lib/bfs-installer"
                         : > "$TARGET/var/lib/bfs-installer/base_extracted"
+                        checkpoint_mark base_extracted
+                fi
+
+                if ! checkpoint_done base_extracted; then
+                        extraction_status=0
+                        extract_rootfs || extraction_status=$?
+                        case "$extraction_status" in
+                                0)
+                                        fix_installed_bfsos_branding
+                                        save_base_archive
+                                        mkdir -p "$TARGET/var/lib/bfs-installer"
+                                        : > "$TARGET/var/lib/bfs-installer/base_extracted"
+                                        checkpoint_mark base_extracted
+                                        ;;
+                                2)
+                                        # The user declined redundant extraction
+                                        # and the existing tree passed sanity checks.
+                                        mkdir -p "$TARGET/var/lib/bfs-installer"
+                                        : > "$TARGET/var/lib/bfs-installer/base_extracted"
+                                        checkpoint_mark base_extracted
+                                        ;;
+                                *)
+                                        INSTALL_CONFIRMED=no
+                                        save_resume_state
+                                        continue
+                                        ;;
+                        esac
                 else
                         log "Resume checkpoint: base archive already extracted; preserving installed target"
                 fi
+
+                # Persist the non-secret active storage topology before entering
+                # the chroot/package phase so an abrupt process exit can be
+                # recovered on the next launch.
+                save_resume_state
                 generate_fstab
                 generate_crypttab
                 mount_virtual_filesystems
                 write_chroot_installer
 
                 if ! run_chroot_installer; then
+                        SESSION_FAILURE_STATUS=1
                         for state in packages_complete system_config_complete bootloader_complete; do
-                                [[ -f "$TARGET/var/lib/bfs-installer/$state" ]] && checkpoint_mark "$state"
+                                if [[ -f "$TARGET/var/lib/bfs-installer/$state" ]]; then
+                        checkpoint_mark "$state"
+                fi
                         done
                         # Keep the process and UI alive.  Avoid reformatting the
                         # already-created filesystems if the user chooses to retry
@@ -7283,15 +7945,19 @@ main() {
                         INSTALL_CONFIRMED=no
                         save_resume_state
                         dialog_message "Installation paused" \
-                                "Installed-system configuration did not complete.\n\nThe target remains mounted and the full log is preserved. You are being returned to the installer menu. Chroot can be used to inspect the target; a retry will preserve existing filesystem formats rather than formatting them again."
+                                "Installed-system configuration did not complete.\n\nThe target remains mounted and the full log is preserved. You are being returned to the installer menu. A retry will reuse the existing mounted target when it still matches the selected filesystem plan, preserve completed package installs, and keep existing filesystem formats rather than formatting them again."
                         continue
                 fi
 
                 for state in packages_complete system_config_complete bootloader_complete; do
-                        [[ -f "$TARGET/var/lib/bfs-installer/$state" ]] && checkpoint_mark "$state"
+                        if [[ -f "$TARGET/var/lib/bfs-installer/$state" ]]; then
+                        checkpoint_mark "$state"
+                fi
                 done
                 offer_package_cache_cleanup
                 clear_resume_state
+                INSTALLATION_ALREADY_COMPLETE=yes
+                SESSION_FAILURE_STATUS=0
                 log "Installation complete"
                 offer_final_chroot
                 break
@@ -7299,9 +7965,10 @@ main() {
 
         if [[ "$LOG_ENABLED" == yes ]]; then
                 printf '\nLive-environment log: %s\n' "$LOG_FILE"
-                close_logging 0
+                close_logging "$SESSION_FAILURE_STATUS"
                 copy_log_to_installed_system
         fi
+        return "$SESSION_FAILURE_STATUS"
 }
 
 set +e
