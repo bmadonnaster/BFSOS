@@ -5,6 +5,24 @@ start_epoch="$(date +%s)"
 start_stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 status=0
 
+human_elapsed() {
+    total="${1:-0}"
+    case "$total" in *[!0-9]*|'') total=0 ;; esac
+    days=$((total / 86400))
+    hours=$(((total % 86400) / 3600))
+    minutes=$(((total % 3600) / 60))
+    seconds=$((total % 60))
+    if [ "$days" -gt 0 ]; then
+        printf '%dd %dh %02dm %02ds' "$days" "$hours" "$minutes" "$seconds"
+    elif [ "$hours" -gt 0 ]; then
+        printf '%dh %02dm %02ds' "$hours" "$minutes" "$seconds"
+    elif [ "$minutes" -gt 0 ]; then
+        printf '%dm %02ds' "$minutes" "$seconds"
+    else
+        printf '%ds' "$seconds"
+    fi
+}
+
 # Prefer a persistent pkgmk-owned history location.  Fall back to /tmp only
 # during very early/bootstrap contexts where /var/lib/pkgmk is unavailable.
 history_dir="/var/lib/pkgmk"
@@ -53,7 +71,7 @@ elif command -v runuser >/dev/null 2>&1 && id pkgmk >/dev/null 2>&1; then
     printf '%s' "$line" | runuser -u pkgmk -- sh -c 'cat >> /var/lib/pkgmk/build-times.log' 2>/dev/null || true
 fi
 
-printf 'BFSOS package timing: %s-%s-%s: %ss (status %s)\n' \
-    "$pkg_name" "$pkg_version" "$pkg_release" "$elapsed" "$status"
+printf 'BFSOS package timing: %s-%s-%s: %s (status %s)\n' \
+    "$pkg_name" "$pkg_version" "$pkg_release" "$(human_elapsed "$elapsed")" "$status"
 
 exit "$status"
