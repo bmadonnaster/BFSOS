@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r58 - Dialog settings + bootstrap-safe ccache policy
+# BFSOS bootstrap r59 - status-color consistency + Dialog settings + bootstrap-safe ccache policy
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -1230,7 +1230,7 @@ _dialog_stage3_status() {
     if _base_stage3_complete; then
         printf '%s' '\Z2COMPLETE\Zn'
     elif _base_stage2_complete; then
-        printf '%s' '\Z2AVAILABLE\Zn'
+        printf '%s' '\Zb\Z3AVAILABLE\Zn'
     else
         printf '%s' '\Z1PENDING\Zn'
     fi
@@ -1246,7 +1246,7 @@ _dialog_verification_status() {
 
 _dialog_action_status() {
     if "$@"; then
-        printf '%s' '\Z2AVAILABLE\Zn'
+        printf '%s' '\Zb\Z3AVAILABLE\Zn'
     else
         printf '%s' '\Z1PENDING\Zn'
     fi
@@ -1266,19 +1266,19 @@ _show_bootstrap_menu() {
     printf '  %s2)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Build base system with temporary toolchain (required)' "$(_required_stage_complete _base_stage2_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s3)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || { _base_stage2_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; })"
+        'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || { _base_stage2_complete && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; })"
     printf '  %s4)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sPASSED!%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s5)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Create/compress base rootfs archive (required)' "$(_rootfs_archive_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s6)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Restore newest base rootfs archive' "$(_rootfs_archive_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Restore newest base rootfs archive' "$(_rootfs_archive_complete && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s7)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Restore newest temporary toolchain archive' "$(_toolchain_complete && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Restore newest temporary toolchain archive' "$(_toolchain_complete && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s8)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sNOT AVAILABLE%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sNOT AVAILABLE%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s9)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s10)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' 
     printf '  %s11)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
@@ -1294,7 +1294,7 @@ _dialog_stage_status() {
 
 _dialog_chroot_status() {
     if _chroot_available; then
-        printf '%s' '\Z2AVAILABLE\Zn'
+        printf '%s' '\Zb\Z3AVAILABLE\Zn'
     else
         printf '%s' '\Z1NOT AVAILABLE\Zn'
     fi
