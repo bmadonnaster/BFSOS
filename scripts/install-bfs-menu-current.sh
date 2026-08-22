@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r58-md-personality-fix.sh
+install-bfs-menu-v50-r59-md-reset-signature-fix.sh
