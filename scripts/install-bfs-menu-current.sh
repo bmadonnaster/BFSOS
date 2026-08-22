@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r57-git-md-boot-fixes.sh
+install-bfs-menu-v50-r58-md-personality-fix.sh
