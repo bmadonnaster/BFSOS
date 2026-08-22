@@ -3355,6 +3355,7 @@ fakeroot
 pkgutils
 dialog
 prt-get
+git
 httpup
 ports
 prt-utils

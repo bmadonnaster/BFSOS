@@ -84,6 +84,15 @@ prt-get depinst <package>
 
 BFSOS uses `python3` as the Python 3 package name; Python module ports use the `python3-*` naming convention.
 
+### Package-management component roles
+
+- `pkgutils` provides the low-level package tools, including `pkgmk` and `pkgadd`.
+- `ports` provides the `ports -u` synchronization wrapper and dispatches repository definitions to protocol drivers under `/etc/ports/drivers/`.
+- `prt-get` is the dependency-aware package/ports frontend used for operations such as `depinst` and `sysup`.
+- `prt-utils` provides maintenance/helper commands such as `revdep`; it is not the repository synchronization driver.
+
+BFSOS-maintained collections use one Git-backed monorepo definition (`/etc/ports/bfsos.git`) and one cached checkout, while the generic CRUX-style HttpUp/Git driver mechanism remains available for third-party collections.
+
 ## Logs and bug reports
 
 Bootstrap package logs are written below `logs/toolchain/` and `logs/base/`. Installer logs are preserved in the installed system under `/var/log/bfs/installer/` when logging is enabled.
