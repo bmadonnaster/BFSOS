@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r59 - status-color consistency + Dialog settings + bootstrap-safe ccache policy
+# BFSOS bootstrap r60 - newest-installer mtime discovery + status-color consistency + Dialog settings + bootstrap-safe ccache policy
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -944,15 +944,40 @@ _latest_rootfs_archive() {
 }
 
 _find_latest_installer() {
-    local dir="$SCRIPT_DIR/scripts" file="" best=""
+    local dir="$SCRIPT_DIR/scripts" file="" candidate="" mtime=""
     [ -d "$dir" ] || return 1
-    while IFS= read -r file; do
-        [ -f "$file" ] && [ -x "$file" ] || continue
-        case "$(basename "$file")" in *backup*|*old*|*disabled*|*~) continue ;; esac
-        best="$file"
-    done < <(find "$dir" -maxdepth 1 -type f -name 'install-bfs-menu-v*.sh' -print 2>/dev/null | sort -V)
-    [ -n "$best" ] || return 1
-    printf '%s\n' "$best"
+
+    # Select by actual filesystem modification time, not version-like filename
+    # sorting and not the install-bfs-menu-current.sh symlink. This makes the
+    # handoff resilient to stale/broken convenience symlinks and arbitrary
+    # descriptive revision suffixes.
+    while IFS= read -r candidate; do
+        [ -n "$candidate" ] || continue
+        file="${candidate#* }"
+        [ -f "$file" ] && [ -r "$file" ] || continue
+
+        case "$(basename "$file")" in
+            install-bfs-menu-current.sh|*backup*|*old*|*disabled*|*~)
+                continue
+                ;;
+        esac
+
+        # Never silently launch a syntactically broken newest revision. Skip it
+        # with a warning and continue to the next-newest valid real installer.
+        if ! bash -n "$file" >/dev/null 2>&1; then
+            printf 'WARNING: Skipping installer with shell syntax errors: %s\n' "$file" >&2
+            continue
+        fi
+
+        printf '%s\n' "$file"
+        return 0
+    done < <(
+        find "$dir" -maxdepth 1 -type f -name 'install-bfs-menu-v*.sh' \
+            -printf '%T@ %p\n' 2>/dev/null |
+            sort -nr -k1,1 -k2,2
+    )
+
+    return 1
 }
 
 _installer_available() {
@@ -971,9 +996,12 @@ _launch_bfs_installer() {
         echo "  $SCRIPT_DIR/scripts" >&2
         return 1
     }
+    local installer_mtime=""
+    installer_mtime="$(stat -c '%y' "$installer" 2>/dev/null || printf 'unknown')"
     echo
     echo "Launching BFSOS installer:"
     echo "  Installer: $installer"
+    echo "  Modified : $installer_mtime"
     echo "  Base file: $archive"
     echo
     set +e

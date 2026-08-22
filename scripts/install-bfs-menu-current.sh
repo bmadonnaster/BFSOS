@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r59-md-reset-signature-fix.sh
+install-bfs-menu-v50-r60-md-reset-discovery-fix.sh
