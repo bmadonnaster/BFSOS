@@ -65,7 +65,10 @@ manifest_tree() {
     [ -d "$tree" ] || return 0
     (
         cd "$tree" || exit 1
-        find . -type f -print | LC_ALL=C sort | while IFS= read -r file; do
+        find . -type f \
+            ! -name '.md5sum' \
+            ! -name '.footprint' \
+            -print | LC_ALL=C sort | while IFS= read -r file; do
             sha256sum "$file"
         done
         find . -type l -print | LC_ALL=C sort | while IFS= read -r link; do
