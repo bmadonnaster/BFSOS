@@ -9,7 +9,7 @@ release=1
 source=(https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-$version.tar.xz)
 
 pkg_build() {
-	meson setup build $name-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--buildtype=plain \
 		--wrap-mode nodownload \
