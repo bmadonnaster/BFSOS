@@ -6,7 +6,7 @@
 name=cairo
 version=1.18.4
 release=2
-source=(https://ftp.ec-m.fr/pub/OpenBSD/distfiles/$name-$version.tar.xz)
+source=(https://mirror.subgraph.com/$name-$version.tar.xz)
 
 pkg_build() {
         mkdir build &&
