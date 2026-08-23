@@ -6,7 +6,7 @@
 name=gdk-pixbuf
 version=2.44.8
 release=1
-source=(https://download.gnome.org/sources/$name/2.42/$name-$version.tar.xz)
+source=(https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-$version.tar.xz)
 
 pkg_build() {
 	meson setup build $name-$version \
