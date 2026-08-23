@@ -2,8 +2,8 @@
 
 name=colord
 version=1.4.8
-release=2
-source=(https://www.freedesktop.org/software/${name}/releases/${name}-${version}.tar.xz
+release=3
+source=(https://mirror.freedif.org/pub/blfs/conglomeration/colord/colord-$version.tar.xz)
 disable-udev-hwdb-tests.patch)
 
 pkg_build () {
