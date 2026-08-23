@@ -6,13 +6,13 @@
 
 name=rustc
 version=1.98.0
-release=4
+release=5
 source=(https://static.rust-lang.org/dist/rustc-$version-src.tar.xz)
 
 pkg_build() {
-      local prefix="/opt/rustc-$version"
+    local prefix="/opt/rustc-$version"
 
-    cat > bootstrap.toml <<EOF
+    cat > bootstrap.toml <<EOF_BOOTSTRAP
 change-id = "ignore"
 
 [llvm]
@@ -40,23 +40,23 @@ cxx = "/usr/bin/g++"
 ar = "/usr/bin/gcc-ar"
 ranlib = "/usr/bin/gcc-ranlib"
 llvm-config = "/usr/bin/llvm-config"
-EOF
+EOF_BOOTSTRAP
 
-    if [ -f /usr/lib32/libc.so.6 ]; then
-        sed -i 's/target = \["x86_64-unknown-linux-gnu"\]/target = ["x86_64-unknown-linux-gnu", "i686-unknown-linux-gnu"]/' bootstrap.toml
-        cat >> bootstrap.toml <<'EOF'
+    python3 x.py build || return 1
 
-[target.i686-unknown-linux-gnu]
-cc = "/usr/bin/gcc -m32"
-cxx = "/usr/bin/g++ -m32"
-ar = "/usr/bin/gcc-ar"
-ranlib = "/usr/bin/gcc-ranlib"
-EOF
-    fi
+    DESTDIR="$PKG" python3 x.py install || return 1
 
-    python3 x.py build
-    DESTDIR="$PKG" python3 x.py install
+    test -x "$PKG$prefix/bin/rustc" || {
+        echo "ERROR: rustc was not installed into package staging tree"
+        return 1
+    }
 
+    test -x "$PKG$prefix/bin/cargo" || {
+        echo "ERROR: cargo was not installed into package staging tree"
+        return 1
+    }
+
+    install -d "$PKG/opt"
     ln -sfn "rustc-$version" "$PKG/opt/rustc"
 
     install -d "$PKG/etc/profile.d"
