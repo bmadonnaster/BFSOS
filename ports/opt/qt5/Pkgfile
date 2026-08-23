@@ -6,7 +6,7 @@
 
 name=qt5
 version=5.15.19
-release=7
+release=8
 # This recipe applies its patches explicitly at package-specific paths.
 skip_patch=yes
 
@@ -20,6 +20,7 @@ source=(
     https://download.qt.io/archive/qt/5.15/$version/single/qt-everywhere-opensource-src-$version.tar.xz
     https://deb.debian.org/debian/pool/main/q/qtbase-opensource-src/qtbase-opensource-src_5.15.19+dfsg-4.debian.tar.xz
     https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
+    https://deb.debian.org/debian/pool/main/q/qtlocation-opensource-src/qtlocation-opensource-src_5.15.19+dfsg-2.debian.tar.xz
 )
 
 # BFSOS pkgmk uses a parallel renames array instead of filename::URL syntax.
@@ -29,19 +30,23 @@ renames=(
     SKIP
     qtbase-debian-patches.xzblob
     qtwebengine-debian-patches.xzblob
+    qtlocation-debian-patches.xzblob
 )
 
 apply_qt5_compat_patches() {
     local patchroot pfile
 
-    rm -rf "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
-    mkdir -p "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
+    rm -rf "$SRC/qtbase-debian" "$SRC/qtwebengine-debian" "$SRC/qtlocation-debian"
+    mkdir -p "$SRC/qtbase-debian" "$SRC/qtwebengine-debian" "$SRC/qtlocation-debian"
 
     tar -xJf "$SRC/qtbase-debian-patches.xzblob" \
         -C "$SRC/qtbase-debian" || return 1
 
     tar -xJf "$SRC/qtwebengine-debian-patches.xzblob" \
         -C "$SRC/qtwebengine-debian" || return 1
+
+    tar -xJf "$SRC/qtlocation-debian-patches.xzblob" \
+        -C "$SRC/qtlocation-debian" || return 1
 
     # Apply the QtBase OpenSSL compatibility backports in Debian series order.
     # These are explicit so a changed/missing Debian patch fails immediately.
@@ -77,6 +82,25 @@ apply_qt5_compat_patches() {
         echo "qt5: applying QtWebEngine compatibility patch $pfile"
         patch -d qtwebengine -Np1 < "$patchroot/$pfile" || return 1
     done
+    # QtLocation 5.15 bundles an old Mapbox GL Native snapshot. Debian carries
+    # the compatibility fixes needed by modern compilers/ICU. Apply the
+    # relevant non-platform-specific patches in Debian series order.
+    patchroot="$SRC/qtlocation-debian/debian/patches"
+    for pfile in \
+        mapboxgl_thread_portability.diff \
+        gcc_13.diff \
+        fix_appendChildNode_call.diff \
+        opengl.diff \
+        c++17.diff
+    do
+        if [ ! -f "$patchroot/$pfile" ]; then
+            echo "qt5: required QtLocation compatibility patch missing: $pfile" >&2
+            return 1
+        fi
+        echo "qt5: applying QtLocation compatibility patch $pfile"
+        patch -d qtlocation -Np1 < "$patchroot/$pfile" || return 1
+    done
+
 }
 
 pkg_build() {
