@@ -6,7 +6,7 @@
 
 name=nodejs
 version=24.19.0
-release=2
+release=3
 source=(https://nodejs.org/dist/v$version/node-v$version.tar.xz
   unbundle-uv.patch)
 
@@ -34,7 +34,7 @@ pkg_build() {
     --shared-libuv \
     --shared-zlib \
     --shared-openssl \
-    --shared-libnghttp2 \
+ \
     --experimental-http-parser
 
   make
