@@ -8,6 +8,7 @@ name=pulseaudio
 version=17.0
 release=1
 source=(https://freedesktop.org/software/$name/releases/$name-$version.tar.xz)
+renames=(pulseaudio-$version.tar.xz)
 
 pkg_build() {
   mkdir build &&
