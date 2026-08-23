@@ -6,7 +6,7 @@
 
 name=libxkbcommon
 version=1.13.2
-release=4
+release=5
 source=(https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz)
 
 pkg_build() {
