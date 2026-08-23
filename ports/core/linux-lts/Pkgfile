@@ -1,17 +1,15 @@
-# Description: Linux 6.12 LTS compatibility kernel with broad x86_64 hardware support
+# Description: Linux 6.18 LTS compatibility kernel with broad x86_64 hardware support
 # URL: https://www.kernel.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bc bison cpio dracut elfutils flex linux-firmware openssl
 # Optional: pahole
 
 name=linux-lts
-version=6.12.101
-release=6.diag2
+version=6.18.45
+release=7
 
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${version}.tar.xz
-    gcc16-const-cast.patch
-    md-check-new-feature-diagnostic.patch
     config
 )
 
@@ -25,7 +23,7 @@ pkg_build() {
     # supplied config is intentionally used as the compatibility baseline so
     # the LTS flavor keeps the same proven EFI/console/virtio/storage behavior
     # instead of inheriting thousands of unrelated allmodconfig differences.
-    # olddefconfig below reconciles version-specific symbols for Linux 6.12.
+    # olddefconfig below reconciles version-specific symbols for Linux 6.18.
     cp "$SRC/config" .config
 
     scripts/config --set-str CONFIG_LOCALVERSION "-BFS-LTS"

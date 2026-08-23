@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r60 - newest-installer mtime discovery + status-color consistency + Dialog settings + bootstrap-safe ccache policy
+# BFSOS bootstrap r62 - newest-installer mtime discovery + PASSED white + authoritative pkgutils defaults validation
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -818,12 +818,14 @@ if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ]; then
     COLOR_GREEN=$'\033[1;32m'
     COLOR_YELLOW=$'\033[1;33m'
     COLOR_CYAN=$'\033[1;36m'
+    COLOR_BOLD_WHITE=$'\033[1;37m'
     COLOR_RESET=$'\033[0m'
 else
     COLOR_RED=""
     COLOR_GREEN=""
     COLOR_YELLOW=""
     COLOR_CYAN=""
+    COLOR_BOLD_WHITE=""
     COLOR_RESET=""
 fi
 
@@ -1266,7 +1268,7 @@ _dialog_stage3_status() {
 
 _dialog_verification_status() {
     if _required_stage_complete _verification_complete; then
-        printf '%s' '\Z3PASSED!\Zn'
+        printf '%s' '\Zb\Z7PASSED!\Zn'
     else
         printf '%s' '\Z1PENDING\Zn'
     fi
@@ -1296,7 +1298,7 @@ _show_bootstrap_menu() {
     printf '  %s3)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Rebuild base system with final toolchain (optional)' "$(_base_stage3_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || { _base_stage2_complete && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; })"
     printf '  %s4)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
-        'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sPASSED!%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
+        'Verify completed base system (required)' "$(_required_stage_complete _verification_complete && printf '%sPASSED!%s' "$COLOR_BOLD_WHITE" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s5)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Create/compress base rootfs archive (required)' "$(_rootfs_archive_complete && printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s6)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \

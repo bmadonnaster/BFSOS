@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r60-md-reset-discovery-fix.sh
+install-bfs-menu-v50-r61-lts618-serial-order-fix.sh
