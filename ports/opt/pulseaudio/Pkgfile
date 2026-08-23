@@ -7,7 +7,7 @@
 name=pulseaudio
 version=17.0
 release=1
-source=(https://freedesktop.org/software/$name/releases/$name-$version.tar.xz)
+source=(https://ftp.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_$version+dfsg1.orig.tar.xz)
 renames=(pulseaudio-$version.tar.xz)
 
 pkg_build() {
