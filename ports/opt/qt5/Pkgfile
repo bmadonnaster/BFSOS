@@ -6,7 +6,7 @@
 
 name=qt5
 version=5.15.19
-release=5
+release=6
 # This recipe applies its patches explicitly at package-specific paths.
 skip_patch=yes
 
@@ -78,7 +78,6 @@ apply_qt5_compat_patches() {
 }
 
 pkg_build() {
-    cd "$SRC/qt-everywhere-opensource-src-$version" || return 1
     export QT5PREFIX=/opt/qt5
 
     apply_qt5_compat_patches || return 1
