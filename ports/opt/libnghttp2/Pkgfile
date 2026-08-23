@@ -4,9 +4,9 @@
 # Optional: libxml2 boost c-ares cython jansson libevent sphinx jemalloc libev mruby spdylay cUnit
 
 name=libnghttp2
-version=1.64.0
-release=2
-source=(https://github.com/libnghttp2/libnghttp2/releases/download/v$version/libnghttp2-$version.tar.xz)
+version=1.70.0
+release=1
+source=(https://github.com/nghttp2/nghttp2/releases/download/v$version/nghttp2-$version.tar.gz)
 
 pkg_build() {
 	./configure --prefix=/usr     \
