@@ -1,0 +1,25 @@
+Files BFSOS-orig/BFSOS/bootstrap.sh and BFSOS-work/BFSOS/bootstrap.sh differ
+Files BFSOS-orig/BFSOS/ports/core/pkgutils/Pkgfile and BFSOS-work/BFSOS/ports/core/pkgutils/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/core/pkgutils/pkgadd.conf and BFSOS-work/BFSOS/ports/core/pkgutils/pkgadd.conf differ
+Files BFSOS-orig/BFSOS/ports/core/python3-pyyaml/Pkgfile and BFSOS-work/BFSOS/ports/core/python3-pyyaml/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/opt/cairo/Pkgfile and BFSOS-work/BFSOS/ports/opt/cairo/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/opt/graphite2/Pkgfile and BFSOS-work/BFSOS/ports/opt/graphite2/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/opt/harfbuzz/Pkgfile and BFSOS-work/BFSOS/ports/opt/harfbuzz/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/opt/spirv-llvm-translator/Pkgfile and BFSOS-work/BFSOS/ports/opt/spirv-llvm-translator/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/libdrm/Pkgfile and BFSOS-work/BFSOS/ports/xorg/libdrm/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/mesa/Pkgfile and BFSOS-work/BFSOS/ports/xorg/mesa/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/twm/Pkgfile and BFSOS-work/BFSOS/ports/xorg/twm/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xauth/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xauth/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xclock/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xclock/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xf86-video-openchrome/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xf86-video-openchrome/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xf86-video-vboxvideo/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xf86-video-vboxvideo/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xinit/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xinit/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xkbutils/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xkbutils/Pkgfile differ
+Only in BFSOS-work/BFSOS/ports/xorg: xorg
+Files BFSOS-orig/BFSOS/ports/xorg/xorg-apps/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xorg-apps/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xorg-driver/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xorg-driver/Pkgfile differ
+Files BFSOS-orig/BFSOS/ports/xorg/xterm/Pkgfile and BFSOS-work/BFSOS/ports/xorg/xterm/Pkgfile differ
+Files BFSOS-orig/BFSOS/scripts/install-bfs-menu-current.sh and BFSOS-work/BFSOS/scripts/install-bfs-menu-current.sh differ
+Only in BFSOS-work/BFSOS/scripts: install-bfs-menu-v50-r64-package-dependency-fixes.sh
+
+Validation: targeted Bash/Pkgfile syntax checks passed on 2026-08-23.

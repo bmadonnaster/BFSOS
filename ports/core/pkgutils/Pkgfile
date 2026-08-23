@@ -4,7 +4,7 @@
 
 name=pkgutils
 version=5.40.12
-release=16
+release=17
 
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
@@ -37,49 +37,10 @@ harden_pkgmk_work_cleanup() {
         rm -f "$tmp"
 }
 
-# Validate archive-shaped sources immediately after acquisition.  This catches
-# HTTP-200 login/error HTML saved under a .tar.* filename while leaving text
-# sources (patches, scripts, configs) alone.
-harden_pkgmk_download_validation() {
-        local target="$1" tmp="${1}.bfsos-new"
-        awk '
-        /^download_source\(\)[[:space:]]*\{/ {
-                print "_bfs_orig_download_source() {"
-                next
-        }
-        /^remove_source\(\)[[:space:]]*\{/ && !injected {
-                print "_bfs_validate_downloaded_archives() {"
-                print "        local FILE LOCAL_FILENAME candidate"
-                print "        for FILE in \"${source[@]}\"; do"
-                print "                LOCAL_FILENAME=\"$(get_filename \"$FILE\")\""
-                print "                candidate=\"$LOCAL_FILENAME\""
-                print "                [ -f \"$candidate\" ] || candidate=\"$PKGMK_SOURCE_DIR/${LOCAL_FILENAME##*/}\""
-                print "                [ -f \"$candidate\" ] || continue"
-                print "                case \"${LOCAL_FILENAME##*/}\" in"
-                print "                        *.tar|*.tar.gz|*.tar.Z|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.txz|*.tar.zst|*.tzst|*.tar.lz4|*.tar.lzma|*.tar.lz|*.zip|*.rpm|*.7z)"
-                print "                                if ! bsdtar -tf \"$candidate\" >/dev/null 2>&1; then"
-                print "                                        error \"Source archive ${LOCAL_FILENAME##*/} is not a valid archive (possible HTML/login/error response).\""
-                print "                                        rm -f -- \"$candidate\""
-                print "                                        exit $E_DOWNLOAD"
-                print "                                fi"
-                print "                                ;;"
-                print "                esac"
-                print "        done"
-                print "}"
-                print ""
-                print "download_source() {"
-                print "        _bfs_orig_download_source \"$@\""
-                print "        _bfs_validate_downloaded_archives"
-                print "}"
-                print ""
-                injected=1
-        }
-        { print }
-        ' "$target" > "$tmp" || return 1
-        cat "$tmp" > "$target" || return 1
-        rm -f "$tmp"
-}
-
+# r152: retire the r148 download_source wrapper experiment. Live sysup
+# testing proved that rewriting the core function could leave pkgmk calling
+# download_source() without defining it. Keep CRUX pkgmk download logic intact;
+# validation must never rename/replace core pkgmk functions.
 bootstrap_build() {
         # Select a UTF-8 C locale when the current environment provides one
         # (needed by libarchive for archives such as GCC), but retain a plain-C

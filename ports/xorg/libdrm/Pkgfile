@@ -6,27 +6,23 @@
 
 name=libdrm
 version=2.4.134
-release=2
+release=3
 source=(https://ftp.debian.org/debian/pool/main/libd/libdrm/libdrm_$version.orig.tar.xz)
 renames=(libdrm-$version.tar.xz)
 
 pkg_build() {
-
-	mkdir build &&
-	cd    build &&
-
-	meson setup --prefix=$XORG_PREFIX \
-            --buildtype=release   \
-            -Dudev=true           \
-            -Dintel=enabled 	  \
-            -Dvalgrind=enabled    \
-            -Damdgpu=enabled      \
-            -Dnouveau=enabled     \
-            --wrap-mode nodownload \
-	    -D b_lto=true \
-	    -D b_pie=true \
-	    -D man-pages=disabled \
-            ..                    &&
-ninja
-	DESTDIR=$PKG ninja install
+    meson setup build . \
+        --prefix="$XORG_PREFIX" \
+        --buildtype=release \
+        -Dudev=true \
+        -Dintel=enabled \
+        -Dvalgrind=enabled \
+        -Damdgpu=enabled \
+        -Dnouveau=enabled \
+        --wrap-mode=nodownload \
+        -Db_lto=true \
+        -Db_pie=true \
+        -Dman-pages=disabled || return $?
+    meson compile -C build -j "${JOBS:-1}" || return $?
+    DESTDIR="$PKG" meson install -C build || return $?
 }

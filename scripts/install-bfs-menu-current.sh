@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r63-storage-plan-kernel-flavor.sh
+install-bfs-menu-v50-r64-package-dependency-fixes.sh

@@ -3431,6 +3431,7 @@ git
 httpup
 ports
 prt-utils
+pciutils
 lzo
 btrfs-progs
 dosfstools

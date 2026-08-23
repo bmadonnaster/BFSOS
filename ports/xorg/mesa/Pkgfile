@@ -1,12 +1,12 @@
 # Description: Mesa 3D graphics library and open-source GPU drivers
 # URL: https://www.mesa3d.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libdrm llvm python3-mako python3-pyyaml xorg-libs
+# Depends on: libdrm llvm spirv-llvm-translator python3-mako python3-pyyaml xorg-libs
 # Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors rust-bindgen valgrind vulkan-loader wayland-protocols
 
 name=mesa
 version=26.2.1
-release=3
+release=4
 source=(https://www.artfiles.org/debian.org/pool/main/m/mesa/mesa_$version.orig.tar.xz)
 renames=(mesa-$version.tar.xz)
 
@@ -29,8 +29,8 @@ pkg_build() {
         -Dvulkan-drivers="$vulkan_drivers" \
         -Dvalgrind=disabled \
         -Dlibunwind=disabled \
-        -Dvideo-codecs=all
+        -Dvideo-codecs=all || return $?
 
-    meson compile -C build -j "${JOBS:-1}"
-    DESTDIR="$PKG" meson install -C build
+    meson compile -C build -j "${JOBS:-1}" || return $?
+    DESTDIR="$PKG" meson install -C build || return $?
 }
