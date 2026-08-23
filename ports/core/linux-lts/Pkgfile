@@ -6,18 +6,68 @@
 
 name=linux-lts
 version=6.18.45
-release=7
+release=8
+
+debian_patch_base="https://sources.debian.org/data/main/l/linux/6.18.9-1/debian/patches"
 
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${version}.tar.xz
     config
+
+    # Selected Debian kernel policy/hardening/reliability patches.
+    # Keep this intentionally small: upstream 6.18.y remains the kernel base.
+    "$debian_patch_base/bugfix/all/radeon-amdgpu-firmware-is-required-for-drm-and-kms-on-r600-onward.patch"
+    "$debian_patch_base/debian/af_802154-Disable-auto-loading-as-mitigation-against.patch"
+    "$debian_patch_base/debian/rds-Disable-auto-loading-as-mitigation-against-local.patch"
+    "$debian_patch_base/debian/hamradio-disable-auto-loading-as-mitigation-against-local-exploits.patch"
+    "$debian_patch_base/debian/fs-enable-link-security-restrictions-by-default.patch"
+    "$debian_patch_base/features/all/security-perf-allow-further-restriction-of-perf_event_open.patch"
+    "$debian_patch_base/features/x86/intel-iommu-add-option-to-exclude-integrated-gpu-only.patch"
+    "$debian_patch_base/debian/btrfs-warn-about-raid5-6-being-experimental-at-mount.patch"
+    "$debian_patch_base/features/x86/x86-memtest-WARN-if-bad-RAM-found.patch"
+    "$debian_patch_base/bugfix/all/fs-add-module_softdep-declarations-for-hard-coded-cr.patch"
+    "$debian_patch_base/bugfix/all/module-disable-matching-missing-version-crc.patch"
 )
+
+apply_bfsos_debian_patch() {
+    local patch_name="$1"
+
+    printf 'Applying BFSOS-selected Debian patch: %s\n' "$patch_name"
+    patch --batch --forward -Np1 -i "$SRC/$patch_name" || {
+        echo "linux-lts patch failure: $patch_name" >&2
+        return 1
+    }
+}
+
+apply_bfsos_debian_patch_series() {
+    local patch_name
+
+    for patch_name in \
+        radeon-amdgpu-firmware-is-required-for-drm-and-kms-on-r600-onward.patch \
+        af_802154-Disable-auto-loading-as-mitigation-against.patch \
+        rds-Disable-auto-loading-as-mitigation-against-local.patch \
+        hamradio-disable-auto-loading-as-mitigation-against-local-exploits.patch \
+        fs-enable-link-security-restrictions-by-default.patch \
+        security-perf-allow-further-restriction-of-perf_event_open.patch \
+        intel-iommu-add-option-to-exclude-integrated-gpu-only.patch \
+        btrfs-warn-about-raid5-6-being-experimental-at-mount.patch \
+        x86-memtest-WARN-if-bad-RAM-found.patch \
+        fs-add-module_softdep-declarations-for-hard-coded-cr.patch \
+        module-disable-matching-missing-version-crc.patch
+    do
+        apply_bfsos_debian_patch "$patch_name" || return 1
+    done
+}
 
 pkg_build() {
     local kernver=""
 
-    make mrproper
+    # Apply the small BFSOS-selected Debian policy/reliability patch set before
+    # configuration.  A rejected patch is fatal; never silently build a kernel
+    # that is missing part of the declared patch policy.
+    apply_bfsos_debian_patch_series || return 1
 
+    make mrproper
 
     # Start from the known-good BFSOS Current-kernel configuration.  The
     # supplied config is intentionally used as the compatibility baseline so
@@ -37,6 +87,30 @@ pkg_build() {
     scripts/config --disable UBSAN
     scripts/config --disable CMDLINE_BOOL
 
+    # BFSOS baseline policy kept synchronized with the default kernel.
+    scripts/config --enable PSI
+    scripts/config --disable PSI_DEFAULT_DISABLED
+    scripts/config --disable IKHEADERS
+
+    scripts/config --enable CGROUPS
+    scripts/config --enable MEMCG
+    scripts/config --enable CGROUP_SCHED
+    scripts/config --disable RT_GROUP_SCHED
+    scripts/config --disable EXPERT
+
+    scripts/config --enable STACKPROTECTOR
+    scripts/config --enable STACKPROTECTOR_STRONG
+
+    scripts/config --disable UEVENT_HELPER
+    scripts/config --disable FW_LOADER_USER_HELPER
+
+    scripts/config --enable DMIID
+    scripts/config --enable SYSFB_SIMPLEFB
+
+    scripts/config --enable INOTIFY_USER
+    scripts/config --enable TMPFS
+    scripts/config --enable TMPFS_POSIX_ACL
+
     # Core x86_64 boot/platform support.
     scripts/config --enable 64BIT
     scripts/config --enable X86_64
@@ -51,7 +125,10 @@ pkg_build() {
     scripts/config --enable PCI
     scripts/config --enable PCI_MSI
     scripts/config --enable IOMMU_SUPPORT
+    scripts/config --enable IRQ_REMAP
+    scripts/config --enable X86_X2APIC
     scripts/config --enable IA32_EMULATION
+    scripts/config --disable IA32_EMULATION_DEFAULT_DISABLED
 
     # Common root/storage filesystems are built in so the compatibility kernel
     # can reach a normal BFSOS root independently of host-only driver guesses.
@@ -61,6 +138,9 @@ pkg_build() {
     scripts/config --enable F2FS_FS
     scripts/config --enable VFAT_FS
     scripts/config --enable EFIVAR_FS
+    scripts/config --enable NLS
+    scripts/config --enable NLS_CODEPAGE_437
+    scripts/config --enable NLS_ISO8859_1
 
     # Storage transports commonly used on x86_64 systems.
     scripts/config --enable SCSI
@@ -75,6 +155,8 @@ pkg_build() {
     # loading these modules before LUKS/LVM discovery.
     scripts/config --enable MD
     scripts/config --enable BLK_DEV_MD
+    scripts/config --enable MD_BITMAP
+    scripts/config --enable MD_BITMAP_FILE
     scripts/config --enable MD_LINEAR
     scripts/config --enable MD_RAID0
     scripts/config --enable MD_RAID1
@@ -91,6 +173,8 @@ pkg_build() {
     scripts/config --module DM_MIRROR
     scripts/config --module DM_RAID
     scripts/config --module DM_MULTIPATH
+    scripts/config --module DM_DELAY
+    scripts/config --module DM_ZERO
 
     # Optional compressed swap exposed by the installer.
     scripts/config --module ZRAM
@@ -106,6 +190,7 @@ pkg_build() {
     scripts/config --enable FB
     scripts/config --enable FB_EFI
     scripts/config --enable DRM
+    scripts/config --enable DRM_PANIC
     scripts/config --enable DRM_SIMPLEDRM
     scripts/config --enable DRM_FBDEV_EMULATION
     scripts/config --enable FRAMEBUFFER_CONSOLE
@@ -129,6 +214,29 @@ pkg_build() {
     make olddefconfig
     make syncconfig
 
+    # Verify the BFSOS baseline policy survived Kconfig dependency resolution.
+    for required_y in \
+        PSI CGROUPS MEMCG CGROUP_SCHED STACKPROTECTOR STACKPROTECTOR_STRONG \
+        DEVTMPFS DEVTMPFS_MOUNT DMIID SYSFB_SIMPLEFB INOTIFY_USER TMPFS \
+        TMPFS_POSIX_ACL PCI PCI_MSI IOMMU_SUPPORT IRQ_REMAP X86_X2APIC \
+        IA32_EMULATION NLS NLS_CODEPAGE_437 NLS_ISO8859_1
+    do
+        grep -q "^CONFIG_${required_y}=y$" .config || {
+            echo "linux-lts config error: CONFIG_${required_y} is not enabled" >&2
+            return 1
+        }
+    done
+
+    for required_n in \
+        PSI_DEFAULT_DISABLED IKHEADERS RT_GROUP_SCHED EXPERT \
+        UEVENT_HELPER FW_LOADER_USER_HELPER IA32_EMULATION_DEFAULT_DISABLED
+    do
+        grep -q "^# CONFIG_${required_n} is not set$" .config || {
+            echo "linux-lts config error: CONFIG_${required_n} is not disabled" >&2
+            return 1
+        }
+    done
+
     echo "===== BFSOS LTS console configuration ====="
     grep -E '^CONFIG_(VT|VT_CONSOLE|SERIAL_8250|SERIAL_8250_CONSOLE|FB|FB_EFI|DRM|DRM_SIMPLEDRM|DRM_FBDEV_EMULATION|FRAMEBUFFER_CONSOLE|FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER|VIRTIO|VIRTIO_PCI|VIRTIO_BLK|VIRTIO_CONSOLE)=' .config || true
 
@@ -149,16 +257,22 @@ pkg_build() {
         }
     done
 
-    for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
+    for md_option in MD BLK_DEV_MD MD_BITMAP MD_BITMAP_FILE MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
         grep -q "^CONFIG_${md_option}=y$" .config || {
             echo "linux-lts config error: CONFIG_${md_option} is not built in" >&2
             return 1
         }
     done
-    grep -q '^CONFIG_ZRAM=m$' .config || {
-        echo "linux-lts config error: CONFIG_ZRAM is not modular" >&2
-        return 1
-    }
+    for dm_option in \
+        BLK_DEV_DM DM_CRYPT DM_INTEGRITY DM_VERITY DM_SNAPSHOT \
+        DM_THIN_PROVISIONING DM_CACHE DM_WRITECACHE DM_MIRROR DM_RAID \
+        DM_MULTIPATH DM_DELAY DM_ZERO ZRAM
+    do
+        grep -q "^CONFIG_${dm_option}=m$" .config || {
+            echo "linux-lts config error: CONFIG_${dm_option} is not modular" >&2
+            return 1
+        }
+    done
 
     kernver="$(make -s kernelrelease)"
     if [ "$kernver" != "$version-BFS-LTS" ]; then
