@@ -7,7 +7,8 @@
 name=mesa
 version=26.2.1
 release=3
-source=(https://archive.mesa3d.org/mesa-$version.tar.xz)
+source=(https://www.artfiles.org/debian.org/pool/main/m/mesa/mesa_$version.orig.tar.xz)
+renames=(mesa-$version.tar.xz)
 
 pkg_build() {
     local platforms=x11
