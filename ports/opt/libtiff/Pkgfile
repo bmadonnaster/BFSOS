@@ -12,8 +12,11 @@ pkg_build() {
 	mkdir -p libtiff-build &&
 	cd       libtiff-build &&
 
-cmake -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libtiff-4.6.0 \
-      -DCMAKE_INSTALL_PREFIX=/usr -G Ninja .. &&
+cmake \
+      -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libtiff-$version \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -G Ninja .. &&
 ninja
 	DESTDIR=$PKG ninja install
 }
