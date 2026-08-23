@@ -6,7 +6,7 @@
 name=twm
 version=1.0.13.1
 release=1
-source=(https://www.x.org/pub/individual/app/$name-$version.tar.xz)
+source=(https://mirror.freedif.org/pub/blfs/conglomeration/Xorg/$name-$version.tar.xz)
 
 pkg_build() {
     sed -i -e '/^rcdir =/s,^\(rcdir = \).*,\1/etc/X11/app-defaults,' src/Makefile.in || return $?

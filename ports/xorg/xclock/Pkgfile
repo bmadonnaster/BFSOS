@@ -6,7 +6,7 @@
 name=xclock
 version=1.2.1
 release=1
-source=(https://www.x.org/pub/individual/app/$name-$version.tar.xz)
+source=(https://mirror.freedif.org/pub/blfs/conglomeration/Xorg/$name-$version.tar.xz)
 
 pkg_build() {
     ./configure $XORG_CONFIG || return $?
