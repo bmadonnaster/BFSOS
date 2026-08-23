@@ -6,11 +6,11 @@
 
 name=libxkbcommon
 version=1.13.2
-release=5
+release=6
 source=(https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz)
 
 pkg_build() {
-	prt-get isinst wayland-protocols || PKGMK_XKBCOMMON+=' -D enable-wayland=false'
+	prt-get isinst wayland-protocols || PKGMK_XKBCOMMON+=' -Denable-wayland=false'
 	prt-get isinst xkeyboard-config || PKGMK_XKBCOMMON+=' -D enable-x11=false'
 
 
