@@ -2,18 +2,22 @@
 
 name=python3-html5lib
 version=1.1
-release=3
+release=4
 source=(https://files.pythonhosted.org/packages/source/h/html5lib/html5lib-${version}.tar.gz)
 
 pkg_build() {
-    # html5lib 1.1 compatibility with setuptools >= 82:
-    # pkg_resources is no longer shipped as a public top-level module.
+    # html5lib 1.1 compatibility with modern setuptools:
     sed -i \
         's/from pkg_resources import/from packaging.version import parse as/' \
         setup.py || return 1
 
     sed -i \
         's/^import pkg_resources$/pkg_resources = None/' \
+        setup.py || return 1
+
+    # Python 3.14 removed ast.Str; string constants are ast.Constant now.
+    sed -i \
+        's/isinstance(a.value, ast.Str)/isinstance(a.value, ast.Constant) and isinstance(a.value.value, str)/' \
         setup.py || return 1
 
     python3 setup.py build || return 1
