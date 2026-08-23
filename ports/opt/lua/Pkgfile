@@ -5,7 +5,7 @@
 
 name=lua
 version=5.4.7
-release=1
+release=2
 source=(https://www.lua.org/ftp/$name-$version.tar.gz
 https://www.linuxfromscratch.org/patches/blfs/svn/$name-$version-shared_library-1.patch)
 
