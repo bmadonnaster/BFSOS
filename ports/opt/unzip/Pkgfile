@@ -1,3 +1,4 @@
+sudo tee ports/opt/unzip/Pkgfile >/dev/null <<'EOF'
 # Description: Decompress utility for zipfiles
 # URL: https://infozip.sourceforge.net/UnZip.html
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
@@ -16,7 +17,7 @@ pkg_build() {
     sed -i 's/-O3//' unix/configure
 
     make -f unix/Makefile \
-        LOCAL_UNZIP="$CFLAGS" \
+        LOCAL_UNZIP="$CFLAGS -std=gnu17" \
         unzips
 
     make -f unix/Makefile \
@@ -26,3 +27,4 @@ pkg_build() {
 
     ln -sf unzip "$PKG/usr/bin/zipinfo"
 }
+
