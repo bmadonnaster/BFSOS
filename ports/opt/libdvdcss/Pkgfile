@@ -2,5 +2,5 @@
 
 name=libdvdcss
 version=1.6.0
-release=2
-source=(https://get.videolan.org/libdvdcss/1.6.0/libdvdcss-1.6.0.tar.bz2)
+release=3
+source=(https://mirror.freedif.org/pub/blfs/conglomeration/libdvdcss/libdvdcss-$version.tar.xz)
