@@ -8,7 +8,7 @@ name=linux-lts
 version=6.18.45
 release=8
 
-debian_patch_base="https://sources.debian.org/data/main/l/linux/6.18.9-1/debian/patches"
+debian_patch_base="https://sources.debian.org/data/main/l/linux/6.18.9-1~bpo13+1/debian/patches"
 
 source=(
     https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${version}.tar.xz
