@@ -6,14 +6,11 @@
 
 name=qt5
 version=5.15.19
-release=8
-# This recipe applies its patches explicitly at package-specific paths.
-skip_patch=yes
-
+release=9
 # Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
 # uses the official complete Qt source archive, but Debian currently carries
 # upstream/downstream compatibility fixes needed by modern OpenSSL/GCC/ICU/
-# glibc/Python/Ninja.  The *.xzblob aliases prevent pkgmk from unpacking two
+# glibc/Python/Ninja.  The *.xzblob aliases prevent pkgmk from unpacking three
 # different debian/ directories on top of each other; build() extracts them
 # into private directories and applies only the selected compatibility fixes.
 source=(
@@ -21,6 +18,7 @@ source=(
     https://deb.debian.org/debian/pool/main/q/qtbase-opensource-src/qtbase-opensource-src_5.15.19+dfsg-4.debian.tar.xz
     https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
     https://deb.debian.org/debian/pool/main/q/qtlocation-opensource-src/qtlocation-opensource-src_5.15.19+dfsg-2.debian.tar.xz
+    qtlocation-rapidjson-gcc16.patch.manual
 )
 
 # BFSOS pkgmk uses a parallel renames array instead of filename::URL syntax.
@@ -31,6 +29,7 @@ renames=(
     qtbase-debian-patches.xzblob
     qtwebengine-debian-patches.xzblob
     qtlocation-debian-patches.xzblob
+    SKIP
 )
 
 apply_qt5_compat_patches() {
@@ -100,6 +99,17 @@ apply_qt5_compat_patches() {
         echo "qt5: applying QtLocation compatibility patch $pfile"
         patch -d qtlocation -Np1 < "$patchroot/$pfile" || return 1
     done
+
+    # GCC 16 rejects RapidJSON 1.1.0's impossible assignment operator because
+    # GenericStringRef::length is const.  Keep this local compatibility patch
+    # opaque to the automatic patch extension and apply it at the QtLocation
+    # subtree explicitly.
+    if [ ! -f "$SRC/qtlocation-rapidjson-gcc16.patch.manual" ]; then
+        echo "qt5: required local QtLocation RapidJSON compatibility patch missing" >&2
+        return 1
+    fi
+    echo "qt5: applying QtLocation RapidJSON GCC 16 compatibility patch"
+    patch -d qtlocation -Np1 < "$SRC/qtlocation-rapidjson-gcc16.patch.manual" || return 1
 
 }
 
