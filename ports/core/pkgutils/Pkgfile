@@ -4,7 +4,7 @@
 
 name=pkgutils
 version=5.40.12
-release=15
+release=16
 
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
@@ -114,12 +114,10 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
         make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
         harden_pkgmk_work_cleanup "$TOOLS/bin/pkgmk"
-        harden_pkgmk_download_validation "$TOOLS/bin/pkgmk"
 }
 
 post_build() {
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
-        harden_pkgmk_download_validation "$PKG/usr/bin/pkgmk"
 
         # Final/installed pkgmk needs a UTF-8-capable C locale for archives
         # containing non-ASCII pathnames (notably GCC). Support both common

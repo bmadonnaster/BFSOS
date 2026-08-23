@@ -9,7 +9,7 @@ version=1.92.0
 release=2
 
 source=(
-    https://archives.boost.io/release/$version/source/boost_1_91_0.tar.bz2
+    https://archives.boost.io/release/$version/source/boost_1_92_0.tar.bz2
 )
 
 pkg_build() {
