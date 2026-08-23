@@ -1,0 +1,9 @@
+--- a/ftp.c
++++ b/ftp.c
+@@ -768,7 +768,10 @@
+-		if (strchr(cast_const_char ud, POST_CHAR)) *strchr(cast_const_char ud, POST_CHAR) = 0;
++		{
++			char *post = strchr((char *)ud, POST_CHAR);
++			if (post)
++				*post = 0;
++		}
