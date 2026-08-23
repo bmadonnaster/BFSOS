@@ -2,24 +2,29 @@
 
 name=colord
 version=1.4.8
-release=3
-source=(https://mirror.freedif.org/pub/blfs/conglomeration/colord/colord-$version.tar.xz)
-disable-udev-hwdb-tests.patch)
+release=4
+source=(
+    https://mirror.freedif.org/pub/blfs/conglomeration/colord/colord-$version.tar.xz
+    disable-udev-hwdb-tests.patch
+)
 
-pkg_build () {
-mkdir build &&
-cd    build &&
-meson setup ..                  \
-      --prefix=/usr             \
-      --buildtype=release       \
-      -D daemon_user=colord     \
-      -D vapi=true              \
-      -D systemd=true           \
-      -D libcolordcompat=true   \
-      -D argyllcms_sensor=false \
-      -D bash_completion=false  \
-      -D docs=false             \
-      -D man=false              &&
-ninja
-DESTDIR="$PKG" ninja install
+pkg_build() {
+    mkdir build &&
+    cd build &&
+
+    meson setup .. \
+        --prefix=/usr \
+        --buildtype=release \
+        -Ddaemon_user=colord \
+        -Dvapi=true \
+        -Dsystemd=true \
+        -Dlibcolordcompat=true \
+        -Dargyllcms_sensor=false \
+        -Dbash_completion=false \
+        -Ddocs=false \
+        -Dman=false &&
+
+    ninja &&
+
+    DESTDIR="$PKG" ninja install
 }
