@@ -6,7 +6,7 @@
 
 name=qt5
 version=5.15.19
-release=4
+release=5
 # This recipe applies its patches explicitly at package-specific paths.
 skip_patch=yes
 
@@ -18,8 +18,17 @@ skip_patch=yes
 # into private directories and applies only the selected compatibility fixes.
 source=(
     https://download.qt.io/archive/qt/5.15/$version/single/qt-everywhere-opensource-src-$version.tar.xz
-    qtbase-debian-patches.xzblob::https://deb.debian.org/debian/pool/main/q/qtbase-opensource-src/qtbase-opensource-src_5.15.19+dfsg-4.debian.tar.xz
-    qtwebengine-debian-patches.xzblob::https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
+    https://deb.debian.org/debian/pool/main/q/qtbase-opensource-src/qtbase-opensource-src_5.15.19+dfsg-4.debian.tar.xz
+    https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
+)
+
+# BFSOS pkgmk uses a parallel renames array instead of filename::URL syntax.
+# Keep the Debian archives opaque so pkgmk does not unpack their debian/
+# directories into the main source tree.
+renames=(
+    SKIP
+    qtbase-debian-patches.xzblob
+    qtwebengine-debian-patches.xzblob
 )
 
 apply_qt5_compat_patches() {
@@ -86,10 +95,10 @@ pkg_build() {
         -system-sqlite \
         -nomake examples \
         -no-rpath \
-        -journald
+        -journald || return 1
 
-    make -j "${JOBS:-1}"
-    make -j1 INSTALL_ROOT="$PKG" install
+    make -j "${JOBS:-1}" || return 1
+    make -j1 INSTALL_ROOT="$PKG" install || return 1
 
     find "$PKG$QT5PREFIX" -name '*.prl' -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
 
