@@ -6,7 +6,7 @@
 name=xmlto
 version=0.0.29
 release=1
-source=(https://pagure.io/$name/archive/$version/$name-$version.tar.gz)
+source=(https://ftp.ludd.ltu.se/mirrors/blfs/conglomeration/xmlto/xmlto-$version.tar.gz)
 
 
 pkg_build() {
