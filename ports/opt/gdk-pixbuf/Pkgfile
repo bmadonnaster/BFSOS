@@ -18,7 +18,7 @@ pkg_build() {
 		-D tests=false \
 		-D installed_tests=false \
 		-D man=false \
-		-D others=enabled
+		-D glycin=disabled -D others=enabled &&
 
 	meson compile -C build -j ${JOBS:-1}
 	DESTDIR=$PKG meson install  -C build
