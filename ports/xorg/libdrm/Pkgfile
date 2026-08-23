@@ -7,7 +7,8 @@
 name=libdrm
 version=2.4.134
 release=2
-source=(https://dri.freedesktop.org/libdrm/libdrm-$version.tar.xz)
+source=(https://ftp.debian.org/debian/pool/main/libd/libdrm/libdrm_$version.orig.tar.xz)
+renames=(libdrm-$version.tar.xz)
 
 pkg_build() {
 
