@@ -9,17 +9,10 @@ release=9
 source=(
     https://downloads.sourceforge.net/sourceforge/infozip/${name}${version//./}.tar.gz
     cumulative.patch
-    28-cve-2022-0529-and-cve-2022-0530.patch
     gcc15.patch
 )
 
 pkg_build() {
-    cd ${name}${version//./}
-
-    patch -Np1 -i "$SRC/cumulative.patch"
-    patch -Np1 -F3 -i "$SRC/28-cve-2022-0529-and-cve-2022-0530.patch"
-    patch -Np1 -i "$SRC/gcc15.patch"
-
     sed -i 's/-O3//' unix/configure
 
     make -f unix/Makefile \
