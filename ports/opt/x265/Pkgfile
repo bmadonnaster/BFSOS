@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: cmake nasm 
+# Depends on: cmake nasm
 
 name=x265
 version=4.1

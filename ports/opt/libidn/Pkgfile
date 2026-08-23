@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: 
+# Depends on:
 
 name=libidn
 version=1.43

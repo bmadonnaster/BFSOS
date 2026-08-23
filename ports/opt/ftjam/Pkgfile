@@ -1,0 +1,21 @@
+# Description: Small Jam-compatible build tool used by ArgyllCMS
+# URL: https://freetype.sourceforge.net/jam/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+
+name=ftjam
+version=2.5.2
+release=1
+source=(https://downloads.sourceforge.net/project/freetype/ftjam/$version/$name-$version.tar.bz2)
+
+build() {
+    cd $name-$version
+    ./configure --prefix=/usr
+    make
+    make DESTDIR="$PKG" install
+
+    # Upstream installs the executable as jam; avoid colliding with other Jam variants.
+    if [ -x "$PKG/usr/bin/jam" ]; then
+        mv "$PKG/usr/bin/jam" "$PKG/usr/bin/ftjam"
+        ln -s ftjam "$PKG/usr/bin/jam"
+    fi
+}

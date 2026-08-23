@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: MIT Kerberos V5 is a free implementation of Kerberos 5. Kerberos is a network authentication protocol. It centralizes the authentication database and uses kerberized applications to work with servers or services that support Kerberos allowing single logins and encrypted communication over internal networks or the Internet.
 # URL:         https://kerberos.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  
+# Depends on:
 # Optional:    bind-utils gnupg keyutils openldap valgrind yasm libedit cmocka kdcproxy pyrad resolv_wrapper
 name=kerberos
 version=1.21.3

@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Postscript interpreter
 # URL: https://www.ghostscript.com
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: fontconfig glib util-linux xorg-libxt xorg-libxext
+# Depends on: fontconfig glib util-linux libXt libXext
 # Optional: cups fontconfig freetype lcms2 jbig2dec libjpeg-turbo libtiff openjpeg libpaper libpng cairo gtk+- libidn libwebp a graphical environment
 
 name=ghostscript
@@ -20,7 +18,7 @@ export CFLAGS+=" -Wno-incompatible-pointer-types -Wno-int-conversion"
 	prt-get isinst libjpeg-turbo libtiff && PKGMK_GHOSTSCRIPT+=' --enable-openjpeg --with-system-libtiff' && rm -r tiff jpeg
 	prt-get isinst jbig2dec && PKGMK_GHOSTSCRIPT+=' --with-jbig2dec' && rm -r jbig2dec
 	prt-get isinst openjpeg2 && PKGMK_GHOSTSCRIPT+=' --enable-openjpeg' && rm -r openjpeg
-	prt-get isinst xorg-libxt xorg-libxext || PKGMK_GHOSTSCRIPT+=' --without-x'
+	prt-get isinst libXt libXext || PKGMK_GHOSTSCRIPT+=' --without-x'
 
 	rm -rf zlib &&
 

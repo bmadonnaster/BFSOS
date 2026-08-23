@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Xapian is an open source search engine library.
 # URL:          https://oligarchy.co.uk/xapian/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  
+# Depends on:
 # Optional: valgrind
 
 name=xapian

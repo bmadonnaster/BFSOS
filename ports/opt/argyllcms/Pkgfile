@@ -1,14 +1,11 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: An ICC compatible color management system with support for different colorimeter hardware
 # URL: https://www.argyllcms.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ftjam libpng libtiff libXinerama  libXrandr libXxf86vm
 
 name=argyllcms
-version=3.2.0
-release=1
+version=3.5.0
+release=2
 source=(https://www.argyllcms.com/Argyll_V${version}_src.zip)
 
 build() {

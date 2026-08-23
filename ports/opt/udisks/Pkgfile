@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Description: The UDisks package provides a daemon, tools and libraries to access and manipulate disks and storage devices. 
+# Description: The UDisks package provides a daemon, tools and libraries to access and manipulate disks and storage devices.
 # URL:         https://github.com/storaged-project/$name/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on:  libatasmart libblockdev libgudev libxslt polkit systemd

@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: The Avahi package is a system which facilitates service discovery on a local network.
 # URL:          https://github.com/lathiat/avahi/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
@@ -11,20 +9,20 @@ version=0.8
 release=1
 source=(https://github.com/lathiat/$name/releases/download/v$version/$name-$version.tar.gz
 $name-$version-ipv6_race_condition_fix-1.patch)
-build_opt="    --prefix=/usr        
-    --sysconfdir=/etc    
-    --localstatedir=/var 
-    --disable-static     
-    --disable-libevent   
-    --disable-mono       
-    --disable-monodoc    
-    --disable-python     
-    --disable-qt3        
+build_opt="    --prefix=/usr
+    --sysconfdir=/etc
+    --localstatedir=/var
+    --disable-static
+    --disable-libevent
+    --disable-mono
+    --disable-monodoc
+    --disable-python
+    --disable-qt3
     --disable-qt4
     --disable-qt5
-    --enable-qt6        
-    --enable-core-docs   
-    --with-distro=none   
+    --enable-qt6
+    --enable-core-docs
+    --with-distro=none
     --with-dbus-system-address='unix:path=/run/dbus/system_bus_socket'"
 pre_build() {
 sed -i '426a if (events & AVAHI_WATCH_HUP) { \

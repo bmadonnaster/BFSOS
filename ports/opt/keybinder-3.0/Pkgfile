@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: gtk3 glib gobject-introspection 
+# Depends on: gtk3 glib gobject-introspection
 
 name=keybinder-3.0
 version=0.3.2

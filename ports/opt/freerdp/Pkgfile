@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: ffmpeg icu xorg-libs cairo docbook-xsl-nons fuse3 json-c kerberos libusb libxkbcommon wayland
+# Depends on: ffmpeg icu xorg-libs cairo docbook-xsl-nons fuse json-c kerberos libusb libxkbcommon wayland
 
 name=freerdp
 version=3.11.1
@@ -26,4 +24,3 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr   \
 ninja
 ninja install
 }
-

@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: HTTP library implementation in C
 # URL: https://wiki.gnome.org/action/show/Projects/libsoup
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: glib-networking libpsl libxml2 sqlite nghttp2
+# Depends on: glib-networking libpsl libxml2 sqlite libnghttp2
 # Optional: gobject-introspection vala apache brotli curl MIT Kerberos V5  gtk-doc php samba sysprof
 
 name=libsoup3

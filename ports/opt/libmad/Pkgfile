@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: libmad is a high-quality MPEG audio decoder capable of 24-bit output.
 # URL:         https://downloads.sourceforge.net/mad/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  
+# Depends on:
 
 name=libmad
 version=0.15.1b

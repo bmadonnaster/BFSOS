@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Mobile broadband settings for various service providers
 # URL:         https://github.com/GNOME/mobile-broadband-provider-info
-# Depends on:  
+# Depends on:
 
 name=mobile-broadband-provider-info
 version=20230416

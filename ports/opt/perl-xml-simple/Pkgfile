@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: 
+# Depends on:
 
 name=perl-xml-simple
 version=2.25

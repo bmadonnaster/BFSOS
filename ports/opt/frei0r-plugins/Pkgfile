@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Frei0r is a minimalistic plugin API for video effects. Note that the 0 in the name is a zero, not a capital letter o.
 # URL:         https://files.dyne.org/frei0r/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
@@ -21,7 +19,7 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_BUILD_TYPE=Release  \
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
       -Wno-dev ..                 &&
-      
+
 
 make
 	make DESTDIR=$PKG install

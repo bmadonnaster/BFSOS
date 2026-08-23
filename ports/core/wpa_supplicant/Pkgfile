@@ -1,11 +1,11 @@
 # Description: Implements WPA key negotiation with a WPA Authenticator and Extensible Authentication Protocol (EAP) authentication with an Authentication Server
-# URL:         
+# URL:
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  libnl openssl dbus libxml2
+# Depends on:  libnl openssl dbus libxml2 wireless-regdb
 
 name=wpa_supplicant
 version=2.11
-release=3
+release=4
 source=(https://w1.fi/releases/wpa_supplicant-$version.tar.gz
         wpa_supplicant.conf
         openssl-4-asn1.patch)
@@ -53,7 +53,7 @@ EOF
 	install -v -m644 doc/docbook/wpa_supplicant.conf.5 $PKG/usr/share/man/man5/ &&
 	mkdir -p  $PKG/usr/share/man/man8/ &&
 	install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 $PKG/usr/share/man/man8/
-	
+
 
         # wpa_supplicant.conf
         install -Dm 600 $SRC/wpa_supplicant.conf $PKG/etc/wpa_supplicant.conf
@@ -71,8 +71,8 @@ EOF
 install -v -d -m755 $PKG/etc/dbus-1/system.d &&
 install -v -m644 dbus/dbus-wpa_supplicant.conf \
                  $PKG/etc/dbus-1/system.d/wpa_supplicant.conf
-	
-       
+
+
 
 	mkdir -p $PKG/etc/sysconfig
 	cat > $PKG/etc/sysconfig/ifconfig.wifi0 << "EOF"

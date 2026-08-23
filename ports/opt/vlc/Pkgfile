@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: alsa-lib desktop-file-utils ffmpeg liba52 libgcrypt libmad lua52 dbus libidn libssh2 libarchive libcddb libdv libdvdcss libdvdread libdvdnav opencv v4l-utils libcdio libogg faad2 flac libaom libass libmpeg2 libpng libva libvorbis opus speex libvpx x264 aalib fontconfig freetypoe fribidi librsvg libvdpau sdl12-compat pulseaudio libsamplerate qt5-alternate  gnutls libnotify libxml2 protobuf taglib xdg-utils
+# Depends on: alsa-lib desktop-file-utils ffmpeg liba52 libgcrypt libmad lua52 dbus libidn libssh2 libarchive libcddb libdv libdvdcss libdvdread libdvdnav opencv v4l-utils libcdio libogg faad2 flac libaom libass libmpeg2 libpng libva libvorbis opus speex libvpx x264 aalib fontconfig freetype fribidi librsvg libvdpau sdl12-compat pulseaudio libsamplerate qt5  gnutls libnotify libxml2 protobuf taglib xdg-utils
 
 name=vlc
 version=3.0.21
@@ -12,8 +10,8 @@ build_opt="--enable-lua --enable-wayland --disable-libplacebo"
 
 pre_build() {
 	export LUAC=/usr/bin/luac5.2                   &&
-export LUA_LIBS="$(pkg-config --libs lua52)"   &&
-export CPPFLAGS="$(pkg-config --cflags lua52)"
+export LUA_LIBS="$(pkgconf --libs lua52)"   &&
+export CPPFLAGS="$(pkgconf --cflags lua52)"
 }
 #pre_build() {
 #BUILDCC=gcc ./configure --prefix=/usr --disable-libplacebo  &&

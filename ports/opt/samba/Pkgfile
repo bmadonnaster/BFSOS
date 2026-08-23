@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: gnutls jansson libitrpc perl-parse-yapp rpcsvc-proto fuse gpgme icu libtasn1 libxslt linux-pam kerberos openldap avahi cups cyrus-sasl git gdb gnupg libaio libarchive libcap libgcrypt libnsl libunwind lmdb python3-markdown nss popt talloc vala valgrind xfsprogs 
+# Depends on: gnutls jansson libtirpc perl-parse-yapp rpcsvc-proto fuse gpgme icu libtasn1 libxslt linux-pam kerberos openldap avahi cups cyrus-sasl git gdb gnupg libaio libarchive libcap libgcrypt libnsl libunwind lmdb python3-markdown nss popt talloc vala valgrind xfsprogs
 
 name=samba
 version=4.21.4
@@ -43,4 +41,3 @@ install -v -m644    examples/LDAP/samba*              \
 install -v -m755    examples/LDAP/{get*,ol*} \
                     $PKG/etc/openldap/schema
 }
-

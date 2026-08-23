@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Depends on: apr
 
 name=apr-util
@@ -7,7 +5,7 @@ version=1.6.3
 release=1
 source=(https://archive.apache.org/dist/apr/${name}-${version}.tar.bz2)
 build_opt="--prefix=/usr
-            --with-apr=/usr     
-            --with-gdbm=/usr    
-            --with-openssl=/usr 
+            --with-apr=/usr
+            --with-gdbm=/usr
+            --with-openssl=/usr
             --with-crypto"

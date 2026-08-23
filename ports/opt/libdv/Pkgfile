@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: sdl12-compat popt 
+# Depends on: sdl12-compat popt
 
 name=libdv
 version=1.0.0

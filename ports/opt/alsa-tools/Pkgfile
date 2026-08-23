@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description:  The ALSA Tools package contains advanced tools for certain sound cards.
 # URL:          https://www.alsa-project.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
@@ -17,4 +15,3 @@ build() {
 cd $name-$version
 exec ../install
 }
-

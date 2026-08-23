@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: qt5-alternate boost lua
+# Depends on: qt5 boost lua
 
 
 name=highlight
@@ -12,7 +10,7 @@ pkg_build () {
 sed -i '/GZIP/s/^/#/' makefile
 make
 make doc_dir=/usr/share/doc/highlight-4.12/ gui
-mkdir -p $PKG/usr/share/doc/$name-$version/ 
+mkdir -p $PKG/usr/share/doc/$name-$version/
 make DESTDIR=$PKG doc_dir=$PKG/usr/share/doc/$name-$version/ install
 make DESTDIR=$PKG install-gui
 }

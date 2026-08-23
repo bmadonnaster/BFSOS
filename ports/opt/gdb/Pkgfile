@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Depends on: python3-six expat mpfr readline texinfo xz zlib
 
 name=gdb
@@ -21,4 +19,3 @@ make
 make -C gdb DESTDIR=$PKG install &&
 make -C gdbserver DESTDIR=$PKG install
 }
-

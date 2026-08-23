@@ -1,10 +1,8 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: CUPS - Common UNIX Printing System
 # URL: https://openprinting.github.io/cups/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: acl zlib linux-pam gnutls dbus libusb xdg-utils colord 
-# Optional: 
+# Depends on: acl zlib linux-pam gnutls dbus libusb xdg-utils colord
+# Optional:
 name=cups
 version=2.4.12
 release=1
@@ -19,7 +17,7 @@ pkg_build() {
             --with-rundir=/run/cups      \
             --with-system-groups=lpadmin \
             --with-docdir=/usr/share/cups/doc-$version &&
-make	
+make
 	make BUILDROOT=$PKG install
 	mkdir -p $PKG/usr/share/doc/$name-$version
 ln -svnf ../cups/doc-2.4.6 $PKG/usr/share/doc/$name-$version

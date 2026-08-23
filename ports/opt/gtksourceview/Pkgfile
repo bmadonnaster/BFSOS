@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: gtk4 pcre2 glib gobject-introspection libxml2 valas valgrind vulkan-loader
+# Depends on: gtk4 pcre2 glib gobject-introspection libxml2 vala valgrind vulkan-loader
 
 name=gtksourceview
 version=5.14.0

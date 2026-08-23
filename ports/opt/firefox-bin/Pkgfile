@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Firefox binary
 # URL: http://www.mozilla.com
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: gtk3 dbus-glib xorg-libxcomposite xorg-libxcursor
+# Depends on: gtk3 dbus-glib libXcomposite libXcursor
 
 name=firefox-bin
 version=139.0.4

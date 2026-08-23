@@ -3,9 +3,9 @@
 # Description: A library that allows developers to access PolicyKit API with a nice Qt-style API
 # URL: https://www.kde.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: cmake git polkit qt5-alternate-alternate
+# Depends on: cmake git polkit qt5
 
-name=polkit-qt5-alternate-alternate
+name=polkit-qt5
 version=0.114.0
 release=3
 

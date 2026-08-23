@@ -1,13 +1,11 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Headers defining the core protocol and extensions for the X Window System
 # URL: http://xorg.freedesktop.org
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: meson ninja
 
 name=xorgproto
-version=2024.1
-release=1
+version=2025.1
+release=2
 source=(https://xorg.freedesktop.org/archive/individual/proto/xorgproto-$version.tar.xz)
 
 build() {
@@ -23,11 +21,11 @@ build() {
 
 
 	# cleanup
-	rm "$PKG"/usr/include/X11/extensions/apple*
-	rm "$PKG"/usr/include/X11/extensions/windows*
-	rm "$PKG"/usr/share/pkgconfig/apple*
-	rm "$PKG"/usr/share/pkgconfig/windows*
-	rm "$PKG"/usr/include/X11/extensions/vldXvMC.h # xorg-libxvmc >= 1.0.13-2
-	rm "$PKG"/usr/include/X11/extensions/XKBgeom.h # xorg-libx11 >= 1.8.1-2
-	rm -r "$PKG"/usr/share/doc
+	rm -f "$PKG"/usr/include/X11/extensions/apple*
+	rm -f "$PKG"/usr/include/X11/extensions/windows*
+	rm -f "$PKG"/usr/share/pkgconfig/apple*
+	rm -f "$PKG"/usr/share/pkgconfig/windows*
+	rm -f "$PKG"/usr/include/X11/extensions/vldXvMC.h # xorg-libxvmc >= 1.0.13-2
+	rm -f "$PKG"/usr/include/X11/extensions/XKBgeom.h # libX11 >= 1.8.1-2
+	rm -rf "$PKG"/usr/share/doc
 }

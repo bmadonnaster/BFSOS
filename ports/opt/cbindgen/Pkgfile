@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Generate C bindings from rust code
 # URL: https://github.com/eqrion/cbindgen
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com

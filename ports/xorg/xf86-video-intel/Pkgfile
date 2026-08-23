@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Intel graphics video driver
 # URL: https://www.x.org/wiki/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: xorg-libxscrnsaver xorg-server
+# Depends on: libXScrnSaver xorg-server
 
 name=xf86-video-intel
 version=2.99.917-931

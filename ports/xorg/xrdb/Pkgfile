@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: x server resource database utility
 # URL: http://xorg.freedesktop.org
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: xorg-libXmu
+# Depends on: libXmu
 
 name=xrdb
 version=1.2.2

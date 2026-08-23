@@ -1,0 +1,102 @@
+# Description: Qt 5 compatibility framework (monolithic BFSOS build, including QtWebEngine)
+# URL: https://www.qt.io/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: alsa-lib bison dbus double-conversion flex glib gperf harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 sqlite xorg-libs
+# Optional: bluez cups gst-plugins-base gst-plugins-good gtk3 ibus mariadb pulseaudio unixodbc wayland-protocols
+
+name=qt5
+version=5.15.19
+release=3
+
+# Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
+# uses the official complete Qt source archive, but Debian currently carries
+# upstream/downstream compatibility fixes needed by modern OpenSSL/GCC/ICU/
+# glibc/Python/Ninja.  The *.xzblob aliases prevent pkgmk from unpacking two
+# different debian/ directories on top of each other; build() extracts them
+# into private directories and applies only the selected compatibility fixes.
+source=(
+    https://download.qt.io/archive/qt/5.15/$version/single/qt-everywhere-opensource-src-$version.tar.xz
+    qtbase-debian-patches.xzblob::https://deb.debian.org/debian/pool/main/q/qtbase-opensource-src/qtbase-opensource-src_5.15.19+dfsg-4.debian.tar.xz
+    qtwebengine-debian-patches.xzblob::https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
+)
+
+apply_qt5_compat_patches() {
+    local patchroot pfile
+
+    rm -rf "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
+    mkdir -p "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
+    tar -xJf "$SRC/qtbase-debian-patches.xzblob" -C "$SRC/qtbase-debian"
+    tar -xJf "$SRC/qtwebengine-debian-patches.xzblob" -C "$SRC/qtwebengine-debian"
+
+    # Debian 5.15.19+dfsg-2 closed its OpenSSL-4 FTBFS by backporting two
+    # upstream patches.  Select by patch description instead of hard-coding
+    # Debian's patch filenames so a packaging-only rename does not break BFSOS.
+    patchroot="$SRC/qtbase-debian/debian/patches"
+    mapfile -t qtbase_ssl4_patches < <(
+        grep -rilE 'OpenSSL[[:space:]-]*4|QTBUG-145221' "$patchroot" \
+            --include='*.patch' --include='*.diff' 2>/dev/null | sort -u
+    )
+    if ((${#qtbase_ssl4_patches[@]} < 2)); then
+        echo "qt5: expected at least two QtBase OpenSSL 4 compatibility patches" >&2
+        return 1
+    fi
+    for pfile in "${qtbase_ssl4_patches[@]}"; do
+        echo "qt5: applying QtBase compatibility patch $(basename "$pfile")"
+        patch -d qtbase -Np1 < "$pfile" || return 1
+    done
+
+    # QtWebEngine 5.15 is Chromium-87-era code and needs current-toolchain
+    # compatibility backports.  These are deliberately limited to build/
+    # platform compatibility rather than Debian policy/system-library patches.
+    patchroot="$SRC/qtwebengine-debian/debian/patches"
+    for pfile in \
+        'python3.13 pipes.patch' \
+        'build with c++17.patch' \
+        'ninja 1.12.patch' \
+        'gcc 15.patch' \
+        'icu 78.patch' \
+        'glibc-2.43.patch'
+    do
+        if [[ ! -f "$patchroot/$pfile" ]]; then
+            echo "qt5: required QtWebEngine compatibility patch missing: $pfile" >&2
+            return 1
+        fi
+        echo "qt5: applying QtWebEngine compatibility patch $pfile"
+        patch -d qtwebengine -Np1 < "$patchroot/$pfile" || return 1
+    done
+}
+
+build() {
+    cd "qt-everywhere-src-$version"
+    export QT5PREFIX=/opt/qt5
+
+    apply_qt5_compat_patches || return 1
+
+    ./configure \
+        -prefix "$QT5PREFIX" \
+        -sysconfdir /etc/xdg \
+        -confirm-license \
+        -opensource \
+        -release \
+        -dbus-linked \
+        -openssl-linked \
+        -system-harfbuzz \
+        -system-sqlite \
+        -nomake examples \
+        -no-rpath \
+        -journald
+
+    make -j "${JOBS:-1}"
+    make -j1 INSTALL_ROOT="$PKG" install
+
+    find "$PKG$QT5PREFIX" -name '*.prl' -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+    install -d "$PKG/etc/profile.d" "$PKG/etc/ld.so.conf.d"
+    cat > "$PKG/etc/profile.d/qt5.sh" <<'EOF'
+QT5DIR=/opt/qt5
+pathappend "$QT5DIR/bin" PATH
+pathappend "$QT5DIR/lib/pkgconfig" PKG_CONFIG_PATH
+export QT5DIR
+EOF
+    printf '%s\n' '/opt/qt5/lib' > "$PKG/etc/ld.so.conf.d/qt5.conf"
+}

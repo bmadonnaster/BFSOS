@@ -1,6 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: appstream gtk4 valas
+# Depends on: appstream gtk4 vala
 
 name=libadwaita
 version=1.6.4
