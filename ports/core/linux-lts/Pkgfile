@@ -28,37 +28,6 @@ source=(
     "$debian_patch_base/bugfix/all/fs-add-module_softdep-declarations-for-hard-coded-cr.patch"
     "$debian_patch_base/bugfix/all/module-disable-matching-missing-version-crc.patch"
 )
-
-apply_bfsos_debian_patch() {
-    local patch_name="$1"
-
-    printf 'Applying BFSOS-selected Debian patch: %s\n' "$patch_name"
-    patch --batch --forward -Np1 -i "$SRC/$patch_name" || {
-        echo "linux-lts patch failure: $patch_name" >&2
-        return 1
-    }
-}
-
-apply_bfsos_debian_patch_series() {
-    local patch_name
-
-    for patch_name in \
-        radeon-amdgpu-firmware-is-required-for-drm-and-kms-on-r600-onward.patch \
-        af_802154-Disable-auto-loading-as-mitigation-against.patch \
-        rds-Disable-auto-loading-as-mitigation-against-local.patch \
-        hamradio-disable-auto-loading-as-mitigation-against-local-exploits.patch \
-        fs-enable-link-security-restrictions-by-default.patch \
-        security-perf-allow-further-restriction-of-perf_event_open.patch \
-        intel-iommu-add-option-to-exclude-integrated-gpu-only.patch \
-        btrfs-warn-about-raid5-6-being-experimental-at-mount.patch \
-        x86-memtest-WARN-if-bad-RAM-found.patch \
-        fs-add-module_softdep-declarations-for-hard-coded-cr.patch \
-        module-disable-matching-missing-version-crc.patch
-    do
-        apply_bfsos_debian_patch "$patch_name" || return 1
-    done
-}
-
 pkg_build() {
     local kernver=""
 
