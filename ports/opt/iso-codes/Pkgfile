@@ -5,7 +5,7 @@
 
 name=iso-codes
 version=4.20.1
-release=2
+release=3
 source=(https://salsa.debian.org/iso-codes-team/iso-codes/-/archive/v$version/iso-codes-v$version.tar.gz)
 
 pkg_build() {
