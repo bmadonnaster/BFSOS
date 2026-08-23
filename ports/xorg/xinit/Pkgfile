@@ -8,8 +8,7 @@ version=1.4.4
 release=2
 source=(https://www.x.org/releases/individual/app/$name-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG --with-xinitdir=/etc/X11/app-defaults &&
 	make

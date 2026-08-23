@@ -9,8 +9,7 @@ version=1.4.25
 release=1
 source=(https://oligarchy.co.uk/$name/$version/$name-core-$version.tar.xz)
 
-build() {
-	cd $name-core-$version
+pkg_build() {
 
 	./configure --prefix=/usr    \
             --disable-static \

@@ -5,12 +5,11 @@
 # Optional: gtk3 gsl libuwind valgrind bash-completion hotdoc libdw
 
 name=gstreamer
-version=1.26.2
-release=1
+version=1.28.6
+release=2
 source=(https://$name.freedesktop.org/src/$name/$name-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	mkdir build &&
 cd    build &&

@@ -10,7 +10,7 @@ version=7x
 release=2
 source=()
 
-build() {
+pkg_build() {
 
 
 	mkdir $PKG/usr

@@ -8,8 +8,7 @@ version=1.9
 release=1
 source=(http://$name.org/files/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr        \
             --sysconfdir=/etc    \

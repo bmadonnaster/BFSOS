@@ -5,12 +5,11 @@
 # Optional: curl doxygen
 
 name=libvpx
-version=1.15.2
-release=2
+version=1.16.0
+release=3
 source=(https://github.com/webmproject/$name/archive/v$version/$name-v$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
  sed -i 's/cp -p/cp/' build/make/Makefile &&
 

@@ -9,8 +9,9 @@ release=1
 source=(https://www.lua.org/ftp/$name-$version.tar.gz
 https://www.linuxfromscratch.org/patches/blfs/svn/$name-$version-shared_library-1.patch)
 
-build() {
-	cd $name-$version
+skip_patch=1
+
+pkg_build() {
 cat > lua.pc << "EOF"
 V=5.4
 R=5.4.7

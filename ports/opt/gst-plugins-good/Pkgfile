@@ -5,12 +5,11 @@
 # Optional: aalib alsa-oss gtk3 libdv qt5 speex taglib valgrind v4l-utils wayland hotdoc jack libcaca libavc1394 libiec61883 libraw1394 libshout orc twolame wavpack
 
 name=gst-plugins-good
-version=1.26.2
-release=2
+version=1.28.6
+release=3
 source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz)
 
-build() {
-  cd $name-$version
+pkg_build() {
   mkdir build &&
 cd    build &&
 

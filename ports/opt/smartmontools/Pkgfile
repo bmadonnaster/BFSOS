@@ -9,8 +9,7 @@ version=7.4
 release=1
 source=(https://downloads.sourceforge.net/$name/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr           \
             --sysconfdir=/etc       \

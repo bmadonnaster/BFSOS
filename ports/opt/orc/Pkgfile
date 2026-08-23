@@ -7,7 +7,7 @@ version=0.4.41
 release=1
 source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
   meson setup $name-$version build \
     --prefix=/usr \
     --buildtype=plain \

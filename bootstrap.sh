@@ -103,6 +103,7 @@ BFS_BUILD_JOBS="auto"
 BFS_BUILD_OPT="portable"
 BFS_CCACHE="yes"
 BFS_CCACHE_SIZE="auto"
+BFS_KEEP_SOURCE_ARCHIVES="no"
 BFS_BUILD_SETTINGS_CHANGED="no"
 
 _resolve_ccache_size() {
@@ -193,6 +194,7 @@ BFS_BUILD_JOBS='$BFS_BUILD_JOBS'
 BFS_BUILD_OPT='$BFS_BUILD_OPT'
 BFS_CCACHE='$BFS_CCACHE'
 BFS_CCACHE_SIZE='$BFS_CCACHE_SIZE'
+BFS_KEEP_SOURCE_ARCHIVES='$BFS_KEEP_SOURCE_ARCHIVES'
 BFS_BUILD_SETTINGS_CHANGED='$BFS_BUILD_SETTINGS_CHANGED'
 EOF_SETTINGS
     _apply_build_settings
@@ -213,12 +215,13 @@ compiler_build_settings_menu() {
                     --ok-label "Select" \
                     --cancel-label "Back" \
                     --menu \
-                    "Current settings:\n\nJobs: $BFS_BUILD_JOBS\nOptimization: $BFS_BUILD_OPT\nccache: $BFS_CCACHE\nccache size: $BFS_CCACHE_SIZE" \
-                    22 82 8 \
+                    "Current settings:\n\nJobs: $BFS_BUILD_JOBS\nOptimization: $BFS_BUILD_OPT\nccache: $BFS_CCACHE\nccache size: $BFS_CCACHE_SIZE\nKeep source archives: $BFS_KEEP_SOURCE_ARCHIVES" \
+                    24 82 9 \
                     jobs "Parallel build jobs" \
                     optimization "Compiler optimization policy" \
                     ccache "Enable or disable ccache" \
                     ccache-size "Configure ccache maximum size" \
+                    source-cache "Keep downloaded source archives in base archive" \
                     defaults "Restore BFSOS build defaults" \
                     </dev/tty 2>/dev/tty
             )"
@@ -349,6 +352,25 @@ compiler_build_settings_menu() {
                     [ -n "$value" ] || continue
                     BFS_CCACHE_SIZE="$value"
                     ;;
+                source-cache)
+                    set +e
+                    if dialog --clear \
+                        --backtitle "BFS Linux Bootstrap" \
+                        --title "Base Source Cache" \
+                        --yes-label "Keep" \
+                        --no-label "Exclude" \
+                        --yesno \
+                        "Keep downloaded source archives under /var/cache/pkg/sources in the generated base archive?\n\nCurrent: $BFS_KEEP_SOURCE_ARCHIVES" \
+                        12 76 </dev/tty >/dev/tty 2>&1; then
+                        BFS_KEEP_SOURCE_ARCHIVES=yes
+                        status=0
+                    else
+                        status=$?
+                        [ "$status" -eq 1 ] && BFS_KEEP_SOURCE_ARCHIVES=no
+                    fi
+                    set -e
+                    [ "$status" -le 1 ] || continue
+                    ;;
                 defaults)
                     set +e
                     if dialog --clear \
@@ -363,6 +385,7 @@ compiler_build_settings_menu() {
                         BFS_BUILD_OPT=portable
                         BFS_CCACHE=yes
                         BFS_CCACHE_SIZE=auto
+                        BFS_KEEP_SOURCE_ARCHIVES=no
                     fi
                     set -e
                     ;;
@@ -376,9 +399,10 @@ compiler_build_settings_menu() {
             printf '2) Optimization         : %s\n' "$BFS_BUILD_OPT"
             printf '3) ccache               : %s\n' "$BFS_CCACHE"
             printf '4) ccache size          : %s\n' "$BFS_CCACHE_SIZE"
-            printf '5) Restore defaults\n'
-            printf '6) Back\n'
-            printf 'Choose [1-6]: '
+            printf '5) Keep source archives : %s\n' "$BFS_KEEP_SOURCE_ARCHIVES"
+            printf '6) Restore defaults\n'
+            printf '7) Back\n'
+            printf 'Choose [1-7]: '
             read -r choice </dev/tty 2>/dev/null || read -r choice
             case "$choice" in
                 1)
@@ -409,12 +433,18 @@ compiler_build_settings_menu() {
                     [ -z "$value" ] || BFS_CCACHE_SIZE="$value"
                     ;;
                 5)
+                    printf 'keep source archives in base [yes/no]: '
+                    read -r value
+                    case "$value" in yes|no) BFS_KEEP_SOURCE_ARCHIVES="$value" ;; esac
+                    ;;
+                6)
                     BFS_BUILD_JOBS=auto
                     BFS_BUILD_OPT=portable
                     BFS_CCACHE=yes
                     BFS_CCACHE_SIZE=auto
+                    BFS_KEEP_SOURCE_ARCHIVES=no
                     ;;
-                6|"") return 0 ;;
+                7|"") return 0 ;;
                 *) continue ;;
             esac
             BFS_BUILD_SETTINGS_CHANGED=yes
@@ -2612,6 +2642,18 @@ _compressrootfs() {
         fi
     done
 
+    # Source-cache retention is an explicit base-build policy. During normal
+    # stages this path is a bind mount, so materialize it only after unmounting.
+    rm -rf "$LFS/$pkgmksrc"
+    mkdir -p "$LFS/$pkgmksrc"
+    if [ "${BFS_KEEP_SOURCE_ARCHIVES:-no}" = yes ]; then
+        echo "Including downloaded package source archives in the base rootfs..."
+        cp -a "$sourcedir"/. "$LFS/$pkgmksrc"/
+        du -sh "$LFS/$pkgmksrc" 2>/dev/null || true
+    else
+        echo "Excluding downloaded package source archives from the base rootfs (default)."
+    fi
+
     _ensure_archive_dirs
 
     rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
@@ -3402,6 +3444,8 @@ liburcu
 xfsprogs
 openssh
 genfstab
+rsync
+traceroute
 signify
 "
 sourcedir="$PWD/sources"
@@ -3422,26 +3466,29 @@ case "${1:-menu}" in
     menu|"")
         _bootstrap_menu
         ;;
-    1)
+    1|toolchain|build-toolchain)
         _buildtoolchain
         ;;
-    2)
+    2|base|build-base)
         _buildbase
         ;;
-    3)
+    3|rebuild|rebuild-base)
         _buildbase rebuild
         ;;
-    4)
+    4|verify|verify-base)
         _verifybase
         ;;
-    5)
+    5|archive|archive-base)
         _compressrootfs
         ;;
-    6)
+    6|restore-base)
         _restore_rootfs
         ;;
-    7)
+    7|restore-toolchain)
         _restore_toolchain
+        ;;
+    settings|build-settings)
+        compiler_build_settings_menu
         ;;
     8|chroot)
         _enter_bfs_chroot
@@ -3458,6 +3505,13 @@ Usage:
   $0             Open the interactive bootstrap menu
   $0 menu        Open the interactive bootstrap menu
   $0 1-7         Run a bootstrap stage directly
+  $0 toolchain|build-toolchain
+  $0 base|build-base
+  $0 rebuild|rebuild-base
+  $0 verify|verify-base
+  $0 archive|archive-base
+  $0 restore-base|restore-toolchain
+  $0 settings|build-settings
   $0 8|chroot    Enter the BFS chroot
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 0|stop|kill Stop a running bootstrap process group

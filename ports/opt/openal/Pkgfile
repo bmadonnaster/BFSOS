@@ -9,7 +9,7 @@ version=1.24.3
 release=1
 source=(https://github.com/kcat/openal-soft/archive/$version/openal-soft-$version.tar.gz)
 
-build() {
+pkg_build() {
   cmake -S openal-soft-$version -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \

@@ -8,8 +8,7 @@ version=1.0.5
 release=1
 source=(https://www.x.org/releases/individual/font/font-screen-cyrillic-$version.tar.xz)
 
-build() {
-	cd font-screen-cyrillic-$version
+pkg_build() {
 
 	./configure --prefix=/usr
 

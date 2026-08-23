@@ -8,8 +8,7 @@ version=0.8.0
 release=1
 source=(https://distfiles.adelielinux.org/source/a52dec/a52dec-$version.tar.gz)
 
-build() {
-	cd a52dec-$version
+pkg_build() {
 
 	./configure --prefix=/usr \
             --mandir=/usr/share/man \

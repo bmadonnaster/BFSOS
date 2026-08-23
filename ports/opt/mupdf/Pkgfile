@@ -9,8 +9,7 @@ version=1.25.4
 release=1
 source=(https://mupdf.com/downloads/archive/$name-$version-source.tar.gz)
 
-build() {
-	cd $name-$version-source
+pkg_build() {
 
 	PKGMK_MUPDF="USE_SYSTEM_LIBS=yes"
 

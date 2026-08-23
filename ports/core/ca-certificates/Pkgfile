@@ -4,7 +4,7 @@
 
 name=ca-certificates
 version=20260716
-release=3
+release=4
 
 source=(
 https://curl.se/ca/cacert.pem
@@ -17,18 +17,21 @@ bootstrap_build() {
 }
 
 pkg_build() {
-	install -D -m 0644 \
-		"$SRC/cacert.pem" \
-		"$PKG/etc/ssl/cert.pem"
-
+	# make-ca owns the canonical generated trust bundle.  This package owns
+	# compatibility paths commonly expected by curl and third-party software.
 	install -d -m 0755 \
-		"$PKG/etc/ssl/certs"
+		"$PKG/etc/ssl/certs" \
+		"$PKG/etc/ssl"
 
 	ln -sfn \
-		../cert.pem \
+		../../pki/tls/certs/ca-bundle.crt \
 		"$PKG/etc/ssl/certs/ca-certificates.crt"
 
 	ln -sfn \
-		/etc/ssl/cert.pem \
+		../pki/tls/certs/ca-bundle.crt \
+		"$PKG/etc/ssl/cert.pem"
+
+	ln -sfn \
+		../pki/tls/certs/ca-bundle.crt \
 		"$PKG/etc/ssl/ca-bundle.crt"
 }

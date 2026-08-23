@@ -5,8 +5,8 @@
 # Optional: doxygen
 
 name=libaom
-version=3.9.1
-release=1
+version=3.14.1
+release=2
 source=(https://storage.googleapis.com/aom-releases/$name-$version.tar.gz)
 build_opt="-DCMAKE_INSTALL_PREFIX=/usr
       -DCMAKE_BUILD_TYPE=Release

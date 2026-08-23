@@ -8,8 +8,7 @@ version=4.7.0
 release=1
 source=(http://download.osgeo.org/libtiff/tiff-$version.tar.gz)
 
-build() {
-	cd tiff-$version
+pkg_build() {
 	mkdir -p libtiff-build &&
 	cd       libtiff-build &&
 

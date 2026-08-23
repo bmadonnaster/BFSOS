@@ -5,12 +5,11 @@
 # Optional: sccache
 
 name=cbindgen
-version=0.29.0
-release=1
+version=0.29.4
+release=2
 source=(https://github.com/mozilla/$name/archive/v$version/$name-v$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 cargo build --release
 mkdir -p $PKG/usr/bin/

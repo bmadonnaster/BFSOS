@@ -5,12 +5,11 @@
 # Optional: pluggy pytest
 
 name=brotli
-version=1.1.0
-release=1
+version=1.2.0
+release=2
 source=(https://github.com/google/$name/archive/v$version/$name-v$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
   mkdir build &&
 cd    build &&
 

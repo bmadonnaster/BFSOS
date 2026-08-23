@@ -8,8 +8,7 @@ version=0.6.1
 release=1
 source=(https://github.com/ksnip/kImageAnnotator/archive/refs/tags/v$version/kImageAnnotator-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	mkdir build &&
 	cd    build &&

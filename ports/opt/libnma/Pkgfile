@@ -9,7 +9,7 @@ version=1.10.6
 release=2
 source=(https://gitlab.gnome.org/GNOME/libnma/-/archive/$version/libnma-$version.tar.bz2)
 
-build() {
+pkg_build() {
   prt-get isinst gtk4 && PKGMK_LIBNMA+=' -D libnma_gtk4=true'
   prt-get isinst mobile-broadband-provider-info || PKGMK_LIBNMA+=' -D mobile_broadband_provider_info=false'
   #prt-get isinst vala || PKGMK_LIBNMA+=' -D vapi=false'

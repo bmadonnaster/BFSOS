@@ -9,7 +9,7 @@ source=(https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-rel
 	https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.xz \
 	http://gcc.gnu.org/pub/gcc/releases/gcc-13.1.0/gcc-13.1.0.tar.xz)
 
-build() {
+pkg_build() {
 
 	# build a stub sysroot gcc if mingw-w64-gcc isn't already installed; if it is, that will be used instead
 	if [ ! -x /usr/bin/x86_64-w64-mingw32-gcc ]; then

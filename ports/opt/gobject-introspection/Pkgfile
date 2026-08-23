@@ -9,7 +9,7 @@ version=1.84.0
 release=1
 source=(https://download.gnome.org/sources/$name/${version::4}/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
   prt-get isinst cairo || PKGMK_GOBJECTINTROSPECTION+=' -D cairo=disabled'
   prt-get isinst python3-mako python3-markdown || PKGMK_GOBJECTINTROSPECTION+=' -D doctool=disabled'
 

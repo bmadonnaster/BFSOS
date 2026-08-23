@@ -9,7 +9,7 @@ _version=vulkan-sdk-$version
 release=1
 source=(https://github.com/zeux/volk/archive/$_version/$name-$version.tar.gz)
 
-build() {
+pkg_build() {
   cmake -S volk-$_version -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \

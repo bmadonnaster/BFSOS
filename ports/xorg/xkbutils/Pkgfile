@@ -8,8 +8,7 @@ version=1.0.6
 release=1
 source=(https://www.x.org/releases/individual/app/xkbutils-$version.tar.xz)
 
-build() {
-	cd xkbutils-$version
+pkg_build() {
 
 	 ./configure $XORG_CONFIG
 

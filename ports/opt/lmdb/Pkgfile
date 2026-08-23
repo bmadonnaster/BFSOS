@@ -4,12 +4,11 @@
 # Depends on:
 
 name=lmdb
-version=0.9.31
-release=1
+version=1.0.1
+release=2
 source=(https://github.com/LMDB/lmdb/archive/LMDB_$version.tar.gz)
 
-build() {
-	cd $name-LMDB_$version
+pkg_build() {
 	cd libraries/liblmdb &&
 make                 &&
 sed -i 's| liblmdb.a||' Makefile

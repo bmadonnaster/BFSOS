@@ -4,13 +4,12 @@
 # Depends on: libxml2
 
 name=wayland
-version=1.23.1
-release=1
+version=1.26.0
+release=2
 source=(https://gitlab.freedesktop.org/$name/$name/-/releases/$version/downloads/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
 
-	cd $name-$version
 	mkdir build &&
 	cd    build &&
 

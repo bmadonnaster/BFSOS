@@ -7,8 +7,7 @@ version=20230828_3.1
 release=1
 source=(https://thrysoee.dk/editline/$name-${version/_/-}.tar.gz)
 
-build() {
-	cd $name-${version/_/-}
+pkg_build() {
 
 	./configure --prefix=/usr
 

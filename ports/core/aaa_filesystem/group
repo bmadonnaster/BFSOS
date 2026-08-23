@@ -14,6 +14,7 @@ video:x:12:
 utmp:x:13:
 cdrom:x:15:
 adm:x:16:
+lpadmin:x:19:
 messagebus:x:18:
 systemd-journal:x:23:
 input:x:24:

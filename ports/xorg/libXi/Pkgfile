@@ -8,8 +8,7 @@ version=1.8.1
 release=1
 source=(https://www.x.org/releases/individual/lib/libXi-$version.tar.xz)
 
-build() {
-	cd libXi-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG $docdir
 

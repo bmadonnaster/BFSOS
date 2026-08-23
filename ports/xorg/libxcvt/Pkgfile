@@ -8,8 +8,7 @@ version=0.1.3
 release=1
 source=(https://xorg.freedesktop.org/releases/individual/lib/libxcvt-$version.tar.xz)
 
-build() {
-cd $name-$version
+pkg_build() {
 mkdir build &&
 cd    build &&
 

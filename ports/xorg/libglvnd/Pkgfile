@@ -8,7 +8,7 @@ version=1.7.0
 release=1
 source=(https://github.com/NVIDIA/$name/archive/v$version/$name-$version.tar.gz)
 
-build() {
+pkg_build() {
 	## for future references
 	#prt-get isinst libX11 libXext xorg-xorgproto && PKGMK_GLVND+=' -D x11=enabled -D glx=enabled'
 	PKGMK_GLVND+=' -D x11=enabled -D glx=enabled'

@@ -12,8 +12,7 @@ source=(
     https://www.linuxfromscratch.org/patches/blfs/svn/qca-$version-openssl4_fixes-1.patch
 )
 
-build() {
-    cd qca-$version
+pkg_build() {
     cmake -S . -B build -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/opt/qt6 \
         -DCMAKE_BUILD_TYPE=Release \

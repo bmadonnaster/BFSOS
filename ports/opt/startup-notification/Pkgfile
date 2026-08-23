@@ -9,8 +9,7 @@ release=1
 
 source=(http://www.freedesktop.org/software/$name/releases/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 	./configure --prefix=/usr --disable-static &&
 make
 	make DESTDIR=$PKG install

@@ -11,7 +11,7 @@ _version=vulkan-sdk-$version
 release=1
 source=(https://github.com/KhronosGroup/Vulkan-ValidationLayers/archive/$_version/$_name-$version.tar.gz)
 
-build() {
+pkg_build() {
 	prt-get isinst wayland || PKGMK_VULKAN_VALIDATION_LAYERS+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
 
 	cmake -S $_name-$_version -B build -G Ninja $PKGMK_VULKAN_VALIDATION_LAYERS \

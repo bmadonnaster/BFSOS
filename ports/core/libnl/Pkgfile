@@ -3,8 +3,8 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 
 name=libnl
-version=3.11.0
-release=1
+version=3.12.0
+release=2
 source=(https://github.com/thom311/libnl/releases/download/libnl${version//./_}/libnl-$version.tar.gz)
 
 build() {

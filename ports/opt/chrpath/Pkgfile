@@ -7,7 +7,7 @@ version=0.18
 release=1
 source=(http://http.debian.net/debian/pool/main/c/chrpath/chrpath_$version.orig.tar.gz)
 
-build() {
+pkg_build() {
 	cd $name
 
 	./bootstrap

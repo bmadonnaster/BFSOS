@@ -9,8 +9,7 @@ version=1.58.0
 release=2
 source=(https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/releases/$version/downloads/NetworkManager-$version.tar.xz)
 
-build() {
-    cd NetworkManager-$version
+pkg_build() {
     grep -rl '^#!.*python$' . | xargs -r sed -i '1s/python$/python3/'
 
     meson setup build \

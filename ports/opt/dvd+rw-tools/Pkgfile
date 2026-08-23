@@ -8,8 +8,7 @@ version=7.1
 release=1
 source=(http://fy.chalmers.se/~appro/linux/DVD+RW/tools/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 sed -i '/stat.h/a #include <sys/sysmacros.h>' growisofs.c &&
 sed -i '/stdlib/a #include <limits.h>' transport.hxx &&
 make all rpl8 btcflash

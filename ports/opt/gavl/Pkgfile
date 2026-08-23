@@ -9,8 +9,7 @@ version=1.4.0
 release=1
 source=(https://downloads.sourceforge.net/gmerlin/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 sed -i "/stdio/a #include <string.h>" src/fill_test.c
 	LIBS=-lm                      \
 ./configure --prefix=/usr     \

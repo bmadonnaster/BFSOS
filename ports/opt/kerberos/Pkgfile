@@ -8,8 +8,7 @@ version=1.21.3
 release=1
 source=(https://$name.org/dist/krb5/1.21/krb5-$version.tar.gz)
 
-build() {
-	cd krb5-$version
+pkg_build() {
 
 cd src &&
 

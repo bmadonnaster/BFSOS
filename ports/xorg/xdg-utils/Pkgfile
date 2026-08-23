@@ -9,8 +9,7 @@ version=v1.2.1
 release=1
 source=(https://gitlab.freedesktop.org/xdg/$name/-/archive/$version/$name-$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
 
   ./configure --prefix=/usr --mandir=/usr/share/man &&

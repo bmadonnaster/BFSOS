@@ -8,8 +8,7 @@ version=1.0.11
 release=1
 source=(https://www.x.org/releases/individual/app/xmodmap-$version.tar.xz)
 
-build() {
-	cd xmodmap-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG
 

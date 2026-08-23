@@ -8,8 +8,7 @@ version=1.4.3
 release=1
 source=(https://www.x.org/releases/individual/driver/$name-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG &&
 	make

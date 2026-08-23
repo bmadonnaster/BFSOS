@@ -8,8 +8,7 @@ version=1.5.2
 release=1
 source=(https://www.x.org/releases/individual/app/xrandr-$version.tar.xz)
 
-build() {
-	cd xrandr-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG
 

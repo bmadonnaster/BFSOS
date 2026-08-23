@@ -5,11 +5,11 @@
 # Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors rust-bindgen valgrind vulkan-loader wayland-protocols
 
 name=mesa
-version=26.1.7
-release=2
-source=(https://mesa.freedesktop.org/archive/mesa-$version.tar.xz)
+version=26.2.1
+release=3
+source=(https://archive.mesa3d.org/mesa-$version.tar.xz)
 
-build() {
+pkg_build() {
     local platforms=x11
     local vulkan_drivers=''
 
@@ -20,7 +20,7 @@ build() {
         vulkan_drivers=auto
     fi
 
-    meson setup build mesa-$version \
+    meson setup build . \
         --prefix=/usr \
         --buildtype=release \
         -Dplatforms="$platforms" \

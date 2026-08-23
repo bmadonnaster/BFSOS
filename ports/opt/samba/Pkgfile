@@ -1,8 +1,8 @@
 # Depends on: gnutls jansson libtirpc perl-parse-yapp rpcsvc-proto fuse gpgme icu libtasn1 libxslt linux-pam kerberos openldap avahi cups cyrus-sasl git gdb gnupg libaio libarchive libcap libgcrypt libnsl libunwind lmdb python3-markdown nss popt talloc vala valgrind xfsprogs
 
 name=samba
-version=4.21.4
-release=1
+version=4.24.5
+release=2
 source=(https://download.${name}.org/pub/${name}/stable/${name}-${version}.tar.gz)
 pkg_build() {
 python3 -m venv pyvenv &&
@@ -22,7 +22,7 @@ PYTHON=$PWD/pyvenv/bin/python3             \
 make
 sed '1s@^.*$@#!/usr/bin/python3@' \
     -i ./bin/default/source4/scripting/bin/*.inst
-make install &&
+make DESTDIR="$PKG" install &&
 
 install -v -m644    examples/smb.conf.default $PKG/etc/samba &&
 

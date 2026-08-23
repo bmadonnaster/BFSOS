@@ -8,8 +8,7 @@ version=1.2.4
 release=1
 source=(https://www.x.org/releases/individual/lib/libXScrnSaver-$version.tar.xz)
 
-build() {
-	cd libXScrnSaver-$version
+pkg_build() {
 	  ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults
 	make

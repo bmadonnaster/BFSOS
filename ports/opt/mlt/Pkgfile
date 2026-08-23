@@ -5,8 +5,8 @@
 # Optional: doxygen fftw libexif sdl2 jack moveit sox vid.stab
 
 name=mlt
-version=7.32.0
-release=1
+version=7.40.0
+release=2
 source=(https://github.com/mltframework/$name/releases/download/v$version/$name-$version.tar.gz)
 pkg_build () {
 mkdir build &&
@@ -18,5 +18,5 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr \
       -D MOD_QT6=ON                \
       -W no-dev .. &&
 make
-make install
+make DESTDIR="$PKG" install
 }

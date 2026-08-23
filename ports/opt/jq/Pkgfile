@@ -8,8 +8,7 @@ version=1.7.1
 release=1
 source=(https://github.com/stedolan/jq/releases/download/jq-$version/jq-$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
   ./configure --prefix=/usr \
     --with-oniguruma=/usr

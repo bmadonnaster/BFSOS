@@ -3,14 +3,14 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 
 name=nspr
-version=4.36
-release=1
+version=4.40
+release=2
 source=(https://archive.mozilla.org/pub/$name/releases/v$version/src/$name-$version.tar.gz)
 
-build() {
+pkg_build() {
 
 
-	cd $name-$version/nspr
+	cd nspr
 
 	sed -ri '/^RELEASE/s/^/#/' pr/src/misc/Makefile.in &&
 sed -i 's#$(LIBRARY) ##'   config/rules.mk         &&

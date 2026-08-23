@@ -8,8 +8,7 @@ version=3.6.2
 release=1
 source=(https://github.com/sass/sassc/archive/3.6.2/$name-$name.tar.gz
 https://github.com/sass/libsass/archive/3.6.5/libsass-3.6.5.tar.gz)
-build() {
-	cd $name-$version
+pkg_build() {
 	autoreconf -fi
 	./configure --prefix=/usr
 	make

@@ -4,12 +4,11 @@
 # Depends on: gettext python3
 
 name=iso-codes
-version=4.16.0
-release=1
+version=4.20.1
+release=2
 source=(https://salsa.debian.org/iso-codes-team/iso-codes/-/archive/v$version/iso-codes-v$version.tar.gz)
 
-build() {
-	cd $name-v$version
+pkg_build() {
 	./configure --prefix=/usr
 	make
 	make DESTDIR=$PKG install

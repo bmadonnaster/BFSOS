@@ -4,11 +4,11 @@
 # Depends on: cairo libsigc++
 
 name=cairomm
-version=1.18.0
-release=1
+version=1.18.1
+release=2
 source=(https://cairographics.org/releases/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup build $name-$version \
 		--prefix=/usr \
 		--buildtype=plain \

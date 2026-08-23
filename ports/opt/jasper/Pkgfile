@@ -4,12 +4,11 @@
 # Depends on:  cmake libjpeg-turbo
 
 name=jasper
-version=4.2.5
-release=1
+version=4.2.9
+release=2
 source=(https://github.com/jasper-software/$name/archive/version-$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-version-$version
+pkg_build() {
 mkdir BUILD &&
 cd    BUILD &&
 

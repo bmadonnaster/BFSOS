@@ -8,8 +8,7 @@ version=1.64.0
 release=2
 source=(https://github.com/libnghttp2/libnghttp2/releases/download/v$version/libnghttp2-$version.tar.xz)
 
-build() {
-	cd libnghttp2-$version
+pkg_build() {
 	./configure --prefix=/usr     \
             --disable-static  \
             --enable-lib-only \

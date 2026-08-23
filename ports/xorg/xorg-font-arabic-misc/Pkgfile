@@ -8,8 +8,7 @@ version=1.0.4
 release=1
 source=(https://www.x.org/releases/individual/font/font-arabic-misc-$version.tar.xz)
 
-build() {
-	cd font-arabic-misc-$version
+pkg_build() {
 
 	./configure --prefix=/usr
 

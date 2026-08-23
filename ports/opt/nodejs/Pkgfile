@@ -5,13 +5,14 @@
 # Optional: brotli c-ares icu libnghttp3 libngtcp2 simdjson simdutf
 
 name=nodejs
-version=24.2.0
-release=1
+version=24.19.0
+release=2
 source=(https://nodejs.org/dist/v$version/node-v$version.tar.xz
   unbundle-uv.patch)
 
-build() {
-  cd node-v$version
+skip_patch=1
+
+pkg_build() {
 
   patch -Np1 -i $SRC/unbundle-uv.patch
   rm deps/uv/uv.gyp deps/zlib/zlib.gyp

@@ -8,8 +8,7 @@ version=1.2.3
 release=1
 source=(https://www.x.org/releases/individual/app/mkfontscale-$version.tar.xz)
 
-build() {
-	cd mkfontscale-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG
 

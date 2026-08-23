@@ -8,7 +8,7 @@ version=13.1.0
 release=1
 source=(http://gcc.gnu.org/pub/gcc/releases/gcc-$version/gcc-$version.tar.xz)
 
-build() {
+pkg_build() {
 	for T in {i686,x86_64}-w64-mingw32; do
 		mkdir build-$T
 		cd build-$T

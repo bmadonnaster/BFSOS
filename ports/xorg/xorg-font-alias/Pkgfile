@@ -7,8 +7,7 @@ version=1.0.4
 release=1
 source=(https://www.x.org/releases/individual/font/font-alias-$version.tar.bz2)
 
-build() {
-	cd font-alias-$version
+pkg_build() {
 
 	./configure --prefix=/usr
 

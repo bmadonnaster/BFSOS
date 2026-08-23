@@ -8,8 +8,7 @@ version=2.99.917-931
 release=1
 source=(https://crux.nu/files/distfiles/xf86-video-intel-$version.tar.xz)
 
-build() {
-	cd xf86-video-intel-$version
+pkg_build() {
 
 	./configure \
 		--prefix=/usr \

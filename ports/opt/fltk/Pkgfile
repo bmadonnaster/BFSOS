@@ -5,12 +5,11 @@
 # Optional:    alsa-lib desktop-file-utils glu mesa texlive
 
 name=fltk
-version=1.3.8
-release=1
+version=1.3.11
+release=2
 source=(https://fltk.org/pub/fltk/$version/fltk-$version-source.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	sed -i -e '/cat./d' documentation/Makefile       &&
 

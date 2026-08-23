@@ -8,8 +8,7 @@ version=1.5.4
 release=1
 source=(https://www.x.org/releases/individual/lib/libXrandr-$version.tar.xz)
 
-build() {
-	cd libXrandr-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG $docdir
 

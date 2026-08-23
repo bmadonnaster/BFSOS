@@ -1,11 +1,11 @@
 # Description: An document type definitions for verification of XML data files against the DocBook rule set.
-# URL: http://www.docbook.org/
+# URL: https://docbook.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: libxml2 unzip
 
 name=docbook-xml
 version=4.5
-release=8
+release=9
 source=(
     https://archive.docbook.org/xml/4.5/$name-4.5.zip
     https://archive.docbook.org/xml/4.4/$name-4.4.zip
@@ -17,7 +17,7 @@ renames=($name-$version.zyp
          $name-4.3.zyp
          $name-4.2.zyp)
 
-build() {
+pkg_build() {
 	# map module filenames to their descriptions
 	declare -A DB_DESC
 	DB_DESC["docbookx.dtd"]="DTD DocBook\$xml V 4.\$vminor"

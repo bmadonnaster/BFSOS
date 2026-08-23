@@ -10,8 +10,7 @@ release=1
 source=(https://github.com/ConsoleKit2/ConsoleKit2/archive/$version/ConsoleKit2-$version.tar.gz
   system-session pam-foreground-compat.ck)
 
-build() {
-  cd ConsoleKit2-$version
+pkg_build() {
 
   NOCONFIGURE=1 ./autogen.sh
   ./configure \

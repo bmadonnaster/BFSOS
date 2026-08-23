@@ -8,8 +8,7 @@ version=3-6-0
 release=1
 source=(https://github.com/lm-sensors/$name/archive/V$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	make PREFIX=/usr        \
      BUILD_STATIC_LIB=0 \

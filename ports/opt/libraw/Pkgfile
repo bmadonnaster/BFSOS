@@ -8,8 +8,7 @@ version=0.21.2
 release=1
 source=(https://www.libraw.org/data/LibRaw-$version.tar.gz)
 
-build() {
-	cd LibRaw-$version
+pkg_build() {
 
 	autoreconf -fiv              &&
 ./configure --prefix=/usr    \

@@ -4,12 +4,11 @@
 # Depends on:  ghostscript cups
 
 name=gutenprint
-version=5.3.4
-release=1
+version=5.3.5
+release=2
 source=(http://downloads.sourceforge.net/project/gimp-print/$name-5.3/$version/$name-$version.tar.xz)
 
-build () {
-    cd $name-$version
+pkg_build() {
 
     sed -i 's|$(PACKAGE)/doc|doc/$(PACKAGE)-$(VERSION)|' \
        {,doc/,doc/developer/}Makefile.in &&

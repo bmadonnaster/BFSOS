@@ -9,8 +9,9 @@ release=1
 source=(http://www.kernel.org/pub/linux/utils/boot/$name/$name-$version.tar.xz
         $name-$version-sysmacros.patch)
 
-build() {
-	cd $name-$version
+skip_patch=1
+
+pkg_build() {
 
 	export CFLAGS="$CFLAGS -fcommon"
 

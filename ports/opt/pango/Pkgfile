@@ -4,11 +4,11 @@
 # Depends on: fontconfig freetype harfbuzz fribidi
 # Optional: cairo gobject-introspection xorg-libs cantarell gi-docGen  help2man libthai sysprof
 name=pango
-version=1.56.1
-release=1
+version=1.58.2
+release=2
 source=(https://download.gnome.org/sources/$name/${version:0:4}/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup $name-$version build \
 		--prefix=/usr \
 		--buildtype=plain \

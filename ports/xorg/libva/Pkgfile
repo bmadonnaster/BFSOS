@@ -5,12 +5,11 @@
 # Optional: wayland-protocols
 
 name=libva
-version=2.22.0
-release=1
+version=2.24.1
+release=2
 source=(https://github.com/intel/libva/archive/$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 	mkdir builds &&
 	cd    builds &&
 

@@ -1,10 +1,9 @@
 # Depends on: dbus glib gobject-introspection lcms2 polkit sqlite libgudev libgusb systemd vala
 
 name=colord
-version=1.4.7
-release=1
+version=1.4.8
+release=2
 source=(https://www.freedesktop.org/software/${name}/releases/${name}-${version}.tar.xz
-https://www.linuxfromscratch.org/patches/blfs/svn/colord-1.4.7-upstream_fixes-1.patch
 disable-udev-hwdb-tests.patch)
 
 pkg_build () {
@@ -16,11 +15,11 @@ meson setup ..                  \
       -D daemon_user=colord     \
       -D vapi=true              \
       -D systemd=true           \
-      -D libcolordcompat=false   \
+      -D libcolordcompat=true   \
       -D argyllcms_sensor=false \
       -D bash_completion=false  \
       -D docs=false             \
       -D man=false              &&
 ninja
-ninja install
+DESTDIR="$PKG" ninja install
 }

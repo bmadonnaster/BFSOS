@@ -8,8 +8,7 @@ version=1.0.3
 release=2
 source=(https://www.x.org/releases/individual/font/font-bh-ttf-$version.tar.bz2)
 
-build() {
-	cd font-bh-ttf-$version
+pkg_build() {
 
 	./configure --prefix=/usr
 

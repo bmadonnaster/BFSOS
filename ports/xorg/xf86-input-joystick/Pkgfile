@@ -8,8 +8,7 @@ version=1.6.4
 release=1
 source=(https://www.x.org/releases/individual/driver/$name-$version.tar.xz)
 
-build() {
-	cd xf86-input-joystick-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG &&
 	make

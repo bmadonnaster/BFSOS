@@ -8,8 +8,7 @@ version=1.2.1
 release=1
 source=(https://www.x.org/releases/individual/lib/libXmu-$version.tar.xz)
 
-build() {
-	cd libXmu-$version
+pkg_build() {
 
 	  ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults

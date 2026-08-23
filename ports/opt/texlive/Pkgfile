@@ -13,9 +13,8 @@ source=(
     https://www.linuxfromscratch.org/patches/blfs/svn/texlive-$version-source-upstream_fixes-1.patch
 )
 
-build() {
-    cd texlive-$version-source
-    export TEXLIVE_PREFIX=/opt/texlive/$version
+pkg_build() {
+      export TEXLIVE_PREFIX=/opt/texlive/$version
     export TEXARCH="$(uname -m | sed -e 's/i.86/i386/' -e 's/$/-linux/')"
 
     mkdir texlive-build

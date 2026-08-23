@@ -12,9 +12,8 @@ source=(
     https://www.linuxfromscratch.org/patches/blfs/svn/llvm-$version-upstream_fix-1.patch
 )
 
-build() {
-    cd llvm-project-$version.src
-
+pkg_build() {
+  
     # pkgmk applies declared .patch sources before build(). Keep the entire
     # LLVM/Clang/compiler-rt stack in one coherent monorepo build.
     mkdir -p llvm/build

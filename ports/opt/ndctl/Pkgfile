@@ -8,7 +8,7 @@ version=82
 release=1
 source=(https://github.com/pmem/ndctl/archive/v$version/$name-$version-$release.tar.gz)
 
-build() {
+pkg_build() {
   meson setup $name-$version build $PKGMK_NDCTL \
     --prefix=/usr \
     --buildtype=plain \

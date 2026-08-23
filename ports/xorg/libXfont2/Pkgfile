@@ -8,8 +8,7 @@ version=2.0.6
 release=1
 source=(https://www.x.org/releases/individual/lib/libXfont2-$version.tar.xz)
 
-build() {
-	cd libXfont2-$version
+pkg_build() {
 
 	 ./configure $XORG_CONFIG $docdir --disable-devel-docs
 

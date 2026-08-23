@@ -1,19 +1,18 @@
 # Description: Mozilla Firefox rapid-release browser
 # URL: https://www.mozilla.org/firefox/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cbindgen gtk3 libarchive libnotify llvm nodejs pulseaudio python3 startup-notification icu libaom libevent libvpx libwebp nasm nspr nss
+# Depends on: cbindgen gtk3 libarchive libnotify llvm nodejs pulseaudio python3 startup-notification icu libaom libevent libvpx libwebp nasm nspr nss rustc
 # Optional: alsa-lib curl ffmpeg geoclue liboauth libproxy pciutils valgrind wget wireless-tools yasm
 
 name=firefox
 version=154.0
-release=3
+release=4
 source=(
     https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
     firefox.desktop
 )
 
-build() {
-    cd "$name-$version"
+pkg_build() {
 
     if [ "$(python3 -c 'import sys; print(sys.stdout.encoding.lower())')" != 'utf-8' ]; then
         echo "firefox: an UTF-8 locale is required to build Firefox" >&2

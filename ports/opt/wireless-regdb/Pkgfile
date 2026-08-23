@@ -7,8 +7,7 @@ version=2026.05.30
 release=1
 source=(https://www.kernel.org/pub/software/network/wireless-regdb/wireless-regdb-$version.tar.xz)
 
-build() {
-    cd wireless-regdb-$version
+pkg_build() {
     install -Dm644 regulatory.db "$PKG/usr/lib/firmware/regulatory.db"
     install -Dm644 regulatory.db.p7s "$PKG/usr/lib/firmware/regulatory.db.p7s"
 }

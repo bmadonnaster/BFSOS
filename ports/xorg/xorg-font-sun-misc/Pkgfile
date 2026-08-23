@@ -8,8 +8,7 @@ version=1.0.3
 release=1
 source=(https://www.x.org/releases/individual/font/font-sun-misc-$version.tar.bz2)
 
-build() {
-	cd font-sun-misc-$version
+pkg_build() {
 
 	./configure --prefix=/usr
 

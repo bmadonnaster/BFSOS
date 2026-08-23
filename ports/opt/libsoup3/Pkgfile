@@ -9,8 +9,7 @@ version=3.6.5
 release=1
 source=(https://ftp.gnome.org/pub/gnome/sources/libsoup/${version%.*}/libsoup-$version.tar.xz)
 
-build() {
-  cd libsoup-$version
+pkg_build() {
   sed 's/apiversion/soup_version/' -i docs/reference/meson.build
    mkdir build &&
 cd    build &&

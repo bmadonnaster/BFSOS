@@ -8,8 +8,7 @@ version=0.4.1
 release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/xcb-util-$version.tar.xz)
 
-build() {
-	cd xcb-util-$version
+pkg_build() {
 	./configure $XORG_CONFIG &&
 	make
 	make DESTDIR=$PKG install

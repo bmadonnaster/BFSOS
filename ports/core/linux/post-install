@@ -22,6 +22,17 @@ initramfs_image="/boot/initramfs-$kver.img"
 echo "Updating module dependencies for $kver"
 depmod -a "$kver"
 
+# Maintain the generic /usr/src/linux link only when this flavor is the
+# configured BFSOS default. The installer writes /etc/bfsos/kernel-flavor.
+mkdir -p /etc/bfsos
+selected_flavor="$(cat /etc/bfsos/kernel-flavor 2>/dev/null || true)"
+if [ -z "$selected_flavor" ]; then
+    selected_flavor="linux"
+fi
+if [ "$selected_flavor" = "linux" ]; then
+    ln -sfn "linux-$kver" /usr/src/linux
+fi
+
 # During a BFSOS installation the installer owns the final storage topology,
 # Dracut invocation, and GRUB validation.  Defer those operations until the
 # installer has generated fstab/crypttab/mdadm/LVM state.

@@ -8,7 +8,7 @@ version=1.14.5
 release=1
 source=(https://cairographics.org/releases/cairomm-$version.tar.xz)
 
-build() {
+pkg_build() {
   meson setup cairomm-$version bld \
     --prefix=/usr \
     --buildtype=release \

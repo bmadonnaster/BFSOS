@@ -8,7 +8,7 @@ version=3.12.0
 release=1
 source=(https://github.com/Reference-LAPACK/lapack/archive/v$version/$name-$version-$release.tar.gz)
 
-build() {
+pkg_build() {
   cmake -S $name-$version -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \

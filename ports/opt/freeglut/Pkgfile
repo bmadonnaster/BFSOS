@@ -4,12 +4,11 @@
 # Depends on:  cmake mesa glu
 
 name=freeglut
-version=3.4.0
-release=1
+version=3.8.0
+release=2
 source=(https://downloads.sourceforge.net/$name/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	mkdir build &&
 	cd    build &&

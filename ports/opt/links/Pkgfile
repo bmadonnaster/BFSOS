@@ -8,8 +8,7 @@ version=2.30
 release=1
 source=(http://links.twibright.com/download/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr --mandir=/usr/share/man
 	make

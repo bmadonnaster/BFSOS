@@ -9,8 +9,7 @@ version=5.3.1
 release=1
 source=(https://github.com/steveire/grantlee/releases/download/v$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	mkdir build &&
 	cd    build &&

@@ -8,7 +8,7 @@ version=10.2.0
 release=1
 source=()
 
-build() {
+pkg_build() {
   install -d $PKG/usr/lib/ccache
 
   ln -s ../../bin/ccache $PKG/usr/lib/ccache/i686-w64-mingw32-c++

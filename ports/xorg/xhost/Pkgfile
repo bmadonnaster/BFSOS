@@ -8,8 +8,7 @@ version=1.0.10
 release=1
 source=(https://www.x.org/releases/individual/app/xhost-$version.tar.xz)
 
-build() {
-	cd xhost-$version
+pkg_build() {
 	./configure $XORG_CONFIG
 	make
 	make DESTDIR=$PKG install

@@ -1,0 +1,143 @@
+[
+  {
+    "port": "opt/accountsservice",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/alsa-lib",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/colord",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/cups",
+    "shipped_files": [
+      "cups.path",
+      "cups.service",
+      "cups.socket"
+    ],
+    "pkgfile_refs": [
+      "systemd",
+      ".service",
+      ".socket",
+      ".path"
+    ]
+  },
+  {
+    "port": "opt/gpm",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd",
+      ".service"
+    ]
+  },
+  {
+    "port": "opt/gst-plugins-bad",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/gst-plugins-base",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/gst-plugins-good",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/gst-plugins-ugly",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/ndctl",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/networkmanager",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/nvidia",
+    "shipped_files": [
+      "10-nvidia-drm-outputclass.conf"
+    ],
+    "pkgfile_refs": []
+  },
+  {
+    "port": "opt/p11-kit",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/snapper",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/udisks",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "opt/wireplumber",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "xorg/libinput",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  },
+  {
+    "port": "xorg/nvidia",
+    "shipped_files": [
+      "10-nvidia-drm-outputclass.conf"
+    ],
+    "pkgfile_refs": []
+  },
+  {
+    "port": "xorg/xorg-server",
+    "shipped_files": [],
+    "pkgfile_refs": [
+      "systemd"
+    ]
+  }
+]

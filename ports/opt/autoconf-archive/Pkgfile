@@ -7,8 +7,7 @@ version=2024.10.16
 release=1
 source=(https://ftp.gnu.org/$name/$name-$version.tar.xz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
   ./configure --prefix=/usr
   make

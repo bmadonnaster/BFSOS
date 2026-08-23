@@ -8,8 +8,7 @@ version=0.3.1
 release=1
 source=(https://github.com/ksnip/kColorPicker/archive/refs/tags/v$version/kColorPicker-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 	mkdir build &&
 cd    build &&
 

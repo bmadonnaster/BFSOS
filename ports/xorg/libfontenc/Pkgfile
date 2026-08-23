@@ -8,8 +8,7 @@ version=1.1.8
 release=1
 source=(https://www.x.org/releases/individual/lib/libfontenc-$version.tar.xz)
 
-build() {
-	cd libfontenc-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG $docdir
 

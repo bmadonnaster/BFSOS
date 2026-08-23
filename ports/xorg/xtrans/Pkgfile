@@ -8,8 +8,7 @@ version=1.5.2
 release=1
 source=(https://www.x.org/releases/individual/lib/xtrans-$version.tar.xz)
 
-build() {
-	cd xtrans-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG $docdir  --with-appdefaultdir=/etc/X11/app-defaults
 

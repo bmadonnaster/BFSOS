@@ -5,12 +5,11 @@
 # Optional: gtk-doc
 
 name=dbus-glib
-version=0.112
-release=2
+version=0.114
+release=3
 source=(https://dbus.freedesktop.org/releases/$name/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	prt-get isinst bash-completion || PKGMK_DBUSGLIB+=' --enable-bash-completion=no'
 

@@ -4,12 +4,11 @@
 # Depends on:  libao libvorbis libmad lame
 
 name=cdrdao
-version=1.2.4
-release=1
+version=1.2.6
+release=2
 source=(https://downloads.sourceforge.net/$name/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr --mandir=/usr/share/man &&
 make

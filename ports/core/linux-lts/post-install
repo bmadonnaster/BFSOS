@@ -25,6 +25,17 @@ for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456;
     }
 done
 
+# Maintain the generic /usr/src/linux link only when this flavor is the
+# configured BFSOS default. The installer writes /etc/bfsos/kernel-flavor.
+mkdir -p /etc/bfsos
+selected_flavor="$(cat /etc/bfsos/kernel-flavor 2>/dev/null || true)"
+if [ -z "$selected_flavor" ]; then
+    selected_flavor="linux-lts"
+fi
+if [ "$selected_flavor" = "linux-lts" ]; then
+    ln -sfn "linux-$kver" /usr/src/linux
+fi
+
 if [ "${BFS_INSTALLER_RUNNING:-no}" = yes ]; then
     echo "BFSOS installer detected; deferring LTS initramfs/bootloader regeneration."
     exit 0

@@ -5,15 +5,14 @@
 # Optional: xmlto
 
 name=shared-mime-info
-version=2.4
-release=2
+version=2.5.1
+release=3
 source=(
     https://gitlab.freedesktop.org/xdg/shared-mime-info/-/archive/$version/shared-mime-info-$version.tar.gz
     https://anduin.linuxfromscratch.org/BLFS/xdgmime/xdgmime.tar.xz
 )
 
-build() {
-    cd shared-mime-info-$version
+pkg_build() {
     if [ -d "$SRC/xdgmime" ]; then
         cp -a "$SRC/xdgmime" .
         make -C xdgmime

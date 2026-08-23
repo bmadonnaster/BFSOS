@@ -9,8 +9,9 @@ release=5
 source=(https://www.libsdl.org/release/SDL-$version.tar.gz
   $name-1.2.x-libx11.patch $name-$version-bs.patch)
 
-build() {
-  cd SDL-$version
+skip_patch=1
+
+pkg_build() {
 
   patch -p1 -i $SRC/$name-1.2.x-libx11.patch
   patch -p1 -i $SRC/$name-$version-bs.patch

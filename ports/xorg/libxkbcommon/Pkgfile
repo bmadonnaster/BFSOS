@@ -5,8 +5,8 @@
 # Optional: libxcb wayland wayland-protocols doxygen
 
 name=libxkbcommon
-version=1.10.0
-release=3
+version=1.13.2
+release=4
 source=(https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz)
 
 pkg_build() {

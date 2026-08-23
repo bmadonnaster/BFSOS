@@ -8,8 +8,7 @@ version=1.0.16
 release=1
 source=(https://www.x.org/releases/individual/lib/libXaw-$version.tar.xz)
 
-build() {
-	cd libXaw-$version
+pkg_build() {
 
 	  ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults

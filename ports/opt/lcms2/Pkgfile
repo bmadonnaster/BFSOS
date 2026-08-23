@@ -4,13 +4,12 @@
 # Depends on: libtiff
 # Optional: libjpeg-turbo
 name=lcms2
-version=2.17
-release=1
+version=2.19.1
+release=2
 source=(http://downloads.sourceforge.net/project/lcms/lcms/${version:0:4}/$name-$version.tar.gz)
 
-build() {
+pkg_build() {
 
-	cd $name-$version
 
 	sed '/BufferSize < TagSize/,+1 s/goto Error/TagSize = BufferSize/' \
     -i src/cmsio0.c

@@ -9,7 +9,7 @@ source=(https://www.unicode.org/Public/zipped/$version/UCD.zip
   https://www.unicode.org/Public/zipped/$version/Unihan.zip)
 renames=(UCD-$version.zip Unihan-$version.zip)
 
-build() {
+pkg_build() {
   cp $PKGMK_SOURCE_DIR/UCD-$version.zip .
   cp $PKGMK_SOURCE_DIR/Unihan-$version.zip .
   for _f in UCD Unihan; do

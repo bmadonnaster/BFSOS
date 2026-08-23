@@ -5,7 +5,7 @@
 # Optional:    doxygen gobject-introspection python3-lxml sphinx sphinx_rtd_theme breathe
 
 name=wireplumber
-version=0.5.2
-release=1
+version=0.5.15
+release=2
 source=( https://gitlab.freedesktop.org/pipewire/$name/-/archive/$version/$version-$version.tar.gz)
 build_opt="--prefix=/usr --buildtype=release -Dsystem-lua=true"

@@ -8,8 +8,7 @@ version=1.0.8
 release=1
 source=(https://www.x.org/releases/individual/app/xcursorgen-$version.tar.xz)
 
-build() {
-	cd xcursorgen-$version
+pkg_build() {
 
 	  ./configure $XORG_CONFIG
 

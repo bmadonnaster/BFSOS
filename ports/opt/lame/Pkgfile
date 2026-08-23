@@ -9,8 +9,7 @@ version=3.100
 release=1
 source=(http://downloads.sourceforge.net/project/$name/$name/$version/$name-$version.tar.gz)
 
-build () {
-    cd $name-$version
+pkg_build() {
     ./configure --prefix=/usr --enable-mp3rtp --disable-static &&
 make
 

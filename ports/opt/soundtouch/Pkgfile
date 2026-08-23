@@ -4,13 +4,12 @@
 # Depends on:
 
 name=soundtouch
-version=2.3.3
-release=1
+version=2.4.1
+release=2
 source=(https://codeberg.org/$name/$name/archive/$version.tar.gz)
 renames=($name-$version.tar.gz)
 
-build() {
-	cd $name
+pkg_build() {
 	./bootstrap &&
 ./configure --prefix=/usr \
             --docdir=/usr/share/doc/soundtouch-$version &&

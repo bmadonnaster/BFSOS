@@ -12,8 +12,7 @@ source=(
     https://www.linuxfromscratch.org/patches/blfs/svn/ffmpeg-$version-chromium_method-1.patch
 )
 
-build() {
-    cd ffmpeg-$version
+pkg_build() {
     ./configure --prefix=/usr \
         --enable-gpl \
         --enable-version3 \

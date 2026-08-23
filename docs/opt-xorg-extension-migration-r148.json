@@ -1,0 +1,2246 @@
+[
+  {
+    "path": "ports/opt/alsa-lib/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/alsa-plugins/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/alsa-tools/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/alsa-utils/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/argyllcms/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/aspell/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/aspell6-en/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/at-spi2-core/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/atkmm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/autoconf-archive/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/brotli/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/c-ares/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/cairo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/cairomm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/cairomm-1.0/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/cbindgen/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/cdparanoia/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/cdrdao/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/chrpath/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/consolekit/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/dbus-glib/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/desktop-file-utils/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/directx-headers/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/discord/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/docbook-xml/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/doxygen/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/duktape/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/dvd+rw-tools/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/faudio/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/ffmpeg/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/fftw/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/firefox/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/firefox-bin/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/flac/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/fltk/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/freeglut/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/freetype2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/frei0r-plugins/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/fribidi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/ftjam/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/fuse2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/gavl/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gdk-pixbuf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/ghostscript/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/glibmm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/glibmm-2.68/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gobject-introspection/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gparted/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/grantlee/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/graphene/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/graphite2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gst-plugins-bad/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gst-plugins-base/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gst-plugins-good/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gst-plugins-ugly/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gstreamer/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gtkmm3/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gutenprint/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/gvim/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/harfbuzz/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/hyphen/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/iniparser/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/iso-codes/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/itstool/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/jansson/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/jasper/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/jq/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/kColorPicker/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/kImageAnnotator/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/kdsoap/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/kerberos/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lame/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lapack/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lcms2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/liba52/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libass/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libassuan/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libatasmart/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libburn/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libbytesize/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libcanberra/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/libcdio/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libcdio-paranoia/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libdvdnav/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libdvdread/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libedit/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libexif/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libglade/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libgudev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libical/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libidn2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libmad/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/libmbim/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libmpeg2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libmusicbrainz5/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/libndp/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libnghttp2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libnma/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libnotify/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libogg/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libpaper/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libpcap/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libpsl/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libpwquality/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libqmi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libraw/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsamplerate/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsass/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsdl/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/libsecret/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsigc++/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsigc++2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsndfile/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsoup/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libsoup3/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libssh2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libtheora/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libtiff/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libtraceevent/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libtracefs/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libvisual/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libvorbis/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libvpx/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libwebp/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/libxslt/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/links/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lld/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/llvm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lm-sensors/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lmdb/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/lua/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/lua52/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/lynx/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/mingw-ccache-bindings/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mingw-w64-binutils/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mingw-w64-crt/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mingw-w64-gcc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mingw-w64-headers/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mm-common/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mobile-broadband-provider-info/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/modemmanager/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mpg123/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/mupdf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/ndctl/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/net-tools/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/networkmanager/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/newt/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/nodejs/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/nspr/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/nvidia/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/oniguruma/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/openal/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/openjpeg2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/opus/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/orc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/oxygen-icons5/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/p5-uri/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/p7zip/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pango/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pangomm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pangomm-2.48/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pcre/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/perl-xml-simple/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/protobuf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pth/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/publicsuffix-list/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/pulseaudio/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qca/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qpdf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qrencode/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qt5/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qt5-alternate/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/qt6/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/qtwebengine/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/robin-hood-hashing/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/rust-bindgen/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/rustc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/sassc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/sbc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/sdl/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/sdl12-compat/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/sgml-common/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/shaderc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/shared-mime-info/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/slang/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/smartmontools/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/socat/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/soundtouch/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/speex/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/startup-notification/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/syslinux/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": true
+  },
+  {
+    "path": "ports/opt/taglib/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/texlive/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/udisks/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/unicode-character-database/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/vala/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/valgrind/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/volk/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/vulkan-utility-libraries/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/vulkan-validation-layers/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/wgetpaste/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/wireless-regdb/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/xapian/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/yasm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/opt/zip/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/bdftopcf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/fontconfig/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/glu/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/iceauth/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libFS/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libICE/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libSM/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libX11/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXScrnSaver/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXau/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXaw/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXcomposite/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXdamage/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXdmcp/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXext/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXfixes/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXfont2/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXft/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXinerama/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXmu/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXpm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXpresent/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXrandr/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXrender/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXres/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXt/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXtst/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXv/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXvMC/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXxf86dga/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libXxf86vm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libdrm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libepoxy/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libevdev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libfontenc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libglvnd/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libinput/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libpciaccess/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libunwind/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libva/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libvdpau/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libxcb/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libxcvt/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libxkbfile/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/libxshmfence/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/luit/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/mesa/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/mesa-demos/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/mkfontscale/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/mtdev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/nvidia/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/sessreg/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/setxkbmap/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/smproxy/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/twm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/util-macros/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/wayland/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/x11perf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xauth/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xbacklight/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xbitmaps/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-proto/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util-cursor/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util-image/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util-keysyms/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util-renderutil/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcb-util-wm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xclock/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcmsdb/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcursor-themes/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xcursorgen/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xdg-utils/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xdpyinfo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xdriinfo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-elographics/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-evdev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-joystick/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-libinput/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-synaptics/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-vmmouse/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-input-wacom/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-amdgpu/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-ast/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-ati/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-cirrus/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-dummy/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-fbdev/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-intel/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-mga/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-neomagic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-openchrome/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-siliconmotion/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-sis/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-vboxvideo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-vesa/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xf86-video-vmware/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xgamma/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xhost/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xinit/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xinput/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xkbcomp/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xkbevd/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xkbutils/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xkeyboard-config/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xkill/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xlsatoms/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xlsclients/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xmessage/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xmodmap/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-apps/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-driver/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-adobe-100dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-adobe-75dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-adobe-utopia-100dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-adobe-utopia-75dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-adobe-utopia-type1/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-alias/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-arabic-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-100dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-75dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-lucidatypewriter-100dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-lucidatypewriter-75dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-ttf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bh-type1/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bitstream-100dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bitstream-75dpi/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bitstream-type1/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-bitstream-vera/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-cronyx-cyrillic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-cursor-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-daewoo-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-dec-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-dejavu-ttf/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-ibm-type1/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-isas-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-jis-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-micro-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-misc-cyrillic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-misc-ethiopic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-misc-meltho/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-misc-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-mutt-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-schumacher-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-screen-cyrillic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-sony-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-sun-misc/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-util/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-winitzki-cyrillic/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-font-xfree86-type1/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-fonts/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorg-libs/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xorgproto/Pkgfile",
+    "converted": true,
+    "removed_source_cd": false,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xpr/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xprop/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xrandr/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xrdb/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xrefresh/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xscreensaver/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xset/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xsetroot/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xterm/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xtrans/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xvinfo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xwd/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xwininfo/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  },
+  {
+    "path": "ports/xorg/xwud/Pkgfile",
+    "converted": true,
+    "removed_source_cd": true,
+    "manual_patch_guard": false
+  }
+]

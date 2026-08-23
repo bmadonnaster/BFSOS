@@ -8,8 +8,7 @@ version=1.0.9
 release=1
 source=(https://www.x.org/releases/individual/lib/libFS-$version.tar.xz)
 
-build() {
-	cd libFS-$version
+pkg_build() {
 
 	  ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults

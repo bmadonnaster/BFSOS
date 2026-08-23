@@ -5,12 +5,11 @@
 # Optional: texlive
 
 name=libunwind
-version=1.8.1
-release=1
+version=1.8.3
+release=2
 source=(https://github.com/libunwind/$name/releases/download/v$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr --disable-static &&
 make

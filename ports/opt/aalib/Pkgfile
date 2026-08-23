@@ -35,5 +35,5 @@ autoreconf -fi
             --mandir=/usr/share/man   \
             --disable-static          &&
 make
-make install
+make DESTDIR="$PKG" install
 }

@@ -4,8 +4,7 @@ name=net-tools
 version=2.10
 release=1
 source=(https://downloads.sourceforge.net/project/${name}/${name}-${version}.tar.xz)
-build() {
-cd $name-$version
+pkg_build() {
  export BINDIR='/usr/bin' SBINDIR='/usr/bin' &&
 yes "" | make -j1                           &&
 

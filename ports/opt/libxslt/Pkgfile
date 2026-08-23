@@ -9,8 +9,7 @@ version=1.1.42
 release=2
 source=(https://download.gnome.org/sources/libxslt/${version:0:3}/libxslt-$version.tar.xz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
   prt-get isinst libgcrypt || PKGMK_LIBXSLT+=' --without-crypto'
 

@@ -9,8 +9,7 @@ release=1
 source=(https://www.x.org/releases/individual/lib/libXext-$version.tar.xz)
 keep_libtool=1
 
-build() {
-	cd libXext-$version
+pkg_build() {
 
 	  ./configure $XORG_CONFIG $docdir \
                   --with-appdefaultdir=/etc/X11/app-defaults

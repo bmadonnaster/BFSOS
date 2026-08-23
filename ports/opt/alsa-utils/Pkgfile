@@ -9,8 +9,7 @@ version=1.2.13
 release=1
 source=(https://www.alsa-project.org/files/pub/utils/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --disable-alsaconf \
             --disable-bat   \

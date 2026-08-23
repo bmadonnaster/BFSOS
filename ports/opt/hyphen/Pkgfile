@@ -7,8 +7,7 @@ version=2.8.8
 release=1
 source=(https://downloads.sourceforge.net/hunspell/$name-$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
   ./configure --prefix=/usr
 

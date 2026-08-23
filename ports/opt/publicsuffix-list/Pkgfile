@@ -9,8 +9,7 @@ release=1
 source=(https://github.com/publicsuffix/list/archive/$_commit/$name-$version.tar.gz)
 
 
-build() {
-  cd list-$_commit
+pkg_build() {
 
   install -D -m 644 -t $PKG/usr/share/publicsuffix \
     public_suffix_list.dat tests/test_psl.txt

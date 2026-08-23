@@ -861,6 +861,8 @@ prt-get
 httpup
 ports
 prt-utils
+rsync
+traceroute
 signify
 "
 

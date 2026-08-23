@@ -8,8 +8,8 @@ version=9.1.1055
 release=1
 source=(https://github.com/vim/vim/archive/v${version}/vim-$version.tar.gz)
 
-build() {
-	cd vim-$version/src
+pkg_build() {
+	cd src
 
 	sed -i '/^CFLAGS/d' Makefile
 

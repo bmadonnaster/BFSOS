@@ -5,16 +5,15 @@
 # Optional: git libssh2
 
 name=rustc
-version=1.97.1
-release=2
+version=1.98.0
+release=4
 source=(https://static.rust-lang.org/dist/rustc-$version-src.tar.xz)
 
-build() {
-    cd rustc-$version-src
-    local prefix="/opt/rustc-$version"
+pkg_build() {
+      local prefix="/opt/rustc-$version"
 
     cat > bootstrap.toml <<EOF
-change-id = 140732
+change-id = "ignore"
 
 [llvm]
 link-shared = true
@@ -59,4 +58,11 @@ EOF
     DESTDIR="$PKG" python3 x.py install
 
     ln -sfn "rustc-$version" "$PKG/opt/rustc"
+
+    install -d "$PKG/etc/profile.d"
+    cat > "$PKG/etc/profile.d/rustc.sh" <<'EOF_PROFILE'
+# BFSOS Rust toolchain
+pathprepend /opt/rustc/bin PATH
+pathappend /opt/rustc/share/man MANPATH
+EOF_PROFILE
 }

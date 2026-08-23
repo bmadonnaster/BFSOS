@@ -9,8 +9,7 @@ release=1
 source=(https://github.com/zlin/$name/releases/download/$version/$name-$version.tar.xz
         https://wgetpaste.zlin.dk/$name.example)
 
-build() {
-	cd $name-$version
+pkg_build() {
   install -Dm755 ${name} "${PKG}"/usr/bin/${name}
   install -Dm644 _${name} "${PKG}"/usr/share/zsh/site-functions/_${name}
   install -Dm644 "${SRC}"/${name}.example ${PKG}/usr/share/${name}/${name}.example

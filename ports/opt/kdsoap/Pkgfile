@@ -4,19 +4,18 @@
 # Depends on:  qt5
 
 name=kdsoap
-version=2.1.1
-release=1
+version=2.3.0
+release=2
 source=(https://github.com/KDAB/KDSoap/releases/download/$name-$version/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 mkdir build &&
 cd    build &&
 
 cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_BUILD_TYPE=Release  \
-      -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/kdsoap-2.1.1 \
+      -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/kdsoap-2.3.0 \
       .. &&
 make
 	make DESTDIR=$PKG install

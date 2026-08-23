@@ -5,8 +5,8 @@
 # Optional: icu openmpi python3-numpy
 
 name=boost
-version=1.91.0
-release=1
+version=1.92.0
+release=2
 
 source=(
     https://archives.boost.io/release/$version/source/boost_1_91_0.tar.bz2

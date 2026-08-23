@@ -9,8 +9,7 @@ version=0.56.18
 release=1
 source=(https://download.gnome.org/sources/vala/${version%.*}/vala-$version.tar.xz)
 
-build() {
-  cd $name-$version
+pkg_build() {
 
   ./configure --prefix=/usr &&
 make

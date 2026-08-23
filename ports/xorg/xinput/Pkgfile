@@ -8,8 +8,7 @@ version=1.6.4
 release=1
 source=(https://www.x.org/releases/individual/app/xinput-$version.tar.xz)
 
-build() {
-	cd xinput-$version
+pkg_build() {
 	./configure $XORG_CONFIG
 	make
 	make DESTDIR=$PKG install

@@ -6,7 +6,9 @@
 
 name=qt5
 version=5.15.19
-release=3
+release=4
+# This recipe applies its patches explicitly at package-specific paths.
+skip_patch=yes
 
 # Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
 # uses the official complete Qt source archive, but Debian currently carries
@@ -66,8 +68,8 @@ apply_qt5_compat_patches() {
     done
 }
 
-build() {
-    cd "qt-everywhere-src-$version"
+pkg_build() {
+    cd "$SRC/qt-everywhere-opensource-src-$version" || return 1
     export QT5PREFIX=/opt/qt5
 
     apply_qt5_compat_patches || return 1

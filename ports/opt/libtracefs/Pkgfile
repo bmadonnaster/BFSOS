@@ -9,7 +9,7 @@ version=1.8.2
 release=1
 source=(https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/snapshot/libtracefs-$version.tar.gz)
 
-build() {
+pkg_build() {
   if prt-get isinst asciidoc xmlto; then
     BUILD_DOCS=1
     PKGMK_LIBTRACEEVENT+=' -D doc=true'

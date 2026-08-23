@@ -1,0 +1,896 @@
+[
+  {
+    "pkgfile": "ports/core/ca-certificates/Pkgfile",
+    "old_version": "20260716",
+    "new_version": "20260716",
+    "old_release": "3",
+    "new_release": "4"
+  },
+  {
+    "pkgfile": "ports/core/curl/Pkgfile",
+    "old_version": "8.21.0",
+    "new_version": "8.21.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/libnl/Pkgfile",
+    "old_version": "3.11.0",
+    "new_version": "3.12.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/libuv/Pkgfile",
+    "old_version": "1.51.0",
+    "new_version": "1.52.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/libyaml/Pkgfile",
+    "status": "new"
+  },
+  {
+    "pkgfile": "ports/core/pkgutils/Pkgfile",
+    "old_version": "5.40.12",
+    "new_version": "5.40.12",
+    "old_release": "14",
+    "new_release": "15"
+  },
+  {
+    "pkgfile": "ports/core/python3-cython/Pkgfile",
+    "status": "new"
+  },
+  {
+    "pkgfile": "ports/core/python3-pyyaml/Pkgfile",
+    "old_version": "6.0.2",
+    "new_version": "6.0.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/rsync/Pkgfile",
+    "old_version": "3.4.4",
+    "new_version": "3.5.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/squashfs-tools/Pkgfile",
+    "old_version": "4.7.5",
+    "new_version": "4.7.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/core/traceroute/Pkgfile",
+    "status": "new"
+  },
+  {
+    "pkgfile": "ports/core/wpa_supplicant/Pkgfile",
+    "old_version": "2.11",
+    "new_version": "2.12",
+    "old_release": "4",
+    "new_release": "5"
+  },
+  {
+    "pkgfile": "ports/opt/abseil-cpp/Pkgfile",
+    "old_version": "20250512.0",
+    "new_version": "20260526.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/accountsservice/Pkgfile",
+    "old_version": "23.13.9",
+    "new_version": "26.27.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/appstream-glib/Pkgfile",
+    "old_version": "0.8.3",
+    "new_version": "0.8.4",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/apr-util/Pkgfile",
+    "old_version": "1.6.3",
+    "new_version": "1.6.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/aspell/Pkgfile",
+    "old_version": "0.60.8.1",
+    "new_version": "0.60.8.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/at-spi2-core/Pkgfile",
+    "old_version": "2.56.1",
+    "new_version": "2.60.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/bluez/Pkgfile",
+    "old_version": "5.83",
+    "new_version": "5.87",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/boost/Pkgfile",
+    "old_version": "1.91.0",
+    "new_version": "1.92.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/brotli/Pkgfile",
+    "old_version": "1.1.0",
+    "new_version": "1.2.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/bubblewrap/Pkgfile",
+    "old_version": "0.11.0",
+    "new_version": "0.11.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/c-ares/Pkgfile",
+    "old_version": "1.34.4",
+    "new_version": "1.34.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/cairo/Pkgfile",
+    "old_version": "1.18.2",
+    "new_version": "1.18.4",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/cairomm/Pkgfile",
+    "old_version": "1.18.0",
+    "new_version": "1.18.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/cbindgen/Pkgfile",
+    "old_version": "0.29.0",
+    "new_version": "0.29.4",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/cdrdao/Pkgfile",
+    "old_version": "1.2.4",
+    "new_version": "1.2.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/colord/Pkgfile",
+    "old_version": "1.4.7",
+    "new_version": "1.4.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/cups/Pkgfile",
+    "old_version": "2.4.12",
+    "new_version": "2.4.19",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/dbus-glib/Pkgfile",
+    "old_version": "0.112",
+    "new_version": "0.114",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/docbook-xml/Pkgfile",
+    "old_version": "4.5",
+    "new_version": "4.5",
+    "old_release": "8",
+    "new_release": "9"
+  },
+  {
+    "pkgfile": "ports/opt/double-conversion/Pkgfile",
+    "old_version": "3.3.1",
+    "new_version": "3.4.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/doxygen/Pkgfile",
+    "old_version": "1.12.0",
+    "new_version": "1.18.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/enchant/Pkgfile",
+    "old_version": "2.8.2",
+    "new_version": "2.8.19",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/exempi/Pkgfile",
+    "old_version": "2.6.5",
+    "new_version": "2.6.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/exiv2/Pkgfile",
+    "old_version": "0.28.5",
+    "new_version": "0.28.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/faad2/Pkgfile",
+    "old_version": "2.11.1",
+    "new_version": "2.11.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/fftw/Pkgfile",
+    "old_version": "3.3.10",
+    "new_version": "3.3.11",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/firefox/Pkgfile",
+    "old_version": "154.0",
+    "new_version": "154.0",
+    "old_release": "3",
+    "new_release": "4"
+  },
+  {
+    "pkgfile": "ports/opt/flac/Pkgfile",
+    "old_version": "1.4.3",
+    "new_version": "1.5.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/fltk/Pkgfile",
+    "old_version": "1.3.8",
+    "new_version": "1.3.11",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/freeglut/Pkgfile",
+    "old_version": "3.4.0",
+    "new_version": "3.8.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/freetype2/Pkgfile",
+    "old_version": "2.13.2",
+    "new_version": "2.13.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gdb/Pkgfile",
+    "old_version": "15.2",
+    "new_version": "17.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gdk-pixbuf/Pkgfile",
+    "old_version": "2.42.12",
+    "new_version": "2.44.7",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/geoclue/Pkgfile",
+    "old_version": "2.7.1",
+    "new_version": "2.8.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/giflib/Pkgfile",
+    "old_version": "5.2.2",
+    "new_version": "6.1.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/glib/Pkgfile",
+    "old_version": "2.84.2",
+    "new_version": "2.88.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/glib-networking/Pkgfile",
+    "old_version": "2.80.0",
+    "new_version": "2.80.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/graphite2/Pkgfile",
+    "old_version": "1.3.14",
+    "new_version": "1.3.14",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gspell/Pkgfile",
+    "old_version": "1.12.2",
+    "new_version": "1.14.4",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gst-libav/Pkgfile",
+    "old_version": "1.24.12",
+    "new_version": "1.28.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gst-plugins-bad/Pkgfile",
+    "old_version": "1.26.2",
+    "new_version": "1.28.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gst-plugins-base/Pkgfile",
+    "old_version": "1.26.2",
+    "new_version": "1.28.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gst-plugins-good/Pkgfile",
+    "old_version": "1.26.2",
+    "new_version": "1.28.6",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/gst-plugins-ugly/Pkgfile",
+    "old_version": "1.26.2",
+    "new_version": "1.28.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gstreamer/Pkgfile",
+    "old_version": "1.26.2",
+    "new_version": "1.28.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gtk-vnc/Pkgfile",
+    "old_version": "1.3.1",
+    "new_version": "1.5.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gtk3/Pkgfile",
+    "old_version": "3.24.49",
+    "new_version": "3.24.52",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gtk4/Pkgfile",
+    "old_version": "4.18.5",
+    "new_version": "4.22.4",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/gutenprint/Pkgfile",
+    "old_version": "5.3.4",
+    "new_version": "5.3.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/harfbuzz/Pkgfile",
+    "old_version": "11.0.0",
+    "new_version": "14.3.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/highway/Pkgfile",
+    "old_version": "1.1.0",
+    "new_version": "1.4.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/hwdata/Pkgfile",
+    "old_version": "0.382",
+    "new_version": "0.410",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/ibus/Pkgfile",
+    "old_version": "1.5.32",
+    "new_version": "1.5.34",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/imlib2/Pkgfile",
+    "old_version": "1.12.4",
+    "new_version": "1.12.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/iso-codes/Pkgfile",
+    "old_version": "4.16.0",
+    "new_version": "4.20.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/jansson/Pkgfile",
+    "old_version": "2.14.1",
+    "new_version": "2.15.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/jasper/Pkgfile",
+    "old_version": "4.2.5",
+    "new_version": "4.2.9",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/json-glib/Pkgfile",
+    "old_version": "1.10.6",
+    "new_version": "1.10.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/kdsoap/Pkgfile",
+    "old_version": "2.1.1",
+    "new_version": "2.3.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/lcms2/Pkgfile",
+    "old_version": "2.17",
+    "new_version": "2.19.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libaom/Pkgfile",
+    "old_version": "3.9.1",
+    "new_version": "3.14.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libass/Pkgfile",
+    "old_version": "0.17.3",
+    "new_version": "0.17.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libdisplay-info/Pkgfile",
+    "old_version": "0.2.0",
+    "new_version": "0.4.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libdvdcss/Pkgfile",
+    "old_version": "1.4.3",
+    "new_version": "1.6.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libdvdnav/Pkgfile",
+    "old_version": "6.1.1",
+    "new_version": "7.0.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libdvdread/Pkgfile",
+    "old_version": "6.1.3",
+    "new_version": "7.1.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libnotify/Pkgfile",
+    "old_version": "0.8.6",
+    "new_version": "0.8.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libogg/Pkgfile",
+    "old_version": "1.3.5",
+    "new_version": "1.3.6",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libpaper/Pkgfile",
+    "old_version": "2.2.5",
+    "new_version": "2.2.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libseccomp/Pkgfile",
+    "old_version": "2.6.0",
+    "new_version": "2.6.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libunistring/Pkgfile",
+    "old_version": "1.3",
+    "new_version": "1.4.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libusb/Pkgfile",
+    "old_version": "1.0.28",
+    "new_version": "1.0.30",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libvpx/Pkgfile",
+    "old_version": "1.15.2",
+    "new_version": "1.16.0",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/libwebp/Pkgfile",
+    "old_version": "1.5.0",
+    "new_version": "1.6.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/libxmlb/Pkgfile",
+    "old_version": "0.3.19",
+    "new_version": "0.3.29",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/lmdb/Pkgfile",
+    "old_version": "0.9.31",
+    "new_version": "1.0.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/lynx/Pkgfile",
+    "old_version": "2.8.9rel.1",
+    "new_version": "2.9.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/mlt/Pkgfile",
+    "old_version": "7.32.0",
+    "new_version": "7.40.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/modemmanager/Pkgfile",
+    "old_version": "1.18.12",
+    "new_version": "1.24.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/neon/Pkgfile",
+    "old_version": "0.33.0",
+    "new_version": "0.37.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/nodejs/Pkgfile",
+    "old_version": "24.2.0",
+    "new_version": "24.19.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/nspr/Pkgfile",
+    "old_version": "4.36",
+    "new_version": "4.40",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/openldap/Pkgfile",
+    "old_version": "2.6.8",
+    "new_version": "2.7.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/opus/Pkgfile",
+    "old_version": "1.5.2",
+    "new_version": "1.6.1",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/pango/Pkgfile",
+    "old_version": "1.56.1",
+    "new_version": "1.58.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/patchelf/Pkgfile",
+    "old_version": "0.18.0",
+    "new_version": "0.19.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/pipewire/Pkgfile",
+    "old_version": "1.4.5",
+    "new_version": "1.6.8",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/protobuf/Pkgfile",
+    "old_version": "31.1",
+    "new_version": "35.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/protobuf-c/Pkgfile",
+    "old_version": "1.5.0",
+    "new_version": "1.5.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/qt5/Pkgfile",
+    "old_version": "5.15.19",
+    "new_version": "5.15.19",
+    "old_release": "3",
+    "new_release": "4"
+  },
+  {
+    "pkgfile": "ports/opt/qt6/Pkgfile",
+    "old_version": "6.11.2",
+    "new_version": "6.11.2",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/rust-bindgen/Pkgfile",
+    "old_version": "0.70.1",
+    "new_version": "0.72.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/rustc/Pkgfile",
+    "old_version": "1.97.1",
+    "new_version": "1.98.0",
+    "old_release": "2",
+    "new_release": "4"
+  },
+  {
+    "pkgfile": "ports/opt/samba/Pkgfile",
+    "old_version": "4.21.4",
+    "new_version": "4.24.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/sbc/Pkgfile",
+    "old_version": "2.1",
+    "new_version": "2.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/scons/Pkgfile",
+    "old_version": "4.9.1",
+    "new_version": "4.11.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/shared-mime-info/Pkgfile",
+    "old_version": "2.4",
+    "new_version": "2.5.1",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/soundtouch/Pkgfile",
+    "old_version": "2.3.3",
+    "new_version": "2.4.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/spirv-headers/Pkgfile",
+    "old_version": "1.4.309.0",
+    "new_version": "1.4.357.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/spirv-llvm-translator/Pkgfile",
+    "old_version": "20.1.0",
+    "new_version": "22.1.5",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/spirv-tools/Pkgfile",
+    "old_version": "1.4.304.1",
+    "new_version": "1.4.357.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/swig/Pkgfile",
+    "old_version": "4.3.0",
+    "new_version": "4.5.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/taglib/Pkgfile",
+    "old_version": "2.0.2",
+    "new_version": "2.3.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/udisks/Pkgfile",
+    "old_version": "2.10.1",
+    "new_version": "2.11.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/v4l-utils/Pkgfile",
+    "old_version": "1.30.1",
+    "new_version": "1.32.0",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/opt/valgrind/Pkgfile",
+    "old_version": "3.24.0",
+    "new_version": "3.27.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/wireplumber/Pkgfile",
+    "old_version": "0.5.2",
+    "new_version": "0.5.15",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/x265/Pkgfile",
+    "old_version": "4.1",
+    "new_version": "4.2",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/opt/xdg-user-dirs/Pkgfile",
+    "old_version": "0.18",
+    "new_version": "0.20",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/libdrm/Pkgfile",
+    "old_version": "2.4.125",
+    "new_version": "2.4.134",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/libunwind/Pkgfile",
+    "old_version": "1.8.1",
+    "new_version": "1.8.3",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/libva/Pkgfile",
+    "old_version": "2.22.0",
+    "new_version": "2.24.1",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/libxkbcommon/Pkgfile",
+    "old_version": "1.10.0",
+    "new_version": "1.13.2",
+    "old_release": "3",
+    "new_release": "4"
+  },
+  {
+    "pkgfile": "ports/xorg/mesa/Pkgfile",
+    "old_version": "26.1.7",
+    "new_version": "26.2.1",
+    "old_release": "2",
+    "new_release": "3"
+  },
+  {
+    "pkgfile": "ports/xorg/wayland/Pkgfile",
+    "old_version": "1.23.1",
+    "new_version": "1.26.0",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/wayland-protocols/Pkgfile",
+    "old_version": "1.45",
+    "new_version": "1.49",
+    "old_release": "1",
+    "new_release": "2"
+  },
+  {
+    "pkgfile": "ports/xorg/xsetroot/Pkgfile",
+    "old_version": "1.1.3",
+    "new_version": "1.1.3",
+    "old_release": "1",
+    "new_release": "2"
+  }
+]

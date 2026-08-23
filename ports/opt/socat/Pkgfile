@@ -8,8 +8,7 @@ version=1.8.0.2
 release=1
 source=(http://www.dest-unreach.org/socat/download/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 	./configure --prefix=/usr
 	make
 	make DESTDIR=$PKG install

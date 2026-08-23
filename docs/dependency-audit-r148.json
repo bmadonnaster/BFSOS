@@ -1,0 +1,530 @@
+{
+  "port_names": 1246,
+  "unresolved": [
+    {
+      "pkgfile": "ports/core/python3-pyyaml/Pkgfile",
+      "dependency": "libyaml",
+      "alternatives": [
+        "libyaml"
+      ]
+    },
+    {
+      "pkgfile": "ports/core/python3-pyyaml/Pkgfile",
+      "dependency": "python3-cython",
+      "alternatives": [
+        "python3-cython"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libdbusmenu-glib-32/Pkgfile",
+      "dependency": "libdbusmenu-glib",
+      "alternatives": [
+        "libdbusmenu-glib"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libjpeg6-turbo-32/Pkgfile",
+      "dependency": "libjpeg6-turbo",
+      "alternatives": [
+        "libjpeg6-turbo"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libpng12-32/Pkgfile",
+      "dependency": "libpng12",
+      "alternatives": [
+        "libpng12"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXau-32/Pkgfile",
+      "dependency": "xorg-libxau",
+      "alternatives": [
+        "xorg-libxau"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXau-32/Pkgfile",
+      "dependency": "xorg-xorgproto-32",
+      "alternatives": [
+        "xorg-xorgproto-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libvdpau-32/Pkgfile",
+      "dependency": "xorg-libxext-32",
+      "alternatives": [
+        "xorg-libxext-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXtst-32/Pkgfile",
+      "dependency": "xorg-libxi-32",
+      "alternatives": [
+        "xorg-libxi-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXtst-32/Pkgfile",
+      "dependency": "xorg-libxtst",
+      "alternatives": [
+        "xorg-libxtst"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libcaca-32/Pkgfile",
+      "dependency": "libcaca",
+      "alternatives": [
+        "libcaca"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/vkd3d-32/Pkgfile",
+      "dependency": "vkd3d",
+      "alternatives": [
+        "vkd3d"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/glew-32/Pkgfile",
+      "dependency": "glew",
+      "alternatives": [
+        "glew"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/glew-32/Pkgfile",
+      "dependency": "libXmu-32",
+      "alternatives": [
+        "libXmu-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libdbusmenu-gtk2-32/Pkgfile",
+      "dependency": "xorg-libxdamage-32",
+      "alternatives": [
+        "xorg-libxdamage-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/vulkan-tools-32/Pkgfile",
+      "dependency": "vulkan-tools",
+      "alternatives": [
+        "vulkan-tools"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/python-32/Pkgfile",
+      "dependency": "python",
+      "alternatives": [
+        "python"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libwebp-32/Pkgfile",
+      "dependency": "giflib-32",
+      "alternatives": [
+        "giflib-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libappindicator-sharp-32/Pkgfile",
+      "dependency": "libappindicator-sharp",
+      "alternatives": [
+        "libappindicator-sharp"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXmu-32/Pkgfile",
+      "dependency": "xorg-libxext-32",
+      "alternatives": [
+        "xorg-libxext-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXmu-32/Pkgfile",
+      "dependency": "xorg-libxmu",
+      "alternatives": [
+        "xorg-libxmu"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libXmu-32/Pkgfile",
+      "dependency": "xorg-libxt-32",
+      "alternatives": [
+        "xorg-libxt-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/speexdsp-32/Pkgfile",
+      "dependency": "speexdsp",
+      "alternatives": [
+        "speexdsp"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libice-32/Pkgfile",
+      "dependency": "libice",
+      "alternatives": [
+        "libice"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libindicator-gtk2-32/Pkgfile",
+      "dependency": "libindicator-gtk2",
+      "alternatives": [
+        "libindicator-gtk2"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libindicator-gtk2-32/Pkgfile",
+      "dependency": "xorg-libxdamage-32",
+      "alternatives": [
+        "xorg-libxdamage-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libsdl2-32/Pkgfile",
+      "dependency": "libsdl2",
+      "alternatives": [
+        "libsdl2"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libpciaccess-32/Pkgfile",
+      "dependency": "xorg-libpciaccess",
+      "alternatives": [
+        "xorg-libpciaccess"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libudev0-shim-32/Pkgfile",
+      "dependency": "libudev0-shim",
+      "alternatives": [
+        "libudev0-shim"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libnewt-32/Pkgfile",
+      "dependency": "libnewt",
+      "alternatives": [
+        "libnewt"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/rtmpdump-32/Pkgfile",
+      "dependency": "rtmpdump",
+      "alternatives": [
+        "rtmpdump"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libva-32/Pkgfile",
+      "dependency": "xorg-libxfixes-32",
+      "alternatives": [
+        "xorg-libxfixes-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/sqlite3-32/Pkgfile",
+      "dependency": "sqlite3",
+      "alternatives": [
+        "sqlite3"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libpcre2-32/Pkgfile",
+      "dependency": "libpcre2",
+      "alternatives": [
+        "libpcre2"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libxkbfile-32/Pkgfile",
+      "dependency": "xorg-libx11-32",
+      "alternatives": [
+        "xorg-libx11-32"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libxkbfile-32/Pkgfile",
+      "dependency": "xorg-libxkbfile",
+      "alternatives": [
+        "xorg-libxkbfile"
+      ]
+    },
+    {
+      "pkgfile": "ports/compat-32/libidn133-32/Pkgfile",
+      "dependency": "automake-114",
+      "alternatives": [
+        "automake-114"
+      ]
+    },
+    {
+      "pkgfile": "ports/contrib/libdbusmenu-gtk2/Pkgfile",
+      "dependency": "libdbusmenu-glib",
+      "alternatives": [
+        "libdbusmenu-glib"
+      ]
+    },
+    {
+      "pkgfile": "ports/contrib/alacritty/Pkgfile",
+      "dependency": "rustx",
+      "alternatives": [
+        "rustx"
+      ]
+    },
+    {
+      "pkgfile": "ports/contrib/gcc-fortran/Pkgfile",
+      "dependency": "libmpfr",
+      "alternatives": [
+        "libmpfr"
+      ]
+    },
+    {
+      "pkgfile": "ports/contrib/asciidoc/Pkgfile",
+      "dependency": "docbook-xsl",
+      "alternatives": [
+        "docbook-xsl"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/webkitgtk-41/Pkgfile",
+      "dependency": "openjpeg",
+      "alternatives": [
+        "openjpeg"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/geocode-glib/Pkgfile",
+      "dependency": "gObject-introspection",
+      "alternatives": [
+        "gObject-introspection"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/rest/Pkgfile",
+      "dependency": "gObject-introspection",
+      "alternatives": [
+        "gObject-introspection"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/evolution-data-server/Pkgfile",
+      "dependency": "valas",
+      "alternatives": [
+        "valas"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gnome-menus/Pkgfile",
+      "dependency": "gobjct-introspection",
+      "alternatives": [
+        "gobjct-introspection"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/brasero/Pkgfile",
+      "dependency": "gobject",
+      "alternatives": [
+        "gobject"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/brasero/Pkgfile",
+      "dependency": "introspection",
+      "alternatives": [
+        "introspection"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/grilo/Pkgfile",
+      "dependency": "totem-pl-parster",
+      "alternatives": [
+        "totem-pl-parster"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gvfs/Pkgfile",
+      "dependency": "fuse3",
+      "alternatives": [
+        "fuse3"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/webkitgtk/Pkgfile",
+      "dependency": "openjpeg",
+      "alternatives": [
+        "openjpeg"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gnome-user-docs/Pkgfile",
+      "dependency": "lihxml2",
+      "alternatives": [
+        "lihxml2"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/nautilus/Pkgfile",
+      "dependency": "gobject-introspectiongst-plugins-base",
+      "alternatives": [
+        "gobject-introspectiongst-plugins-base"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gnome-calculator/Pkgfile",
+      "dependency": "gtksourceviewitstool",
+      "alternatives": [
+        "gtksourceviewitstool"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gsettings-desktop-schemas/Pkgfile",
+      "dependency": "glub",
+      "alternatives": [
+        "glub"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/evolution/Pkgfile",
+      "dependency": "highlightitstool",
+      "alternatives": [
+        "highlightitstool"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/gnome-apps-meta/Pkgfile",
+      "dependency": "gone-system-monitor",
+      "alternatives": [
+        "gone-system-monitor"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/seahorse/Pkgfile",
+      "dependency": "gcr3",
+      "alternatives": [
+        "gcr3"
+      ]
+    },
+    {
+      "pkgfile": "ports/gnome/libshumate/Pkgfile",
+      "dependency": "gtk4l",
+      "alternatives": [
+        "gtk4l"
+      ]
+    },
+    {
+      "pkgfile": "ports/lxqt/xdg-desktop-portal-lxqt/Pkgfile",
+      "dependency": "libfm",
+      "alternatives": [
+        "libfm"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/drkonqi/Pkgfile",
+      "dependency": "python3-sentry_sdk",
+      "alternatives": [
+        "python3-sentry_sdk"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-meta/Pkgfile",
+      "dependency": "pulseaudio-qtkdecoration",
+      "alternatives": [
+        "pulseaudio-qtkdecoration"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-meta/Pkgfile",
+      "dependency": "kdeplasma-adons",
+      "alternatives": [
+        "kdeplasma-adons"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-desktop/Pkgfile",
+      "dependency": "xorg-xf86-input-evdev",
+      "alternatives": [
+        "xorg-xf86-input-evdev"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-desktop/Pkgfile",
+      "dependency": "xorg-xf86-input-libinput",
+      "alternatives": [
+        "xorg-xf86-input-libinput"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/kde-frameworks-6/Pkgfile",
+      "dependency": "polkit-qt",
+      "alternatives": [
+        "polkit-qt"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-default-apps/Pkgfile",
+      "dependency": "kio-extras",
+      "alternatives": [
+        "kio-extras"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/kmix/Pkgfile",
+      "dependency": "kde-frameworks-5",
+      "alternatives": [
+        "kde-frameworks-5"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/k3b/Pkgfile",
+      "dependency": "kde-rameworks-6",
+      "alternatives": [
+        "kde-rameworks-6"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/kaccounts-integration/Pkgfile",
+      "dependency": "libaccounts-qt",
+      "alternatives": [
+        "libaccounts-qt"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/kaccounts-integration/Pkgfile",
+      "dependency": "signond",
+      "alternatives": [
+        "signond"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/kdoctools/Pkgfile",
+      "dependency": "docbook-xsl",
+      "alternatives": [
+        "docbook-xsl"
+      ]
+    },
+    {
+      "pkgfile": "ports/plasma/plasma-integration/Pkgfile",
+      "dependency": "krb5",
+      "alternatives": [
+        "krb5"
+      ]
+    },
+    {
+      "pkgfile": "ports/xfce/xfburn/Pkgfile",
+      "dependency": "cdrao",
+      "alternatives": [
+        "cdrao"
+      ]
+    },
+    {
+      "pkgfile": "ports/xfce/libxfce4ui/Pkgfile",
+      "dependency": "startup-notifcation",
+      "alternatives": [
+        "startup-notifcation"
+      ]
+    }
+  ]
+}

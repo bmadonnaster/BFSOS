@@ -4,11 +4,11 @@
 # Depends on: gobject-introspection libpng libtiff shared-mime-info
 # Optional: docutils librsvg libtiff gobject-introspection gi-docgen libavif webp-pixbuf-loader
 name=gdk-pixbuf
-version=2.42.12
-release=1
+version=2.44.7
+release=2
 source=(https://download.gnome.org/sources/$name/2.42/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup build $name-$version \
 		--prefix=/usr \
 		--buildtype=plain \

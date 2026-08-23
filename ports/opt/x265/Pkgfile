@@ -1,9 +1,9 @@
 # Depends on: cmake nasm
 
 name=x265
-version=4.1
-release=1
-source=(https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.6.tar.gz)
+version=4.2
+release=2
+source=(https://bitbucket.org/multicoreware/x265_git/downloads/x265_$version.tar.gz)
 pkg_build () {
 mkdir bld &&
 cd    bld &&
@@ -12,5 +12,5 @@ cmake -D CMAKE_INSTALL_PREFIX=/usr \
       -D GIT_ARCHETYPE=1           \
       -W no-dev ../source          &&
 make
-make install
+make DESTDIR="$PKG" install
 }

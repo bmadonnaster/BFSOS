@@ -9,8 +9,7 @@ version=1.0.7
 release=1
 source=(https://www.x.org/pub/individual/data/$name-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 	./configure --prefix=/usr &&
 make
 	make DESTDIR=$PKG install

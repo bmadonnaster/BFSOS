@@ -8,8 +8,7 @@ version=1.10.0
 release=2
 source=(https://www.x.org/releases/individual/driver/xf86-input-synaptics-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG &&
 	make

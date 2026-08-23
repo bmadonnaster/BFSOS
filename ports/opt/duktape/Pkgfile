@@ -7,8 +7,7 @@ version=2.7.0
 release=2
 source=(https://duktape.org/$name-$version.tar.xz)
 
-build() {
-  cd $name-$version
+pkg_build() {
   export CFLAGS="$CFLAGS -DDUK_USE_FASTINT"
  sed -i 's/-Os/-O2/' Makefile.sharedlibrary
   make -f Makefile.sharedlibrary INSTALL_PREFIX=/usr

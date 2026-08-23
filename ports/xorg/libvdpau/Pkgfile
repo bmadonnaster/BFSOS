@@ -9,7 +9,7 @@ version=1.5
 release=1
 source=(https://gitlab.freedesktop.org/vdpau/$name/-/archive/$version//$name-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	meson setup build $name-$version \
 		--prefix=/usr \
 		--buildtype=plain \

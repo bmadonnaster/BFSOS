@@ -1,16 +1,15 @@
 # Description: Qt 6 framework, monolithic BFSOS build including QtWebEngine
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib cups dbus double-conversion ffmpeg glib gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev nodejs nss pciutils rust-bindgen sqlite xorg-libs
+# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs
 # Optional: bluez gtk3 ibus libproxy mariadb pulseaudio unixodbc wayland-protocols
 
 name=qt6
 version=6.11.2
-release=2
+release=3
 source=(https://download.qt.io/archive/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 
-build() {
-    cd qt-everywhere-src-$version
+pkg_build() {
     export QT6PREFIX=/opt/qt6
 
     # Keep Qt as one coherent package. qtopcua is currently incompatible with

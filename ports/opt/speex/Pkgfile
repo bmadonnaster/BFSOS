@@ -12,8 +12,7 @@ source=(
     https://downloads.xiph.org/releases/speex/speexdsp-$version.tar.gz
 )
 
-build() {
-    cd speex-$version
+pkg_build() {
     ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/speex-$version
     make -j "${JOBS:-1}"
     make DESTDIR="$PKG" install

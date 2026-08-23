@@ -5,12 +5,11 @@
 # Optional: fontconfig libunibreak
 
 name=libass
-version=0.17.3
-release=1
+version=0.17.5
+release=2
 source=(https://github.com/$name/$name/releases/download/$version/$name-$version.tar.gz)
 
-build() {
-  cd $name-$version
+pkg_build() {
   	./configure --prefix=/usr --disable-static &&
 	make
   make DESTDIR=$PKG install

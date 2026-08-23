@@ -9,8 +9,7 @@ version=1.5.0
 release=1
 source=(https://downloads.sourceforge.net/gparted/$name-$version.tar.gz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --prefix=/usr    \
             --disable-doc    \

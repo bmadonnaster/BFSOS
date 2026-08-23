@@ -5,12 +5,13 @@
 
 name=freetype2
 version=2.13.2
-release=1
+release=2
 source=(https://downloads.sourceforge.net/freetype/freetype-$version.tar.xz
 https://downloads.sourceforge.net/freetype/freetype-doc-$version.tar.xz)
 
-build() {
-	cd freetype-$version
+pkg_build() {
+
+	cd "$SRC/freetype-$version" || return 1
 
 	sed -ri "s:.*(AUX_MODULES.*valid):\1:" modules.cfg &&
 

@@ -4,12 +4,11 @@
 # Depends on: libsndfile
 
 name=sbc
-version=2.1
-release=1
+version=2.2
+release=2
 source=(https://www.kernel.org/pub/linux/bluetooth/$name-$version.tar.xz)
 
-build() {
-	cd $name-$version
+pkg_build() {
 ./configure --prefix=/usr --disable-static --disable-tester &&
 make
 

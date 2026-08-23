@@ -9,8 +9,7 @@ version=1.2.7.1
 release=1
 source=(ftp://ftp.alsa-project.org/pub/plugins/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure --sysconfdir=/etc &&
 make

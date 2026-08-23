@@ -1,8 +1,8 @@
 # Depends on: apr
 
 name=apr-util
-version=1.6.3
-release=1
+version=1.6.5
+release=2
 source=(https://archive.apache.org/dist/apr/${name}-${version}.tar.bz2)
 build_opt="--prefix=/usr
             --with-apr=/usr

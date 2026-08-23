@@ -8,8 +8,7 @@ version=1.17.0
 release=1
 source=(https://xorg.freedesktop.org/archive/individual/proto/xcb-proto-$version.tar.xz)
 
-build() {
-	cd xcb-proto-$version
+pkg_build() {
 
 		PYTHON=/usr/bin/python3 \
 	       ./configure --prefix= $XORG_CONFIG

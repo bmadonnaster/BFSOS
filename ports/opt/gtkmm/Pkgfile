@@ -10,5 +10,5 @@ cd    gtkmm4-build &&
 
 meson setup --prefix=/usr --buildtype=release .. &&
 ninja
-ninja install
+DESTDIR="$PKG" ninja install
 }

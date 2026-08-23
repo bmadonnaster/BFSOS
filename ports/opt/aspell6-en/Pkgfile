@@ -8,8 +8,7 @@ version=2020.12.07-0
 release=1
 source=(https://ftp.gnu.org/gnu/aspell/dict/en/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version                &&
+pkg_build() {
 
 ./configure &&
 make

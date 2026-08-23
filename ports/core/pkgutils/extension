@@ -191,8 +191,16 @@ if [ ! "$(command -v build)" ]; then
 			fi
 			_patch
 			if [ "$(command -v pkg_build)" ]; then
-				# run pkg_build inside Pkgfile if function exist, then ignore pre_build and post_build
-				pkg_build
+				# Custom recipes still participate in the standard extension hooks.
+				# This is important for ports migrated from legacy build(), where
+				# pre_build/post_build remain part of the package recipe.
+				if [ "$(command -v pre_build)" ]; then
+					pre_build || return $?
+				fi
+				pkg_build || return $?
+				if [ "$(command -v post_build)" ]; then
+					post_build || return $?
+				fi
 			else
 				if [ "$(command -v pre_build)" ]; then
 					pre_build

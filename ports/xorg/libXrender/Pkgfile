@@ -8,8 +8,7 @@ version=0.9.12
 release=1
 source=(https://www.x.org/releases/individual/lib/libXrender-$version.tar.xz)
 
-build() {
-	cd libXrender-$version
+pkg_build() {
 
 	./configure $XORG_CONFIG $docdir
 
