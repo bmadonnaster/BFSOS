@@ -4,16 +4,16 @@
 # Depends on: expat freetype
 
 name=fontconfig
-version=2.16.0
+version=2.18.1
 release=1
-source=(https://fontconfig.org/release/$name-$version.tar.xz)
+source=(https://ftp2.osuosl.org/pub/blfs/conglomeration/fontconfig/fontconfig-$version.tar.xz)
 
 pkg_build() {
 	./configure --prefix=/usr        \
             --sysconfdir=/etc    \
             --localstatedir=/var \
             --disable-docs       \
-            --docdir=/usr/share/doc/fontconfig-2.14.2 &&
+            --docdir=/usr/share/doc/fontconfig-$version &&
             make
 
 	make DESTDIR=$PKG install
