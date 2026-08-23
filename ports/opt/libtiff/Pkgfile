@@ -5,7 +5,7 @@
 # Optional: freeglut libjpeg-turbo sphinx libwebp JBIG-KITLERC
 name=libtiff
 version=4.7.0
-release=1
+release=2
 source=(http://download.osgeo.org/libtiff/tiff-$version.tar.gz)
 
 pkg_build() {
