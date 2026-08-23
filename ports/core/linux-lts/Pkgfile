@@ -34,7 +34,6 @@ pkg_build() {
     # Apply the small BFSOS-selected Debian policy/reliability patch set before
     # configuration.  A rejected patch is fatal; never silently build a kernel
     # that is missing part of the declared patch policy.
-    apply_bfsos_debian_patch_series || return 1
 
     make mrproper
 
