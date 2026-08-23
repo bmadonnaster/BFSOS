@@ -6,7 +6,7 @@
 
 name=qt5
 version=5.15.19
-release=6
+release=7
 # This recipe applies its patches explicitly at package-specific paths.
 skip_patch=yes
 
@@ -36,39 +36,41 @@ apply_qt5_compat_patches() {
 
     rm -rf "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
     mkdir -p "$SRC/qtbase-debian" "$SRC/qtwebengine-debian"
-    tar -xJf "$SRC/qtbase-debian-patches.xzblob" -C "$SRC/qtbase-debian"
-    tar -xJf "$SRC/qtwebengine-debian-patches.xzblob" -C "$SRC/qtwebengine-debian"
 
-    # Debian 5.15.19+dfsg-2 closed its OpenSSL-4 FTBFS by backporting two
-    # upstream patches.  Select by patch description instead of hard-coding
-    # Debian's patch filenames so a packaging-only rename does not break BFSOS.
+    tar -xJf "$SRC/qtbase-debian-patches.xzblob" \
+        -C "$SRC/qtbase-debian" || return 1
+
+    tar -xJf "$SRC/qtwebengine-debian-patches.xzblob" \
+        -C "$SRC/qtwebengine-debian" || return 1
+
+    # Apply the QtBase OpenSSL compatibility backports in Debian series order.
+    # These are explicit so a changed/missing Debian patch fails immediately.
     patchroot="$SRC/qtbase-debian/debian/patches"
-    mapfile -t qtbase_ssl4_patches < <(
-        grep -rilE 'OpenSSL[[:space:]-]*4|QTBUG-145221' "$patchroot" \
-            --include='*.patch' --include='*.diff' 2>/dev/null | sort -u
-    )
-    if ((${#qtbase_ssl4_patches[@]} < 2)); then
-        echo "qt5: expected at least two QtBase OpenSSL 4 compatibility patches" >&2
-        return 1
-    fi
-    for pfile in "${qtbase_ssl4_patches[@]}"; do
-        echo "qt5: applying QtBase compatibility patch $(basename "$pfile")"
-        patch -d qtbase -Np1 < "$pfile" || return 1
+    for pfile in \
+        openssl3.diff \
+        asn1_time_to_tm.diff \
+        openssl4.diff
+    do
+        if [ ! -f "$patchroot/$pfile" ]; then
+            echo "qt5: required QtBase compatibility patch missing: $pfile" >&2
+            return 1
+        fi
+        echo "qt5: applying QtBase compatibility patch $pfile"
+        patch -d qtbase -Np1 < "$patchroot/$pfile" || return 1
     done
 
-    # QtWebEngine 5.15 is Chromium-87-era code and needs current-toolchain
-    # compatibility backports.  These are deliberately limited to build/
-    # platform compatibility rather than Debian policy/system-library patches.
+    # QtWebEngine 5.15 is Chromium-87-era code. Apply only the Debian
+    # toolchain/platform compatibility backports BFSOS needs, in series order.
     patchroot="$SRC/qtwebengine-debian/debian/patches"
     for pfile in \
-        'python3.13 pipes.patch' \
-        'build with c++17.patch' \
-        'ninja 1.12.patch' \
-        'gcc 15.patch' \
-        'icu 78.patch' \
-        'glibc-2.43.patch'
+        python3.13-pipes.patch \
+        build-with-c++17.patch \
+        ninja-1.12.patch \
+        gcc-15.patch \
+        icu-78.patch \
+        glibc-2.43.patch
     do
-        if [[ ! -f "$patchroot/$pfile" ]]; then
+        if [ ! -f "$patchroot/$pfile" ]; then
             echo "qt5: required QtWebEngine compatibility patch missing: $pfile" >&2
             return 1
         fi
