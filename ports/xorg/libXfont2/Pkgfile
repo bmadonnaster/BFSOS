@@ -4,8 +4,8 @@
 # Depends on: bzip2 freetype libfontenc xtrans
 
 name=libXfont2
-version=2.0.6
-release=1
+version=2.0.9
+release=2
 source=(https://www.x.org/releases/individual/lib/libXfont2-$version.tar.xz)
 
 pkg_build() {

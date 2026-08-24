@@ -7,8 +7,8 @@
 # Optional: libcanberra pulseaudio
 
 name=kmix
-version=25.04.0
-release=1
+version=26.04.1
+release=2
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 
 build() {

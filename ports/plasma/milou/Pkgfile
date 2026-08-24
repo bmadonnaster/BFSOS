@@ -3,9 +3,9 @@
 # Depends on: krunner libplasma
 
 name=milou
-version=6.3.4
-release=1
-source=(https://download.kde.org/stable/plasma/6.3.4/$name-$version.tar.xz)
+version=6.6.5
+release=2
+source=(https://download.kde.org/stable/plasma/6.6.5/$name-$version.tar.xz)
 build_opt="-D CMAKE_INSTALL_PREFIX=$KF6_PREFIX 
              -D CMAKE_INSTALL_LIBEXECDIR=libexec 
              -D CMAKE_BUILD_TYPE=Release         

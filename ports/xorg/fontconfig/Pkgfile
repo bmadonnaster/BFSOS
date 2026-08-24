@@ -4,8 +4,8 @@
 # Depends on: expat freetype
 
 name=fontconfig
-version=2.18.1
-release=1
+version=2.18.3
+release=2
 source=(https://ftp2.osuosl.org/pub/blfs/conglomeration/fontconfig/fontconfig-$version.tar.xz)
 
 pkg_build() {

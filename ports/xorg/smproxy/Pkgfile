@@ -4,8 +4,8 @@
 # Depends on: libxkbfile
 
 name=smproxy
-version=1.0.7
-release=1
+version=1.0.8
+release=2
 source=(https://www.x.org/releases/individual/app/smproxy-$version.tar.xz)
 
 pkg_build() {

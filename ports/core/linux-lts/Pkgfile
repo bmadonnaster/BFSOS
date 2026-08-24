@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.18.45
-release=8
+release=9
 
 debian_patch_base="https://sources.debian.org/data/main/l/linux/6.18.9-1~bpo13+1/debian/patches"
 
@@ -59,6 +59,14 @@ pkg_build() {
     scripts/config --enable PSI
     scripts/config --disable PSI_DEFAULT_DISABLED
     scripts/config --disable IKHEADERS
+
+    # BFSOS kernel compression policy: prefer Zstandard for the kernel and
+    # installed modules. Dracut already uses compress="zstd".
+    scripts/config --enable KERNEL_ZSTD
+    scripts/config --enable MODULE_COMPRESS
+    scripts/config --enable MODULE_COMPRESS_ZSTD
+    scripts/config --disable MODULE_COMPRESS_GZIP
+    scripts/config --disable MODULE_COMPRESS_XZ
 
     scripts/config --enable CGROUPS
     scripts/config --enable MEMCG
@@ -260,6 +268,7 @@ pkg_build() {
     fi
 
     install -Dm644 arch/x86/boot/bzImage "$PKG/boot/vmlinuz-$kernver"
+    ln -sfn "vmlinuz-$kernver" "$PKG/boot/vmlinuz-lts"
     install -Dm644 System.map "$PKG/boot/System.map-$kernver"
     install -Dm644 .config "$PKG/boot/config-$kernver"
 

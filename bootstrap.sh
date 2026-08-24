@@ -3399,7 +3399,9 @@ ccache
 boost
 meson
 kmod
+cracklib
 linux-pam
+libpwquality
 shadow
 libpng
 which

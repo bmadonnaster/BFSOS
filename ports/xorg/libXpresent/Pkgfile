@@ -4,8 +4,8 @@
 # Depends on: libXrandr libXrender libXfixes libXext libX11 libxcb libXau libXdmcp
 
 name=libXpresent
-version=1.0.1
-release=1
+version=1.0.2
+release=2
 source=(https://www.x.org/releases/individual/lib/libXpresent-$version.tar.xz)
 
 

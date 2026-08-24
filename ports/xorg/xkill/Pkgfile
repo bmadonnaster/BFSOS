@@ -4,8 +4,8 @@
 # Depends on: libXmu
 
 name=xkill
-version=1.0.6
-release=1
+version=1.0.7
+release=2
 source=(https://www.x.org/releases/individual/app/xkill-$version.tar.xz)
 
 pkg_build() {

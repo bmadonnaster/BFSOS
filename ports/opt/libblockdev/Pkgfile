@@ -5,8 +5,8 @@
 # Optional:    btrfs-progs gtk-doc mdadm parted volume_key targetcli
 
 name=libblockdev
-version=3.2.1
-release=1
+version=3.5.0
+release=2
 source=(https://github.com/storaged-project/libblockdev/releases/download/$version/$name-$version.tar.gz)
 keep_libtool=1
 build_opt=" --sysconfdir=/etc

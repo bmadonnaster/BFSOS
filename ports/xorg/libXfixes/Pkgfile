@@ -4,8 +4,8 @@
 # Depends on: libX11
 
 name=libXfixes
-version=6.0.1
-release=1
+version=6.0.2
+release=2
 source=(https://www.x.org/releases/individual/lib/libXfixes-$version.tar.xz)
 
 pkg_build() {

@@ -4,8 +4,8 @@
 # Depends on: xrandr
 
 name=xev
-version=1.2.6
-release=1
+version=1.2.7
+release=2
 source=(https://www.x.org/releases/individual/app/xev-$version.tar.xz)
 
 pkg_build() {

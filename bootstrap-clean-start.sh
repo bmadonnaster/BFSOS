@@ -826,7 +826,9 @@ util-linux
 meson
 ninja
 kmod
+cracklib
 linux-pam
+libpwquality
 shadow
 libpng
 which

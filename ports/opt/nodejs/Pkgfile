@@ -1,21 +1,21 @@
 # Description: Evented I/O for V8 javascript.
 # URL: https://nodejs.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: libnghttp2 libuv openssl zlib
+# Depends on: libnghttp2 libuv openssl zlib icu
 # Optional: brotli c-ares icu libnghttp3 libngtcp2 simdjson simdutf
 
 name=nodejs
 version=24.19.0
-release=3
+release=4
 source=(https://nodejs.org/dist/v$version/node-v$version.tar.xz
   unbundle-uv.patch)
 
-skip_patch=1
+PKGMK_AUTO_PATCH=no
 
 pkg_build() {
 
-  patch -Np1 -i $SRC/unbundle-uv.patch
-  rm deps/uv/uv.gyp deps/zlib/zlib.gyp
+  patch -Np1 -i "$SRC/unbundle-uv.patch" || return 1
+  rm deps/uv/uv.gyp deps/zlib/zlib.gyp || return 1
 
   prt-get isinst brotli && PKGMK_NODEJS+=' --shared-brotli'
   prt-get isinst c-ares && PKGMK_NODEJS+=' --shared-cares'
@@ -32,13 +32,14 @@ pkg_build() {
     --ninja \
     --without-npm \
     --shared-libuv \
+    --shared-nghttp2 \
     --shared-zlib \
     --shared-openssl \
  \
-    --experimental-http-parser
+    --experimental-http-parser || return 1
 
-  make
-  make DESTDIR=$PKG install
+  make || return 1
+  make DESTDIR="$PKG" install || return 1
 
   rm -r $PKG/usr/share/doc
 

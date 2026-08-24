@@ -6,7 +6,7 @@
 
 name=qt6
 version=6.11.2
-release=3
+release=4
 source=(https://download.qt.io/archive/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 
 pkg_build() {
@@ -26,10 +26,10 @@ pkg_build() {
         -nomake examples \
         -no-rpath \
         -no-sbom \
-        -journald
+        -journald || return 1
 
-    ninja -j "${JOBS:-1}"
-    DESTDIR="$PKG" ninja install
+    ninja -j "${JOBS:-1}" || return 1
+    DESTDIR="$PKG" ninja install || return 1
 
     find "$PKG$QT6PREFIX" -name '*.prl' -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
 

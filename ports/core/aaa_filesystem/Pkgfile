@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=6
+release=7
 
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
@@ -33,9 +33,6 @@ source=(
     umask.sh
     i18n.sh
     kf6.sh
-    qt5.sh
-    qt6.sh
-    rustc.sh
     vte.csh
     vte.sh
     xorg.sh
@@ -200,10 +197,7 @@ pkg_build() {
         gawk.sh \
         i18n.sh \
         kf6.sh \
-        qt5.sh \
-        qt6.sh \
         readline.sh \
-        rustc.sh \
         umask.sh \
         vte.csh \
         vte.sh \

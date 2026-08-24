@@ -4,8 +4,8 @@
 # Optional:    mta
 
 name=mdadm
-version=4.4
-release=1
+version=4.6
+release=2
 source=(https://www.kernel.org/pub/linux/utils/raid/$name/$name-$version.tar.xz)
 pkg_build () {
     make \

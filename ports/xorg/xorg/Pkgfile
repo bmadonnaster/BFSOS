@@ -1,11 +1,11 @@
 # Description: Complete baseline BFSOS X.Org environment
 # URL: https://www.x.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: xorg-server xorg-libs xorg-apps xorg-fonts xorg-driver xinit
+# Depends on: xorg-server xorg-libs xorg-apps xorg-fonts xorg-driver xinit wayland wayland-protocols xwayland
 
 name=xorg
 version=7x
-release=1
+release=2
 source=()
 
 pkg_build() {

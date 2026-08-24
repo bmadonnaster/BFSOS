@@ -4,8 +4,8 @@
 # Depends on: dbus duktape gobject-introspection intltool util-linux glib docbook-xml docbook-xsl-nons
 
 name=polkit
-version=126
-release=1
+version=127
+release=2
 source=(https://github.com/$name-org/$name/archive/$version/$name-$version.tar.gz)
 
 pkg_build() {

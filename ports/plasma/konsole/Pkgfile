@@ -3,8 +3,8 @@
 # Depends on: kde-frameworks-6
 
 name=konsole
-version=25.04.0
-release=1
+version=26.04.1
+release=2
 source=(https://download.kde.org/stable/release-service/${version}/src/$name-$version.tar.xz
 konsole-adjust_scrollbar-1.patch)
 build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX

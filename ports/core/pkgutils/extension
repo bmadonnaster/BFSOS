@@ -123,7 +123,9 @@ if [ ! "$(command -v build)" ]; then
 	}
 
 	_patch() {
+		# Backward-compatible skip_patch plus explicit Pkgfile control.
 		[ "$skip_patch" ] && return 0
+		[ "${PKGMK_AUTO_PATCH:-yes}" = "no" ] && return 0
 		n=0
 		for i in "${source[@]}"; do
 			if [ "$renames" ]; then
@@ -134,9 +136,15 @@ if [ ! "$(command -v build)" ]; then
 			fi
 			case $i in
 				*.patch|*.diff)
-					patch -t ${patch_opt:--p1} -i $SRC/${i##*/};;
+					patch -t ${patch_opt:--p1} -i "$SRC/${i##*/}" || return $? ;;
+				*.patch.gz|*.diff.gz)
+					gzip -dc "$SRC/${i##*/}" | patch -t ${patch_opt:--p1} || return $? ;;
+				*.patch.xz|*.diff.xz)
+					xz -dc "$SRC/${i##*/}" | patch -t ${patch_opt:--p1} || return $? ;;
+				*.patch.bz2|*.diff.bz2)
+					bzip2 -dc "$SRC/${i##*/}" | patch -t ${patch_opt:--p1} || return $? ;;
 			esac
-			n=$(( $n + 1 ))
+			n=$(( n + 1 ))
 		done
 	}
 
@@ -189,7 +197,7 @@ if [ ! "$(command -v build)" ]; then
 			if [ -n "$srcdir" ] && [ -d "$srcdir" ]; then
 			        cd "$srcdir" || return 1
 			fi
-			_patch
+			_patch || return $?
 			if [ "$(command -v pkg_build)" ]; then
 				# Custom recipes still participate in the standard extension hooks.
 				# This is important for ports migrated from legacy build(), where

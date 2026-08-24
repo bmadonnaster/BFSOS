@@ -4,9 +4,9 @@
 # Depends on:
 # Optional:    bind-utils gnupg keyutils openldap valgrind yasm libedit cmocka kdcproxy pyrad resolv_wrapper
 name=kerberos
-version=1.21.3
-release=1
-source=(https://$name.org/dist/krb5/1.21/krb5-$version.tar.gz)
+version=1.22.2
+release=2
+source=(https://$name.org/dist/krb5/${version%.*}/krb5-$version.tar.gz)
 
 pkg_build() {
 

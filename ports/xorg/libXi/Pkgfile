@@ -4,8 +4,8 @@
 # Depends on: libXext libXfixes
 
 name=libXi
-version=1.8.1
-release=1
+version=1.8.3
+release=2
 source=(https://www.x.org/releases/individual/lib/libXi-$version.tar.xz)
 
 pkg_build() {

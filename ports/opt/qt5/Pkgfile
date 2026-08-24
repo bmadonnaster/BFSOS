@@ -1,12 +1,12 @@
 # Description: Qt 5 compatibility framework (monolithic BFSOS build, including QtWebEngine)
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib bison dbus double-conversion flex glib gperf harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 sqlite xorg-libs
+# Depends on: alsa-lib bison dbus double-conversion flex glib gperf harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 python3-html5lib sqlite xorg-libs
 # Optional: bluez cups gst-plugins-base gst-plugins-good gtk3 ibus mariadb pulseaudio unixodbc wayland-protocols
 
 name=qt5
 version=5.15.19
-release=9
+release=10
 # Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
 # uses the official complete Qt source archive, but Debian currently carries
 # upstream/downstream compatibility fixes needed by modern OpenSSL/GCC/ICU/
@@ -145,4 +145,8 @@ pathappend "$QT5DIR/lib/pkgconfig" PKG_CONFIG_PATH
 export QT5DIR
 EOF
     printf '%s\n' '/opt/qt5/lib' > "$PKG/etc/ld.so.conf.d/qt5.conf"
+    install -d "$PKG/usr/bin" || return 1
+    for file in moc uic rcc qmake lconvert lrelease lupdate; do
+        ln -sfn "/opt/qt5/bin/$file" "$PKG/usr/bin/$file-qt5" || return 1
+    done
 }

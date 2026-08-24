@@ -4,8 +4,8 @@
 # Depends on: libXcomposite libXinerama libXrender libXtst libXxf86vm
 
 name=xdpyinfo
-version=1.3.4
-release=1
+version=1.4.0
+release=2
 source=(https://xorg.freedesktop.org/archive/individual/app/xdpyinfo-$version.tar.xz)
 
 pkg_build() {

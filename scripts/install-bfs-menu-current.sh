@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r64-package-dependency-fixes.sh
+install-bfs-menu-v50-r65-auth-stack-integration.sh

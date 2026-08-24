@@ -4,8 +4,8 @@
 # Depends on: harfbuzz util-linux
 
 name=libXft
-version=2.3.8
-release=1
+version=2.3.9
+release=2
 source=(https://www.x.org/releases/individual/lib/libXft-$version.tar.xz)
 
 pkg_build() {

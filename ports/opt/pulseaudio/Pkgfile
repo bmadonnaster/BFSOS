@@ -6,7 +6,7 @@
 
 name=pulseaudio
 version=17.0
-release=1
+release=2
 source=(https://ftp.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_$version+dfsg1.orig.tar.xz)
 renames=(pulseaudio-$version.tar.xz)
 
@@ -20,7 +20,7 @@ meson setup --prefix=/usr       \
             -Ddoxygen=false     \
             -Dbluez5=disabled   \
             ..                  &&
-ninja
-  DESTDIR=$PKG ninja install
+ninja || return 1
+  DESTDIR="$PKG" ninja install || return 1
 #rm -fv $PKG/etc/dbus-1/system.d/pulseaudio-system.conf
 }

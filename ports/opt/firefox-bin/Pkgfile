@@ -5,8 +5,8 @@
 
 name=firefox-bin
 version=154.0
-release=2
-source=(http://ftp.mozilla.org/pub/firefox/releases/$version/linux-x86_64/en-US/firefox-$version.tar.xz \
+release=3
+source=(https://archive.mozilla.org/pub/firefox/releases/$version/linux-x86_64/en-US/firefox-$version.tar.xz \
 	policies.json firefox.desktop)
 
 pkg_build() {

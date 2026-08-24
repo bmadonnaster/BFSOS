@@ -4,8 +4,8 @@
 # Depends on: libxcb xtrans
 
 name=libX11
-version=1.8.11
-release=1
+version=1.8.13
+release=2
 source=(https://www.x.org/releases/individual/lib/libX11-$version.tar.xz)
 
 pkg_build() {

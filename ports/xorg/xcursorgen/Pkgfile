@@ -4,8 +4,8 @@
 # Depends on: libpng libXcursor
 
 name=xcursorgen
-version=1.0.8
-release=1
+version=1.0.9
+release=2
 source=(https://www.x.org/releases/individual/app/xcursorgen-$version.tar.xz)
 
 pkg_build() {

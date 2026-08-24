@@ -3,8 +3,8 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 
 name=libpciaccess
-version=0.18.1
-release=1
+version=0.19
+release=2
 source=(https://www.x.org/releases/individual/lib/libpciaccess-$version.tar.xz)
 
 pkg_build() {

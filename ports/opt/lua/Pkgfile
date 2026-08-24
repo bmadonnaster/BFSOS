@@ -4,8 +4,8 @@
 # Depends on:
 
 name=lua
-version=5.4.7
-release=2
+version=5.4.8
+release=3
 source=(https://www.lua.org/ftp/$name-$version.tar.gz
 https://mirror.freedif.org/pub/blfs/conglomeration/lua/$name-$version-shared_library-1.patch)
 
@@ -13,7 +13,7 @@ https://mirror.freedif.org/pub/blfs/conglomeration/lua/$name-$version-shared_lib
 pkg_build() {
 cat > lua.pc << "EOF"
 V=5.4
-R=5.4.7
+R=5.4.8
 
 prefix=/usr
 INSTALL_BIN=${prefix}/bin
@@ -37,7 +37,7 @@ make linux
 make DESTDIR=$PKG INSTALL_TOP=/usr                \
      DESTDIR=$PKG INSTALL_DATA="cp -d"            \
      DESTDIR=$PKG INSTALL_MAN=/usr/share/man/man1 \
-     DESTDIR=$PKG TO_LIB="liblua.so liblua.so.5.4 liblua.so.5.4.7" \
+     DESTDIR=$PKG TO_LIB="liblua.so liblua.so.5.4 liblua.so.5.4.8" \
      DESTDIR=$PKG install &&
 
 mkdir -pv                      $PKG/usr/share/doc/$name-$version &&

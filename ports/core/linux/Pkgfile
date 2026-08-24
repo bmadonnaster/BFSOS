@@ -5,8 +5,8 @@
 # Optional: pahole
 
 name=linux
-version=7.1.8
-release=4
+version=7.1.9
+release=5
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz
     config
@@ -29,6 +29,14 @@ pkg_build() {
     scripts/config --enable PSI
     scripts/config --disable PSI_DEFAULT_DISABLED
     scripts/config --disable IKHEADERS
+
+    # BFSOS kernel compression policy: prefer Zstandard for the kernel and
+    # installed modules. Dracut already uses compress="zstd".
+    scripts/config --enable KERNEL_ZSTD
+    scripts/config --enable MODULE_COMPRESS
+    scripts/config --enable MODULE_COMPRESS_ZSTD
+    scripts/config --disable MODULE_COMPRESS_GZIP
+    scripts/config --disable MODULE_COMPRESS_XZ
 
     scripts/config --enable CGROUPS
     scripts/config --enable MEMCG
