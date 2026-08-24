@@ -4,9 +4,9 @@
 # Optional: llvm doxygen
 
 name=icu
-version=78.2
+version=78.3
 release=2
-source=(https://github.com/unicode-org/icu/releases/download/release-${version//./-}/icu4c-${version/./_}-src.tgz)
+source=(https://github.com/unicode-org/icu/releases/download/release-${version}/icu4c-${version}-sources.tgz)
 
 pkg_build() {
     cd "$SRC/icu/source" || return 1
