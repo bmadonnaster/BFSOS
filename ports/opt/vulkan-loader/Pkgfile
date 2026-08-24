@@ -5,7 +5,7 @@
 
 name=vulkan-loader
 version=1.4.357.0
-release=3
+release=4
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/vulkan-sdk-${version}.tar.gz)
 
 pkg_build() {
@@ -15,21 +15,27 @@ pkg_build() {
         -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_SKIP_RPATH=TRUE \
+        -DVULKAN_HEADERS_INSTALL_DIR=/usr \
         -DBUILD_TESTS=OFF || return 1
 
     cmake --build build -j "${JOBS:-1}" || return 1
 
     DESTDIR="$PKG" cmake --install build || return 1
 
-    # Vulkan-Headers is the canonical owner of the API headers, registry,
-    # vk_video headers, and VulkanHeaders CMake package metadata.  The Loader
-    # package must not duplicate files supplied by vulkan-headers.
+    # Vulkan-Headers is the canonical owner of these files.
     rm -rf \
         "$PKG/usr/include/vulkan" \
         "$PKG/usr/include/vk_video" \
         "$PKG/usr/share/cmake/VulkanHeaders" \
         "$PKG/usr/share/vulkan/registry"
 
-    # BFSOS does not retain libtool archives.
+    # The loader package must actually contain the Vulkan loader library.
+    if ! find "$PKG/usr/lib" -maxdepth 1 \
+        \( -name 'libvulkan.so' -o -name 'libvulkan.so.*' \) \
+        -print -quit | grep -q .; then
+        echo "vulkan-loader: libvulkan.so was not staged" >&2
+        return 1
+    fi
+
     find "$PKG" -type f -name '*.la' -delete
 }
