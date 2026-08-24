@@ -1,5 +1,18 @@
 name=libpng
 version=1.6.58
-release=1
+release=2
 source=(https://downloads.sourceforge.net/$name/$name-$version.tar.xz
-	libpng-1.6.58-apng.patch.gz)
+        libpng-1.6.58-apng.patch.gz)
+
+pkg_build() {
+    # Explicitly apply APNG patch.
+    gzip -dc "$SRC/libpng-1.6.58-apng.patch.gz" | patch -Np1 || return 1
+
+    ./configure \
+        --prefix=/usr \
+        --disable-static || return 1
+
+    make || return 1
+
+    make DESTDIR="$PKG" install || return 1
+}
