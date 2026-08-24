@@ -1,16 +1,31 @@
 # Depends on: qt5 boost lua
 
-
 name=highlight
 version=4.12
-release=1
+release=2
 source=(http://www.andre-simon.de/zip/${name}-${version}.tar.bz2)
-pkg_build () {
 
-sed -i '/GZIP/s/^/#/' makefile
-make
-make doc_dir=/usr/share/doc/highlight-4.12/ gui
-mkdir -p $PKG/usr/share/doc/$name-$version/
-make DESTDIR=$PKG doc_dir=$PKG/usr/share/doc/$name-$version/ install
-make DESTDIR=$PKG install-gui
+pkg_build() {
+    sed -i '/GZIP/s/^/#/' makefile || return 1
+
+    make || return 1
+
+    # BFSOS Qt5 provides qmake as qmake-qt5.
+    make \
+        QMAKE=qmake-qt5 \
+        doc_dir=/usr/share/doc/${name}-${version}/ \
+        gui || return 1
+
+    mkdir -p "${PKG}/usr/share/doc/${name}-${version}" || return 1
+
+    # doc_dir must remain relative to the installed filesystem.
+    # DESTDIR applies the package staging prefix.
+    make \
+        DESTDIR="${PKG}" \
+        doc_dir=/usr/share/doc/${name}-${version}/ \
+        install || return 1
+
+    make \
+        DESTDIR="${PKG}" \
+        install-gui || return 1
 }
