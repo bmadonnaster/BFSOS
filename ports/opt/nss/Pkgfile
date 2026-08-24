@@ -31,3 +31,6 @@ pkg_build() {
 
     install -v -m644 Linux*/lib/pkgconfig/nss.pc         "$PKG/usr/lib/pkgconfig" || return 1
 }
+post_build () {
+rm -f "$PKG/usr/lib/libnssckbi.so"
+}
