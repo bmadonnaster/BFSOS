@@ -3,7 +3,7 @@
 name=vulkan-loader
 version=1.4.357.0
 release=2
-source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/v${version}.tar.gz)
+source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/vulkan-sdk-${version}.tar.gz)
 build_opt="-DCMAKE_INSTALL_PREFIX=/usr
       -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_SKIP_RPATH=TRUE
