@@ -3,7 +3,7 @@
 name=rust-bindgen
 version=0.72.1
 release=3
-source=(https://github.com/rust-lang/${name}/archive/v${version}/${name}-${version}.tar.gz)
+source=(https://github.com/rust-lang/${name}/archive/refs/tags/v${version}.tar.gz)
 pkg_build() {
   prt-get isinst sccache && export RUSTC_WRAPPER=/usr/bin/sccache
   [[ ! -e $PKGMK_SOURCE_DIR/rust ]] && mkdir $PKGMK_SOURCE_DIR/rust
