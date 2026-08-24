@@ -8,6 +8,8 @@ version=1.4.357.0
 release=4
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/vulkan-sdk-${version}.tar.gz)
 
+srcdir="Vulkan-Loader-vulkan-sdk-${version}"
+
 pkg_build() {
     cmake -S . -B build \
         -G Ninja \
@@ -15,21 +17,13 @@ pkg_build() {
         -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_SKIP_RPATH=TRUE \
-        -DVULKAN_HEADERS_INSTALL_DIR=/usr \
         -DBUILD_TESTS=OFF || return 1
 
     cmake --build build -j "${JOBS:-1}" || return 1
 
     DESTDIR="$PKG" cmake --install build || return 1
 
-    # Vulkan-Headers is the canonical owner of these files.
-    rm -rf \
-        "$PKG/usr/include/vulkan" \
-        "$PKG/usr/include/vk_video" \
-        "$PKG/usr/share/cmake/VulkanHeaders" \
-        "$PKG/usr/share/vulkan/registry"
-
-    # The loader package must actually contain the Vulkan loader library.
+    # Loader must actually provide libvulkan.
     if ! find "$PKG/usr/lib" -maxdepth 1 \
         \( -name 'libvulkan.so' -o -name 'libvulkan.so.*' \) \
         -print -quit | grep -q .; then
