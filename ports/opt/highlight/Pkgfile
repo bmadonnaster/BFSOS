@@ -1,4 +1,4 @@
-# Depends on: qt6 boost lua
+# Depends on: qt5 boost lua
 
 name=highlight
 version=4.21
@@ -12,7 +12,7 @@ pkg_build() {
 
     # BFSOS Qt5 provides qmake as qmake-qt5.
     make \
-        QMAKE=/opt/qt6/bin/qmake \
+        QMAKE=/opt/qt5/bin/qmake \
         doc_dir=/usr/share/doc/${name}-${version}/ \
         gui || return 1
 
