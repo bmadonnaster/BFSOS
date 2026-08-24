@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=7
+release=8
 
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
@@ -89,7 +89,6 @@ pkg_build() {
 
     ln -sfn usr/lib32 "$PKG/lib32"
 
-    ln -sfn lib "$PKG/lib64"
 
     #
     # /usr and /usr/local directory hierarchy.
