@@ -4,21 +4,17 @@
 
 name=nspr
 version=4.40
-release=2
+release=3
 source=(https://archive.mozilla.org/pub/$name/releases/v$version/src/$name-$version.tar.gz)
 
 pkg_build() {
+    cd nspr || return 1
 
+    sed -ri '/^RELEASE/s/^/#/' pr/src/misc/Makefile.in || return 1
+    sed -i 's#$(LIBRARY) ##' config/rules.mk || return 1
 
-	cd nspr
+    ./configure         --prefix=/usr         --with-mozilla         --with-pthreads         $([ "$(uname -m)" = x86_64 ] && echo --enable-64bit) || return 1
 
-	sed -ri '/^RELEASE/s/^/#/' pr/src/misc/Makefile.in &&
-sed -i 's#$(LIBRARY) ##'   config/rules.mk         &&
-
-./configure --prefix=/usr \
-            --with-mozilla \
-            --with-pthreads \
-            $([ $(uname -m) = x86_64 ] && echo --enable-64bit) &&
-make
-	make DESTDIR=$PKG install
+    make || return 1
+    make DESTDIR="$PKG" install || return 1
 }
