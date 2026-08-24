@@ -1,7 +1,7 @@
 # Description: Mozilla Firefox rapid-release browser
 # URL: https://www.mozilla.org/firefox/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cbindgen desktop-file-utils gtk3 libarchive libnotify llvm nodejs pulseaudio python3 startup-notification icu libaom libevent libvpx libwebp nasm nspr nss rustc
+# Depends on: dav1d cbindgen desktop-file-utils gtk3 libarchive libnotify llvm nodejs pulseaudio python3 startup-notification icu libaom libevent libvpx libwebp nasm nspr nss rustc
 # Optional: alsa-lib curl ffmpeg geoclue liboauth libproxy pciutils valgrind wget wireless-tools yasm
 
 name=firefox
