@@ -3,4 +3,4 @@
 name=vulkan-headers
 version=1.4.357.0
 release=2
-source=(https://github.com/KhronosGroup/Vulkan-Headers/archive/v${version}/Vulkan-Headers-${version}.tar.gz)
+source=(https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v${version}.tar.gz)
