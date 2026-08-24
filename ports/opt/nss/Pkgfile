@@ -2,7 +2,7 @@
 
 name=nss
 version=3.127
-release=2
+release=3
 source=(https://archive.mozilla.org/pub/security/nss/releases/NSS_${version//./_}_RTM/src/nss-$version.tar.gz
         nss-3.54-standalone-2.patch
         nss-config.in
@@ -21,7 +21,6 @@ pkg_build() {
 
     install -v -m755 Linux*/lib/*.so "$PKG/usr/lib" || return 1
     install -v -m644 Linux*/lib/*.chk "$PKG/usr/lib" || return 1
-    install -v -m644 Linux*/lib/libcrmf.a "$PKG/usr/lib" || return 1
 
     cp -v -RL public/nss/* "$PKG/usr/include/nss" || return 1
     cp -v -RL private/nss/* "$PKG/usr/include/nss" || return 1
