@@ -1,6 +1,6 @@
 # Add your top line text here
 # Your line to add at the top here
-# Depends on: extra-cmake-modules qt6
+# Depends on: extra-cmake-modules qt6 python3-lxml
 
 name=breeze-icons
 version=6.26.0
