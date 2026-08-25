@@ -4,7 +4,7 @@
 
 name=plasma-workspace
 version=6.6.5
-release=4
+release=5
 source=(https://download.kde.org/stable/plasma/6.6.5/$name-$version.tar.xz)
 build_opt="-D CMAKE_INSTALL_PREFIX=$KF6_PREFIX \
             -D CMAKE_PREFIX_PATH=$QT6DIR 
@@ -12,5 +12,6 @@ build_opt="-D CMAKE_INSTALL_PREFIX=$KF6_PREFIX \
              -D CMAKE_BUILD_TYPE=Release         
              -D CMAKE_QT6=ON				
              -D BUILD_QT5=OFF                    
-             -D BUILD_TESTING=OFF                
+             -D BUILD_TESTING=OFF
+           -D WITH_X11_SESSION=TRUE                
              -Wno-author .."
