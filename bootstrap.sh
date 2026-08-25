@@ -3282,6 +3282,7 @@ gcc-pass3
 m4
 ncurses
 bash
+bash-completion
 bison
 bzip2
 coreutils
@@ -3346,6 +3347,7 @@ flex
 pcre2
 grep
 bash
+bash-completion
 libtool
 gdbm
 gperf
