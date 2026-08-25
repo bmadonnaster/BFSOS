@@ -1,0 +1,19 @@
+# Description: Programmable completion functions for the Bash shell
+# URL: https://github.com/scop/bash-completion
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: bash
+
+name=bash-completion
+version=2.17.0
+release=1
+source=(https://github.com/scop/bash-completion/releases/download/$version/bash-completion-$version.tar.xz)
+
+pkg_build() {
+    ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc || return 1
+
+    make -j "${JOBS:-1}" || return 1
+
+    make DESTDIR="$PKG" install || return 1
+}
