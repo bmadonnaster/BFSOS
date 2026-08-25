@@ -6,8 +6,9 @@
 
 name=qt6
 version=6.11.2
-release=5
+release=6
 source=(https://download.qt.io/official_releases/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
+keep_static=1
 
 pkg_build() {
     export QT6PREFIX=/opt/qt6
