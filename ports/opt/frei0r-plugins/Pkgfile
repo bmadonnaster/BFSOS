@@ -5,9 +5,9 @@
 # Optional: doxygen opencv
 
 name=frei0r-plugins
-version=1.8.0
-release=1
-source=(https://files.dyne.org/frei0r/releases/$name-$version.tar.gz)
+version=3.2.3
+release=2
+source=(https://github.com/dyne/frei0r/archive/refs/tags/v$version.tar.gz)
 
 pkg_build() {
 
