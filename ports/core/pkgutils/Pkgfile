@@ -4,12 +4,13 @@
 
 name=pkgutils
 version=5.40.12
-release=20
+release=21
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
         extension
-        bfs-pkgmk)
+        bfs-pkgmk
+        pkgutils_source-fallbacks.patch)
 
 # CRUX pkgmk normally removes PKGMK_WORK_DIR itself.  BFSOS can place that
 # path directly on tmpfs, so preserve an active mountpoint and clean only its
@@ -41,6 +42,7 @@ harden_pkgmk_work_cleanup() {
 # download_source() without defining it. Keep CRUX pkgmk download logic intact;
 # validation must never rename/replace core pkgmk functions.
 bootstrap_build() {
+
         # Select a UTF-8 C locale when the current environment provides one
         # (needed by libarchive for archives such as GCC), but retain a plain-C
         # fallback for early chroot phases where no UTF-8 locale exists yet.
