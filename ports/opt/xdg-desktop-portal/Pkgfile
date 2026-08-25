@@ -5,5 +5,7 @@
 
 name=xdg-desktop-portal
 version=1.22.1
-release=1
+release=2
 source=(https://github.com/flatpak/$name/releases/download/$version/$name-$version.tar.xz)
+
+build_opt="-Dtests=false"
