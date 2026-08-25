@@ -1,4 +1,4 @@
-# Depends on: yaml graphviz rustc valgrind
+# Depends on: libyaml graphviz rustc valgrind
 
 name=ruby
 version=3.4.2

@@ -1,6 +1,6 @@
 # Add your top line text here
 # Your line to add at the top here
-# Depends on: curl itstool libxml2 libxmlb yaml
+# Depends on: curl itstool libxml2 libxmlb libyaml
 
 name=appstream
 version=1.0.3
