@@ -31,6 +31,7 @@ source=(
     umask.sh
     i18n.sh
     kf6.sh
+    kf6.sudoers
     vte.csh
     vte.sh
     xorg.sh
