@@ -1,31 +1,30 @@
-# Description: Qt 6 framework, monolithic BFSOS build including QtWebEngine
+# Description: Qt 6 framework (base/modules excluding QtWebEngine)
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm
+# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm
 # Optional: bluez gtk3 ibus libproxy mariadb pulseaudio unixodbc wayland-protocols
 
 name=qt6
 version=6.11.2
-release=6
+release=7
 source=(https://download.qt.io/official_releases/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 keep_static=1
 
 pkg_build() {
     export QT6PREFIX=/opt/qt6
 
-    # pkgmk exports staging variables before pkg_build(). QtWebEngine performs
-    # internal build-time installs (notably its bundled GN tool), so leaving
-    # DESTDIR set causes those tools to be installed under $PKG and makes the
-    # running build unable to find them.
+    # Configure/build tools must run outside pkgmk staging; staging is applied
+    # only to the final install below.
     unset DESTDIR
     unset DEST_DIR
     unset INSTALLROOT
     unset install_root
     unset INSTALL_ROOT
 
-    # Keep Qt as one coherent package. qtopcua is currently incompatible with
-    # OpenSSL 4; qt3d/qtquick3dphysics remain intentionally excluded.
-    rm -rf qt3d qtquick3dphysics qtopcua
+    # QtWebEngine is packaged separately so ordinary Qt rebuilds do not rebuild
+    # Chromium. qtopcua is currently incompatible with OpenSSL 4; qt3d and
+    # qtquick3dphysics remain intentionally excluded.
+    rm -rf qtwebengine qt3d qtquick3dphysics qtopcua
 
     ./configure \
         -prefix "$QT6PREFIX" \

@@ -4,8 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=8
-
+release=9
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.0
@@ -22,7 +21,6 @@ source=(
     shells
     inputrc
     profile
-    bash_completion.sh
     debuginfod.csh
     debuginfod.sh
     dircolors.sh
@@ -187,7 +185,6 @@ pkg_build() {
     #
     for file in \
         locale.sh \
-        bash_completion.sh \
         debuginfod.csh \
         debuginfod.sh \
         dircolors.sh \
