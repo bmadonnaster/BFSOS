@@ -6,7 +6,7 @@
 
 name=libmusicbrainz
 version=5.1.0
-release=1
+release=2
 source=(https://github.com/metabrainz/$name/releases/download/release-$version/$name-$version.tar.gz
 https://www.linuxfromscratch.org/patches/blfs/svn/$name-$version-cmake_fixes-1.patch)
 
@@ -18,8 +18,9 @@ sed -e 's/xmlErrorPtr /const xmlError */'     \
 mkdir build &&
 cd    build &&
 
-cmake -D CMAKE_INSTALL_PREFIX=/usr -D CMAKE_BUILD_TYPE=Release .. &&
+cmake -D CMAKE_INSTALL_PREFIX=/usr -D CMAKE_BUILD_TYPE=Release -D CMAKE_POLICY_VERSION_MINIMUM=3.5 .. || return 1 &&
 make
 
-	make DESTDIR=$PKG install
+	make -j${JOBS:-1} || return 1
+make DESTDIR="$PKG" install || return 1
 }
