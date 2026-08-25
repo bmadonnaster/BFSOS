@@ -6,17 +6,14 @@
 
 name=mlt
 version=7.40.0
-release=3
+release=4
 source=(https://github.com/mltframework/$name/releases/download/v$version/$name-$version.tar.gz)
 pkg_build () {
-mkdir build &&
-cd    build &&
+    mkdir -p build || return 1
+    cd build || return 1
 
-cmake -D CMAKE_INSTALL_PREFIX=/usr \
-      -D CMAKE_BUILD_TYPE=Release  \
-      -D MOD_QT=OFF                \
-      -D MOD_QT6=ON                \
-      -W no-dev .. &&
-make
-make DESTDIR="$PKG" install
+    cmake         -DCMAKE_INSTALL_PREFIX=/usr         -DCMAKE_BUILD_TYPE=Release         -DMOD_QT=OFF         -DMOD_QT6=ON         -DMOD_MOVIT=OFF         -Wno-author         .. || return 1
+
+    make -j${JOBS:-1} || return 1
+    make DESTDIR="$PKG" install || return 1
 }
