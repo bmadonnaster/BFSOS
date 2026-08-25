@@ -1,8 +1,8 @@
 # Description: GLib-based library for talking to WWAN modems and devices using the Qualcomm MSM Interface (QMI) protocol.
 # URL: https://gitlab.freedesktop.org/mobile-broadband/libqmi
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: glib libgudev gobject-introspection libmbim meson ninja
-# Optional: bash-completion gi-docgen libqrtr-glib
+# Depends on: glib libgudev gobject-introspection libmbim meson ninja libqrtr-glib
+# Optional: bash-completion gi-docgen
 
 name=libqmi
 version=1.38.0
