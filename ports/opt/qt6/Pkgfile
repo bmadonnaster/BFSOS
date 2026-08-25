@@ -30,7 +30,6 @@ pkg_build() {
     ./configure \
         -prefix "$QT6PREFIX" \
         -release \
-        -xcb \
         -sysconfdir /etc/xdg \
         -dbus-linked \
         -openssl-linked \
