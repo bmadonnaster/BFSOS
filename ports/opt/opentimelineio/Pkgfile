@@ -5,7 +5,7 @@
 
 name=opentimelineio
 version=0.17.0
-release=3
+release=4
 source=(https://github.com/AcademySoftwareFoundation/OpenTimelineIO/archive/refs/tags/v$version.tar.gz)
 
 pkg_build() {
@@ -15,6 +15,7 @@ pkg_build() {
         -DOTIO_CXX_INSTALL=ON \
         -DOTIO_PYTHON_INSTALL=OFF \
         -DOTIO_FIND_IMATH=ON \
+        -DOTIO_FIND_RAPIDJSON=ON \
         -DOTIO_AUTOMATIC_SUBMODULES=OFF \
         -DOTIO_DEPENDENCIES_INSTALL=OFF \
         -DBUILD_TESTING=OFF || return 1

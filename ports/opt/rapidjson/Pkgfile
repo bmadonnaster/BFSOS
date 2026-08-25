@@ -4,9 +4,9 @@
 # Depends on: cmake
 
 name=rapidjson
-version=1.1.0
-release=2
-source=(https://github.com/Tencent/rapidjson/archive/refs/tags/v$version.tar.gz)
+version=2025.08.25
+release=1
+source=(https://github.com/Tencent/rapidjson/archive/refs/heads/master.tar.gz)
 
 build_opt="-DCMAKE_INSTALL_PREFIX=/usr
            -DCMAKE_BUILD_TYPE=Release
