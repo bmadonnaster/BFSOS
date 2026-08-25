@@ -12,6 +12,7 @@ cd    build &&
 
 cmake -DCMAKE_INSTALL_PREFIX=/usr \
        -DBUILD_WITH_QT6=ON \
+-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
       -DCMAKE_BUILD_TYPE=Release  \
       -DRUNTIME_DIR=/run/sddm     \
       -DBUILD_MAN_PAGES=ON        \
