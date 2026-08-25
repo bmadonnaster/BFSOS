@@ -1,0 +1,23 @@
+# Description: C++ coroutine library for Qt
+# URL: https://github.com/danvratil/qcoro
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cmake qt6
+
+name=qcoro
+version=0.12.0
+release=1
+source=(https://github.com/danvratil/$name/archive/refs/tags/v$version.tar.gz)
+
+pkg_build() {
+    cmake -B build -S . \
+        -DCMAKE_INSTALL_PREFIX=$KF6_PREFIX \
+        -DCMAKE_PREFIX_PATH=$QT6DIR \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF \
+        -DQCORO_BUILD_EXAMPLES=OFF \
+        -DQCORO_WITH_QT6=ON \
+        -Wno-author || return 1
+
+    cmake --build build -j${JOBS:-1} || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
+}
