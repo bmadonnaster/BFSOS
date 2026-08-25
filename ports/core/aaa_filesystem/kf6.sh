@@ -13,7 +13,9 @@ pathappend $KF6_PREFIX/lib/plugins/kcms QT_PLUGIN_PATH
 
 pathappend $KF6_PREFIX/lib/qml          QML2_IMPORT_PATH
 
-pathappend $KF6_PREFIX/lib/python3.12/site-packages PYTHONPATH
+_python_site="$(python3 -c 'import sys; print(f"python{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)"
+[ -n "$_python_site" ] && pathappend "$KF6_PREFIX/lib/$_python_site/site-packages" PYTHONPATH
+unset _python_site
 
 pathappend $KF6_PREFIX/include          CPLUS_INCLUDE_PATH
 # End /etc/profile.d/kf6.sh
