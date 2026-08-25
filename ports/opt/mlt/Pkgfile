@@ -1,12 +1,12 @@
 # Description: MLT package is the Media Lovin Toolkit. It is an open source multimedia framework, designed and developed for television broadcasting. It provides a toolkit for broadcasters, video editors, media players, transcoders, web streamers and many more types of applications.
 # URL:          https://github.com/mltframework/mlt/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  frei0r-plugins qt6 sdl
-# Optional: doxygen fftw libexif sdl2 jack moveit sox vid.stab
+# Depends on:  frei0r-plugins qt6 sdl2
+# Optional: doxygen fftw libexif jack moveit sox vid.stab
 
 name=mlt
 version=7.40.0
-release=2
+release=3
 source=(https://github.com/mltframework/$name/releases/download/v$version/$name-$version.tar.gz)
 pkg_build () {
 mkdir build &&
