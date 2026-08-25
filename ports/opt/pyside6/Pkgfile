@@ -21,6 +21,7 @@ pkg_build() {
         -DPython_EXECUTABLE=/usr/bin/python3 \
         -DBUILD_TESTS=OFF || return 1
 
+    export PYTHONPATH="$PWD/_build/sources${PYTHONPATH:+:$PYTHONPATH}"
     cmake --build _build --parallel "${JOBS:-1}" || return 1
     DESTDIR="$PKG" cmake --install _build || return 1
 
