@@ -4,9 +4,9 @@
 
 name=kimageannotator
 version=0.7.1
-release=1
+release=2
 source=(https://github.com/ksnip/kImageAnnotator/archive/v${version}/kImageAnnotator-${version}.tar.gz)
-build_opt="      -DCMAKE_INSTALL_PREFIX=/usr 
+build_opt="      -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_PREFIX_PATH=$QT6DIR 
                  -DCMAKE_BUILD_TYPE=Release  
                  -DBUILD_SHARED_LIBS=ON      
                  -DBUILD_WITH_QT6=ON"
