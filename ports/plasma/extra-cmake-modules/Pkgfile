@@ -8,8 +8,8 @@
 
 name=extra-cmake-modules
 version=6.26.0
-release=2
-source=(https://download.kde.org/stable/frameworks/6.13/$name-$version.tar.xz)
+release=3
+source=(https://download.kde.org/stable/frameworks/6.26/$name-$version.tar.xz)
 
 pkg_build() {
 
