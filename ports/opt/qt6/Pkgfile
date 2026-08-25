@@ -1,7 +1,7 @@
 # Description: Qt 6 framework, monolithic BFSOS build including QtWebEngine
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs
+# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm
 # Optional: bluez gtk3 ibus libproxy mariadb pulseaudio unixodbc wayland-protocols
 
 name=qt6
@@ -30,6 +30,7 @@ pkg_build() {
     ./configure \
         -prefix "$QT6PREFIX" \
         -release \
+        -xcb \
         -sysconfdir /etc/xdg \
         -dbus-linked \
         -openssl-linked \
