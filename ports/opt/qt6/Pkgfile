@@ -6,14 +6,24 @@
 
 name=qt6
 version=6.11.2
-release=4
-source=(https://download.qt.io/archive/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
+release=5
+source=(https://download.qt.io/official_releases/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 
 pkg_build() {
     export QT6PREFIX=/opt/qt6
 
+    # pkgmk exports staging variables before pkg_build(). QtWebEngine performs
+    # internal build-time installs (notably its bundled GN tool), so leaving
+    # DESTDIR set causes those tools to be installed under $PKG and makes the
+    # running build unable to find them.
+    unset DESTDIR
+    unset DEST_DIR
+    unset INSTALLROOT
+    unset install_root
+    unset INSTALL_ROOT
+
     # Keep Qt as one coherent package. qtopcua is currently incompatible with
-    # OpenSSL 4; qt3d/qtquick3dphysics remain intentionally excluded as in BLFS.
+    # OpenSSL 4; qt3d/qtquick3dphysics remain intentionally excluded.
     rm -rf qt3d qtquick3dphysics qtopcua
 
     ./configure \
@@ -29,16 +39,24 @@ pkg_build() {
         -journald || return 1
 
     ninja -j "${JOBS:-1}" || return 1
+
     DESTDIR="$PKG" ninja install || return 1
 
-    find "$PKG$QT6PREFIX" -name '*.prl' -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+    find "$PKG$QT6PREFIX" \
+        -name '*.prl' \
+        -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
 
-    install -d "$PKG/etc/profile.d" "$PKG/etc/ld.so.conf.d"
-    cat > "$PKG/etc/profile.d/qt6.sh" <<'EOF'
+    install -d \
+        "$PKG/etc/profile.d" \
+        "$PKG/etc/ld.so.conf.d"
+
+    cat > "$PKG/etc/profile.d/qt6.sh" <<'EOF_PROFILE'
 QT6DIR=/opt/qt6
 pathappend "$QT6DIR/bin" PATH
 pathappend "$QT6DIR/lib/pkgconfig" PKG_CONFIG_PATH
 export QT6DIR
-EOF
-    printf '%s\n' '/opt/qt6/lib' > "$PKG/etc/ld.so.conf.d/qt6.conf"
+EOF_PROFILE
+
+    printf '%s\n' '/opt/qt6/lib' \
+        > "$PKG/etc/ld.so.conf.d/qt6.conf"
 }
