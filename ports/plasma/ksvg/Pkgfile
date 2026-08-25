@@ -4,11 +4,11 @@
 
 name=ksvg
 version=6.26.0
-release=3
+release=4
 source=(https://download.kde.org/stable/frameworks/${version%.*}/$name-$version.tar.xz)
 build_opt="-D CMAKE_INSTALL_PREFIX=$KF6_PREFIX 
             -D CMAKE_INSTALL_LIBEXECDIR=libexec 
             -D CMAKE_PREFIX_PATH=$QT6DIR        
             -D CMAKE_BUILD_TYPE=Release         
             -D BUILD_TESTING=OFF                
-            -W no-dev .."
+            -Wno-author .."

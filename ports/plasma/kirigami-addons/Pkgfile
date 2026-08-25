@@ -4,14 +4,15 @@
 
 name=kirigami-addons
 version=1.12.1
-release=2
+release=3
 source=(https://download.kde.org/stable/${name}/$name-$version.tar.xz)
 pkg_build () {
 
 mkdir build &&
 cd    build &&
 
-cmake -D CMAKE_INSTALL_PREFIX=$KF6_PREFIX  \
+cmake -D CMAKE_INSTALL_PREFIX=$KF6_PREFIX \
+            -D CMAKE_PREFIX_PATH=$QT6DIR  \
       -D CMAKE_BUILD_TYPE=Release          \
       -D BUILD_TESTING=OFF                 \
        ..                                  &&

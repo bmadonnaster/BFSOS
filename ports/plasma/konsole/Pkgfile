@@ -4,10 +4,10 @@
 
 name=konsole
 version=26.04.1
-release=2
+release=3
 source=(https://download.kde.org/stable/release-service/${version}/src/$name-$version.tar.xz
 konsole-adjust_scrollbar-1.patch)
 build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX
       -DCMAKE_BUILD_TYPE=Release         
       -DBUILD_TESTING=OFF                
-      -Wno-dev .."
+      -Wno-author .."

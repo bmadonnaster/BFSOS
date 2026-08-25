@@ -4,9 +4,9 @@
 # Optional:
 name=khelpcenter
 version=26.04.1
-release=3
+release=4
 source=(https://download.kde.org/stable/release-service/${version}/src/$name-$version.tar.xz)
 build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX
       -DCMAKE_BUILD_TYPE=Release
       -DBUILD_TESTING=OFF
-      -Wno-dev .."
+      -Wno-author .."
