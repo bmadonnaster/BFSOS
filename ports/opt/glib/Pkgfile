@@ -11,10 +11,10 @@ source=(https://download.gnome.org/sources/$name/${version:0:4}/$name-$version.t
 https://www.linuxfromscratch.org/patches/blfs/svn/glib-skip_warnings-1.patch)
 
 pkg_build() {
-  local introspection_opt="-D introspection=disabled"
+  local introspection_opt="-Dintrospection=disabled"
 
   if prt-get isinst gobject-introspection >/dev/null 2>&1; then
-    introspection_opt="-D introspection=enabled"
+    introspection_opt="-Dintrospection=enabled"
   fi
 
   meson setup build . \
