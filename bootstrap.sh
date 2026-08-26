@@ -2857,6 +2857,10 @@ export LIBRARY_PATH="/usr/lib"
 export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 export PKG_CONFIG_LIBDIR="/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
+# BFSOS X.Org build policy. Do not rely on login-shell profile.d loading.
+export XORG_PREFIX="/usr"
+export XORG_CONFIG="--prefix=/usr --sysconfdir=/etc --localstatedir=/var --disable-static"
+
 export JOBS=${BFS_BUILD_JOBS/auto/$(nproc)}
 export MAKEFLAGS="-j \$JOBS"
 

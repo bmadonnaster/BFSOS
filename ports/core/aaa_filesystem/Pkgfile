@@ -32,6 +32,7 @@ source=(
     i18n.sh
     kf6.sh
     kf6.sudoers
+    xorg.sudoers
     vte.csh
     vte.sh
     xorg.sh
@@ -179,7 +180,12 @@ pkg_build() {
     install -d -m 0755 \
         "$PKG/etc/profile.d" \
         "$PKG/etc/bash_completion.d" \
-        "$PKG/etc/skel"
+        "$PKG/etc/skel" \
+        "$PKG/etc/sudoers.d"
+
+    # Preserve BFSOS package-build prefix variables through sudo.
+    install -m 0440 kf6.sudoers "$PKG/etc/sudoers.d/kf6"
+    install -m 0440 xorg.sudoers "$PKG/etc/sudoers.d/xorg"
 
     #
     # Profile scripts.
