@@ -5,12 +5,12 @@
 
 name=libXrandr
 version=1.5.5
-release=2
+release=3
 source=(https://www.x.org/releases/individual/lib/libXrandr-$version.tar.xz)
 
 pkg_build() {
 
-	./configure $XORG_CONFIG $docdir
+	./configure $XORG_CONFIG --docdir=/usr/share/doc/$name-$version
 
 	make
 	make DESTDIR=$PKG install

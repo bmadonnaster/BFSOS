@@ -5,13 +5,13 @@
 
 name=libsigc++2
 version=2.12.1
-release=1
+release=2
 source=(https://download.gnome.org/sources/libsigc++/${version%.*}/libsigc++-$version.tar.xz)
 
 pkg_build() {
   mkdir bld && cd bld
 
-  meson setup ../libsigc++-$version \
+  meson setup .. \
     --prefix=/usr \
     --buildtype=release \
     -D build-documentation=false \

@@ -4,11 +4,11 @@
 
 name=orc
 version=0.4.41
-release=1
+release=2
 source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz)
 
 pkg_build() {
-  meson setup $name-$version build \
+  meson setup build . \
     --prefix=/usr \
     --buildtype=plain \
     --wrap-mode nodownload \

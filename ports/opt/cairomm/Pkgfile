@@ -5,11 +5,11 @@
 
 name=cairomm
 version=1.18.1
-release=2
+release=3
 source=(https://cairographics.org/releases/$name-$version.tar.xz)
 
 pkg_build() {
-	meson setup build $name-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--buildtype=plain \
 		-D b_lto=true \

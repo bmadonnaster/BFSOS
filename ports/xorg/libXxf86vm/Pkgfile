@@ -5,12 +5,12 @@
 
 name=libXxf86vm
 version=1.1.7
-release=2
+release=3
 source=(https://www.x.org/releases/individual/lib/libXxf86vm-$version.tar.xz)
 
 pkg_build() {
 
-	 ./configure $XORG_CONFIG $docdir
+	 ./configure $XORG_CONFIG --docdir=/usr/share/doc/$name-$version
 
 	make
 	make DESTDIR=$PKG install

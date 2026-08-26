@@ -5,12 +5,12 @@
 
 name=libXaw
 version=1.0.16
-release=1
+release=2
 source=(https://www.x.org/releases/individual/lib/libXaw-$version.tar.xz)
 
 pkg_build() {
 
-	  ./configure $XORG_CONFIG $docdir \
+	  ./configure $XORG_CONFIG --docdir=/usr/share/doc/$name-$version \
                   --with-appdefaultdir=/etc/X11/app-defaults
 
 	make

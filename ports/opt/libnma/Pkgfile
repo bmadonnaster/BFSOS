@@ -6,7 +6,7 @@
 
 name=libnma
 version=1.10.6
-release=2
+release=3
 source=(https://gitlab.gnome.org/GNOME/libnma/-/archive/$version/libnma-$version.tar.bz2)
 
 pkg_build() {
@@ -15,7 +15,7 @@ pkg_build() {
   #prt-get isinst vala || PKGMK_LIBNMA+=' -D vapi=false'
   PKGMK_LIBNMA+=' -D vapi=false'
 
-  meson setup $name-$version build $PKGMK_LIBNMA \
+  meson setup build . $PKGMK_LIBNMA \
     --prefix=/usr \
     --buildtype=plain \
     --wrap-mode nodownload \

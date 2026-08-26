@@ -5,11 +5,11 @@
 
 name=libXpm
 version=3.5.19
-release=2
+release=3
 source=(https://www.x.org/releases/individual/lib/libXpm-$version.tar.xz)
 
 pkg_build() {
-	   ./configure $XORG_CONFIG $docdir --disable-open-zfile
+	   ./configure $XORG_CONFIG --docdir=/usr/share/doc/$name-$version --disable-open-zfile
 	make
 	make DESTDIR=$PKG install
 }

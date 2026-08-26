@@ -5,11 +5,11 @@
 
 name=libXvMC
 version=1.0.15
-release=3
+release=4
 source=(https://www.x.org/releases/individual/lib/libXvMC-$version.tar.xz)
 
 pkg_build() {
-	./configure $XORG_CONFIG $docdir
+	./configure $XORG_CONFIG --docdir=/usr/share/doc/$name-$version
 
 	make
 	make DESTDIR=$PKG install
