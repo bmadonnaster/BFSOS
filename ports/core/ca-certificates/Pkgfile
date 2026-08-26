@@ -1,10 +1,11 @@
 # Description: Mozilla CA certificate bundle
 # URL: https://curl.se/docs/caextract.html
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on:
 
 name=ca-certificates
 version=20260716
-release=4
+release=5
 
 source=(
 https://curl.se/ca/cacert.pem
@@ -17,21 +18,19 @@ bootstrap_build() {
 }
 
 pkg_build() {
-	# make-ca owns the canonical generated trust bundle.  This package owns
-	# compatibility paths commonly expected by curl and third-party software.
-	install -d -m 0755 \
-		"$PKG/etc/ssl/certs" \
-		"$PKG/etc/ssl"
+	# Seed the canonical BFSOS trust bundle as a real file. make-ca may
+	# regenerate this runtime trust database later, but curl must never see
+	# dangling compatibility links during bootstrap or a cold-cache install.
+	install -D -m 0644 \
+		"$SRC/cacert.pem" \
+		"$PKG/etc/pki/tls/certs/ca-bundle.crt"
 
-	ln -sfn \
-		../../pki/tls/certs/ca-bundle.crt \
+	# Compatibility paths used by OpenSSL/curl-compatible software.
+	install -d -m 0755 "$PKG/etc/ssl/certs" "$PKG/etc/ssl"
+	ln -sfn ../../pki/tls/certs/ca-bundle.crt \
 		"$PKG/etc/ssl/certs/ca-certificates.crt"
-
-	ln -sfn \
-		../pki/tls/certs/ca-bundle.crt \
+	ln -sfn ../pki/tls/certs/ca-bundle.crt \
 		"$PKG/etc/ssl/cert.pem"
-
-	ln -sfn \
-		../pki/tls/certs/ca-bundle.crt \
+	ln -sfn ../pki/tls/certs/ca-bundle.crt \
 		"$PKG/etc/ssl/ca-bundle.crt"
 }

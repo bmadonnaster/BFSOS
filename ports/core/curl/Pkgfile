@@ -1,6 +1,11 @@
+# Description: URL transfer tool
+# URL: https://curl.se/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: ca-certificates openssl
+
 name=curl
 version=8.21.0
-release=2
+release=3
 source=(https://$name.se/download/$name-$version.tar.xz)
 build_opt="
 	--with-openssl

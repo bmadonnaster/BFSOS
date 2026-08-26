@@ -6,9 +6,9 @@
 # Depends on: kcmutils kirigami kwallet libaccounts-qt qcoro qt6 signond
 
 name=kaccounts-integration
-version=26.04.1
-release=4
-source=(http://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
+version=26.08.0
+release=1
+source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX
       -DCMAKE_BUILD_TYPE=Release
       -DBUILD_TESTING=OFF

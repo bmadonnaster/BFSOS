@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r62 - newest-installer mtime discovery + PASSED white + authoritative pkgutils defaults validation
+# BFSOS bootstrap r63 - CA transition hardening + integrity toggles + exact failing-log tracking
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -104,6 +104,11 @@ BFS_BUILD_OPT="portable"
 BFS_CCACHE="yes"
 BFS_CCACHE_SIZE="auto"
 BFS_KEEP_SOURCE_ARCHIVES="no"
+# Integrity verification is secure-by-default.  Development builds may
+# explicitly disable individual checks from Bootstrap Settings.
+BFS_VERIFY_MD5="yes"
+BFS_VERIFY_SIGNATURE="yes"
+BFS_VERIFY_FOOTPRINT="yes"
 BFS_BUILD_SETTINGS_CHANGED="no"
 
 _resolve_ccache_size() {
@@ -195,6 +200,9 @@ BFS_BUILD_OPT='$BFS_BUILD_OPT'
 BFS_CCACHE='$BFS_CCACHE'
 BFS_CCACHE_SIZE='$BFS_CCACHE_SIZE'
 BFS_KEEP_SOURCE_ARCHIVES='$BFS_KEEP_SOURCE_ARCHIVES'
+BFS_VERIFY_MD5='$BFS_VERIFY_MD5'
+BFS_VERIFY_SIGNATURE='$BFS_VERIFY_SIGNATURE'
+BFS_VERIFY_FOOTPRINT='$BFS_VERIFY_FOOTPRINT'
 BFS_BUILD_SETTINGS_CHANGED='$BFS_BUILD_SETTINGS_CHANGED'
 EOF_SETTINGS
     _apply_build_settings
@@ -215,13 +223,16 @@ compiler_build_settings_menu() {
                     --ok-label "Select" \
                     --cancel-label "Back" \
                     --menu \
-                    "Current settings:\n\nJobs: $BFS_BUILD_JOBS\nOptimization: $BFS_BUILD_OPT\nccache: $BFS_CCACHE\nccache size: $BFS_CCACHE_SIZE\nKeep source archives: $BFS_KEEP_SOURCE_ARCHIVES" \
-                    24 82 9 \
+                    "Current settings:\n\nJobs: $BFS_BUILD_JOBS\nOptimization: $BFS_BUILD_OPT\nccache: $BFS_CCACHE\nccache size: $BFS_CCACHE_SIZE\nKeep source archives: $BFS_KEEP_SOURCE_ARCHIVES\nMD5 verification: $BFS_VERIFY_MD5\nSignature verification: $BFS_VERIFY_SIGNATURE\nFootprint verification: $BFS_VERIFY_FOOTPRINT" \
+                    27 86 12 \
                     jobs "Parallel build jobs" \
                     optimization "Compiler optimization policy" \
                     ccache "Enable or disable ccache" \
                     ccache-size "Configure ccache maximum size" \
                     source-cache "Keep downloaded source archives in base archive" \
+                    verify-md5 "Verify source MD5/checksums" \
+                    verify-signature "Verify source signatures" \
+                    verify-footprint "Verify package footprints" \
                     defaults "Restore BFSOS build defaults" \
                     </dev/tty 2>/dev/tty
             )"
@@ -371,6 +382,15 @@ compiler_build_settings_menu() {
                     set -e
                     [ "$status" -le 1 ] || continue
                     ;;
+                verify-md5)
+                    if [ "$BFS_VERIFY_MD5" = yes ]; then BFS_VERIFY_MD5=no; else BFS_VERIFY_MD5=yes; fi
+                    ;;
+                verify-signature)
+                    if [ "$BFS_VERIFY_SIGNATURE" = yes ]; then BFS_VERIFY_SIGNATURE=no; else BFS_VERIFY_SIGNATURE=yes; fi
+                    ;;
+                verify-footprint)
+                    if [ "$BFS_VERIFY_FOOTPRINT" = yes ]; then BFS_VERIFY_FOOTPRINT=no; else BFS_VERIFY_FOOTPRINT=yes; fi
+                    ;;
                 defaults)
                     set +e
                     if dialog --clear \
@@ -386,6 +406,9 @@ compiler_build_settings_menu() {
                         BFS_CCACHE=yes
                         BFS_CCACHE_SIZE=auto
                         BFS_KEEP_SOURCE_ARCHIVES=no
+                        BFS_VERIFY_MD5=yes
+                        BFS_VERIFY_SIGNATURE=yes
+                        BFS_VERIFY_FOOTPRINT=yes
                     fi
                     set -e
                     ;;
@@ -400,9 +423,12 @@ compiler_build_settings_menu() {
             printf '3) ccache               : %s\n' "$BFS_CCACHE"
             printf '4) ccache size          : %s\n' "$BFS_CCACHE_SIZE"
             printf '5) Keep source archives : %s\n' "$BFS_KEEP_SOURCE_ARCHIVES"
-            printf '6) Restore defaults\n'
-            printf '7) Back\n'
-            printf 'Choose [1-7]: '
+            printf '6) Verify MD5/checksums   : %s\n' "$BFS_VERIFY_MD5"
+            printf '7) Verify signatures     : %s\n' "$BFS_VERIFY_SIGNATURE"
+            printf '8) Verify footprints     : %s\n' "$BFS_VERIFY_FOOTPRINT"
+            printf '9) Restore defaults\n'
+            printf '10) Back\n'
+            printf 'Choose [1-10]: '
             read -r choice </dev/tty 2>/dev/null || read -r choice
             case "$choice" in
                 1)
@@ -437,14 +463,20 @@ compiler_build_settings_menu() {
                     read -r value
                     case "$value" in yes|no) BFS_KEEP_SOURCE_ARCHIVES="$value" ;; esac
                     ;;
-                6)
+                6) case "$BFS_VERIFY_MD5" in yes) BFS_VERIFY_MD5=no ;; *) BFS_VERIFY_MD5=yes ;; esac ;;
+                7) case "$BFS_VERIFY_SIGNATURE" in yes) BFS_VERIFY_SIGNATURE=no ;; *) BFS_VERIFY_SIGNATURE=yes ;; esac ;;
+                8) case "$BFS_VERIFY_FOOTPRINT" in yes) BFS_VERIFY_FOOTPRINT=no ;; *) BFS_VERIFY_FOOTPRINT=yes ;; esac ;;
+                9)
                     BFS_BUILD_JOBS=auto
                     BFS_BUILD_OPT=portable
                     BFS_CCACHE=yes
                     BFS_CCACHE_SIZE=auto
                     BFS_KEEP_SOURCE_ARCHIVES=no
+                    BFS_VERIFY_MD5=yes
+                    BFS_VERIFY_SIGNATURE=yes
+                    BFS_VERIFY_FOOTPRINT=yes
                     ;;
-                7|"") return 0 ;;
+                10|"") return 0 ;;
                 *) continue ;;
             esac
             BFS_BUILD_SETTINGS_CHANGED=yes
@@ -840,6 +872,7 @@ ACTIVE_LOG_STDOUT_FD=7
 ACTIVE_LOG_STDERR_FD=8
 CURRENT_BASE_LOGS=()
 STAGE_OPERATION_STARTED_EPOCH=0
+LAST_FAILED_LOG_FILE=""
 
 mkdir -p "$TOOLCHAIN_LOG_DIR" "$BASE_LOG_DIR"
 
@@ -873,6 +906,9 @@ _close_active_package_log() {
 
     printf '\nBuild finished: %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
     printf 'Exit status: %s\n' "$status"
+    if [ "$status" -ne 0 ]; then
+        LAST_FAILED_LOG_FILE="$ACTIVE_LOG_FILE"
+    fi
 
     exec 1>&"$ACTIVE_LOG_STDOUT_FD" 2>&"$ACTIVE_LOG_STDERR_FD"
     exec 7>&- 8>&-
@@ -1129,6 +1165,11 @@ _latest_failure_log() {
     esac
 
     [ -d "$directory" ] || return 1
+
+    if [ -n "${LAST_FAILED_LOG_FILE:-}" ] && [ -r "$LAST_FAILED_LOG_FILE" ]; then
+        printf '%s\n' "$LAST_FAILED_LOG_FILE"
+        return 0
+    fi
 
     newest="$(
         find "$directory" -type f -name '*.log' -printf '%T@ %p
@@ -1423,6 +1464,7 @@ _bootstrap_menu() {
         # during preflight before opening a new package log, do not display an
         # unrelated log from an earlier failure.
         STAGE_OPERATION_STARTED_EPOCH="$(date +%s)"
+        LAST_FAILED_LOG_FILE=""
 
         case "$choice" in
             1) set +e; BFS_MENU_STAGE=yes _buildtoolchain; status=$?; set -e ;;
@@ -2834,6 +2876,12 @@ PKGMK_SOURCE_DIR="/$pkgmksrc"
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
 PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 
+# Bootstrap integrity policy. All checks default to enabled; development
+# bypasses require an explicit settings change and are visible in this file/log.
+PKGMK_IGNORE_MD5SUM="$([ "$BFS_VERIFY_MD5" = yes ] && echo no || echo yes)"
+PKGMK_IGNORE_SIGNATURE="$([ "$BFS_VERIFY_SIGNATURE" = yes ] && echo no || echo yes)"
+PKGMK_IGNORE_FOOTPRINT="$([ "$BFS_VERIFY_FOOTPRINT" = yes ] && echo no || echo yes)"
+
 # Match the installed BFSOS downloader policy during Stage 2/3: go directly
 # to Pkgfile sources, resume partial downloads, and detect dead/stalled links.
 PKGMK_SOURCE_MIRRORS=()
@@ -2898,6 +2946,17 @@ fi
 # END BFSOS BOOTSTRAP CCACHE
 EOF_INSTALLED_CCACHE_DEFAULT
         fi
+
+        sed -i '/^# BEGIN BFSOS BOOTSTRAP INTEGRITY$/,/^# END BFSOS BOOTSTRAP INTEGRITY$/d' \
+            "$LFS/etc/pkgmk.conf"
+        cat >> "$LFS/etc/pkgmk.conf" <<EOF_INSTALLED_INTEGRITY
+
+# BEGIN BFSOS BOOTSTRAP INTEGRITY
+PKGMK_IGNORE_MD5SUM="$([ "$BFS_VERIFY_MD5" = yes ] && echo no || echo yes)"
+PKGMK_IGNORE_SIGNATURE="$([ "$BFS_VERIFY_SIGNATURE" = yes ] && echo no || echo yes)"
+PKGMK_IGNORE_FOOTPRINT="$([ "$BFS_VERIFY_FOOTPRINT" = yes ] && echo no || echo yes)"
+# END BFSOS BOOTSTRAP INTEGRITY
+EOF_INSTALLED_INTEGRITY
 
         # Never point pkgmk at the bind-mount root itself.  pkgmk removes its
         # work directory during cleanup; using the mount point directly causes
@@ -2995,12 +3054,20 @@ EOF
                 echo "Using temporary util-linux libraries for systemd bootstrap."
             fi
 
+            integrity_opts=""
+            [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
+            [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
+            [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
+            if [ -n "$integrity_opts" ]; then
+                echo "WARNING: development integrity bypass active:$integrity_opts"
+            fi
+
             chroot "$LFS" \
                 env -i \
                 HOME=/root \
                 TERM="${TERM:-dumb}" \
                 PATH="$LFSPATH" \
-                pkgin -d "$i" -is -if -im -cf "$pkgmk_conf" \
+                pkgin -d "$i" $integrity_opts -cf "$pkgmk_conf" \
                 || {
                     status=$?
                     _close_active_package_log "$status"
@@ -3016,6 +3083,28 @@ EOF
                     umountfs
                     return "$status"
                 }
+
+            case "$i" in
+                ca-certificates)
+                    if ! chroot "$LFS" /bin/sh -c 'test -s /etc/pki/tls/certs/ca-bundle.crt'; then
+                        echo "ERROR: ca-certificates did not create a non-empty canonical CA bundle." >&2
+                        _close_active_package_log 1
+                        umountfs
+                        return 1
+                    fi
+                    echo "CA trust-store canonical bundle initialized."
+                    ;;
+                curl)
+                    if ! chroot "$LFS" env -i HOME=/root PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                        /usr/bin/curl -fsSI --connect-timeout 10 https://kernel.org/ >/dev/null; then
+                        echo "ERROR: final BFSOS curl failed HTTPS trust-store sanity check." >&2
+                        _close_active_package_log 1
+                        umountfs
+                        return 1
+                    fi
+                    echo "Final BFSOS curl HTTPS trust-store sanity check passed."
+                    ;;
+            esac
 
             case $i in
                 glibc)
@@ -3175,6 +3264,14 @@ EOF
         else
             _start_package_log base "$i"
 
+            integrity_opts=""
+            [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
+            [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
+            [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
+            if [ -n "$integrity_opts" ]; then
+                echo "WARNING: development integrity bypass active:$integrity_opts"
+            fi
+
             chroot "$LFS" \
                 env -i \
                 HOME=/root \
@@ -3184,7 +3281,7 @@ EOF
                 LANGUAGE=C \
                 PATH="$STAGE_BUILD_PATH" \
                 CCACHE_DIR=/var/cache/ccache \
-                prt-get update -im -fr -if -fi "$i" \
+                prt-get update $integrity_opts -fr -fi "$i" \
                 || {
                     status=$?
                     _close_active_package_log "$status"

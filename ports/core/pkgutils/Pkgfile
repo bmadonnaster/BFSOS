@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=24
+release=25
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -129,8 +129,9 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
         # Use Zstandard as the default package compression mode.
         sed -i 's,^PKGMK_COMPRESSION_MODE=.*,PKGMK_COMPRESSION_MODE="zst",' "$PKG/usr/bin/pkgmk"
 
-        # BFSOS currently ignores source signatures by default.
-        sed -i 's,^PKGMK_IGNORE_SIGNATURE=.*,PKGMK_IGNORE_SIGNATURE="yes",' "$PKG/usr/bin/pkgmk"
+        # Integrity verification is enabled by default. Development/bootstrap
+        # callers may explicitly opt out through their configuration.
+        sed -i 's,^PKGMK_IGNORE_SIGNATURE=.*,PKGMK_IGNORE_SIGNATURE="no",' "$PKG/usr/bin/pkgmk"
 
         # BFSOS pkgmk extension.
         install -Dm644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"

@@ -1,14 +1,14 @@
 # Add your top line text here
 # Your line to add at the top here
-# Description: The KMix package contains a KF5 based Sound Mixer application.
+# Description: KDE audio volume and mixer application.
 # URL:          https://kde.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: alsa-lib extra-cmake-modules kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kglobalaccel kdoctools ki18n knotifications kstatusnotifieritem kwidgetsaddons kwindowsystem kxmlgui libcanberra pulseaudio qt6 solid
 # Optional: libcanberra pulseaudio
 
 name=kmix
-version=26.04.1
-release=4
+version=26.08.0
+release=1
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 
 build() {

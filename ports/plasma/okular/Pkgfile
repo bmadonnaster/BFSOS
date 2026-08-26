@@ -3,9 +3,9 @@
 # Depends on: kde-frameworks-6 plasma-activities libkexiv2 libtiff poppler qca phonon
 
 name=okular
-version=26.04.1
-release=3
-source=(https://download.kde.org/stable/release-service/${version}/src/$name-$version.tar.xz)
+version=26.08.0
+release=1
+source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 pkg_build() {
     mkdir -p build || return 1
     cd build || return 1

@@ -7,8 +7,8 @@
 
 
 name=kde-frameworks-6
-version=6.26.0
-release=2
+version=6.29.0
+release=1
 source=()
 
 build() {

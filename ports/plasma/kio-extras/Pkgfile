@@ -4,7 +4,7 @@
 # Depends on: extra-cmake-modules kde-frameworks-6 kdsoap-ws-discovery-client libkexiv2 libproxy plasma-activities-stats qcoro qt6
 
 name=kio-extras
-version=26.04.1
+version=26.08.0
 release=1
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 
