@@ -9,7 +9,7 @@ release=1
 source=(https://github.com/rockdaboot/$name/releases/download/$version/$name-$version.tar.lz)
 
 pkg_build() {
-  meson setup build $name-$version \
+  meson setup build . \
     --prefix=/usr \
     --buildtype=plain \
     --wrap-mode nodownload \
@@ -21,6 +21,6 @@ pkg_build() {
     -D psl_testfile=/usr/share/publicsuffix/test_psl.txt \
     -D tests=false
 
-  ninja -j ${JOBS-1} -C build
-  DESTDIR=$PKG meson install -C build
+  ninja -j "${JOBS:-1}" -C build
+  DESTDIR="$PKG" meson install -C build
 }

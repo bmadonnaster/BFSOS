@@ -12,8 +12,8 @@ pkg_build() {
 
 	./configure $XORG_CONFIG      \
             --without-doxygen \
-            --docdir='${datadir}'/doc/libxcb-1.16 &&
+            --docdir='${datadir}'/doc/libxcb-$version &&
 	make
 	make DESTDIR=$PKG install
-chown -Rv root:root $PKG$XORG_PREFIX/share/doc/libxcb-1.16
+chown -Rv root:root $PKG$XORG_PREFIX/share/doc/libxcb-$version
 }
