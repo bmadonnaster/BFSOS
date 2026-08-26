@@ -15,14 +15,8 @@ command -v git >/dev/null 2>&1 || die "git is not installed"
 # generated HttpUp state from the project tree; third-party user configs under
 # /etc/ports are outside this maintainer checkout and are not touched here.
 if [[ -d "$REPO_ROOT/ports" ]]; then
-    # Development-tree hygiene: generated verification metadata is deliberately
-    # removed before committing. pkgmk will regenerate it when verification is
-    # enabled for release/testing workflows.
     find "$REPO_ROOT/ports" -type f \
-        \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' -o -name REPO \
-           -o -name '.md5sum' -o -name '.md5sums' \
-           -o -name '.footprint' -o -name '.footprints' \
-           -o -name '.signature' -o -name '.signatures' \) \
+        \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' -o -name REPO \) \
         -delete
 fi
 
