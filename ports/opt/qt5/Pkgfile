@@ -1,12 +1,12 @@
 # Description: Qt 5 compatibility framework (monolithic BFSOS build, including QtWebEngine)
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib bison dbus double-conversion flex glib gperf harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 python3-html5lib sqlite xorg-libs
+# Depends on: alsa-lib bison dbus double-conversion flex glib gperf harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja nodejs nss openssl pciutils python3 python3-html5lib sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm xcb-util-cursor
 # Optional: bluez cups gst-plugins-base gst-plugins-good gtk3 ibus mariadb pulseaudio unixodbc wayland-protocols
 keep_static=1
 name=qt5
 version=5.15.19
-release=10
+release=11
 # Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
 # uses the official complete Qt source archive, but Debian currently carries
 # upstream/downstream compatibility fixes needed by modern OpenSSL/GCC/ICU/

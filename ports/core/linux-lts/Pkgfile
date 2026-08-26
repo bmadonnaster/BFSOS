@@ -5,8 +5,8 @@
 # Optional: pahole
 
 name=linux-lts
-version=6.18.45
-release=9
+version=6.18.46
+release=1
 
 debian_patch_base="https://sources.debian.org/data/main/l/linux/6.18.9-1~bpo13+1/debian/patches"
 

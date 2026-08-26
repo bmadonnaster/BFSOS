@@ -5,7 +5,7 @@ cription: Pluggable Authentication Modules for Linux
 
 name=linux-pam
 version=1.7.2
-release=3
+release=4
 
 source=(
     https://github.com/linux-pam/linux-pam/releases/download/v$version/Linux-PAM-$version.tar.xz

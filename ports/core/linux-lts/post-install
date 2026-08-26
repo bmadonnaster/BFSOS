@@ -1,23 +1,54 @@
 #!/bin/sh
 set -eu
 
-kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%T@ %f\n' 2>/dev/null |
-    sort -nr | head -n1 | sed 's/^[^ ]* vmlinuz-//')"
+FLAVOR="linux-lts"
+SUFFIX="BFS-LTS"
 
-if [ -z "$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
-    echo "linux-lts post-install: unable to determine newly installed kernel release" >&2
+installed_pkg_version() {
+    pkginfo -i 2>/dev/null | awk -v p="$1" '$1 == p { print $2; exit }'
+}
+
+package_installed() {
+    pkginfo -i 2>/dev/null | awk -v p="$1" '$1 == p { found=1 } END { exit !found }'
+}
+
+atomic_symlink() {
+    target="$1"
+    link="$2"
+    dir=${link%/*}
+    base=${link##*/}
+    tmp="$dir/.${base}.tmp.$$"
+    rm -f -- "$tmp"
+    ln -s "$target" "$tmp"
+    mv -Tf -- "$tmp" "$link"
+}
+
+pkgver="$(installed_pkg_version "$FLAVOR")"
+version="${pkgver%-*}"
+kver="${version}-${SUFFIX}"
+
+if [ -z "$version" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
+    kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f
+' 2>/dev/null | sed 's/^vmlinuz-//' | sort -V | tail -n1)"
+fi
+
+if [ -z "$kver" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
+    echo "linux-lts post-install: unable to determine the installed kernel release" >&2
     exit 1
 fi
 
 kernel_image="/boot/vmlinuz-$kver"
 initramfs_image="/boot/initramfs-$kver.img"
 kernel_config="/boot/config-$kver"
+source_tree="/usr/src/linux-$kver"
+
+[ -d "$source_tree" ] || {
+    echo "linux-lts post-install: missing source tree $source_tree" >&2
+    exit 1
+}
 
 depmod -a "$kver"
 
-# Root-on-MD is a supported BFSOS boot topology.  The LTS kernel therefore
-# carries the MD core and supported RAID personalities built in rather than
-# depending on initramfs module inclusion/load ordering.
 for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
     grep -q "^CONFIG_${md_option}=y$" "$kernel_config" || {
         echo "ERROR: $kernel_config does not have CONFIG_${md_option}=y" >&2
@@ -25,15 +56,27 @@ for md_option in MD BLK_DEV_MD MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456;
     }
 done
 
-# Maintain the generic /usr/src/linux link only when this flavor is the
-# configured BFSOS default. The installer writes /etc/bfsos/kernel-flavor.
+# Always refresh the flavor-specific convenience links from the actual package
+# version. Use temp-link + rename so upgrades never leave a half-updated link.
+atomic_symlink "vmlinuz-$kver" /boot/vmlinuz-lts
+atomic_symlink "linux-$kver" /usr/src/linux-lts
+
 mkdir -p /etc/bfsos
 selected_flavor="$(cat /etc/bfsos/kernel-flavor 2>/dev/null || true)"
-if [ -z "$selected_flavor" ]; then
-    selected_flavor="linux-lts"
-fi
-if [ "$selected_flavor" = "linux-lts" ]; then
-    ln -sfn "linux-$kver" /usr/src/linux
+case "$selected_flavor" in
+    linux|linux-lts) ;;
+    *)
+        if package_installed linux; then
+            selected_flavor=linux
+        else
+            selected_flavor=linux-lts
+        fi
+        printf '%s
+' "$selected_flavor" > /etc/bfsos/kernel-flavor
+        ;;
+esac
+if [ "$selected_flavor" = linux-lts ]; then
+    atomic_symlink "linux-$kver" /usr/src/linux
 fi
 
 if [ "${BFS_INSTALLER_RUNNING:-no}" = yes ]; then
@@ -59,8 +102,6 @@ for image in /boot/initramfs-*-BFS-LTS.img; do
     [ -d "/lib/modules/$old_kver" ] || rm -f -- "$image"
 done
 
-# Remove generic kernel aliases: grub-mkconfig can enumerate them as
-# separate kernels without pairing the matching initramfs.
 rm -f /boot/vmlinuz-BFS-LTS /boot/initramfs-BFS-LTS.img
 
 if command -v grub-mkconfig >/dev/null 2>&1 && [ -d /boot/grub ]; then

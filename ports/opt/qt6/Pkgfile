@@ -1,12 +1,12 @@
 # Description: Qt 6 framework (base/modules excluding QtWebEngine)
 # URL: https://www.qt.io/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm
+# Depends on: alsa-lib bison cmake cups dbus double-conversion ffmpeg flex glib gperf gst-plugins-base gst-plugins-good harfbuzz icu libinput libjpeg-turbo libmng libpng libtiff libwebp libxkbcommon mesa mtdev ninja openssl pciutils python3 rust-bindgen rustc sqlite xorg-libs xcb-util xcb-util-renderutil xcb-util-image xcb-util-keysyms xcb-util-wm xcb-util-cursor
 # Optional: bluez gtk3 ibus libproxy mariadb pulseaudio unixodbc wayland-protocols
 
 name=qt6
 version=6.11.2
-release=7
+release=8
 source=(https://download.qt.io/official_releases/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 keep_static=1
 

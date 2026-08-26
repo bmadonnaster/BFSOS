@@ -6,7 +6,7 @@
 
 name=alsa-utils
 version=1.2.13
-release=1
+release=2
 source=(https://www.alsa-project.org/files/pub/utils/$name-$version.tar.bz2)
 
 pkg_build() {
@@ -14,7 +14,7 @@ pkg_build() {
 	./configure --disable-alsaconf \
             --disable-bat   \
             --enable-xmlto \
-            --with-curses=ncursesw &&
-make
-	make DESTDIR=$PKG install
+            --with-curses=ncursesw || return 1
+make || return 1
+make DESTDIR="$PKG" install || return 1
 }

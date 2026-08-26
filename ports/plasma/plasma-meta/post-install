@@ -26,7 +26,6 @@ cd /usr/share/xdg-desktop-portal/portals
 
 [ -e kde.portal ] ||
 ln -sfv $KF6_PREFIX/share/xdg-desktop-portal/portals/kde.portal
-rm -rf $KF6_PREFIX/lib/systemd
 cat > /etc/pam.d/kde << "EOF"
 # Begin /etc/pam.d/kde
 

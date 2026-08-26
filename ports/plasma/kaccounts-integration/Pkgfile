@@ -3,11 +3,11 @@
 # Description: Integration library and QML module for Accounts-SSO and SignOn-SSO
 # URL: https://www.kde.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: kcmutils kirigami kwallet libaccounts-qt qcoro signond
+# Depends on: kcmutils kirigami kwallet libaccounts-qt qcoro qt6 signond
 
 name=kaccounts-integration
 version=26.04.1
-release=3
+release=4
 source=(http://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX
       -DCMAKE_BUILD_TYPE=Release

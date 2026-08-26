@@ -6,7 +6,7 @@
 
 name=pulseaudio
 version=17.0
-release=2
+release=3
 source=(https://ftp.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_$version+dfsg1.orig.tar.xz)
 renames=(pulseaudio-$version.tar.xz)
 
@@ -22,5 +22,18 @@ meson setup --prefix=/usr       \
             ..                  &&
 ninja || return 1
   DESTDIR="$PKG" ninja install || return 1
-#rm -fv $PKG/etc/dbus-1/system.d/pulseaudio-system.conf
+
+  # BFSOS Plasma uses PipeWire-Pulse as the PulseAudio protocol server.
+  # Keep libpulse/tools for compatibility, but do not auto-launch the
+  # standalone PulseAudio daemon and race PipeWire for pulse/native.
+  rm -f "$PKG/etc/xdg/autostart/pulseaudio.desktop"
+
+  if [ -f "$PKG/etc/pulse/client.conf" ]; then
+    if grep -q '^[#;][[:space:]]*autospawn[[:space:]]*=' "$PKG/etc/pulse/client.conf"; then
+      sed -i 's/^[#;][[:space:]]*autospawn[[:space:]]*=.*/autospawn = no/' \
+        "$PKG/etc/pulse/client.conf"
+    elif ! grep -q '^[[:space:]]*autospawn[[:space:]]*=' "$PKG/etc/pulse/client.conf"; then
+      printf '\nautospawn = no\n' >> "$PKG/etc/pulse/client.conf"
+    fi
+  fi
 }

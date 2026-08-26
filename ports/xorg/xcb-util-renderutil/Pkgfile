@@ -5,11 +5,11 @@
 
 name=xcb-util-renderutil
 version=0.3.10
-release=1
+release=2
 source=(https://xcb.freedesktop.org/dist/xcb-util-renderutil-$version.tar.xz)
 
 pkg_build() {
-	./configure $XORG_CONFIG &&
-	make
-	make DESTDIR=$PKG install
+    ./configure $XORG_CONFIG || return 1
+    make -j "${JOBS:-1}" || return 1
+    make DESTDIR="$PKG" install || return 1
 }

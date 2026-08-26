@@ -227,6 +227,22 @@ if [ ! "$(command -v build)" ]; then
 			mkdir -p $PKG/usr
 		fi
 		
+		# KDE/KF6 is intentionally installed under /opt/kf6, but systemd
+		# user/system units are host integration files and must live in the
+		# standard /usr/lib/systemd hierarchy so systemd can discover them.
+		# Relocate staged units before the package footprint is generated.
+		if [ -d "$PKG/opt/kf6/lib/systemd" ]; then
+			for _bfs_systemd_scope in system user; do
+				_bfs_systemd_src="$PKG/opt/kf6/lib/systemd/$_bfs_systemd_scope"
+				_bfs_systemd_dst="$PKG/usr/lib/systemd/$_bfs_systemd_scope"
+				[ -d "$_bfs_systemd_src" ] || continue
+				mkdir -p "$_bfs_systemd_dst" || return $?
+				cp -a "$_bfs_systemd_src/." "$_bfs_systemd_dst/" || return $?
+				rm -rf -- "$_bfs_systemd_src" || return $?
+			done
+			rmdir "$PKG/opt/kf6/lib/systemd" 2>/dev/null || true
+		fi
+
 		# info dir
 		if [ -d $PKG/usr/share/info ]; then
 			rm -f $PKG/usr/share/info/dir

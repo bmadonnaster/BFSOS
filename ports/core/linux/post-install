@@ -2,39 +2,81 @@
 set -eu
 
 RAID_DRIVERS="linear raid0 raid1 raid10 raid456"
+FLAVOR="linux"
+SUFFIX="BFS-Linux"
 
-find_new_kernel_release() {
-    find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%T@ %f\n' 2>/dev/null |
-        sort -nr |
-        head -n1 |
-        sed 's/^[^ ]* vmlinuz-//'
+installed_pkg_version() {
+    pkginfo -i 2>/dev/null | awk -v p="$1" '$1 == p { print $2; exit }'
 }
 
-kver="$(find_new_kernel_release)"
-if [ -z "$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
-    echo "linux post-install: unable to determine newly installed kernel release" >&2
+package_installed() {
+    pkginfo -i 2>/dev/null | awk -v p="$1" '$1 == p { found=1 } END { exit !found }'
+}
+
+atomic_symlink() {
+    target="$1"
+    link="$2"
+    dir=${link%/*}
+    base=${link##*/}
+    tmp="$dir/.${base}.tmp.$$"
+    rm -f -- "$tmp"
+    ln -s "$target" "$tmp"
+    mv -Tf -- "$tmp" "$link"
+}
+
+pkgver="$(installed_pkg_version "$FLAVOR")"
+version="${pkgver%-*}"
+kver="${version}-${SUFFIX}"
+
+# Fall back only for legacy/manual hook execution where pkginfo cannot provide
+# the just-installed package version. Never use mtime as the normal selector.
+if [ -z "$version" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
+    kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f
+' 2>/dev/null | sed 's/^vmlinuz-//' | sort -V | tail -n1)"
+fi
+
+if [ -z "$kver" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
+    echo "linux post-install: unable to determine the installed kernel release" >&2
     exit 1
 fi
 
 kernel_image="/boot/vmlinuz-$kver"
 initramfs_image="/boot/initramfs-$kver.img"
+source_tree="/usr/src/linux-$kver"
+
+[ -d "$source_tree" ] || {
+    echo "linux post-install: missing source tree $source_tree" >&2
+    exit 1
+}
 
 echo "Updating module dependencies for $kver"
 depmod -a "$kver"
 
-# Maintain the generic /usr/src/linux link only when this flavor is the
-# configured BFSOS default. The installer writes /etc/bfsos/kernel-flavor.
+# Persist a deterministic default flavor. On legacy dual-kernel systems with
+# no selection file, prefer the normal kernel rather than whichever package
+# happened to be installed last. The installer overwrites this with the user's
+# explicit selection before final boot configuration.
 mkdir -p /etc/bfsos
 selected_flavor="$(cat /etc/bfsos/kernel-flavor 2>/dev/null || true)"
-if [ -z "$selected_flavor" ]; then
-    selected_flavor="linux"
-fi
-if [ "$selected_flavor" = "linux" ]; then
-    ln -sfn "linux-$kver" /usr/src/linux
+case "$selected_flavor" in
+    linux|linux-lts) ;;
+    *)
+        if package_installed linux && package_installed linux-lts; then
+            selected_flavor=linux
+        else
+            selected_flavor=linux
+        fi
+        printf '%s
+' "$selected_flavor" > /etc/bfsos/kernel-flavor
+        ;;
+esac
+
+if [ "$selected_flavor" = linux ]; then
+    atomic_symlink "linux-$kver" /usr/src/linux
 fi
 
 # During a BFSOS installation the installer owns the final storage topology,
-# Dracut invocation, and GRUB validation.  Defer those operations until the
+# Dracut invocation, and GRUB validation. Defer those operations until the
 # installer has generated fstab/crypttab/mdadm/LVM state.
 if [ "${BFS_INSTALLER_RUNNING:-no}" = yes ]; then
     echo "BFSOS installer detected; deferring initramfs/bootloader regeneration."
@@ -52,13 +94,13 @@ dracut --force --omit "fido2 systemd-cryptsetup" --force-drivers "$RAID_DRIVERS"
 if command -v lsinitrd >/dev/null 2>&1; then
     image_listing="$(lsinitrd "$initramfs_image" 2>/dev/null || true)"
     for driver in $RAID_DRIVERS; do
-        if ! printf '%s\n' "$image_listing" | grep -qE "/${driver}\\.ko([.]|$)"; then
+        if ! printf '%s
+' "$image_listing" | grep -qE "/${driver}\.ko([.]|$)"; then
             echo "ERROR: initramfs is missing required md driver: $driver" >&2
             exit 1
         fi
     done
 fi
-
 
 # Remove only initramfs images whose matching installed module tree no longer
 # exists. Never remove the new image or the running kernel's image.
@@ -75,13 +117,7 @@ for image in /boot/initramfs-*-BFS-Linux.img; do
     fi
 done
 
-# Clean the helper used by older BFSOS kernel packages after no code depends on
-# it anymore.
 rm -f /lib/modules/KERNELVERSION
-
-
-# Remove generic kernel aliases: grub-mkconfig can enumerate them as
-# separate kernels without pairing the matching initramfs.
 rm -f /boot/vmlinuz-BFS-Linux /boot/initramfs-BFS-Linux.img
 
 if command -v grub-mkconfig >/dev/null 2>&1 && [ -d /boot/grub ]; then
