@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r68-glib-introspection-preflight.sh
+install-bfs-menu-v50-r69-format-checkpoint-invalidation.sh
