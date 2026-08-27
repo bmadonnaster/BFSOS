@@ -6,7 +6,7 @@
 
 name=libxkbcommon
 version=1.13.2
-release=7
+release=8
 source=(https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz)
 
 pkg_build() {
@@ -20,7 +20,8 @@ cd    build &&
 meson setup ..            \
       --prefix=/usr       \
       --buildtype=release \
-      -Denable-docs=false &&
+      -Denable-docs=false \
+     $PKGMK_XKBCOMMON &&
 ninja
 DESTDIR=$PKG ninja install
 }
