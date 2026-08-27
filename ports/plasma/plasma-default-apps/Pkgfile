@@ -8,10 +8,10 @@
 
 name=plasma-default-apps
 version=26.08.0
-release=1
+release=2
 source=()
 
-build() {
+pkg_build() {
 
 
 	mkdir $PKG/usr
