@@ -1,11 +1,11 @@
 # Description: Automatic proxy configuration management library
 # URL: https://libproxy.github.io/libproxy/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: curl duktape glib meson ninja
+# Depends on: curl duktape glib meson ninja gsettings-desktop-schemas
 
 name=libproxy
 version=0.5.12
-release=1
+release=2
 source=(https://github.com/libproxy/libproxy/archive/refs/tags/$version.tar.gz)
 
 pkg_build() {
