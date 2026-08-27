@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r69-format-checkpoint-invalidation.sh
+install-bfs-menu-v50-r70-glib-footprint-cycle-fix.sh
