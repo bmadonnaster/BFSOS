@@ -1,11 +1,11 @@
 # Description: x window sniper
 # URL: http://xorg.freedesktop.org
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: libXmu
+# Depends on: libXaw
 
 name=xmessage
 version=1.0.7
-release=1
+release=2
 source=(https://www.x.org/releases/individual/app/xmessage-$version.tar.xz)
 
 pkg_build() {
