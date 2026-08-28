@@ -4,14 +4,14 @@
 # Depends on: cmake qt6
 
 name=qcoro
-version=0.12.0
+version=0.13.0
 release=1
 source=(https://github.com/danvratil/$name/archive/refs/tags/v$version.tar.gz)
 
 pkg_build() {
     cmake -B build -S . \
-        -DCMAKE_INSTALL_PREFIX=$KF6_PREFIX \
-        -DCMAKE_PREFIX_PATH=$QT6DIR \
+        -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
+        -DCMAKE_PREFIX_PATH="/opt/qt6;/opt/kf6" \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_TESTING=OFF \
         -DQCORO_BUILD_EXAMPLES=OFF \

@@ -1,5 +1,3 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: KDE audio volume and mixer application.
 # URL:          https://kde.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
@@ -8,7 +6,7 @@
 
 name=kmix
 version=26.08.0
-release=1
+release=2
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 
 build() {
@@ -17,11 +15,11 @@ build() {
 	mkdir build &&
 cd    build &&
 
-cmake -D CMAKE_INSTALL_PREFIX=$KF6_PREFIX \
-      -D CMAKE_PREFIX_PATH=$QT6DIR \
-      -D CMAKE_BUILD_TYPE=Release         \
-      -D BUILD_TESTING=OFF                \
-      -Wno-author .. &&
+cmake -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
+      -DCMAKE_PREFIX_PATH=/opt/qt6;/opt/kf6 \
+      -DCMAKE_BUILD_TYPE=Release         \
+      -DBUILD_TESTING=OFF                \
+      -Wno-author &&
 make
 	make DESTDIR=$PKG install
 }

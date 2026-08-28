@@ -1,10 +1,8 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: doxygen python3-doxypypy python3-doxyqml python3-requests extra-cmake-modules
+# Depends on: doxygen python3-doxypypy python3-doxyqml python3-requests extra-cmake-modules qt6
 
 name=kapidox
 version=6.29.0
-release=1
+release=2
 source=(https://download.kde.org/stable/frameworks/${version%.*}/$name-$version.tar.xz)
 build() {
 cd $name-$version

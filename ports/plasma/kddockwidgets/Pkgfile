@@ -5,7 +5,7 @@
 
 name=kddockwidgets
 version=2.4.0
-release=1
+release=2
 source=(https://github.com/KDAB/KDDockWidgets/releases/download/v$version/KDDockWidgets-$version.tar.gz)
 
 pkg_build() {
@@ -13,8 +13,8 @@ pkg_build() {
     cd build || return 1
 
     cmake \
-        -DCMAKE_INSTALL_PREFIX=$KF6_PREFIX \
-        -DCMAKE_PREFIX_PATH=$QT6DIR \
+        -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
+        -DCMAKE_PREFIX_PATH="/opt/qt6;/opt/kf6" \
         -DCMAKE_BUILD_TYPE=Release \
         -DKDDockWidgets_QT6=ON \
         -Wno-author \

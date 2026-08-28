@@ -1,13 +1,11 @@
-# Add your top line text here
-# Your line to add at the top here
-# Depends on: kde-frameworks-6
+# Depends on: kde-frameworks-6 qt6
 
 name=konsole
 version=26.08.0
-release=1
+release=2
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz
 konsole-adjust_scrollbar-1.patch)
-build_opt="-DCMAKE_INSTALL_PREFIX=$KF6_PREFIX
+build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6
       -DCMAKE_BUILD_TYPE=Release         
       -DBUILD_TESTING=OFF                
-      -Wno-author .."
+      -Wno-author"

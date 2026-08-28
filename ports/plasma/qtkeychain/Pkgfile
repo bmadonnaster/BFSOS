@@ -5,13 +5,13 @@
 
 name=qtkeychain
 version=0.17.0
-release=1
+release=2
 source=(https://github.com/frankosterfeld/$name/archive/refs/tags/$version.tar.gz)
 
 pkg_build() {
     cmake -B build -S . \
-        -DCMAKE_INSTALL_PREFIX=$KF6_PREFIX \
-        -DCMAKE_PREFIX_PATH=$QT6DIR \
+        -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
+        -DCMAKE_PREFIX_PATH="/opt/qt6;/opt/kf6" \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_WITH_QT6=ON \
         -DBUILD_TESTING=OFF \
