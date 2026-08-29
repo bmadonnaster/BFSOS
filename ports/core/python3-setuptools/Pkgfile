@@ -1,3 +1,5 @@
+# Depends on: python3
+
 name=python3-setuptools
 version=84.0.0
 release=1

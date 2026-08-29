@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r65 - full-bootstrap Stage-1 clean-start/preflight hardening
+# BFSOS bootstrap r66 - Stage-2 Meson dependency ordering + r65 preflight hardening
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -1330,6 +1330,99 @@ _run_full_bootstrap() {
         echo
         echo "Full Bootstrap: Stage $stage ($label) PASSED."
         echo
+    done
+
+    _reset_terminal_ui
+    _finish_full_bootstrap
+}
+
+_next_resume_full_stage() {
+    if _rootfs_archive_complete; then
+        printf '%s\n' 6
+    elif _verification_complete; then
+        printf '%s\n' 5
+    elif _base_stage3_complete; then
+        printf '%s\n' 4
+    elif _base_stage2_complete; then
+        printf '%s\n' 3
+    elif _toolchain_complete; then
+        printf '%s\n' 2
+    else
+        printf '%s\n' 1
+    fi
+}
+
+_run_resume_full_bootstrap() {
+    local start=0 stage=0 status=0 label="" answer=""
+
+    if [ "$(id -u)" -eq 0 ]; then
+        echo "ERROR: Resume Full Bootstrap must be started as a regular user; root stages are elevated internally." >&2
+        return 1
+    fi
+
+    if ! command -v sudo >/dev/null 2>&1; then
+        echo "ERROR: Resume Full Bootstrap requires sudo for root stages." >&2
+        return 1
+    fi
+    if ! sudo -v; then
+        echo "ERROR: sudo authentication failed; resume was not started." >&2
+        return 1
+    fi
+
+    start="$(_next_resume_full_stage)"
+    if [ "$start" -eq 1 ]; then
+        echo "ERROR: No completed Stage-1 toolchain archive was found. Use Full Bootstrap for a clean 1 -> 5 build." >&2
+        return 1
+    fi
+    if [ "$start" -gt 5 ]; then
+        echo "Full Bootstrap is already complete; a base archive exists."
+        _finish_full_bootstrap
+        return $?
+    fi
+
+    if [ "${BFS_FULL_BOOTSTRAP_ASSUME_YES:-no}" != yes ]; then
+        if command -v dialog >/dev/null 2>&1 && [ -r /dev/tty ] && [ -w /dev/tty ]; then
+            if ! dialog --clear \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Resume Full Bootstrap" \
+                --yes-label "Resume" --no-label "Cancel" --defaultno \
+                --yesno "Resume the existing build at Stage $start and continue automatically through Stage 5?\n\nExisting successful work will be preserved. The workflow stops on the first failure." \
+                14 78 </dev/tty >/dev/tty 2>&1; then
+                return 0
+            fi
+        else
+            printf 'Resume existing build at Stage %s and continue through Stage 5? [y/N]: ' "$start"
+            read -r answer </dev/tty 2>/dev/null || read -r answer || true
+            case "$answer" in y|Y|yes|YES|Yes) ;; *) return 0 ;; esac
+        fi
+    fi
+
+    for ((stage=start; stage<=5; stage++)); do
+        case "$stage" in
+            2) label="Base system" ;;
+            3) label="Final-toolchain rebuild" ;;
+            4) label="Base verification" ;;
+            5) label="Base archive compression" ;;
+        esac
+
+        STAGE_OPERATION_STARTED_EPOCH="$(date +%s)"
+        LAST_FAILED_LOG_FILE=""
+        _show_menu_progress "Resume Full Bootstrap - Stage $stage of 5" \
+            "Running Stage $stage: $label\n\nExisting successful work is being preserved."
+        _reset_terminal_ui
+
+        if BFS_FULL_BOOTSTRAP=yes BFS_MENU_STAGE=yes _run_root_stage "$stage"; then
+            status=0
+        else
+            status=$?
+        fi
+
+        if [ "$status" -ne 0 ]; then
+            echo "Resume Full Bootstrap stopped: Stage $stage ($label) failed with status $status." >&2
+            _show_stage_failure_dialog "$stage" "$status"
+            return "$status"
+        fi
+        echo "Resume Full Bootstrap: Stage $stage ($label) PASSED."
     done
 
     _reset_terminal_ui
@@ -3795,8 +3888,6 @@ openssl
 ca-certificates
 curl
 libtasn1
-p11-kit
-make-ca
 gettext
 elfutils
 libffi
@@ -3837,6 +3928,8 @@ xxhash
 ccache
 boost
 meson
+p11-kit
+make-ca
 kmod
 cracklib
 linux-pam
@@ -3941,6 +4034,9 @@ case "${1:-menu}" in
     full|full-bootstrap|all)
         _run_full_bootstrap
         ;;
+    resume-full|resume-bootstrap|continue-full)
+        _run_resume_full_bootstrap
+        ;;
     0|stop|kill)
         _stop_bootstrap
         ;;
@@ -3961,6 +4057,8 @@ Usage:
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 full|full-bootstrap|all
                   Run the complete build, verify, and archive workflow
+  $0 resume-full|continue-full
+                  Resume at the first incomplete stage and continue through Stage 5
   $0 0|stop|kill Stop a running bootstrap process group
 EOF
         ;;

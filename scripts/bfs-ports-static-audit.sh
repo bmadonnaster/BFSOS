@@ -115,6 +115,13 @@ fi
 if ! grep -Eq '^# Depends on:.*(^|[[:space:]])p11-kit([[:space:]]|$)' ports/core/make-ca/Pkgfile; then
     report "make-ca dependency metadata is missing p11-kit"
 fi
+if ! grep -Eq '^# Depends on:.*(^|[[:space:]])meson([[:space:]]|$)' ports/opt/p11-kit/Pkgfile; then
+    report "p11-kit dependency metadata is missing meson"
+fi
+if ! grep -Eq '^# Depends on:.*(^|[[:space:]])ninja([[:space:]]|$)' ports/core/meson/Pkgfile ||
+   ! grep -Eq '^# Depends on:.*(^|[[:space:]])python3-pip([[:space:]]|$)' ports/core/meson/Pkgfile; then
+    report "meson dependency metadata must include ninja and python3-pip"
+fi
 
 # r212 pre-bootstrap refresh guards.
 check_version() {

@@ -33,6 +33,17 @@ esac
 [ -f ports/core/traceroute/Pkgfile ] || say_fail "traceroute diagnostic port missing"
 grep -q '^# Depends on: p11-kit' ports/core/make-ca/Pkgfile || say_fail "make-ca must depend on p11-kit"
 ! grep -Eq '^# Depends on:.*(^|[[:space:]])make-ca([[:space:]]|$)' ports/opt/p11-kit/Pkgfile || say_fail "p11-kit must not depend on make-ca"
+grep -Eq '^# Depends on:.*(^|[[:space:]])meson([[:space:]]|$)' ports/opt/p11-kit/Pkgfile || say_fail "p11-kit must depend on meson"
+grep -Eq '^# Depends on:.*(^|[[:space:]])ninja([[:space:]]|$)' ports/core/meson/Pkgfile || say_fail "meson must depend on ninja"
+grep -Eq '^# Depends on:.*(^|[[:space:]])python3-pip([[:space:]]|$)' ports/core/meson/Pkgfile || say_fail "meson must depend on python3-pip"
+python3 - <<'PY_ORDER' || say_fail "Stage-2 basepkg must build meson before p11-kit and p11-kit before make-ca"
+from pathlib import Path
+s=Path('bootstrap.sh').read_text()
+start=s.index('basepkg="') + len('basepkg="')
+end=s.index('"\nsourcedir=', start)
+pkgs=[x.strip() for x in s[start:end].splitlines() if x.strip()]
+assert pkgs.index('meson') < pkgs.index('p11-kit') < pkgs.index('make-ca')
+PY_ORDER
 [ -x ports/core/make-ca/post-install ] || [ -f ports/core/make-ca/post-install ] || say_fail "make-ca post-install missing"
 grep -q 'update-pki.timer' ports/core/make-ca/post-install || say_fail "make-ca timer policy missing"
 
