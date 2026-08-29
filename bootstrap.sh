@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r64 - full 1->2->3->4->5 orchestration + existing hardening
+# BFSOS bootstrap r65 - full-bootstrap Stage-1 clean-start/preflight hardening
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -939,6 +939,7 @@ ACTIVE_LOG_STDERR_FD=8
 CURRENT_BASE_LOGS=()
 STAGE_OPERATION_STARTED_EPOCH=0
 LAST_FAILED_LOG_FILE=""
+STAGE_PREFLIGHT_LOG=""
 
 mkdir -p "$TOOLCHAIN_LOG_DIR" "$BASE_LOG_DIR"
 
@@ -963,6 +964,42 @@ _sanitize_log_name() {
 
     name="${name//[^a-zA-Z0-9_.+-]/-}"
     printf '%s\n' "$name"
+}
+
+_start_stage_preflight_log() {
+    local stage="$1" directory="" timestamp=""
+
+    case "$stage" in
+        1) directory="$TOOLCHAIN_LOG_DIR" ;;
+        2|3|4|5) directory="$BASE_LOG_DIR" ;;
+        *) directory="$LOG_DIR" ;;
+    esac
+
+    mkdir -p "$directory" || return 1
+    timestamp="$(date +%Y%m%d-%H%M%S)"
+    STAGE_PREFLIGHT_LOG="$directory/stage${stage}-preflight-${timestamp}.log"
+    : > "$STAGE_PREFLIGHT_LOG" || return 1
+
+    # Until a package-specific log replaces this pointer, a pre-package failure
+    # must show this transcript rather than the useless 'no package log' text.
+    LAST_FAILED_LOG_FILE="$STAGE_PREFLIGHT_LOG"
+
+    {
+        printf '============================================================\n'
+        printf 'BFS bootstrap Stage %s preflight\n' "$stage"
+        printf 'Started: %s\n' "$(date --iso-8601=seconds 2>/dev/null || date)"
+        printf 'User: %s (uid=%s gid=%s)\n' "$(id -un)" "$(id -u)" "$(id -g)"
+        printf 'LFS: %s\n' "${LFS:-<unset>}"
+        printf 'TOOLS: %s\n' "${TOOLS:-<unset>}"
+        printf 'Project: %s\n' "$SCRIPT_DIR"
+        printf '============================================================\n\n'
+    } >> "$STAGE_PREFLIGHT_LOG"
+}
+
+_stage_preflight_note() {
+    local message="$*"
+    [ -z "${STAGE_PREFLIGHT_LOG:-}" ] || printf '%s\n' "$message" >> "$STAGE_PREFLIGHT_LOG"
+    printf '%s\n' "$message" >&2
 }
 
 _close_active_package_log() {
@@ -1150,7 +1187,7 @@ _launch_bfs_installer() {
 
 _confirm_full_bootstrap() {
     local status=0 answer=""
-    local message="Full Bootstrap will run every build stage in order:\n\n  1. Temporary toolchain\n  2. Base system\n  3. Final-toolchain rebuild\n  4. Base verification\n  5. Base archive compression\n\nStage 3 is intentionally included in this full workflow even though it remains optional when stages are run manually.\n\nThe workflow stops immediately if any stage fails.\n\nStart Full Bootstrap now?"
+    local message="Full Bootstrap will run every build stage in order:\n\n  1. Temporary toolchain\n  2. Base system\n  3. Final-toolchain rebuild\n  4. Base verification\n  5. Base archive compression\n\nFull Bootstrap starts Stage 1 from a CLEAN build state. It removes old /tmp/lfs build trees, package/build-work contents, and previous BFS bootstrap archives. Downloaded source archives are retained.\n\nStage 3 is intentionally included even though it remains optional when stages are run manually.\n\nThe workflow stops immediately if any stage fails.\n\nStart Full Bootstrap now?"
 
     if [ "${BFS_FULL_BOOTSTRAP_ASSUME_YES:-no}" = yes ]; then
         return 0
@@ -1164,7 +1201,7 @@ _confirm_full_bootstrap() {
             --yes-label "Start" \
             --no-label "Cancel" \
             --defaultno \
-            --yesno "$message" 20 78 </dev/tty >/dev/tty 2>&1; then
+            --yesno "$message" 23 88 </dev/tty >/dev/tty 2>&1; then
             return 0
         fi
         return 1
@@ -1232,6 +1269,15 @@ _run_full_bootstrap() {
     fi
 
     _confirm_full_bootstrap || return 0
+
+    command -v sudo >/dev/null 2>&1 || {
+        echo "ERROR: Full Bootstrap requires sudo for clean-start and root stages." >&2
+        return 1
+    }
+    if ! sudo -v; then
+        echo "ERROR: sudo authentication failed; Full Bootstrap was not started." >&2
+        return 1
+    fi
 
     echo
     echo "========================================"
@@ -1401,6 +1447,9 @@ _latest_failure_log() {
 _show_stage_failure_dialog() {
     local stage="$1" status="$2" logfile="" details="" failed_url=""
     logfile="$(_latest_failure_log "$stage" 2>/dev/null || true)"
+    if [ -z "$logfile" ] && [ -n "${STAGE_PREFLIGHT_LOG:-}" ] && [ -r "$STAGE_PREFLIGHT_LOG" ]; then
+        logfile="$STAGE_PREFLIGHT_LOG"
+    fi
     if [ -n "$logfile" ] && [ -r "$logfile" ]; then
         details="$(tail -n 18 "$logfile" 2>/dev/null || true)"
         failed_url="$(grep -Eo 'https?://[^[:space:]'\"'<>]+' "$logfile" 2>/dev/null | tail -n1 || true)"
@@ -1935,8 +1984,17 @@ _clean_start() {
     echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
     echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
     echo
-    printf "Type YES to continue, or press Enter to keep existing files: "
-    read -r answer
+
+    if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
+        # The Full Bootstrap workflow is explicitly a from-scratch 1->5 run.
+        # Do not drop from Dialog into an easy-to-miss raw-terminal YES prompt:
+        # the Full Bootstrap confirmation already authorizes this cleanup.
+        answer=YES
+        echo "Full Bootstrap: clean start confirmed; removing prior build state."
+    else
+        printf "Type YES to continue, or press Enter to keep existing files: "
+        read -r answer
+    fi
 
     if [ "$answer" != "YES" ]; then
         echo
@@ -2461,13 +2519,20 @@ EOF_CPP
 
 _buildtoolchain() {
     _ensure_archive_dirs
+    _start_stage_preflight_log 1 || {
+        echo "ERROR: Could not create the Stage-1 preflight log." >&2
+        return 1
+    }
 
     if [ "$(id -u)" = 0 ]; then
-        echo "temporary toolchain needs to be built as a regular user" >&2
+        _stage_preflight_note "ERROR: Temporary toolchain needs to be built as a regular user."
         return 1
     fi
 
-    _clean_start
+    if ! _clean_start; then
+        _stage_preflight_note "ERROR: Stage-1 clean-start preparation failed."
+        return 1
+    fi
 
     export PATCH="$SCRIPT_DIR/sources/"
     export BOOTSTRAP=1
@@ -2485,7 +2550,7 @@ _buildtoolchain() {
         /tmp/lfs-tools)
             ;;
         *)
-            echo "ERROR: Refusing to replace unexpected tools path: $TOOLS" >&2
+            _stage_preflight_note "ERROR: Refusing to replace unexpected tools path: $TOOLS"
             return 1
             ;;
     esac
@@ -2494,24 +2559,43 @@ _buildtoolchain() {
         /tmp/lfs-rootfs/tmp/lfs-tools)
             ;;
         *)
-            echo "ERROR: Unexpected rooted toolchain path: ${LFS}${TOOLS}" >&2
+            _stage_preflight_note "ERROR: Unexpected rooted toolchain path: ${LFS}${TOOLS}"
             return 1
             ;;
     esac
 
-    rm -rf -- "$TOOLS"
-    mkdir -p "${LFS}${TOOLS}" "$sourcedir"
-    ln -s "${LFS}${TOOLS}" "$TOOLS"
+    # A prior root-stage or interrupted build can leave /tmp/lfs-tools owned
+    # by root.  Stage 1 itself must still build as the regular user, but removing
+    # the stale link/directory may require sudo.
+    if [ -e "$TOOLS" ] || [ -L "$TOOLS" ]; then
+        if ! rm -rf -- "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
+            _stage_preflight_note "Stage 1: regular-user removal of $TOOLS failed; retrying cleanup with sudo."
+            if ! sudo rm -rf -- "$TOOLS" >>"$STAGE_PREFLIGHT_LOG" 2>&1; then
+                _stage_preflight_note "ERROR: Could not remove stale toolchain path: $TOOLS"
+                return 1
+            fi
+        fi
+    fi
+
+    if ! mkdir -p "${LFS}${TOOLS}" "$sourcedir" 2>>"$STAGE_PREFLIGHT_LOG"; then
+        _stage_preflight_note "ERROR: Could not create Stage-1 toolchain directories."
+        _stage_preflight_note "       If $LFS survived an older root build, use Full Bootstrap clean-start or remove that stale tree with sudo."
+        return 1
+    fi
+    if ! ln -s "${LFS}${TOOLS}" "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
+        _stage_preflight_note "ERROR: Could not create $TOOLS -> ${LFS}${TOOLS}."
+        return 1
+    fi
 
     if [ ! -L "$TOOLS" ]; then
-        echo "ERROR: $TOOLS was not created as a symlink." >&2
+        _stage_preflight_note "ERROR: $TOOLS was not created as a symlink."
         return 1
     fi
 
     if [ "$(readlink -f "$TOOLS")" != "${LFS}${TOOLS}" ]; then
-        echo "ERROR: $TOOLS points to the wrong location." >&2
-        echo "  Expected: ${LFS}${TOOLS}" >&2
-        echo "  Actual:   $(readlink -f "$TOOLS" 2>/dev/null || echo '<unresolved>')" >&2
+        _stage_preflight_note "ERROR: $TOOLS points to the wrong location."
+        _stage_preflight_note "  Expected: ${LFS}${TOOLS}"
+        _stage_preflight_note "  Actual:   $(readlink -f "$TOOLS" 2>/dev/null || echo '<unresolved>')"
         return 1
     fi
 
@@ -2593,7 +2677,10 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
     echo
     echo "Resolving temporary-toolchain ports across all collections..."
     # shellcheck disable=SC2086
-    _validate_package_ports $toolchainpkg
+    if ! _validate_package_ports $toolchainpkg 2> >(tee -a "$STAGE_PREFLIGHT_LOG" >&2); then
+        _stage_preflight_note "ERROR: Temporary-toolchain port validation failed before the first package build."
+        return 1
+    fi
     echo
 
     for i in $toolchainpkg; do
