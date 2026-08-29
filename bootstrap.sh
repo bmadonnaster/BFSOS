@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r63 - CA transition hardening + integrity toggles + exact failing-log tracking
+# BFSOS bootstrap r64 - full 1->2->3->4->5 orchestration + existing hardening
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -485,6 +485,69 @@ compiler_build_settings_menu() {
     done
 }
 
+integrity_verification_settings_menu() {
+    local choice=""
+
+    while true; do
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] && [ -w /dev/tty ]; then
+            if ! choice="$(
+                dialog --stdout --clear \
+                    --backtitle "BFS Linux Bootstrap" \
+                    --title "Integrity Verification" \
+                    --ok-label "Select" \
+                    --cancel-label "Back" \
+                    --menu \
+                    "Verification is secure-by-default. Disable individual checks only for deliberate development/testing.\n\nMD5/checksums: $BFS_VERIFY_MD5\nSignatures: $BFS_VERIFY_SIGNATURE\nFootprints: $BFS_VERIFY_FOOTPRINT" \
+                    19 88 7 \
+                    md5 "Verify source MD5/checksums" \
+                    signature "Verify source signatures" \
+                    footprint "Verify package footprints" \
+                    defaults "Restore secure defaults (all enabled)" \
+                    </dev/tty 2>/dev/tty
+            )"; then
+                return 0
+            fi
+
+            case "$choice" in
+                md5) case "$BFS_VERIFY_MD5" in yes) BFS_VERIFY_MD5=no ;; *) BFS_VERIFY_MD5=yes ;; esac ;;
+                signature) case "$BFS_VERIFY_SIGNATURE" in yes) BFS_VERIFY_SIGNATURE=no ;; *) BFS_VERIFY_SIGNATURE=yes ;; esac ;;
+                footprint) case "$BFS_VERIFY_FOOTPRINT" in yes) BFS_VERIFY_FOOTPRINT=no ;; *) BFS_VERIFY_FOOTPRINT=yes ;; esac ;;
+                defaults)
+                    BFS_VERIFY_MD5=yes
+                    BFS_VERIFY_SIGNATURE=yes
+                    BFS_VERIFY_FOOTPRINT=yes
+                    ;;
+                *) continue ;;
+            esac
+        else
+            printf '\nIntegrity Verification\n======================\n'
+            printf '1) Verify MD5/checksums : %s\n' "$BFS_VERIFY_MD5"
+            printf '2) Verify signatures   : %s\n' "$BFS_VERIFY_SIGNATURE"
+            printf '3) Verify footprints   : %s\n' "$BFS_VERIFY_FOOTPRINT"
+            printf '4) Restore secure defaults\n'
+            printf '5) Back\n'
+            printf 'Choose [1-5]: '
+            read -r choice </dev/tty 2>/dev/null || read -r choice
+            case "$choice" in
+                1) case "$BFS_VERIFY_MD5" in yes) BFS_VERIFY_MD5=no ;; *) BFS_VERIFY_MD5=yes ;; esac ;;
+                2) case "$BFS_VERIFY_SIGNATURE" in yes) BFS_VERIFY_SIGNATURE=no ;; *) BFS_VERIFY_SIGNATURE=yes ;; esac ;;
+                3) case "$BFS_VERIFY_FOOTPRINT" in yes) BFS_VERIFY_FOOTPRINT=no ;; *) BFS_VERIFY_FOOTPRINT=yes ;; esac ;;
+                4)
+                    BFS_VERIFY_MD5=yes
+                    BFS_VERIFY_SIGNATURE=yes
+                    BFS_VERIFY_FOOTPRINT=yes
+                    ;;
+                5|"") return 0 ;;
+                *) continue ;;
+            esac
+        fi
+
+        BFS_BUILD_SETTINGS_CHANGED=yes
+        save_bootstrap_settings
+    done
+}
+
 write_dialog_theme_classic() {
     cat > "$DIALOGRC_FILE" <<'EOF_DIALOGRC'
 use_colors = ON
@@ -819,9 +882,10 @@ bootstrap_settings_menu() {
                     --cancel-label "Back" \
                     --menu \
                     "Choose a settings category." \
-                    15 72 6 \
+                    17 76 7 \
                     1 "Interface theme" \
                     2 "Compiler / build settings" \
+                    3 "Integrity verification" \
                     </dev/tty 2>/dev/tty
             )"
             status=$?
@@ -832,15 +896,17 @@ bootstrap_settings_menu() {
             echo "Bootstrap Settings"
             echo "  1) Interface theme"
             echo "  2) Compiler / build settings"
-            echo "  3) Back"
-            printf "Choose [1-3]: "
+            echo "  3) Integrity verification"
+            echo "  4) Back"
+            printf "Choose [1-4]: "
             read -r choice </dev/tty 2>/dev/null || read -r choice
         fi
 
         case "$choice" in
             1) bootstrap_theme_settings_menu ;;
             2) compiler_build_settings_menu ;;
-            3|"") return 0 ;;
+            3) integrity_verification_settings_menu ;;
+            4|"") return 0 ;;
             *) continue ;;
         esac
     done
@@ -1082,6 +1148,148 @@ _launch_bfs_installer() {
     return "$status"
 }
 
+_confirm_full_bootstrap() {
+    local status=0 answer=""
+    local message="Full Bootstrap will run every build stage in order:\n\n  1. Temporary toolchain\n  2. Base system\n  3. Final-toolchain rebuild\n  4. Base verification\n  5. Base archive compression\n\nStage 3 is intentionally included in this full workflow even though it remains optional when stages are run manually.\n\nThe workflow stops immediately if any stage fails.\n\nStart Full Bootstrap now?"
+
+    if [ "${BFS_FULL_BOOTSTRAP_ASSUME_YES:-no}" = yes ]; then
+        return 0
+    fi
+
+    if command -v dialog >/dev/null 2>&1 &&
+       [ -r /dev/tty ] && [ -w /dev/tty ]; then
+        if dialog --clear \
+            --backtitle "BFS Linux Bootstrap" \
+            --title "Run Full Bootstrap" \
+            --yes-label "Start" \
+            --no-label "Cancel" \
+            --defaultno \
+            --yesno "$message" 20 78 </dev/tty >/dev/tty 2>&1; then
+            return 0
+        fi
+        return 1
+    fi
+
+    printf '\n%s\n' "Full Bootstrap will run Stages 1 -> 2 -> 3 -> 4 -> 5 and stop on the first failure."
+    printf 'Start Full Bootstrap? [y/N]: '
+    read -r answer </dev/tty 2>/dev/null || read -r answer || true
+    case "$answer" in
+        y|Y|yes|YES|Yes) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+_finish_full_bootstrap() {
+    local archive="" status=0 answer=""
+    archive="$(_latest_rootfs_archive 2>/dev/null || true)"
+
+    if _installer_available; then
+        if command -v dialog >/dev/null 2>&1 &&
+           [ -r /dev/tty ] && [ -w /dev/tty ]; then
+            if dialog --clear \
+                --backtitle "BFS Linux Bootstrap" \
+                --title "Full Bootstrap Complete" \
+                --yes-label "Launch installer" \
+                --no-label "Done" \
+                --defaultno \
+                --yesno \
+                "Stages 1 through 5 completed successfully.\n\nBase archive:\n${archive:-<unknown>}\n\nLaunch the BFSOS installer now?" \
+                17 82 </dev/tty >/dev/tty 2>&1; then
+                status=0
+            else
+                status=$?
+            fi
+            _reset_terminal_ui
+            if [ "$status" -eq 0 ]; then
+                _launch_bfs_installer
+                return $?
+            fi
+            return 0
+        fi
+
+        printf '\nFull Bootstrap completed successfully.\n'
+        printf 'Base archive: %s\n' "${archive:-<unknown>}"
+        printf 'Launch the BFSOS installer now? [y/N]: '
+        read -r answer </dev/tty 2>/dev/null || read -r answer || true
+        case "$answer" in
+            y|Y|yes|YES|Yes) _launch_bfs_installer ;;
+            *) return 0 ;;
+        esac
+        return $?
+    fi
+
+    _show_menu_success "Full Bootstrap Complete" \
+        "Stages 1 through 5 completed successfully.\n\nBase archive:\n${archive:-<unknown>}\n\nNo usable installer is currently available, so Bootstrap will return to the main menu."
+    return 0
+}
+
+_run_full_bootstrap() {
+    local stage=0 status=0 label=""
+
+    if [ "$(id -u)" -eq 0 ]; then
+        echo "ERROR: Full Bootstrap must be started as a regular user because Stage 1 must not run as root." >&2
+        return 1
+    fi
+
+    _confirm_full_bootstrap || return 0
+
+    echo
+    echo "========================================"
+    echo " BFS FULL BOOTSTRAP: STAGES 1 -> 5"
+    echo "========================================"
+    echo "Stage 3 final-toolchain rebuild is included."
+    echo "Any failure stops the workflow immediately."
+    echo
+
+    for stage in 1 2 3 4 5; do
+        case "$stage" in
+            1) label="Temporary toolchain" ;;
+            2) label="Base system" ;;
+            3) label="Final-toolchain rebuild" ;;
+            4) label="Base verification" ;;
+            5) label="Base archive compression" ;;
+        esac
+
+        STAGE_OPERATION_STARTED_EPOCH="$(date +%s)"
+        LAST_FAILED_LOG_FILE=""
+
+        _show_menu_progress "Full Bootstrap - Stage $stage of 5" \
+            "Running Stage $stage: $label\n\nThe workflow will continue automatically after this stage passes."
+        _reset_terminal_ui
+
+        case "$stage" in
+            1)
+                if BFS_FULL_BOOTSTRAP=yes BFS_MENU_STAGE=yes _buildtoolchain; then
+                    status=0
+                else
+                    status=$?
+                fi
+                ;;
+            2|3|4|5)
+                if BFS_FULL_BOOTSTRAP=yes BFS_MENU_STAGE=yes _run_root_stage "$stage"; then
+                    status=0
+                else
+                    status=$?
+                fi
+                ;;
+        esac
+
+        if [ "$status" -ne 0 ]; then
+            echo
+            echo "Full Bootstrap stopped: Stage $stage ($label) failed with status $status." >&2
+            _show_stage_failure_dialog "$stage" "$status"
+            return "$status"
+        fi
+
+        echo
+        echo "Full Bootstrap: Stage $stage ($label) PASSED."
+        echo
+    done
+
+    _reset_terminal_ui
+    _finish_full_bootstrap
+}
+
 _stage_complete_text() {
     if "$@"; then
         printf '%sCOMPLETE%s' "$COLOR_GREEN" "$COLOR_RESET"
@@ -1255,7 +1463,9 @@ _run_root_stage() {
     local stage="$1"
 
     if [ "$(id -u)" -eq 0 ]; then
-        BFS_SKIP_TIME_SYNC=yes "$0" "$stage"
+        BFS_SKIP_TIME_SYNC=yes \
+            BFS_FULL_BOOTSTRAP="${BFS_FULL_BOOTSTRAP:-no}" \
+            "$0" "$stage"
         return $?
     fi
 
@@ -1271,7 +1481,11 @@ _run_root_stage() {
         echo
     fi
 
-    sudo -- env BFS_SKIP_TIME_SYNC=yes BFS_MENU_STAGE="${BFS_MENU_STAGE:-no}" "$0" "$stage"
+    sudo -- env \
+        BFS_SKIP_TIME_SYNC=yes \
+        BFS_MENU_STAGE="${BFS_MENU_STAGE:-no}" \
+        BFS_FULL_BOOTSTRAP="${BFS_FULL_BOOTSTRAP:-no}" \
+        "$0" "$stage"
 }
 
 _enter_bfs_chroot() {
@@ -1380,8 +1594,10 @@ _show_bootstrap_menu() {
         'Chroot into BFS rootfs (sudo/root)' "$(_chroot_available && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sNOT AVAILABLE%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s9)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
-    printf '  %s10)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings' 
-    printf '  %s11)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
+    printf '  %s10)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Run Full Bootstrap (Stages 1 -> 2 -> 3 -> 4 -> 5)' "$(printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET")"
+    printf '  %s11)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings'
+    printf '  %s12)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
 
@@ -1422,8 +1638,8 @@ _select_bootstrap_menu_choice() {
                 --extra-button --extra-label "Settings" \
                 --cancel-label "Quit" \
                 --menu \
-                "Required normal path: 1 -> 2 -> 4 -> 5. Stage 3 is optional.\n\nA valid existing base archive satisfies installer readiness automatically." \
-                26 100 14 \
+                "Manual path: 1 -> 2 -> 4 -> 5; Stage 3 is optional.\nFull Bootstrap runs 1 -> 2 -> 3 -> 4 -> 5 automatically and stops on the first failure.\n\nA valid existing base archive satisfies installer readiness automatically." \
+                28 104 15 \
                 1 "$(_dialog_menu_description 'Build temporary toolchain (required)' "$(_dialog_required_status _toolchain_complete)")" \
                 2 "$(_dialog_menu_description 'Build base system with temporary toolchain (required)' "$(_dialog_required_status _base_stage2_complete)")" \
                 3 "$(_dialog_menu_description 'Rebuild base system with final toolchain (optional)' "$(_dialog_stage3_status)")" \
@@ -1433,7 +1649,8 @@ _select_bootstrap_menu_choice() {
                 7 "$(_dialog_menu_description 'Restore newest temporary toolchain archive' "$(_dialog_action_status _toolchain_complete)")" \
                 8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
-                11 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
+                10 "$(_dialog_menu_description 'Run Full Bootstrap (Stages 1 -> 2 -> 3 -> 4 -> 5)' '\Zb\Z3AVAILABLE\Zn')" \
+                12 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
                 --stdout </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
@@ -1441,15 +1658,15 @@ _select_bootstrap_menu_choice() {
         clear </dev/tty >/dev/tty 2>/dev/null || true
         case "$dialog_status" in
             0) printf '%s\n' "$choice" ;;
-            3) printf '%s\n' 10 ;;
-            *) printf '%s\n' 11 ;;
+            3) printf '%s\n' 11 ;;
+            *) printf '%s\n' 12 ;;
         esac
         return 0
     fi
     _show_bootstrap_menu >&2
-    printf '%sChoose [1-11]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    printf '%sChoose [1-12]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
     read -r choice </dev/tty 2>/dev/null || read -r choice
-    case "$choice" in q|Q|quit|Quit|QUIT) choice=11 ;; esac
+    case "$choice" in q|Q|quit|Quit|QUIT) choice=12 ;; esac
     printf '%s\n' "$choice"
 }
 
@@ -1500,8 +1717,19 @@ _bootstrap_menu() {
                 _reset_terminal_ui
                 continue
                 ;;
-            10) bootstrap_settings_menu; continue ;;
-            11|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
+            10)
+                # Full Bootstrap owns its per-stage failure handling and final
+                # Done/Launch-installer prompt.  It deliberately includes the
+                # otherwise-optional Stage 3 final-toolchain rebuild.
+                set +e
+                BFS_MENU_STAGE=yes _run_full_bootstrap
+                status=$?
+                set -e
+                _reset_terminal_ui
+                continue
+                ;;
+            11) bootstrap_settings_menu; continue ;;
+            12|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
             *) echo "Invalid selection."; sleep 1; continue ;;
         esac
         # Stages 2, 3, and 5 already report their successful result.  Return
@@ -2197,7 +2425,9 @@ EOF_CPP
 
     if [ "$failed" -eq 0 ]; then
         summary="64-bit C: PASS\n32-bit C: PASS\n64-bit C++: PASS\n32-bit C++: PASS\nStartup files: PASS\nlib32 link: PASS\n\nTemporary toolchain verification PASSED."
-        if command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+        if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
+            printf '\n%s\n' "Temporary toolchain verification PASSED."
+        elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
             dialog \
                 --clear \
                 --backtitle "BFS Linux Bootstrap" \
@@ -2211,7 +2441,10 @@ EOF_CPP
     fi
 
     summary="One or more 32/64-bit toolchain checks FAILED.\n\nSee:\n$log_file\n\nStep 1 will not be archived or marked successful."
-    if command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+    if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
+        printf '\nERROR: Temporary toolchain verification FAILED.\n' >&2
+        printf 'See: %s\n' "$log_file" >&2
+    elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
         dialog \
             --clear \
             --backtitle "BFS Linux Bootstrap" \
@@ -2748,7 +2981,12 @@ _compressrootfs() {
         chown "$owner_uid:$owner_gid" "$rootfs_archive" 2>/dev/null || true
     fi
 
-    _show_menu_success "Base archive complete"         "Base rootfs compressed successfully.\n\nArchive created and verified:\n$rootfs_archive"
+    if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
+        printf '\nBase rootfs compressed successfully.\nArchive created and verified:\n  %s\n' "$rootfs_archive"
+    else
+        _show_menu_success "Base archive complete" \
+            "Base rootfs compressed successfully.\n\nArchive created and verified:\n$rootfs_archive"
+    fi
 }
 
 _buildbase() {
@@ -3613,6 +3851,9 @@ case "${1:-menu}" in
     9|install|installer)
         _launch_bfs_installer
         ;;
+    full|full-bootstrap|all)
+        _run_full_bootstrap
+        ;;
     0|stop|kill)
         _stop_bootstrap
         ;;
@@ -3631,6 +3872,8 @@ Usage:
   $0 settings|build-settings
   $0 8|chroot    Enter the BFS chroot
   $0 9|installer Launch the newest BFSOS installer from scripts/
+  $0 full|full-bootstrap|all
+                  Run the complete build, verify, and archive workflow
   $0 0|stop|kill Stop a running bootstrap process group
 EOF
         ;;

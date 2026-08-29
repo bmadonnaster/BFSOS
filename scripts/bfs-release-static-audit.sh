@@ -10,6 +10,18 @@ bash scripts/bfs-ports-static-audit.sh || fail=1
 bash -n bootstrap.sh || say_fail "bootstrap.sh syntax"
 bash -n scripts/install-bfs-menu-current.sh || say_fail "current installer syntax"
 
+# Full Bootstrap must remain a real one-action orchestration of Stages 1-5.
+grep -q '^_run_full_bootstrap()' bootstrap.sh || say_fail "Full Bootstrap orchestration function missing"
+grep -q 'for stage in 1 2 3 4 5' bootstrap.sh || say_fail "Full Bootstrap does not run Stages 1 through 5 in order"
+grep -Fq 'Run Full Bootstrap (Stages 1 -> 2 -> 3 -> 4 -> 5)' bootstrap.sh || say_fail "Full Bootstrap menu entry missing"
+grep -q 'full|full-bootstrap|all)' bootstrap.sh || say_fail "Full Bootstrap CLI dispatch missing"
+grep -q -- '--yes-label "Launch installer"' bootstrap.sh || say_fail "Full Bootstrap final Launch installer action missing"
+grep -q -- '--no-label "Done"' bootstrap.sh || say_fail "Full Bootstrap final Done action missing"
+grep -q 'BFS_FULL_BOOTSTRAP="${BFS_FULL_BOOTSTRAP:-no}"' bootstrap.sh || say_fail "Full Bootstrap mode is not preserved through root-stage dispatch"
+
+grep -q '^integrity_verification_settings_menu()' bootstrap.sh || say_fail "dedicated Bootstrap integrity-verification settings menu missing"
+grep -Fq '3 "Integrity verification"' bootstrap.sh || say_fail "Integrity verification is not exposed as its own Bootstrap Settings category"
+
 # Current installer must be the newest maintained implementation.
 current_target="$(readlink scripts/install-bfs-menu-current.sh 2>/dev/null || true)"
 case "$current_target" in
