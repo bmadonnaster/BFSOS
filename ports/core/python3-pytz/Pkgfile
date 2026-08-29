@@ -8,8 +8,7 @@ version=2026.2
 release=1
 source=(https://pypi.io/packages/source/p/pytz/pytz-$version.tar.gz)
 
-build() {
-  cd pytz-$version
+pkg_build() {
 
   /usr/bin/python3 setup.py build
   /usr/bin/python3 setup.py install --root=$PKG \

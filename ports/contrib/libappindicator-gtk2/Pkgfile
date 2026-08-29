@@ -15,7 +15,7 @@ source=(http://archive.ubuntu.com/ubuntu/pool/universe/liba/libappindicator/liba
   badfunction.patch
   improved-plasma-support.patch)
 
-build() {
+pkg_build() {
   # The next 3 patches shamelessly pinched from Arch
   patch -p1 -i $SRC/0001-Glib.Timeout-fix.patch
   patch -p1 -i $SRC/0002-Fix-mono-nunit-pkgconfig-name.patch

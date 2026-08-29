@@ -4,7 +4,7 @@
 # Depends on: libidn2 publicsuffix-list
 # Optional:  gtk-doc valgrind
 name=libpsl
-version=0.21.5
+version=0.23.3
 release=1
 source=(https://github.com/rockdaboot/$name/releases/download/$version/$name-$version.tar.lz)
 

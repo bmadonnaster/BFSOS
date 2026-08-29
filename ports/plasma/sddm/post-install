@@ -1,4 +1,6 @@
 #!/bin/sh
+set -eu
+
 install -v -dm755 -o sddm -g sddm /var/lib/sddm
 /usr/bin/sddm --example-config > /etc/sddm.conf
 sed -i 's/-nolisten tcp//' /etc/sddm.conf
@@ -54,3 +56,9 @@ session  required       pam_unix.so
 
 # End /etc/pam.d/sddm-greeter
 EOF
+
+# BFSOS Plasma policy: SDDM is the default display manager when installed.
+# systemctl enable works offline and does not require systemd to be PID 1.
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl enable sddm.service
+fi

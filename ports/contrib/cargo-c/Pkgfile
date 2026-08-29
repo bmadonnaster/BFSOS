@@ -1,7 +1,7 @@
 # Description: Cargo subcommand to build and install C-ABI compatible dynamic and static libraries
 # URL: https://github.com/lu-zero/cargo-c/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: rustc libssh2 sqlite openssl pkg-config
+# Depends on: rustc libssh2 sqlite openssl pkgconf
 
 name=cargo-c
 version=0.10.24

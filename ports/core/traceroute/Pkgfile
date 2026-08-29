@@ -1,11 +1,17 @@
 # Description: Network route tracing diagnostic utility
-# URL: https://traceroute.sourceforge.net/
+# URL: https://sourceforge.net/projects/traceroute/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=traceroute
 version=2.1.6
 release=1
-source=(https://downloads.sourceforge.net/project/traceroute/traceroute/traceroute-$version/traceroute-$version.tar.gz)
+source=(https://downloads.sourceforge.net/traceroute/$name-$version.tar.gz)
 
-# The pkgutils extension auto-detects the GNU configure build and installs
-# with DESTDIR into the package staging root.
+pkg_build() {
+    make -j "${JOBS:-1}" || return 1
+    make DESTDIR="$PKG" prefix=/usr install || return 1
+
+    ln -sf traceroute "$PKG/usr/bin/traceroute6" || return 1
+    ln -sf traceroute.8 "$PKG/usr/share/man/man8/traceroute6.8" || return 1
+    rm -f "$PKG/usr/share/man/man1/traceroute.1"
+}

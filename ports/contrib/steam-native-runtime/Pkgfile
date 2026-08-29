@@ -11,7 +11,7 @@ version=1.0.0.75
 release=2
 source=(steam-native.sh)
 
-build() {
+pkg_build() {
   cp /usr/share/applications/steam.desktop steam-native.desktop
   sed '/^Icon=.*/i StartupWMClass=Steam' -i steam-native.desktop
   sed -r 's|(Name=Steam) \(Runtime\)|\1 (Native)|' -i steam-native.desktop

@@ -1,13 +1,29 @@
+# Description: X11 screen saver collection and locker
+# URL: https://www.jwz.org/xscreensaver/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 xorg-apps glu linux-pam ffmpeg kerberos
 
 name=xscreensaver
-version=6.09
-release=2
+version=6.15
+release=3
 source=(https://www.jwz.org/${name}/${name}-${version}.tar.gz)
+
 pkg_build() {
-./configure --prefix=/usr &&
-make
-make install_prefix=$PKG install
-	chmod 755 $PKG/usr/bin/xscreensaver
-	install -d $PKG/usr/share/backgrounds
+    ./configure --prefix=/usr --with-systemd || return 1
+    make -j"${JOBS:-1}" || return 1
+    make install_prefix="$PKG" install || return 1
+
+    chmod 755 "$PKG/usr/bin/xscreensaver" || return 1
+    install -d "$PKG/usr/share/backgrounds" || return 1
+
+    # `bsod` intentionally simulates crashes/security incidents, including a
+    # ransomware screen. Keep it available but exclude it from the default
+    # random-hack list so a stock BFSOS install cannot mislead the user.
+    for cfg in \
+        "$PKG/etc/X11/app-defaults/XScreenSaver" \
+        "$PKG/usr/share/X11/app-defaults/XScreenSaver"
+    do
+        [ -f "$cfg" ] || continue
+        sed -E -i '/^[[:space:]]*-[[:space:]]+bsod([[:space:]]|$)/! s/^([[:space:]]*)bsod([[:space:]])/\1- bsod\2/' "$cfg" || return 1
+    done
 }

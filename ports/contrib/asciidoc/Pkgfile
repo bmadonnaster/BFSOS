@@ -3,15 +3,14 @@
 # Description: Text based document generation.
 # URL: https://asciidoc.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: docbook-xsl python3-build python3-installer
+# Depends on: docbook-xsl-nons python3-build python3-installer
 
 name=asciidoc
 version=10.2.0
 release=1
 source=(https://github.com/$name-py/$name-py/archive/$version/$name-py-$version.tar.gz)
 
-build() {
-  cd $name-py-$version
+pkg_build() {
   PYTHON='/usr/bin/python3'
   autoconf
   ./configure --prefix=/usr --sysconfdir=/usr/etc

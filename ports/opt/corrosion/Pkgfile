@@ -1,7 +1,7 @@
 # Description: CMake integration for Rust projects
 # URL: https://github.com/corrosion-rs/corrosion
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cmake rust
+# Depends on: cmake rustc
 
 name=corrosion
 version=0.6.1

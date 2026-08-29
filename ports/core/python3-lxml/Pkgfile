@@ -5,12 +5,11 @@
 
 name=python3-lxml
 _name=${name#*-}
-version=6.0.3
+version=6.1.1
 release=2
 source=(https://github.com/$_name/$_name/releases/download/$_name-$version/$_name-$version.tar.gz)
 
-build() {
-	cd $_name-$version
+pkg_build() {
 
 	/usr/bin/python3 setup.py build
 

@@ -1,16 +1,44 @@
 name=prt-get
 version=5.19.9
-release=3
+release=4
 source=(http://crux.nu/files/prt-get-$version.tar.xz
 	prt-get.conf
 	prt-get.aliases
 	bfsos.git)
 
 post_build() {
-	install -m 644 $SRC/prt-get.{conf,aliases} $PKG/etc/
-	install -d $PKG/var/lib/pkg
-	install -d $PKG/etc/ports
-	install -m 644 $SRC/bfsos.git $PKG/etc/ports/bfsos.git
-	install -d "$PKG/var/log/pkgbuild/"
-	touch $PKG/var/lib/pkg/prt-get.locker
+    install -m 644 "$SRC"/prt-get.{conf,aliases} "$PKG/etc/" || return 1
+    install -d "$PKG/var/lib/pkg" "$PKG/etc/ports" "$PKG/var/log/pkgbuild" || return 1
+    install -m 644 "$SRC/bfsos.git" "$PKG/etc/ports/bfsos.git" || return 1
+    touch "$PKG/var/lib/pkg/prt-get.locker" || return 1
+
+    # sysup can contain a pkgutils update plus packages whose recipes require
+    # the new pkgmk extension.  Always let the real prt-get bring pkgutils
+    # current first, then calculate/execute the remaining sysup transaction.
+    install -d "$PKG/usr/libexec" || return 1
+    mv "$PKG/usr/bin/prt-get" "$PKG/usr/libexec/prt-get.real" || return 1
+    cat > "$PKG/usr/bin/prt-get" <<'EOF_WRAPPER'
+#!/bin/sh
+set -eu
+
+real=/usr/libexec/prt-get.real
+want_sysup=no
+test_mode=no
+for arg in "$@"; do
+    [ "$arg" = sysup ] && want_sysup=yes
+    case "$arg" in --test|-t) test_mode=yes ;; esac
+done
+
+if [ "$want_sysup" = yes ] && [ "$test_mode" = no ]; then
+    echo "BFSOS sysup preflight: updating package-management tooling first"
+    "$real" update pkgutils || {
+        status=$?
+        echo "BFSOS sysup preflight: pkgutils update failed (status $status); sysup aborted" >&2
+        exit "$status"
+    }
+fi
+
+exec "$real" "$@"
+EOF_WRAPPER
+    chmod 0755 "$PKG/usr/bin/prt-get" || return 1
 }

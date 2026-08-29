@@ -8,8 +8,7 @@ version=9.2.0954
 release=1
 source=(https://github.com/vim/vim/archive/v$version.tar.gz)
 
-build() {
-        cd vim-$version
+pkg_build() {
 
         echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h
 

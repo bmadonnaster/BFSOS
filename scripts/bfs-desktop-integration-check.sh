@@ -87,4 +87,76 @@ else
     warn "speaker-test missing (install/check alsa-utils)"
 fi
 
+echo
+echo "== Display manager / screen locker =="
+if command -v sddm >/dev/null 2>&1; then
+    ok "sddm executable present"
+else
+    bad "sddm executable missing"
+fi
+if systemctl is-enabled sddm.service >/dev/null 2>&1; then
+    ok "sddm.service enabled"
+else
+    warn "sddm.service not enabled"
+fi
+
+locker=""
+for candidate in /opt/kf6/libexec/kscreenlocker_greet /opt/kf6/bin/kscreenlocker_greet /usr/libexec/kscreenlocker_greet /usr/bin/kscreenlocker_greet; do
+    if [ -x "$candidate" ]; then locker="$candidate"; break; fi
+done
+if [ -n "$locker" ]; then
+    ok "kscreenlocker_greet present: $locker"
+    if ldd "$locker" 2>/dev/null | grep -q 'not found'; then
+        bad "kscreenlocker_greet has unresolved shared libraries"
+    else
+        ok "kscreenlocker_greet shared libraries resolve"
+    fi
+else
+    bad "kscreenlocker_greet executable missing"
+fi
+
+for pamfile in /etc/pam.d/kde /etc/pam.d/kscreensaver; do
+    if [ -e "$pamfile" ]; then
+        ok "$pamfile present"
+    else
+        warn "$pamfile not present (verify package/session policy)"
+    fi
+done
+
+echo
+echo "== Phonon / VLC Qt6 =="
+phonon_vlc="/opt/kf6/lib/plugins/phonon4qt6_backend/phonon_vlc_qt6.so"
+if [ -f "$phonon_vlc" ]; then
+    ok "Qt6 Phonon VLC backend present"
+    if ldd "$phonon_vlc" 2>/dev/null | grep -q 'not found'; then
+        bad "Qt6 Phonon VLC backend has unresolved libraries"
+    else
+        ok "Qt6 Phonon VLC backend libraries resolve"
+    fi
+    if ldd "$phonon_vlc" 2>/dev/null | grep -q 'libQt6Core'; then
+        ok "Phonon VLC backend links to Qt6"
+    else
+        bad "Phonon VLC backend does not link to Qt6"
+    fi
+else
+    bad "Qt6 Phonon VLC backend missing"
+fi
+
+vlc_qt="/usr/lib/vlc/plugins/gui/libqt_plugin.so"
+if [ -f "$vlc_qt" ]; then
+    if ldd "$vlc_qt" 2>/dev/null | grep -q 'libQt6Core'; then
+        ok "VLC GUI plugin links to Qt6"
+    else
+        bad "VLC GUI plugin is not linked to Qt6"
+    fi
+else
+    bad "VLC Qt GUI plugin missing"
+fi
+
+if systemctl is-active rtkit-daemon.service >/dev/null 2>&1; then
+    ok "rtkit-daemon.service active"
+else
+    warn "rtkit-daemon.service not active; PipeWire may run without realtime priority"
+fi
+
 exit "$fail"

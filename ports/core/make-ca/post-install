@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+# make-ca requires the p11-kit trust module at runtime.  On first install,
+# fetch Mozilla certdata and generate every system trust representation.  On
+# subsequent installs/upgrades, regenerate from the already downloaded data.
+if [ ! -x /usr/bin/trust ]; then
+    echo "make-ca: p11-kit trust utility is required before CA initialization" >&2
+    exit 1
+fi
+
+if [ -s /etc/pki/tls/certs/ca-bundle.crt ] &&
+   find /etc/pki/anchors -mindepth 1 -type f -print -quit 2>/dev/null | grep -q .; then
+    /usr/sbin/make-ca -r
+else
+    /usr/sbin/make-ca -g
+fi
+
+test -s /etc/pki/tls/certs/ca-bundle.crt || {
+    echo "make-ca: canonical CA bundle is empty after trust-store generation" >&2
+    exit 1
+}
+
+if ! /usr/bin/trust list 2>/dev/null | grep -q 'type: certificate'; then
+    echo "make-ca: p11-kit trust view contains no certificates after generation" >&2
+    exit 1
+fi
+
+if command -v systemctl >/dev/null 2>&1 &&
+   [ -f /usr/lib/systemd/system/update-pki.timer ]; then
+    systemctl enable update-pki.timer
+fi

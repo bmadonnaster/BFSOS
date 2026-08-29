@@ -9,8 +9,7 @@ release=1
 source=(https://downloads.sourceforge.net/freetype/freetype-$version.tar.xz
 https://downloads.sourceforge.net/freetype/freetype-doc-$version.tar.xz)
 
-build() {
-	cd freetype-$version
+pkg_build() {
 
 	sed -ri "s:.*(AUX_MODULES.*valid):\1:" modules.cfg &&
 

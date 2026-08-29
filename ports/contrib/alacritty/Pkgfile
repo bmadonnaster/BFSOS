@@ -3,7 +3,7 @@
 # Description: A cross-platform, GPU-accelerated terminal emulator
 # URL: https://github.com/alacritty/alacritty
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: fontconfig libxkbcommon rustx util-linux libxcb
+# Depends on: fontconfig libxkbcommon rustc util-linux libxcb
 # Optional: bash-completion scdoc zsh
 
 name=alacritty
@@ -12,7 +12,7 @@ release=1
 source=(https://github.com/alacritty/alacritty/archive/refs/tags/v$version.tar.gz)
 renames=($name-$version.tar.gz)
 
-build() {
+pkg_build() {
   prt-get isinst sccache && export RUSTC_WRAPPER=/usr/bin/sccache
   mkdir $PKGMK_SOURCE_DIR/rust || true
   export CARGO_HOME=$PKGMK_SOURCE_DIR/rust

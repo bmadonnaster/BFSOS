@@ -17,8 +17,7 @@ unpack_source() {
                    esac
            done
    }
-build() {
-  cd wheel-$version
+pkg_build() {
 
   /usr/bin/python3 -m build --wheel --skip-dependency-check --no-isolation
   /usr/bin/python3 -m installer --destdir=$PKG dist/*.whl

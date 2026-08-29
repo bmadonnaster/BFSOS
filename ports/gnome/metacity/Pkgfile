@@ -3,7 +3,7 @@
 # Description: 
 # URL: https://gnome.org         
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  at-spi2-core cairo dconf gdk-pixbuf glib glibc gsettings-desktop-schemas gtk3 libcanberra libgtop libICE libSM libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXcursor libXinerama libXpresent libXrandr libXrender libXres pango startup-notification zenity
+# Depends on: at-spi2-core cairo dconf gdk-pixbuf glib glibc gsettings-desktop-schemas gtk3 libcanberra libgtop libICE libSM libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXinerama libXpresent libXrandr libXrender libXres pango startup-notification zenity
 
 name=metacity
 version=3.52.0

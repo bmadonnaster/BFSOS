@@ -4,12 +4,11 @@
 # Depends on: python3-setuptools
 
 name=python3-docutils
-version=0.21.2
+version=0.23
 release=1
 source=(https://downloads.sourceforge.net/docutils/docutils-$version.tar.gz)
 
-build() {
-  cd docutils-$version
+pkg_build() {
 
   /usr/bin/python3 -m build --wheel --skip-dependency-check --no-isolation
   /usr/bin/python3 -m installer --compile-bytecode 2 --destdir=$PKG dist/*.whl

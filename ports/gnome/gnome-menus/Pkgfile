@@ -1,6 +1,6 @@
 # Add your top line text here
 # Your line to add at the top here
-# Depends on: glib gobjct-introspection
+# Depends on: glib gobject-introspection
 
 name=gnome-menus
 version=3.36.0

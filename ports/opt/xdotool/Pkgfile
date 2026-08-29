@@ -1,7 +1,7 @@
 # Depends on:
 
 name=xdotool
-version=3.20211022.1
+version=4.20260303.1
 release=1
 source=(https://github.com/jordansissel/${name}/releases/download/v${version}/${name}-${version}.tar.gz)
 pkg_build() {

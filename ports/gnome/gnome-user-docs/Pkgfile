@@ -1,6 +1,6 @@
 # Add your top line text here
 # Your line to add at the top here
-# Depends on: itstool lihxml2
+# Depends on: itstool libxml2
 
 name=gnome-user-docs
 version=47.2

@@ -3,7 +3,7 @@
 # URL: http://gcc.gnu.org/fortran
 # Description: Fortran (f95) add-on for GNU GCC compiler.
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: libmpfr
+# Depends on: mpfr
 
 name=gcc-fortran
 version=14.2.0
@@ -11,7 +11,7 @@ release=1
 source=(ftp://gcc.gnu.org/pub/gcc/releases/gcc-$version/gcc-$version.tar.xz
   gcc-nocheck-fixincludes.patch gcc-4.7.3-multilib-dirs.patch)
 
-build() {
+pkg_build() {
   patch -d gcc-$version -p 1 -i $SRC/gcc-nocheck-fixincludes.patch
   patch -d gcc-$version -p 1 -i $SRC/gcc-4.7.3-multilib-dirs.patch
 

@@ -12,8 +12,7 @@ release=1
 source=(https://repo.steampowered.com/$name/pool/$name/s/$name/${name}_$version.tar.gz
   steam-runtime.sh)
 
-build() {
-  cd steam-launcher
+pkg_build() {
 
   # apply roundups for udev rules
   sed -r 's|("0666")|"0660", TAG+="uaccess"|g' -i subprojects/steam-devices/60-steam-input.rules

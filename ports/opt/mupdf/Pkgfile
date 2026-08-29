@@ -5,7 +5,7 @@
 # Optional: freeglut openjpeg2 jbig2dec gumbo-parser
 
 name=mupdf
-version=1.25.4
+version=1.26.12
 release=1
 source=(https://mupdf.com/downloads/archive/$name-$version-source.tar.gz)
 

@@ -1,6 +1,6 @@
 # Depends on:
 
 name=npth
-version=1.7
+version=1.8
 release=1
 source=(https://mirrors.dotsrc.org/gcrypt/${name}/${name}-${version}.tar.bz2)

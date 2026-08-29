@@ -4,8 +4,8 @@
 # Depends on: luit xorg-libs xorg-fonts
 
 name=xterm
-version=410
-release=3
+version=411
+release=1
 source=(https://invisible-mirror.net/archives/xterm/$name-$version.tgz)
 
 pkg_build() {

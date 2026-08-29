@@ -1,6 +1,6 @@
 # Add your top line text here
 # Your line to add at the top here
-# Depends on: glib gobject-introspection libxml2 gtk3 libsoup totem-pl-parster vala
+# Depends on: glib gobject-introspection libxml2 gtk3 libsoup totem-pl-parser vala
 
 name=grilo
 version=0.3.16

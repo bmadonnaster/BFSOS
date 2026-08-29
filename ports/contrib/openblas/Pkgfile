@@ -1,17 +1,14 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Optimized BLAS library
 # URL: https://www.openblas.net/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: gcc-fortran
 
 name=openblas
-version=0.3.28
-release=1
-source=(https://github.com/xianyi/OpenBLAS/archive/v$version/OpenBLAS-$version.tar.gz)
+version=0.3.34
+release=2
+source=(https://github.com/OpenMathLib/OpenBLAS/archive/v$version/OpenBLAS-$version.tar.gz)
 
-build () {
-  cd OpenBLAS-$version
+pkg_build() {
 
   export MAKE_NB_JOBS=-1 \
     COMMON_OPT=" " \
@@ -31,9 +28,9 @@ build () {
     CFLAGS="$CFLAGS $CPPFLAGS"
   )
 
-  make "${flags[@]}"
+  make "${flags[@]}" || return 1
 
-  make "${flags[@]}" install
+  make "${flags[@]}" install || return 1
 
   # Symlink to provide blas & cblas
   cd $PKG/usr/lib/

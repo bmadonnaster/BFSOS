@@ -1,28 +1,21 @@
-# Description: The libkcddb package contains a library used to retrieve audio CD meta data from the internet.
+# Description: Library used to retrieve audio CD metadata from the internet
 # URL: https://kde.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: kde-frameworks-6 libmusicbrainz qt6
 
 name=libkcddb
 version=26.08.0
-release=3
+release=4
 source=(https://download.kde.org/stable/release-service/$version/src/$name-$version.tar.xz)
 
-build() {
-    cd $name-$version
-
-    mkdir -p build
-    cd build
-
-    cmake -G Ninja \
+pkg_build() {
+    cmake -S . -B build -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
         "-DCMAKE_PREFIX_PATH=/opt/qt6;/opt/kf6" \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_TESTING=OFF \
         -DQT_MAJOR_VERSION=6 \
-        -Wno-author \
-        ..
-
-    ninja
-    DESTDIR=$PKG ninja install
+        -Wno-author || return 1
+    cmake --build build -j "${JOBS:-1}" || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
 }

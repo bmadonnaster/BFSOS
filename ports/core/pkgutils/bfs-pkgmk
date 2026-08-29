@@ -61,14 +61,24 @@ if [ -r ./Pkgfile ]; then
 fi
 
 package_glob="${pkg_name}#${pkg_version}-${pkg_release}.pkg.tar.*"
+
+# Honor a simple PKGMK_PACKAGE_DIR assignment from the active configuration so
+# failure cleanup is not tied to BFSOS's default cache path.  Keep the default
+# as a fallback for early/bootstrap environments.
+package_dir="${PKGMK_PACKAGE_DIR:-}"
+if [ -z "$package_dir" ] && [ -r /etc/pkgmk.conf ]; then
+    package_dir="$(sed -n 's|^[[:space:]]*PKGMK_PACKAGE_DIR=["'"']\{0,1\}\([^"'"']*\)["'"']\{0,1\}[[:space:]]*$||p' /etc/pkgmk.conf | tail -n1 || true)"
+fi
+[ -n "$package_dir" ] || package_dir=/var/cache/pkg/packages
+
 cleanup_failed_archives() {
     [ "$pkg_name" != unknown ] || return 0
-    rm -f -- /var/cache/pkg/packages/$package_glob 2>/dev/null || true
+    rm -f -- "$package_dir"/$package_glob 2>/dev/null || true
 }
 
 if [ "$status" -eq 0 ] && [ "$pkg_name" != unknown ]; then
     archive_list="/tmp/bfs-pkgmk-archive-list.$$"
-    for archive in /var/cache/pkg/packages/$package_glob; do
+    for archive in "$package_dir"/$package_glob; do
         [ -f "$archive" ] || continue
         if ! bsdtar -tf "$archive" >"$archive_list" 2>/dev/null || [ ! -s "$archive_list" ]; then
             printf 'BFSOS pkgmk: rejecting invalid or empty package archive: %s\n' "$archive" >&2

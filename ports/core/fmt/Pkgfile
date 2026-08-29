@@ -7,8 +7,8 @@ version=12.2.0
 release=1
 source=(https://github.com/fmtlib/fmt/releases/download/$version/fmt-$version.zip)
 
-build() {
-    cmake -S $name-$version -B build -G Ninja \
+pkg_build() {
+    cmake -S . -B build -G Ninja \
         -D CMAKE_INSTALL_PREFIX=/usr \
         -D CMAKE_INSTALL_LIBDIR=lib \
         -D CMAKE_BUILD_TYPE=Release \

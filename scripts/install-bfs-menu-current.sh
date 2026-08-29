@@ -1,1 +1,1 @@
-install-bfs-menu-v50-r70-glib-footprint-cycle-fix.sh
+install-bfs-menu-v50-r71-lvm-equal-split.sh

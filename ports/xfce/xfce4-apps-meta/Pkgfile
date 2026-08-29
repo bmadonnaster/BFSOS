@@ -1,13 +1,13 @@
 # Add your top line text here
 # Your line to add at the top here
-# Description: Gnome apps meta package
-# URL:  https://gnome.org/
+# Description: Xfce applications meta package
+# URL: https://xfce.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Depends on: parole xfce4-terminal ristretto xfce4-dev-tools xfce4-notifyd xfce4-pulseaudio-plugin xfburn
 name=xfce4-apps-meta
-version=4.18.4
+version=4.20.0
 release=1
 source=()
-build() {
+pkg_build() {
     mkdir $PKG/usr
 }

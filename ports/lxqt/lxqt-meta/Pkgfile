@@ -9,7 +9,7 @@ version=2.0.0
 release=1
 source=()
 
-build() {
+pkg_build() {
     mkdir $PKG/usr
 }
 

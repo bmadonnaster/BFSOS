@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
 # Optional: doxygen graphviz
 name=libexif
-version=0.6.25
+version=0.6.26
 release=1
 source=(https://github.com/$name/$name/releases/download/v$version/$name-$version.tar.bz2)
 

@@ -1,7 +1,7 @@
 # Depends on: gnutls jansson libtirpc perl-parse-yapp rpcsvc-proto fuse gpgme icu libtasn1 libxslt linux-pam kerberos openldap avahi cups cyrus-sasl git gdb gnupg libaio libarchive libcap libgcrypt libnsl libunwind lmdb python3-markdown nss popt talloc vala valgrind xfsprogs
 
 name=samba
-version=4.24.5
+version=4.24.6
 release=2
 source=(https://download.${name}.org/pub/${name}/stable/${name}-${version}.tar.gz)
 pkg_build() {

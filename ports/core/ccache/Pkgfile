@@ -9,10 +9,10 @@ version=4.13.6
 release=2
 source=(https://github.com/$name/$name/releases/download/v$version/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
   PKGMK_CCACHE+=' -D REDIS_STORAGE_BACKEND=OFF'
 
-  cmake -S $name-$version -B build -G Ninja $PKGMK_CCACHE \
+  cmake -S . -B build -G Ninja $PKGMK_CCACHE \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \
     -D CMAKE_BUILD_TYPE=Release \

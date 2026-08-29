@@ -7,8 +7,7 @@ version=4.0.49
 release=1
 source=(ftp://ftp.gnu.org/gnu/mtools/$name-$version.tar.bz2)
 
-build() {
-	cd $name-$version
+pkg_build() {
 
 	./configure \
 		--prefix=/usr \

@@ -17,8 +17,7 @@ source=(https://dl.winehq.org/wine/source/9.x/wine-$version.tar.xz \
     https://dl.winehq.org/wine/wine-gecko/2.47.4/wine-gecko-2.47.4-x86_64.msi \
     https://dl.winehq.org/wine/wine-mono/9.3.0/wine-mono-9.3.0-x86.msi)
 
-build() {
-    cd $name-$version
+pkg_build() {
     ./staging/patchinstall.py DESTDIR=../wine-$version --all -W server-Stored_ACLs
     cd ..
 

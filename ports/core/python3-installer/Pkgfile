@@ -8,8 +8,7 @@ version=1.0.1
 release=1
 source=(https://pypi.org/packages/source/i/installer/installer-$version.tar.gz)
 
-build() {
-  cd installer-$version
+pkg_build() {
 
   PIP_CONFIG_FILE=/dev/null /usr/bin/pip3 install --isolated --root=$PKG \
     --ignore-installed --no-deps .

@@ -1,6 +1,23 @@
-# Depends on: glib gobject-introspection gtk3 gtk4 xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome
+# Description: GIO-style APIs for desktop portals
+# URL: https://github.com/flatpak/libportal
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: glib gobject-introspection gtk3 gtk4 meson ninja
+# Optional: qt6 vala xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome
 
 name=libportal
-version=0.8.0
-release=1
-source=(https://github.com/flatpak/${name}/releases/download/${version}/${name}-${version}.tar.xz)
+version=0.9.1
+release=2
+source=(
+    https://github.com/flatpak/${name}/releases/download/${version}/${name}-${version}.tar.xz
+    https://www.linuxfromscratch.org/patches/blfs/12.4/${name}-${version}-qt6.9_fixes-1.patch
+)
+
+pkg_build() {
+    meson setup build \
+        --prefix=/usr \
+        --buildtype=release \
+        -D vapi=false \
+        -D docs=false || return 1
+    meson compile -C build || return 1
+    DESTDIR="$PKG" meson install --no-rebuild -C build || return 1
+}

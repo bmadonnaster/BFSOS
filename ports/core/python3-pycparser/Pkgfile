@@ -8,7 +8,7 @@ version=2.22
 release=1
 source=(https://pypi.org/packages/source/p/pycparser/pycparser-$version.tar.gz)
 
-build() {
+pkg_build() {
   ls
   cd pycparser-$version
 

@@ -11,12 +11,12 @@ version=4.0.3
 release=1
 source=(https://download.gnome.org/sources/$name/4.0/$name-$version.tar.xz)
 
-build() {
+pkg_build() {
   prt-get isinst help2man || PKGMK_ZENITY+=' -D manpage=false'
   # disabled for now as it requires webkitgtk4.1
   prt-get isinst webkitgtk && PKGMK_ZENITY+=' -D webkitgtk=false'
 
-  meson setup $name-$version build $PKGMK_ZENITY \
+  meson setup build . $PKGMK_ZENITY \
     --prefix=/usr \
     --buildtype=plain \
     --wrap-mode nodownload \

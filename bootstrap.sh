@@ -2472,7 +2472,7 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
         return 1
     fi
 
-    _show_menu_success "Toolchain build complete"         "Toolchain build completed.\n\nArchive created and verified:\n$toolchain_archive"
+    # Return directly to the main menu after the archive passes validation.
 }
 
 _verifybase() {
@@ -3469,6 +3469,9 @@ automake
 openssl
 ca-certificates
 curl
+libtasn1
+p11-kit
+make-ca
 gettext
 elfutils
 libffi
