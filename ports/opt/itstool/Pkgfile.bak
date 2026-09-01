@@ -1,12 +1,14 @@
 # Description: XML to PO and back again
 # URL: https://itstool.org/
 # Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on: docbook-xml python3-lxml
+# Depends on: libxml2 python3-lxml
 
 name=itstool
 version=2.0.7
 release=4
-source=(https://github.com/itstool/itstool/archive/$version/$name-$version.tar.gz
+source=(https://files.itstool.org/itstool/$name-$version.tar.bz2
+  fix_crash_918953.patch
+  fix_crash_912099.patch
   itstool-2.0.7-lxml-1.patch)
 
 
