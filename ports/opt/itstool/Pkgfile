@@ -11,12 +11,10 @@ source=(https://files.itstool.org/itstool/$name-$version.tar.bz2
   fix_crash_912099.patch
   itstool-2.0.7-lxml-1.patch)
 
-skip_patch=1
 
 pkg_build() {
-  autoreconf -fi
   PYTHON=/usr/bin/python3 \
-  ./configure --prefix=/usr
+  ./autogen.sh --prefix=/usr
   make
   make DESTDIR=$PKG install
 }
