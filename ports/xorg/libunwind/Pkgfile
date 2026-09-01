@@ -6,12 +6,12 @@
 
 name=libunwind
 version=1.8.3
-release=2
+release=3
 source=(https://github.com/libunwind/$name/releases/download/v$version/$name-$version.tar.gz)
 
 pkg_build() {
 
-	./configure --prefix=/usr --disable-static &&
+	./configure --prefix=/usr --disable-static --disable-tests &&
 make
 	make DESTDIR=$PKG install
 }

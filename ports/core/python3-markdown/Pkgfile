@@ -1,8 +1,8 @@
-# Depends on: 
+# Depends on: python3-pip
 
 name=python3-markdown
 version=3.10.2
-release=1
+release=2
 source=(https://files.pythonhosted.org/packages/2b/f4/69fa6ed85ae003c2378ffa8f6d2e3234662abd02c10d216c0ba96081a238/markdown-3.10.2.tar.gz)
 pkg_build() {
     python3 -m pip install . \
