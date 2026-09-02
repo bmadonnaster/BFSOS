@@ -1,0 +1,73 @@
+# Description: Lightweight cross-desktop display manager
+# URL: https://github.com/ubuntu/lightdm
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: glib libgcrypt linux-pam intltool itstool xorg-server
+# Optional: accountsservice libxklavier vala
+
+name=lightdm
+version=1.33.1
+release=1
+
+source=(
+    https://github.com/ubuntu/lightdm/releases/download/$version/lightdm-$version.tar.gz
+)
+
+pkg_build() {
+    ./configure \
+        --prefix=/usr \
+        --libexecdir=/usr/lib/lightdm \
+        --localstatedir=/var \
+        --sbindir=/usr/bin \
+        --sysconfdir=/etc \
+        --disable-static \
+        --disable-tests \
+        --with-greeter-user=lightdm \
+        --with-greeter-session=lightdm-gtk-greeter \
+        --docdir=/usr/share/doc/lightdm-$version \
+        || return 1
+
+    make -j"${JOBS:-1}" || return 1
+    make DESTDIR="$PKG" install || return 1
+
+    # Session wrapper. Using a login shell ensures the normal BFSOS
+    # profile/environment is available inside graphical sessions.
+    install -Dm755 \
+        tests/src/lightdm-session \
+        "$PKG/usr/bin/lightdm-session" \
+        || return 1
+
+    sed -i '1 s|/bin/sh|/bin/bash --login|' \
+        "$PKG/usr/bin/lightdm-session" \
+        || return 1
+
+    # Remove obsolete Upstart integration if upstream installs it.
+    rm -rf "$PKG/etc/init"
+
+    # Runtime directories.
+    install -d \
+        "$PKG/var/lib/lightdm" \
+        "$PKG/var/lib/lightdm-data" \
+        "$PKG/var/cache/lightdm" \
+        "$PKG/var/log/lightdm" \
+        || return 1
+
+    # BFSOS systemd unit.
+    install -d "$PKG/usr/lib/systemd/system" || return 1
+
+    cat > "$PKG/usr/lib/systemd/system/lightdm.service" <<'UNIT'
+[Unit]
+Description=Light Display Manager
+Documentation=man:lightdm(1)
+After=systemd-user-sessions.service systemd-logind.service
+Conflicts=getty@tty7.service
+
+[Service]
+ExecStart=/usr/bin/lightdm
+Restart=always
+RestartSec=2
+BusName=org.freedesktop.DisplayManager
+
+[Install]
+Alias=display-manager.service
+UNIT
+}
