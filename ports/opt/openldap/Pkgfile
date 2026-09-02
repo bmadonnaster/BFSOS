@@ -1,6 +1,6 @@
 # Description: Lightweight Directory Access Protocol (LDAP) Toolkit
 # URL: https://www.openldap.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cyrus-sasl libtool perl util-linux
 
 name=openldap

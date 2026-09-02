@@ -1,6 +1,6 @@
 # Description: An OpenType text shaping engine
 # URL: https://github.com/harfbuzz/harfbuzz
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo gobject-introspection graphite2
 # Optional: chafa icu
 

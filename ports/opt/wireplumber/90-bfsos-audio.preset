@@ -1,0 +1,5 @@
+# BFSOS desktop audio defaults.
+# PipeWire daemons are socket-activated; WirePlumber supplies session policy.
+enable pipewire.socket
+enable pipewire-pulse.socket
+enable wireplumber.service

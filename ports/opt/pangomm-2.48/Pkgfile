@@ -1,6 +1,6 @@
 # Description: C++ interface to pango
 # URL: https://gitlab.gnome.org/GNOME/pangomm
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairomm glibmm-2.68 pango
 
 name=pangomm-2.48

@@ -1,6 +1,6 @@
 # Description: Library giving userland programs access to USB devices
 # URL: https://libusb.info
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=libusb

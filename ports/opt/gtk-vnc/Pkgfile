@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gnutls gtk3 libgcrypt glib gobject-introspection vala
 
 name=gtk-vnc

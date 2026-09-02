@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: xorg lib xtrans
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xtrans
 
 name=xtrans-32

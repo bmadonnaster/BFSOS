@@ -1,6 +1,6 @@
 # Description: A library for a new image format comparable to JPEG.
 # URL: https://developers.google.com/speed/webp/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: libjpeg-turbo libpng libtiff sdl12-compat freeglut giflib
 

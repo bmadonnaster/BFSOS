@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libgpg-error
 # Optional: valgrind
 name=libksba

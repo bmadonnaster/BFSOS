@@ -1,6 +1,6 @@
 # Description: Common build files of the C++ bindings.
 # URL: https://gtkmm.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=mm-common
 version=1.0.5

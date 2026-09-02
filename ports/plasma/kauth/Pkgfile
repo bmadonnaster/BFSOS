@@ -1,6 +1,6 @@
 # Description: KDE Framework for executing actions with elevated privileges
 # URL: https://invent.kde.org/frameworks/kauth
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kcoreaddons kwindowsystem polkit-qt-1 extra-cmake-modules qt6
 
 name=kauth

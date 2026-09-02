@@ -1,6 +1,6 @@
 # Description: Integration library and QML module for Accounts-SSO and SignOn-SSO
 # URL: https://www.kde.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kcmutils kirigami kwallet libaccounts-qt qcoro qt6 signond
 
 name=kaccounts-integration

@@ -1,6 +1,6 @@
 # Description: Support library with a focus on asynchronous I/O
 # URL: https://libuv.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: autoconf automake libtool
 
 name=libuv

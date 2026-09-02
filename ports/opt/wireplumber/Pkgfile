@@ -1,11 +1,19 @@
-# Description: The Wireplumber package contains a session and policy manager for Pipewire.
-# URL:         https://gitlab.freedesktop.org/pipewire/wireplumber/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  glib pipewire systemd linux-pam lua
-# Optional:    doxygen gobject-introspection python3-lxml sphinx sphinx_rtd_theme breathe
+# Description: Session and policy manager for PipeWire
+# URL: https://pipewire.pages.freedesktop.org/wireplumber/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: glib pipewire systemd linux-pam lua
+# Optional: doxygen gobject-introspection python3-lxml sphinx sphinx_rtd_theme breathe
 
 name=wireplumber
 version=0.5.15
-release=2
-source=( https://gitlab.freedesktop.org/pipewire/$name/-/archive/$version/$version-$version.tar.gz)
+release=3
+source=(
+    https://gitlab.freedesktop.org/pipewire/$name/-/archive/$version/$name-$version.tar.gz
+    90-bfsos-audio.preset
+)
 build_opt="--prefix=/usr --buildtype=release -Dsystem-lua=true"
+
+post_build() {
+    install -Dm644 "$SRC/90-bfsos-audio.preset" \
+        "$PKG/usr/lib/systemd/user-preset/90-bfsos-audio.preset" || return 1
+}

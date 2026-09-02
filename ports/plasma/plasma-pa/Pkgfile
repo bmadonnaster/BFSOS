@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kdeclarative kstatusnotifieritem libplasma pulseaudio pulseaudio-qt qt6
 
 name=plasma-pa

@@ -1,6 +1,6 @@
 # Description: Fast and small AV1 video decoder
 # URL: https://code.videolan.org/videolan/dav1d
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: meson ninja
 # Optional: nasm
 

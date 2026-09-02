@@ -1,6 +1,6 @@
 # Description: xorg driver xf86-input-evdev
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: mtdev libevdev xorg-server
 
 name=xf86-input-evdev

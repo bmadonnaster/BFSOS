@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=11
+release=12
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.0
@@ -33,8 +33,6 @@ source=(
     kf6.sh
     kf6.sudoers
     xorg.sudoers
-    vte.csh
-    vte.sh
     xorg.sh
     bashrc
     .bash_profile
@@ -202,8 +200,6 @@ pkg_build() {
         kf6.sh \
         readline.sh \
         umask.sh \
-        vte.csh \
-        vte.sh \
         xorg.sh
     do
         install -m 0644 "$file" "$PKG/etc/profile.d/$file"

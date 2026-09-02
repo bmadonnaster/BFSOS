@@ -1,6 +1,6 @@
 # Description:  The ALSA Tools package contains advanced tools for certain sound cards.
 # URL:          https://www.alsa-project.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  alsa-lib popt fltk
 # Optional:    gtk envy24control gtk3
 

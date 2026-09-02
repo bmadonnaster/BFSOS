@@ -1,5 +1,6 @@
 # Description: Mobile broadband settings for various service providers
 # URL:         https://github.com/GNOME/mobile-broadband-provider-info
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=mobile-broadband-provider-info

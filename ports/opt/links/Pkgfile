@@ -1,6 +1,6 @@
 # Description: Text and graphics mode WWW browser
 # URL:         http://links.twibright.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  openssl libevent
 
 name=links

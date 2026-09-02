@@ -1,6 +1,6 @@
 # Description: Backends and filters for CUPS
 # URL: https://openprinting.github.io/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libcupsfilters libppd
 
 name=cups-filters

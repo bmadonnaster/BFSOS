@@ -1,6 +1,6 @@
 # Description: X11 server performance test program
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXft libXmu
 
 name=x11perf

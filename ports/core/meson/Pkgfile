@@ -1,6 +1,6 @@
 # Description: High productivity build system.
 # URL: https://mesonbuild.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ninja python3-pip python3-setuptools
 
 name=meson

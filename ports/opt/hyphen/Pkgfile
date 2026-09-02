@@ -1,6 +1,6 @@
 # Description: Library for high quality hyphenation and justification
 # URL: https://sourceforge.net/projects/hunspell/files/Hyphen/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=hyphen
 version=2.8.8

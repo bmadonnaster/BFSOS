@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Meta loader for Vulkan API
 # URL: https://github.com/zeux/volk
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: vulkan-loader-32 volk
 
 name=volk-32

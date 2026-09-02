@@ -1,6 +1,6 @@
 # Description: The libical package contains an implementation of the iCalendar protocols and data formats.
 # URL:         https://github.com/libical
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  cmake gobject-introspection vala
 # Optional: db doxygen graphviz gtk-doc icu pygobject
 

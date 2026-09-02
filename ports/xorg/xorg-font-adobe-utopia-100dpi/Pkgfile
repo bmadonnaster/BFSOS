@@ -1,6 +1,6 @@
 # Description: xorg font font-adobe-utopia-100dpi
 # URL: https//xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bdftopcf xorg-font-util mkfontscale
 
 name=xorg-font-adobe-utopia-100dpi

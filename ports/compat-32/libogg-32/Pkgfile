@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Ogg bitstream and framing library
 # URL:         https://www.xiph.org/ogg/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libogg
 
 name=libogg-32

@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cups kglobalaccel kio kirigami kpipewire kstatusnotifieritem kwayland xdg-desktop-portal qt6
 
 name=xdg-desktop-portal-kde

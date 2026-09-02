@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: GObject bindings for libudev
 # URL: https://wiki.gnome.org/Projects/libgudev
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib-32 libgudev
 
 name=libgudev-32

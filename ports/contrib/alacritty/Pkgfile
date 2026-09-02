@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: A cross-platform, GPU-accelerated terminal emulator
 # URL: https://github.com/alacritty/alacritty
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fontconfig libxkbcommon rustc util-linux libxcb
 # Optional: bash-completion scdoc zsh
 

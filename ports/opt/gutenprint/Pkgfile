@@ -1,6 +1,6 @@
 # Description: Print plugin and ghostscript/cups driver (formerly called gimp-print)
 # URL:         http://gimp-print.sourceforge.net/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  ghostscript cups
 
 name=gutenprint

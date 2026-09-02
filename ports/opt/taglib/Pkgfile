@@ -1,6 +1,6 @@
 # Description: Taglib is a library used for reading, writing and manipulating audio file tags and is used by applications such as Amarok and VLC.
 # URL:         https://taglib.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  cmake utfcpp
 # Optional: cppunit
 

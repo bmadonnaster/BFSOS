@@ -1,6 +1,6 @@
 # Description: xorg font font-misc-ethiopic
 # URL: https//xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fontconfig mkfontscale
 
 name=xorg-font-misc-ethiopic

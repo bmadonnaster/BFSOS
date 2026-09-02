@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: pthread dummy implementation
 # URL: https://xcb.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libpthread-stubs
 
 name=libpthread-stubs-32

@@ -1,6 +1,6 @@
 # Description: Protocol definitions and daemon for D-Bus at-spi
 # URL: https://gitlab.gnome.org/GNOME/at-spi2-core
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus gobject-introspection intltool libxml2 libXtst xorg-libs
 # Optional: gi-docgen sphinx
 

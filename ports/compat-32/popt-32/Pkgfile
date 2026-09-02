@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Commandline option parser
 # URL: https://github.com/rpm-software-management/popt
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: popt
 
 name=popt-32

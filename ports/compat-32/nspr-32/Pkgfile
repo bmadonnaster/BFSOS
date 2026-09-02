@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Netscape Portable Runtime library
 # URL: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSPR
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: nspr
 
 name=nspr-32

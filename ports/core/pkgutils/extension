@@ -37,8 +37,101 @@ if [ ! "$(command -v build)" ]; then
 		fi
 	}
 
+	_bfs_collect_build_opts() {
+		_bfs_build_opts=()
+		case "$(declare -p build_opt 2>/dev/null || true)" in
+			"declare -a "*|"declare -A "*)
+				_bfs_build_opts=("${build_opt[@]}")
+				;;
+			*)
+				# Preserve the historical scalar build_opt behavior: whitespace
+				# separates arguments.  Arrays are preferred when an option itself
+				# needs embedded whitespace.
+				if [ -n "${build_opt:-}" ]; then
+					read -r -a _bfs_build_opts <<< "$build_opt"
+				fi
+				;;
+		esac
+	}
+
+	_bfs_build_opt_has() {
+		local needle=$1 arg
+		_bfs_collect_build_opts
+		for arg in "${_bfs_build_opts[@]}"; do
+			case "$arg" in
+				"$needle"|"$needle="*) return 0 ;;
+			esac
+		done
+		return 1
+	}
+
+	_bfs_cmake_policy_default() {
+		_bfs_cmake_policy_args=()
+		[ "${PKGMK_CMAKE_POLICY_COMPAT:-yes}" != no ] || return 0
+		_bfs_build_opt_has -DCMAKE_POLICY_VERSION_MINIMUM && return 0
+
+		local major
+		major=$(cmake --version 2>/dev/null | awk 'NR==1 {split($3,v,"."); print v[1]+0}')
+		if [ "${major:-0}" -ge 4 ]; then
+			_bfs_cmake_policy_args=(
+				"-DCMAKE_POLICY_VERSION_MINIMUM=${PKGMK_CMAKE_POLICY_VERSION_MINIMUM:-3.5}"
+			)
+		fi
+	}
+
+	_bfs_cmake_test_defaults() {
+		_bfs_cmake_test_args=()
+		[ "${PKGMK_RUN_TESTS:-no}" != yes ] || return 0
+		[ "${run_tests:-no}" != yes ] || return 0
+
+		local opt
+		for opt in BUILD_TESTING BUILD_TESTS ENABLE_TESTS; do
+			_bfs_build_opt_has "-D$opt" && continue
+			if grep -Eiq "(^|[^A-Za-z0-9_])(option[[:space:]]*\\([[:space:]]*$opt([[:space:]]|\\))|set[[:space:]]*\\([[:space:]]*$opt[[:space:]].*CACHE[[:space:]]+BOOL)" ../CMakeLists.txt 2>/dev/null; then
+				_bfs_cmake_test_args+=("-D$opt=OFF")
+			elif [ "$opt" = BUILD_TESTING ] && grep -Eiq 'include[[:space:]]*\\([[:space:]]*CTest[[:space:]]*\\)' ../CMakeLists.txt 2>/dev/null; then
+				_bfs_cmake_test_args+=("-DBUILD_TESTING=OFF")
+			fi
+		done
+	}
+
+	_bfs_configure_test_defaults() {
+		_bfs_configure_test_args=()
+		[ "${PKGMK_RUN_TESTS:-no}" != yes ] || return 0
+		[ "${run_tests:-no}" != yes ] || return 0
+
+		local help opt
+		help=$(./configure --help 2>/dev/null || true)
+		for opt in --disable-tests --disable-test --disable-checks --disable-check; do
+			case "$help" in
+				*"$opt"*) _bfs_configure_test_args+=("$opt"); break ;;
+			esac
+		done
+	}
+
+	_bfs_meson_disable_supported_tests() {
+		[ "${PKGMK_RUN_TESTS:-no}" != yes ] || return 0
+		[ "${run_tests:-no}" != yes ] || return 0
+
+		local cfg opt
+		cfg=$(meson configure _meson_build 2>/dev/null || true)
+		for opt in tests test build_tests build-tests enable_tests enable-tests; do
+			_bfs_build_opt_has "-D$opt" && continue
+			if printf '%s\n' "$cfg" | grep -Eq "^[[:space:]]*$opt[[:space:]]"; then
+				if meson configure _meson_build "-D$opt=disabled" >/dev/null 2>&1; then
+					printf 'pkgmk: disabled supported Meson test option %s\n' "$opt"
+				elif meson configure _meson_build "-D$opt=false" >/dev/null 2>&1; then
+					printf 'pkgmk: disabled supported Meson test option %s\n' "$opt"
+				else
+					echo "pkgmk: warning: detected Meson option '$opt' but could not disable it safely" >&2
+				fi
+			fi
+		done
+	}
+
 	_makefile_build() {
-		make $build_opt || return $?
+		_bfs_collect_build_opts
+		make "${_bfs_build_opts[@]}" || return $?
 		make \
 			PREFIX=/usr \
 			prefix=/usr \
@@ -48,61 +141,65 @@ if [ ! "$(command -v build)" ]; then
 			mandir=/usr/share/man \
 			LIBDIR=/usr/lib \
 			PKGCONFIGDIR=/usr/lib/pkgconfig \
-			$build_opt \
-			DESTDIR=$PKG install || return $?
+			"${_bfs_build_opts[@]}" \
+			DESTDIR="$PKG" install || return $?
 	}
 
 	_perlmodule_build() {
 		perl Makefile.PL || return $?
 		make || return $?
-		make DESTDIR=$PKG install || return $?
+		make DESTDIR="$PKG" install || return $?
 	}
 
 	_cmake_build() {
-		mkdir -p cmakebuild
-		cd cmakebuild
+		_bfs_collect_build_opts
+		mkdir -p cmakebuild || return $?
+		cd cmakebuild || return $?
+		_bfs_cmake_policy_default
+		_bfs_cmake_test_defaults
 		cmake -DCMAKE_INSTALL_PREFIX=/usr \
 			-DCMAKE_INSTALL_SYSCONFDIR=/etc \
-			-DCMAKE_INSTALL_LIBDIR=lib  \
-			-DCMAKE_INSTALL_LIBEXECDIR=lib  \
+			-DCMAKE_INSTALL_LIBDIR=lib \
+			-DCMAKE_INSTALL_LIBEXECDIR=lib \
 			-DCMAKE_BUILD_TYPE=Release \
 			-DFETCHCONTENT_FULLY_DISCONNECTED=ON \
 			-DCMAKE_C_FLAGS_RELEASE="$CFLAGS" \
 			-DCMAKE_CXX_FLAGS_RELEASE="$CXXFLAGS" \
-			$build_opt \
+			"${_bfs_cmake_policy_args[@]}" \
+			"${_bfs_cmake_test_args[@]}" \
+			"${_bfs_build_opts[@]}" \
 			-G Ninja .. || return $?
-		if [ -f build.ninja ]; then
-			ninja || return $?
-			DESTDIR=$PKG ninja install || return $?
-		else
-			cmake --build build || return $?
-			DESTDIR=$PKG cmake --install build || return $?
-		fi
+		cmake --build . --parallel "${JOBS:-1}" || return $?
+		DESTDIR="$PKG" cmake --install . || return $?
 	}
 
 	_python3_build() {
 		python3 setup.py build || return $?
-		python3 setup.py install --prefix=/usr --root=$PKG --optimize=1 --skip-build || return $?
+		python3 setup.py install --prefix=/usr --root="$PKG" --optimize=1 --skip-build || return $?
 	}
 
 	_configure_build() {
+		_bfs_collect_build_opts
+		_bfs_configure_test_defaults
 		./configure \
 			--prefix=/usr \
 			--sysconfdir=/etc \
-			--libexecdir=/usr/lib  \
+			--libexecdir=/usr/lib \
 			--localstatedir=/var \
 			--mandir=/usr/share/man \
-			--libdir=/usr/lib  \
-			$build_opt || return $?
-		make || return $?
-		make DESTDIR=$PKG install || return $?
+			--libdir=/usr/lib \
+			"${_bfs_configure_test_args[@]}" \
+			"${_bfs_build_opts[@]}" || return $?
+		make -j"${JOBS:-1}" || return $?
+		make DESTDIR="$PKG" install || return $?
 	}
 
 	_meson_build() {
+		_bfs_collect_build_opts
 		meson setup _meson_build \
 			--prefix=/usr \
-			--libdir=/usr/lib  \
-			--libexecdir=/usr/lib  \
+			--libdir=/usr/lib \
+			--libexecdir=/usr/lib \
 			--includedir=/usr/include \
 			--datadir=/usr/share \
 			--mandir=/usr/share/man \
@@ -117,9 +214,10 @@ if [ ! "$(command -v build)" ]; then
 			-Db_lto=true \
 			-Db_pie=true \
 			-Db_thinlto_cache=true \
-			$build_opt || return $?
-		meson compile -C _meson_build || return $?
-		DESTDIR=$PKG meson install --no-rebuild -C _meson_build || return $?
+			"${_bfs_build_opts[@]}" || return $?
+		_bfs_meson_disable_supported_tests || return $?
+		meson compile -C _meson_build -j "${JOBS:-1}" || return $?
+		DESTDIR="$PKG" meson install --no-rebuild -C _meson_build || return $?
 	}
 
 	_patch() {

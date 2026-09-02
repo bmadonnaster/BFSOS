@@ -1,6 +1,6 @@
 # Description: Framework for defining and tracking users, login sessions, and seats
 # URL: http://www.freedesktop.org/wiki/Software/ConsoleKit
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus gobject-introspection linux-pam libX11
 # Optional: polkit
 

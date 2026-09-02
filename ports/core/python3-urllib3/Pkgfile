@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-hatchling python3-hatch-vcs
 
 name=python3-urllib3

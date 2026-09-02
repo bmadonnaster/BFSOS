@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: adwaita-icon-theme exempi gnome-desktop libhandy libjpeg-turbo libpeas shared-mime-info glib gobject-introspection lcms2 libexif librsvg webp-pixbuf-loader
 
 name=eog

@@ -1,6 +1,6 @@
 # Description: C++ coroutine library for Qt6
 # URL: https://github.com/danvratil/qcoro
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: qt6
 
 name=qcoro

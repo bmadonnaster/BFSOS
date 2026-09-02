@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Library of JPEG support functions.
 # URL: https://www.libjpeg-turbo.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libjpeg-turbo
 
 name=libjpeg-turbo-32

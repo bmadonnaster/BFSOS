@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: S-Lang programmer's library
 # URL: http://www.jedsoft.org/slang/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: jq-32 libpcre-32 libpng-32 slang
 # Optional: oniguruma
 

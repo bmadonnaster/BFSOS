@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: ALSA libraries
 # URL: http://www.alsa-project.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib
 
 name=alsa-lib-32

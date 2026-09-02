@@ -1,6 +1,6 @@
 # Description: Image format plugins for Qt6/KF6
 # URL: https://invent.kde.org/frameworks/kimageformats
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: qt6 libavif libjxl libraw extra-cmake-modules
 
 name=kimageformats

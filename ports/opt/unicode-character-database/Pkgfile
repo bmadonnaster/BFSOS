@@ -1,6 +1,6 @@
 # Description: Unicode Character Database
 # URL: https://www.unicode.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=unicode-character-database
 version=15.1.0

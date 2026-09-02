@@ -1,6 +1,6 @@
 # Description: Source code documentation generator tool
 # URL: https://www.doxygen.nl/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake git
 # Optional graphviz ghostscript libxml2 llvm qt qt-alternate texlive install-tl-unx xapian javacc
 

@@ -1,6 +1,6 @@
 # Description: A debugging and profiling system for Linux programs
 # URL: https://valgrind.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Optional: gdb llvm which
 
 name=valgrind

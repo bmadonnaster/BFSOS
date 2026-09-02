@@ -5,7 +5,7 @@
 # Optional: alsa-lib curl ffmpeg geoclue liboauth libproxy pciutils valgrind wget wireless-tools yasm
 
 name=firefox-esr
-version=153.1.0esr
+version=153.2.0esr
 release=1
 source=(
     https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
@@ -42,7 +42,7 @@ new = 'c.target.vendor == ("unknown" if host_or_target.vendor == "pc" else host_
 if new in s:
     print("firefox: Rust vendor compatibility fix already present")
 elif old in s:
-    # Firefox 154 has the old exact-vendor tiebreaker. Replacing this expression
+    # Older Firefox sources have the exact-vendor tiebreaker. Replacing this expression
     # makes x86/x86_64 config.guess vendor "pc" prefer Rust's generic "unknown".
     s = s.replace(old, new)
     p.write_text(s)

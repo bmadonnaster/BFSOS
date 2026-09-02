@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: A library that handles input devices for display servers
 # URL: https://wayland.freedesktop.org/libinput/doc/latest/index.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: eudev-32 libinput mtdev-32 libevdev-32
 
 

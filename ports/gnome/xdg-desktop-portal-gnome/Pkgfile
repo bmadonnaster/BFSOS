@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gnome-backgrounds gnome-desktop gtk4 libadwaita xdg-desktop-portal xdg-desktop-portal-gtk
 
 name=xdg-desktop-portal-gnome

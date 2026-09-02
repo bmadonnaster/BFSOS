@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: extra-cmake-modules qrencode libdmtx zxing-cpp qt6
 
 name=prison

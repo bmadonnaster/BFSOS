@@ -1,6 +1,6 @@
 # Description: Asynchronous C DNS library
 # URL: https://c-ares.haxx.se/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends On: cmake
 # Optional:
 name=c-ares

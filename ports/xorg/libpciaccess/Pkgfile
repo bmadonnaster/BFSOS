@@ -1,6 +1,6 @@
 # Description: Generic PCI access library
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=libpciaccess
 version=0.19

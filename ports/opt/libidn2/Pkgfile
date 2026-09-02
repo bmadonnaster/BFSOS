@@ -1,6 +1,6 @@
 # Description: Provides support for IETF Internationalized Domain Names (IDN)
 # URL: http://www.gnu.org/software/libidn/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libunistring
 # Optional: git gtk-doc
 

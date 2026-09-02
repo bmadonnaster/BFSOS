@@ -1,6 +1,6 @@
 # Description: GLib-based client library for accessing the online accounts database
 # URL: https://gitlab.com/accounts-sso/libaccounts-glib
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: check glib libxml2 meson ninja sqlite
 
 name=libaccounts-glib

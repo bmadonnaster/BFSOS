@@ -1,6 +1,6 @@
 # Description: Library of JPEG support functions.
 # URL: https://www.libjpeg-turbo.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: nasm cmake
 # Optional: yasm
 name=libjpeg-turbo

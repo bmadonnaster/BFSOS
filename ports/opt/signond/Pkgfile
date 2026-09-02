@@ -1,6 +1,6 @@
 # Description: D-Bus service that performs user authentication for Accounts-SSO clients
 # URL: https://gitlab.com/accounts-sso/signond/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: qt6
 
 name=signond

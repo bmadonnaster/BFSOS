@@ -1,6 +1,6 @@
 # Description: X Display Manager Control Protocol library
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorgproto
 
 name=libXdmcp

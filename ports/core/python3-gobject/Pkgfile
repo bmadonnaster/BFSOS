@@ -1,6 +1,6 @@
 # Description: Python bindings for GLib/GObject/GIO/GTK+/GStreamer
 # URL: https://wiki.gnome.org/Projects/PyGObject
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gobject-introspection python3-cairo
 
 name=python3-gobject

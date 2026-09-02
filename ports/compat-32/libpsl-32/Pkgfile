@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Public Suffix List library.
 # URL: https://github.com/rockdaboot/libpsl
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libidn2-32 libpsl
 
 name=libpsl-32

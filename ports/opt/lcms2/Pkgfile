@@ -1,6 +1,6 @@
 # Description: Little CMS intends to be an small-footprint color management engine
 # URL: http://www.littlecms.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libtiff
 # Optional: libjpeg-turbo
 name=lcms2

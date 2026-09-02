@@ -1,6 +1,6 @@
 # Description: ALSA libraries
 # URL: http://www.alsa-project.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # optional: systemd doxygen python2 alsa-ucm-conf
 
 name=alsa-lib

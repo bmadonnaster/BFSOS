@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: exiv2 ffmpeg karchive kconfig kcoreaddons ki18n poppler taglib extra-cmake-modules qt6
 
 name=kfilemetadata

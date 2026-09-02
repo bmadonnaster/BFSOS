@@ -1,6 +1,6 @@
 # Description: neon is an HTTP and WebDAV client library, with a C interface.
 # URL:         https//notroj.github.io/neon/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: gnutls libxml2 kerberos nss xmlto libproxy pakchois
 

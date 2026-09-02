@@ -1,6 +1,6 @@
 # Description: a set of plug-ins that aren't up to par compared to the rest
 # URL: https://gstreamer.freedesktop.org/modules/gst-plugins-bad.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gst-plugins-base libdvdread libdvdnav soundtouch
 # Optional: aom bluez chromaprint ladspa libde265 lv2 musepack openal openh264 soundtouch x265
 

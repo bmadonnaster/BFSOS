@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Unicode Bidirectional (BiDi) Algorithm.
 # URL: https://github.com/fribidi/fribidi/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fribidi glib-32
 
 name=fribidi-32

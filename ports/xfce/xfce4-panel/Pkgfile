@@ -1,8 +1,20 @@
-# Add your top line text here
-# Your line to add at the top here
+# Description: Panel for the Xfce desktop environment
+# URL: https://docs.xfce.org/xfce/xfce4-panel/start
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo exo garcon libwnck libxfce4windowing
 
 name=xfce4-panel
 version=4.20.8
-release=1
-source=(https://archive.xfce.org/src/xfce/${name}/${version%.*}/${name}-${version}.tar.bz2)
+release=2
+source=(
+    https://archive.xfce.org/src/xfce/${name}/${version%.*}/${name}-${version}.tar.bz2
+    default.xml
+)
+
+post_build() {
+    # Xfce reads this template when a user has no panel configuration yet.
+    # Keep the normal status cluster useful on first login rather than
+    # requiring each user to add notifications, power and audio manually.
+    install -Dm644 "$SRC/default.xml" \
+        "$PKG/etc/xdg/xfce4/panel/default.xml" || return 1
+}

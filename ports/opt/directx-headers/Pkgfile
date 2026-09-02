@@ -1,6 +1,6 @@
 # Description: Official DirectX headers available under an open source license
 # URL: https://github.com/microsoft/DirectX-Headers
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=directx-headers
 version=1.615.0

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: X font rendering client library
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fontconfig-32 libXft libXrender-32
 
 name=libXft-32

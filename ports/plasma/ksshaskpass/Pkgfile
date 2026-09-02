@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kwallet qtkeychain qt6
 
 name=ksshaskpass

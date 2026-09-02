@@ -1,6 +1,6 @@
 # Description: Provides a way to load and enumerate PKCS #11 modules.
 # URL: https://p11-glue.github.io/p11-glue/p11-kit.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libtasn1 meson
 # Optional: libffi nss
 

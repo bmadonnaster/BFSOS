@@ -1,6 +1,6 @@
 # Description: The cpio package contains tools for archiving.
 # URL:          https://ftp.gnu.org/gnu/cpio/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: texlive (or install-tl-unx)
 

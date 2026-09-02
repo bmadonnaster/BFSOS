@@ -1,6 +1,6 @@
 # Description: DVD reading library.
 # URL: https://www.videolan.org/developers/libdvdnav.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libdvdcss
 
 name=libdvdread

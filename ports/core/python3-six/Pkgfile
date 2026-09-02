@@ -1,6 +1,6 @@
 # Description: Python 2 and 3 compatibility utilities
 # URL: https://pypi.python.org/pypi/six/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-six

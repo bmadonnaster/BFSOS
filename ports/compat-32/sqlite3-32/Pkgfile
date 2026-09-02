@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: SQL database engine
 # URL: https://www.sqlite.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: readline-32 sqlite3
 
 name=sqlite3-32

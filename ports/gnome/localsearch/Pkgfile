@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: exempi gexiv2 gst-plugins-base tinysparql giflib gst-plugins-good gst-libav icu libgxps libseccomp poppler upower
 
 name=localsearch

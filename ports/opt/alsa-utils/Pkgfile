@@ -1,6 +1,6 @@
 # Description:  The ALSA Utilities package contains various utilities which are useful for controlling your sound card.
 # URL:         https://www.alsa-project.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  alsa-lib xmlto
 # Optional:    docutils fftw libsamplerate python3-dialog
 

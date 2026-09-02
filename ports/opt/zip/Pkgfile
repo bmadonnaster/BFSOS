@@ -1,6 +1,6 @@
 # Description: The Zip package contains Zip utilities. These are useful for compressing files into ZIP archives.
 # URL:          https://downloads.sourceforge.net/infozip/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=zip

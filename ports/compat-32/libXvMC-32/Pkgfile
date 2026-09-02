@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: X Video Motion Compensation extension client library
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXv-32 libXvMC
 
 name=libXvMC-32

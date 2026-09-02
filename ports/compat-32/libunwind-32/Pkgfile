@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Portable and efficient API to determine the call-chain of a program
 # URL: https://savannah.nongnu.org/projects/libunwind
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libunwind
 
 name=libunwind-32

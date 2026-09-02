@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Shared GSettings schemas for the desktop
 # URL: https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib gobject-introspection intltool
 
 name=gsettings-desktop-schemas

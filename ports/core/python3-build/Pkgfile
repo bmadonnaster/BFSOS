@@ -1,6 +1,6 @@
 # Description: A simple, correct PEP517 package builder
 # URL: https://github.com/pypa/build
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-packaging python3-pyproject-hooks
 
 name=python3-build

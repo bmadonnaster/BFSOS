@@ -1,6 +1,6 @@
 # Description: Array processing for numbers, strings, records, and objects with Python
 # URL: https://numpy.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: lapack python3-cython python3-meson_python
 
 name=python3-numpy

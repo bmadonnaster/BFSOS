@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Pixel manipulation library
 # URL: https://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: pixman
 
 name=pixman-32

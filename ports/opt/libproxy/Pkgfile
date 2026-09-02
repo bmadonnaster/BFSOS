@@ -1,6 +1,6 @@
 # Description: Automatic proxy configuration management library
 # URL: https://libproxy.github.io/libproxy/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: curl duktape glib meson ninja gsettings-desktop-schemas
 
 name=libproxy

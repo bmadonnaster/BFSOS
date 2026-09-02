@@ -1,6 +1,6 @@
 # Description: Decompress utility for zipfiles
 # URL: https://infozip.sourceforge.net/UnZip.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=unzip
 version=6.0

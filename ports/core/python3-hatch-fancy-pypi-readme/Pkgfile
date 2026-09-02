@@ -1,6 +1,6 @@
 # Description: Fancy PyPI READMEs with Hatch
 # URL: https://github.com/hynek/hatch-fancy-pypi-readme
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-build python3-hatchling
 
 name=python3-hatch-fancy-pypi-readme

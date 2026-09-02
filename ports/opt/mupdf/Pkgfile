@@ -1,6 +1,6 @@
 # Description: Lightweight PDF and XPS viewer
 # URL: https://www.mupdf.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glu harfbuzz libjpeg-turbo libXi
 # Optional: freeglut openjpeg2 jbig2dec gumbo-parser
 

@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kiconthemes knewstuff knotifications extra-cmake-modules qt6
 
 name=frameworkintegration

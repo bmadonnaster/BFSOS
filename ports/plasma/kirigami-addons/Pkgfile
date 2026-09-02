@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kde-frameworks-6 vulkan-loader qt6
 
 name=kirigami-addons

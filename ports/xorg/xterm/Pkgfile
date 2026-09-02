@@ -1,6 +1,6 @@
 # Description: X terminal emulator
 # URL: https://invisible-island.net/xterm/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: luit xorg-libs xorg-fonts
 
 name=xterm

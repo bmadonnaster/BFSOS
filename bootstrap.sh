@@ -2706,20 +2706,30 @@ export MAKEFLAGS=-j$(nproc)
 # live-host /usr/lib/ccache wrapper path into the bootstrap compiler chain.
 export BFS_CCACHE=no
 
-PKGMK_SOURCE_DIR=$sourcedir
+# Keep the Stage-1 source cache in the same package-namespaced layout used
+# by the installed BFSOS pkgmk configuration.  Later bootstrap stages bind
+# this same root at /var/cache/pkg/sources, so unchanged archives are reused
+# instead of being downloaded again merely because the cache layout changed.
+PKGMK_SOURCE_ROOT="$sourcedir"
+PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"
+mkdir -p "\$PKGMK_SOURCE_DIR" || exit 1
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
 
 . $PWD/files/pkgmk.bootstrap
 EOF
 
     if [ ! "$(PATH=$TOOLS/bin command -v pkgmk)" ]; then
-        if [ ! -f "$sourcedir/pkgutils-5.40.12.tar.xz" ]; then
-            curl -o "$sourcedir/pkgutils-5.40.12.tar.xz" \
-                https://crux.nu/files/pkgutils-5.40.12.tar.xz
+        # The first pkgutils build happens before pkgmk exists, so seed its
+        # source into the same package namespace normal pkgmk will use later.
+        mkdir -p "$sourcedir/pkgutils" || return 1
+        if [ ! -f "$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz" ]; then
+            curl --fail --location --retry 3 \
+                -o "$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz" \
+                https://crux.nu/files/pkgutils-5.40.12.tar.xz || return 1
         fi
 
         rm -rf /tmp/pkgutils-5.40.12
-        tar -xf "$sourcedir/pkgutils-5.40.12.tar.xz" -C /tmp
+        tar -xf "$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz" -C /tmp || return 1
 
         # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile.
         # Prefer a UTF-8 C locale when the live host provides one (GCC 16.2
@@ -3294,7 +3304,9 @@ if [ "\$BFS_CCACHE" = yes ] &&
     export PATH="/usr/lib/ccache:\$PATH"
 fi
 
-PKGMK_SOURCE_DIR="/$pkgmksrc"
+PKGMK_SOURCE_ROOT="/$pkgmksrc"
+PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"
+mkdir -p "\$PKGMK_SOURCE_DIR" || exit 1
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
 PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 
@@ -3314,6 +3326,9 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
+    "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
+    "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
+    "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
 PKGMK_DOWNLOAD_PROG="curl"
 PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
@@ -3416,9 +3431,26 @@ export MAKEFLAGS="-j \$JOBS"
 export BFS_CCACHE=no
 export CCACHE_DISABLE=1
 
-PKGMK_SOURCE_DIR="/$pkgmksrc"
+PKGMK_SOURCE_ROOT="/$pkgmksrc"
+PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"
+mkdir -p "\$PKGMK_SOURCE_DIR" || exit 1
 PKGMK_PACKAGE_DIR="/$pkgmkpkg"
 PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
+
+PKGMK_SOURCE_MIRRORS=()
+PKGMK_SOURCE_FLAT_FALLBACKS=(
+    "https://mirror.math.princeton.edu/pub/redcorelinux/amd64/distfiles"
+)
+PKGMK_SOURCE_FALLBACKS=(
+    "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
+    "https://www.x.org/releases/|https://www.x.org/archive/"
+    "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
+    "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
+    "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
+    "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
+)
+PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . /var/lib/pkgmk/extension
 EOF

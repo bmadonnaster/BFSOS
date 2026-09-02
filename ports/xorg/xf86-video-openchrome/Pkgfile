@@ -1,6 +1,6 @@
 # Description: Legacy X.Org driver for VIA/OpenChrome graphics
 # URL: https://www.freedesktop.org/wiki/Openchrome/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorg-server
 
 name=xf86-video-openchrome

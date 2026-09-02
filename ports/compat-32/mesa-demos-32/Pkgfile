@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Mesa 3D demos
 # URL: https://www.mesa3d.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glew-32 glu-32 libglvnd-32
 
 name=mesa-demos-32

@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: karchive kcolorscheme kcoreaddons kirigami extra-cmake-modules qt6
 
 name=ksvg

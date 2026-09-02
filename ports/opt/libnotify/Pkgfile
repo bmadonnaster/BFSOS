@@ -1,6 +1,6 @@
 # Description: Desktop notification library
 # URL: https://gitlab.gnome.org/GNOME/libnotify
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gdk-pixbuf
 # Optional: gtk4 gobject-introspection gi-docgen xmlto notification-daemon xfce4-notifyd lxqt-notificationd
 

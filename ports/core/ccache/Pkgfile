@@ -1,6 +1,6 @@
 # Description: A fast compiler cache
 # URL: https://ccache.dev/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fmt xxhash zstd
 # Optional: asciidoctor clang-ccache-bindings gcc-fortran-ccache-bindings hiredis mingw-ccache-bindings
 

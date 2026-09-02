@@ -1,6 +1,6 @@
 # Description: World timezone definitions, modern and historical
 # URL: https://pythonhosted.org/pytz/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-pytz

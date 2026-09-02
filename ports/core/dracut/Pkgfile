@@ -1,6 +1,6 @@
 # Description: Generates an initramfs image for booting Linux systems
 # URL: https://github.com/dracut-ng/dracut-ng
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bash cpio kmod util-linux
 # Optional: cryptsetup lvm2 mdadm
 

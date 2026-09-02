@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus glib gobject-introspection lcms2 polkit sqlite libgudev libgusb systemd vala
 
 name=colord

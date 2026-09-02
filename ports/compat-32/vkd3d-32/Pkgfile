@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Direct3D 12 to Vulkan translation library By WineHQ.
 # URL: https://github.com/d3d12/vkd3d
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: spirv-tools-32 vulkan-loader-32 xcb-util-keysyms-32 vkd3d
 
 name=vkd3d-32

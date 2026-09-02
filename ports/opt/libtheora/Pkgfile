@@ -1,6 +1,6 @@
 # Description: a free and open video compression format
 # URL: https://www.theora.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libogg
 # Optional: libvorbis sdl12-compat libpng doxygen texlive tl-unx bibtex transfig valgrind
 

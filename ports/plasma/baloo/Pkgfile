@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kfilemetadata kidletime lmdb milou extra-cmake-modules qt6
 
 name=baloo

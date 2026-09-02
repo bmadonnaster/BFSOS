@@ -1,6 +1,6 @@
 # Description: Collection of boot loaders for the Linux operating system
 # URL:
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  mtools
 
 name=syslinux

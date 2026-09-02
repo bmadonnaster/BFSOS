@@ -1,10 +1,10 @@
 # Description: Firefox binary
 # URL: http://www.mozilla.com
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 glib dbus libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXi libXrandr libXtst alsa-lib pulseaudio
 
 name=firefox-bin
-version=154.0
+version=155.0
 release=3
 source=(https://archive.mozilla.org/pub/firefox/releases/$version/linux-x86_64/en-US/firefox-$version.tar.xz \
 	policies.json firefox.desktop)

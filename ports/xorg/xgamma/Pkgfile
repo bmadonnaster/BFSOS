@@ -1,6 +1,6 @@
 # Description: Query or set X gamma correction
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXxf86vm
 
 name=xgamma

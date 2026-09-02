@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kirigami-addons kwallet libplasma modemmanager-qt networkmanager-qt qcoro qt6
 
 name=plasma-nm

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Lets users edit command lines as they are typed in
 # URL: https://tiswww.case.edu/php/chet/readline/rltop.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ncurses-32
 
 name=readline-32

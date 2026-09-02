@@ -1,6 +1,6 @@
 # Description: Filesystem snapshot management tool for Btrfs
 # URL: https://github.com/openSUSE/snapper
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: acl boost btrfs-progs dbus json-c libxml2 util-linux zlib
 # Optional: linux-pam
 

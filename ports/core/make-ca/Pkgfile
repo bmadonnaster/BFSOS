@@ -1,6 +1,6 @@
 # Description: Builds and maintains the system CA certificate trust store
 # URL: https://github.com/lfs-book/make-ca
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: p11-kit
 
 name=make-ca

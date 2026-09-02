@@ -1,6 +1,6 @@
 # Description: firewalling, NAT, and packet mangling for linux
 # URL: https://netfilter.org/projects/nftables/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: jansson libedit python3 libmnl libnftnl
 
 name=nftables

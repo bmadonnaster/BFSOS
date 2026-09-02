@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: corrosion kdeclarative kholidays kirigami-addons knewstuff krunner kunitconversion libplasma plasma5support purpose qt6 sonnet
 
 name=kdeplasma-addons

@@ -1,6 +1,6 @@
 # Description: The libaom package contains a reference version of the Alliance for Open Media video codec. This codec is a patent free alternative to H.265, and is starting to be used throughout the internet.
 # URL:         https://aomedia.googlesource.com/aom/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: yasm nasm
 # Optional: doxygen
 

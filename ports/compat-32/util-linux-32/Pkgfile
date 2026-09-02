@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Miscellaneous system utilities
 # URL: https://github.com/karelzak/util-linux
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bzip2-32 eudev-32 sqlite3-32 xz-32 zlib-32
 
 name=util-linux-32

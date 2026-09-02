@@ -1,6 +1,6 @@
 # Description: An open source JPEG 2000 codec.
 # URL: https://github.com/uclouvain/openjpeg
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: lcms2
 # Optional: Little CMS libpng libtiff doxygen
 

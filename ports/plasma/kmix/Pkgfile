@@ -1,6 +1,6 @@
 # Description: KDE audio volume and mixer application.
 # URL: https://kde.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib extra-cmake-modules kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kglobalaccel kdoctools ki18n knotifications kstatusnotifieritem kwidgetsaddons kwindowsystem kxmlgui libcanberra pulseaudio qt6 solid
 # Optional: libcanberra pulseaudio
 

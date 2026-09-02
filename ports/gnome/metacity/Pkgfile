@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: 
 # URL: https://gnome.org         
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: at-spi2-core cairo dconf gdk-pixbuf glib glibc gsettings-desktop-schemas gtk3 libcanberra libgtop libICE libSM libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXinerama libXpresent libXrandr libXrender libXres pango startup-notification zenity
 
 name=metacity

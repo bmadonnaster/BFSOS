@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: XML library version 2
 # URL: https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxml2 xz-32 zlib-32
 
 name=libxml2-32

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Lightweight Directory Access Protocol (LDAP) Toolkit
 # URL: https://www.openldap.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: openldap openssl-32
 
 name=openldap-32

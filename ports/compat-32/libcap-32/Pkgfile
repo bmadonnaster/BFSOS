@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: POSIX.1e capabilities library
 # URL: https://sites.google.com/site/fullycapable/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: attr-32
 
 name=libcap-32

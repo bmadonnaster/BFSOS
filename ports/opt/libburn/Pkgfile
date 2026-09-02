@@ -1,6 +1,6 @@
 # Description: libburn is a library for writing preformatted data onto optical media: CD, DVD and BD (Blu-Ray).
 # URL:         https://files.libburnia-project.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  doxygen
 
 name=libburn

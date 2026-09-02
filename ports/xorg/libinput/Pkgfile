@@ -1,6 +1,6 @@
 # Description: library that handles input devices for display servers
 # URL: https://www.freedesktop.org/wiki/Software/libinput/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: systemd mtdev libevdev
 # Optional: wayland-protocols
 

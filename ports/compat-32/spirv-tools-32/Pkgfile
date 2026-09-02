@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: API and commands for processing SPIR-V modules
 # URL: https://www.khronos.org/vulkan/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: spirv-tools
 
 name=spirv-tools-32

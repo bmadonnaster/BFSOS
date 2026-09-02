@@ -1,6 +1,6 @@
 # Description: The libqalculate package contains a library that provides functions for a multi-purpose calculator.
 # URL:         https://github.com/Qalculate/libqalculate/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  curl icu libxml2
 # Optional:	gnuplot	doxygen
 

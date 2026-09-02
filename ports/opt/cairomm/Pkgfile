@@ -1,6 +1,6 @@
 # Description: C++ wrapper for the cairo graphics library.
 # URL: https://cairographics.org/cairomm/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo libsigc++
 
 name=cairomm

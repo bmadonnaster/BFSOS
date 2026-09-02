@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: PulseAudio is a cross-platform, networked sound server
 # URL: https://www.freedesktop.org/wiki/Software/PulseAudio/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus-32 gdbm-32 glib-32 libcap-32 libsndfile-32 libtool-32 openssl-32 opus-32 orc-32 pulseaudio speexdsp-32
 # Optional: avahi-32 bluez-32 fftw-32 glib-32 sbc-32 gst-plugins-base-32 xorg-libice xorg-libsm-32 xorg-libxtst-32
 

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Free library for arbitrary precision arithmetic
 # URL: https://gmplib.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=libgmp-32
 version=6.3.0

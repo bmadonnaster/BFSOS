@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libnotify pulseaudio xfce4-panel libxfce4windowing keybinder-3.0 libcanberra pavucontrol
 
 name=xfce4-pulseaudio-plugin

@@ -1,6 +1,6 @@
 # Description: Print contents of X events
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xrandr
 
 name=xev

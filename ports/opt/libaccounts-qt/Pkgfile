@@ -1,6 +1,6 @@
 # Description: Qt 6 client library for accessing the online accounts database
 # URL: https://gitlab.com/accounts-sso/libaccounts-qt
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libaccounts-glib qt6
 
 name=libaccounts-qt

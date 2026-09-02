@@ -1,6 +1,6 @@
 # Description: PEP 517 build backend and core utilities for Poetry
 # URL: https://github.com/python-poetry/poetry-core
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-build python3-installer
 
 name=python3-poetry-core

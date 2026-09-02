@@ -1,6 +1,6 @@
 # Description: Cross-vendor public domain suffix database
 # URL: https://github.com/publicsuffix/list
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=publicsuffix-list
 version=20230812.1829.5e6ac3a

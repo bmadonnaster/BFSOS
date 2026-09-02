@@ -1,6 +1,6 @@
 # Description: An image loading library for GTK+
 # URL: https://wiki.gnome.org/Projects/GdkPixbuf
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gobject-introspection libpng libtiff shared-mime-info
 # Optional: docutils librsvg libtiff gobject-introspection gi-docgen libavif webp-pixbuf-loader
 name=gdk-pixbuf

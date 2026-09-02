@@ -1,6 +1,6 @@
 # Description: self-hosting compiler that translates Vala source code into C
 # URL: https://wiki.gnome.org/Projects/Vala
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib graphviz
 # Optional: dbus libxslt  help2man jing weasyprint
 

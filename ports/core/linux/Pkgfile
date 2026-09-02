@@ -1,11 +1,11 @@
 # Description: Linux kernel, sources and modules
 # URL: https://cdn.kernel.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bc bison cpio dracut elfutils flex linux-firmware openssl zstd
 # Optional: pahole
 
 name=linux
-version=7.2
+version=7.2.3
 release=2
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz

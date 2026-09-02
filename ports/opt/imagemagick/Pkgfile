@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorg-libs llvm cups curl ffmpeg fftw p7zip wget xdg-utils xterm jasper lcms2 libgxps libjpeg-turbo libjxl libpng libraw librsvg libtiff libwebp openjpeg2 pango
 
 name=imagemagick

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Library for manipulation of TIFF (Tag Image File Format) images
 # URL: http://www.libtiff.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libjpeg-turbo-32 libtiff zlib-32
 
 name=libtiff-32

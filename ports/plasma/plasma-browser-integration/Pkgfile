@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: plasma-workspace purpose qt6
 
 name=plasma-browser-integration

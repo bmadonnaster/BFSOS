@@ -1,6 +1,6 @@
 # Description: 80x86 assembler
 # URL: https://www.nasm.us/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Optional: asciidoc xmlto
 
 name=nasm

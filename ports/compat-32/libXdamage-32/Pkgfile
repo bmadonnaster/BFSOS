@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: X Damage extension client library
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXdamage libXfixes-32
 
 name=libXdamage-32

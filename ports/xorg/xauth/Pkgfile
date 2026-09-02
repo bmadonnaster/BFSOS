@@ -1,6 +1,6 @@
 # Description: X authority file utility
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libX11 libXau libXext libXmu
 
 name=xauth

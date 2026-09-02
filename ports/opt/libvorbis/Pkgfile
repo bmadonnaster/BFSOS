@@ -1,6 +1,6 @@
 # Description: Vorbis codec library
 # URL: https://www.xiph.org/vorbis/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libogg
 # Optional: doxygen texlive install-tl-unx
 name=libvorbis

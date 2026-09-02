@@ -1,6 +1,6 @@
 # Description: Standard X.Org applications plus BFSOS basic X test/session clients.
 # URL:         https://www.x.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libpng mesa xbitmaps xcb-util iceauth luit mkfontscale sessreg setxkbmap smproxy x11perf xauth xbacklight xcmsdb xcursorgen xdpyinfo xdriinfo xev xgamma xhost xinput xkbcomp xkbevd xkbutils xkill xlsatoms xlsclients xmessage xmodmap xpr xprop xrandr xrdb xrefresh xset xsetroot xvinfo xwd xwininfo xwud bdftopcf twm xclock xterm
 
 name=xorg-apps

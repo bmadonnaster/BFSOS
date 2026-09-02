@@ -1,6 +1,6 @@
 # Description: C parser and AST generator written in Python.
 # URL: https://github.com/eliben/pycparser
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-pycparser

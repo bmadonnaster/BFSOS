@@ -1,6 +1,6 @@
 # Description: The Cdrdao package contains CD recording utilities. These are useful for burning a CD in disk-at-once mode.
 # URL:         https://downloads.sourceforge.net/cdrdao/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  libao libvorbis libmad lame
 
 name=cdrdao

@@ -1,6 +1,6 @@
 # Description: Specifications of extended Wayland protocols
 # URL: https://wayland.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: wayland
 
 name=wayland-protocols

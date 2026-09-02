@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: X11 client-side library
 # URL: https://xcb.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libinput-32 libpthread-stubs-32 libxslt-32 libXau-32 libxcb libXdmcp-32
 
 name=libxcb-32

@@ -1,6 +1,6 @@
 # Description: A library that provides a Qt implementation of the DBusMenu spec
 # URL: https://launchpad.net/libdbusmenu-qt
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake doxygen qt5
 
 name=libdbusmenu-qt5

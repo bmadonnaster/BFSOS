@@ -1,6 +1,6 @@
 # Description: Networkmanager GUI client library
 # URL: https://gitlab.gnome.org/GNOME/libnma
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gcr gtk3 iso-codes networkmanager
 # Optional: gtk4 mobile-broadband-provider-info vala
 

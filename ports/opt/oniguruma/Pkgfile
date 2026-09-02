@@ -1,6 +1,6 @@
 # Description: Regular expressions library
 # URL: https://github.com/kkos/oniguruma
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=oniguruma
 version=6.9.9

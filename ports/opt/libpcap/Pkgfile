@@ -1,6 +1,6 @@
 # Description: libpcap provides functions for user-level packet capture, used in low-level network monitoring.
 # URL:          https://www.tcpdump.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional:	bluezlibnl libusb dag septel
 

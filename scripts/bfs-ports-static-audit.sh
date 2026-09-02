@@ -130,10 +130,10 @@ check_version() {
     [ "$got" = "$expected" ] || report "$file version is $got; expected $expected"
 }
 
-check_version ports/core/linux/Pkgfile 7.2
-check_version ports/core/linux-headers/Pkgfile 7.2
-check_version ports/core/linux-api-headers/Pkgfile 7.2
-check_version ports/core/linux-lts/Pkgfile 6.18.46
+check_version ports/core/linux/Pkgfile 7.2.3
+check_version ports/core/linux-headers/Pkgfile 7.2.3
+check_version ports/core/linux-api-headers/Pkgfile 7.2.3
+check_version ports/core/linux-lts/Pkgfile 6.18.49
 if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
     report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
 fi
@@ -166,14 +166,88 @@ for dep in xfce4-session xfce4-settings xfce4-panel xfdesktop xfwm4 xfce4-appfin
     grep -qw "$dep" <<<"$xfce_meta_deps" || report "xfce4-meta dependency metadata is missing $dep"
 done
 
-for pkg in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra emerald emerald-themes compiz-meta; do
+for pkg in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra compiz-plugins-experimental emerald emerald-themes compiz-meta; do
     [ -f "ports/compiz/$pkg/Pkgfile" ] || { report "Compiz Reloaded component missing: $pkg"; continue; }
     check_version "ports/compiz/$pkg/Pkgfile" 0.8.18
 done
 compiz_meta_deps=$(grep '^# Depends on:' ports/compiz/compiz-meta/Pkgfile 2>/dev/null || true)
-for dep in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra emerald emerald-themes; do
+for dep in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra compiz-plugins-experimental emerald emerald-themes fusion-icon; do
     grep -qw "$dep" <<<"$compiz_meta_deps" || report "compiz-meta dependency metadata is missing $dep"
 done
+
+check_version ports/compiz/fusion-icon/Pkgfile 0.2.4
+check_version ports/xorg/glew/Pkgfile 2.3.1
+
+# r223-r232 systemic package/desktop policy guards.
+grep -q '_bfs_collect_build_opts' ports/core/pkgutils/extension || report "pkgutils generic extension lacks array-safe build_opt collection"
+grep -q 'PKGMK_CMAKE_POLICY_VERSION_MINIMUM' ports/core/pkgutils/extension || report "pkgutils CMake policy compatibility default missing"
+grep -q '_bfs_meson_disable_supported_tests' ports/core/pkgutils/extension || report "pkgutils Meson supported-test default logic missing"
+grep -q '_bfs_configure_test_defaults' ports/core/pkgutils/extension || report "pkgutils Autotools supported-test default logic missing"
+! grep -q 'vte\.sh\|vte\.csh' ports/core/aaa_filesystem/Pkgfile || report "aaa_filesystem still owns VTE profile scripts"
+[ -f ports/opt/wireplumber/90-bfsos-audio.preset ] || report "BFSOS desktop-audio user preset missing"
+for unit in pipewire.socket pipewire-pulse.socket wireplumber.service; do
+    grep -q "^enable $unit$" ports/opt/wireplumber/90-bfsos-audio.preset || report "audio preset missing $unit"
+done
+[ -f ports/xfce/xfce4-panel/default.xml ] || report "Xfce default panel layout missing"
+for plugin in notification-plugin xfce4powermanager pulseaudio systray; do
+    grep -q "value=\"$plugin\"" ports/xfce/xfce4-panel/default.xml || report "Xfce default panel missing $plugin"
+done
+grep -q 'bfs_refresh_new_deps' ports/core/prt-get/Pkgfile || report "prt-get wrapper lacks newly-added dependency refresh"
+
+# Bootstrap and installed pkgmk must agree on the package-namespaced source-cache layout.
+grep -Fq 'PKGMK_SOURCE_ROOT="$sourcedir"' bootstrap.sh || report "Stage-1 bootstrap source-cache root is not explicit"
+grep -Fq 'PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"' bootstrap.sh || report "bootstrap generated pkgmk configs are not package-namespaced"
+grep -Fq '$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz' bootstrap.sh || report "initial pkgutils source is not seeded into its package namespace"
+for fallback in \
+    'https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/' \
+    'https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/'; do
+    grep -Fq "$fallback" ports/core/pkgutils/pkgmk.conf || report "installed pkgmk fallback missing $fallback"
+    grep -Fq "$fallback" bootstrap.sh || report "bootstrap pkgmk fallback missing $fallback"
+done
+
+# Firefox rapid/ESR channels are tracked independently; binary and source rapid ports must match.
+check_version ports/opt/firefox/Pkgfile 155.0
+check_version ports/opt/firefox-bin/Pkgfile 155.0
+check_version ports/opt/firefox-esr/Pkgfile 153.2.0esr
+
+# Current LXQt stable baseline (2026-04 suite plus later point releases).
+for spec in libfm-qt:2.4.0 liblxqt:2.4.0 libqtxdg:4.4.0 lxqt-about:2.4.0 lxqt-admin:2.4.0 \
+    lxqt-build-tools:2.4.0 lxqt-config:2.4.0 lxqt-globalkeys:2.4.0 lxqt-menu-data:2.4.0 \
+    lxqt-notificationd:2.4.0 lxqt-panel:2.4.1 lxqt-policykit:2.4.0 lxqt-powermanagement:2.4.0 \
+    lxqt-qtplugin:2.4.0 lxqt-runner:2.4.0 lxqt-session:2.4.0 lxqt-sudo:2.4.0 lxqt-themes:2.4.0 \
+    pcmanfm-qt:2.4.1 qterminal:2.4.0 qtermwidget:2.4.0 qtxdg-tools:4.4.0 xdg-desktop-portal-lxqt:1.4.0; do
+    pkg=${spec%%:*}; ver=${spec#*:}; check_version "ports/lxqt/$pkg/Pkgfile" "$ver"
+done
+# BLFS Chapter 38 LXQt Applications: keep the complete application set present.
+for pkg in lximage-qt lxqt-archiver lxqt-notificationd pavucontrol-qt qps qtermwidget qterminal screengrab; do
+    [ -f "ports/lxqt/$pkg/Pkgfile" ] || report "BLFS LXQt application missing: $pkg"
+done
+[ -f ports/lxqt/lxqt-meta/Pkgfile ] || report "LXQt desktop component missing: lxqt-meta"
+lxqt_meta_deps=$(grep '^# Depends on:' ports/lxqt/lxqt-meta/Pkgfile 2>/dev/null || true)
+for dep in lxqt-session lxqt-panel pcmanfm-qt lxqt-notificationd lxqt-wayland-session     lximage-qt lxqt-archiver pavucontrol-qt qps qtermwidget qterminal screengrab     xdg-desktop-portal-lxqt openbox obconf-qt breeze-icons desktop-file-utils     sddm pipewire wireplumber; do
+    grep -qw "$dep" <<<"$lxqt_meta_deps" || report "lxqt-meta dependency metadata is missing $dep"
+done
+# BLFS requires liblxqt for these two applications; keep the dependency explicit.
+for pkg in lxqt-archiver pavucontrol-qt; do
+    grep '^# Depends on:' "ports/lxqt/$pkg/Pkgfile" | grep -qw liblxqt || report "$pkg is missing required liblxqt dependency"
+done
+
+# Duplicate package identities across maintained collections are never silent.
+python3 - "$ROOT" <<'PY_DUP' || fail=1
+from pathlib import Path
+from collections import defaultdict
+import sys
+root=Path(sys.argv[1]); found=defaultdict(list)
+for p in root.glob('ports/*/*/Pkgfile'):
+    for line in p.read_text(errors='replace').splitlines():
+        if line.startswith('name='):
+            found[line.split('=',1)[1].strip()].append(p.relative_to(root)); break
+bad={k:v for k,v in found.items() if len(v)>1}
+if bad:
+    for name,paths in sorted(bad.items()):
+        print(f"AUDIT: duplicate package identity {name}: " + ', '.join(map(str,paths)), file=sys.stderr)
+    raise SystemExit(1)
+PY_DUP
 
 if grep -Rqs --include=Pkgfile -E 'launchpad\.net/compiz|version=0\.9\.|libwnck2|gtk2' ports/compiz; then
     grep -Rns --include=Pkgfile -E 'launchpad\.net/compiz|version=0\.9\.|libwnck2|gtk2' ports/compiz >&2 || true

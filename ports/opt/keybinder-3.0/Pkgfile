@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 glib gobject-introspection
 
 name=keybinder-3.0

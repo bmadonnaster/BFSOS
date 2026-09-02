@@ -1,6 +1,6 @@
 # Description: Libraries and utilities used for parsing XML files.
 # URL: https://gitlab.gnome.org/GNOME/libxml2
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=libxml2

@@ -1,6 +1,6 @@
 # Description: The libglade package contains libglade libraries. These are useful for loading Glade interface files in a program at runtime.
 # URL:         https://gnome.org/sources/libglade/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  libxml2 gtk
 # Optional: python gtk-doc
 

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: XCB utilities library
 # URL: https://xcb.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxcb-32 xcb-util-keysyms libXau-32
 
 name=xcb-util-keysyms-32

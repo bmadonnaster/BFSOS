@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: An essential exemplary set of plugins for gstreamer.
 # URL: https://gstreamer.freedesktop.org/modules/gst-plugins-base.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: graphene-32 gst-plugins-base gstreamer-32 libjpeg-turbo-32 libtheora-32 libvisual-32 orc-32 pango-32
 # Optional: cdparanoia-32
 

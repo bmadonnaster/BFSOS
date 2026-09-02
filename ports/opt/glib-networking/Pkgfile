@@ -1,6 +1,6 @@
 # Description: Network-related giomodules for glib
 # URL: https://git.gnome.org/browse/glib-networking/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gnutls gsettings-desktop-schemas
 # Optional : make-ca
 

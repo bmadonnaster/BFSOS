@@ -1,6 +1,6 @@
 # Description: An document type definitions for verification of XML data files against the DocBook rule set.
 # URL: https://docbook.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxml2 unzip
 
 name=docbook-xml

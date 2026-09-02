@@ -1,6 +1,6 @@
 # Description: XCB utilities library
 # URL: https://xcb.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxcb
 
 name=xcb-util-wm

@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Xfce applications meta package
 # URL: https://xfce.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: parole xfce4-terminal ristretto xfce4-dev-tools xfce4-notifyd xfce4-pulseaudio-plugin xfburn
 name=xfce4-apps-meta
 version=4.20.0

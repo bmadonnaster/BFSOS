@@ -1,6 +1,6 @@
 # Description: Programs for compressing and decompressing files
 # URL:         
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  
 
 name=bzip2

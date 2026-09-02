@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: C library for encoding, decoding and manipulating JSON data.
 # URL: http://www.digip.org/jansson/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: jansson
 
 name=jansson-32

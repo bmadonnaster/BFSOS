@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ffmpeg icu xorg-libs cairo docbook-xsl-nons fuse json-c kerberos libusb libxkbcommon wayland
 
 name=freerdp

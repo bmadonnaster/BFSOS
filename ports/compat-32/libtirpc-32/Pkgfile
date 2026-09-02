@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Transport Independent RPC library
 # URL: https://git.linux-nfs.org/?p=steved/libtirpc.git;a=summary
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libtirpc
 
 name=libtirpc-32

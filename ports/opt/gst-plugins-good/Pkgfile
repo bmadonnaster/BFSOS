@@ -1,6 +1,6 @@
 # Description: A set of good-quality plugins for gstreamer under the LGPL.
 # URL: https://gstreamer.freedesktop.org/modules/gst-plugins-good.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gst-plugins-base cairo flac gdk-pixbuf lame libsoup libsoup3 libvpx mpg123 nasm pulseaudio
 # Optional: aalib alsa-oss gtk3 libdv qt5 speex taglib valgrind v4l-utils wayland hotdoc jack libcaca libavc1394 libiec61883 libraw1394 libshout orc twolame wavpack
 

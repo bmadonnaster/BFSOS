@@ -1,6 +1,6 @@
 # Description: XML to PO and back again
 # URL: https://itstool.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: docbook-xml python3-lxml
 
 name=itstool

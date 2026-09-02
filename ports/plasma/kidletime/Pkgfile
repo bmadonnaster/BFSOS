@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: plasma-wayland-protocols qt6 extra-cmake-modules
 
 name=kidletime

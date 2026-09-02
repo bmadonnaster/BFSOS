@@ -1,6 +1,6 @@
 # Description: A script that automates pasting to a number of pastebin services
 # URL:         https://wgetpaste.zlin.dk/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  wget
 
 name=wgetpaste

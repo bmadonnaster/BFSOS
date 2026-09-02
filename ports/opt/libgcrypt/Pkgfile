@@ -1,6 +1,6 @@
 # Description: General-purpose cryptographic library used by GnuPG and other applications.
 # URL: https://www.gnupg.org/software/libgcrypt/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libgpg-error
 
 name=libgcrypt

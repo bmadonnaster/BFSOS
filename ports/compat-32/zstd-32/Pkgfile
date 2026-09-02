@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Real-time compression with high compression ratios.
 # URL: https://facebook.github.io/zstd/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: zlib-32 xz-32 zstd
 
 name=zstd-32

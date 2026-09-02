@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-markdown python3-packaging python3-pygments python3-typogrify
 
 name=python3-gi_docgen

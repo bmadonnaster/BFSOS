@@ -1,6 +1,6 @@
 # Description: KDE API documentation generation tools
 # URL: https://invent.kde.org/frameworks/kapidox
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: doxygen python3-doxypypy python3-doxyqml python3-requests extra-cmake-modules qt6
 
 name=kapidox

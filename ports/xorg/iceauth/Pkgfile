@@ -1,6 +1,6 @@
 # Description: ICE authority file utility
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libICE
 
 name=iceauth

@@ -1,6 +1,6 @@
 # Description: Services and protocols files for /etc
 # URL: https://www.iana.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=iana-etc
 version=20260805

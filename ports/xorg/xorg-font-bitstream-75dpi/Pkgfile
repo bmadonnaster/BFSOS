@@ -1,6 +1,6 @@
 # Description: xorg font font-bitstream-75dpi
 # URL: https//xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bdftopcf mkfontscale
 
 name=xorg-font-bitstream-75dpi

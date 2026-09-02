@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Widely used set of C/C++ libraries providing Unicode and Globalization support.
 # URL: https://icu.unicode.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: icu
 
 name=icu-32

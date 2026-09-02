@@ -1,6 +1,6 @@
 # Description: reimplementation of the SIL Graphite text processing engine.
 # URL: https://github.com/silnrsi/graphite
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: freetype cmake
 # Optional: asciidoc dblatex doxygen graphviz
 

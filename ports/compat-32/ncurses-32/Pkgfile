@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: A System V Release 4.0 curses emulation library
 # URL: https://invisible-island.net/ncurses/announce.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=ncurses-32
 version=6.5-20250531

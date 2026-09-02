@@ -1,6 +1,6 @@
 # Description: Create an index of scalable X font files
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: freetype libfontenc libX11
 
 name=mkfontscale

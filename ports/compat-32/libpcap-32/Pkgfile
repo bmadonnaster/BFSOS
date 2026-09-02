@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Packet capture library
 # URL: https://www.tcpdump.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libpcap libusb-32
 
 name=libpcap-32

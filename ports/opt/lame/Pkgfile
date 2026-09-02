@@ -1,6 +1,6 @@
 # Description: MP3 encoder
 # URL:         http://lame.sourceforge.net/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: dmalloc electric fence libsndfile nasm
 

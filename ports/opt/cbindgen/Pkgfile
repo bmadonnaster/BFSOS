@@ -1,6 +1,6 @@
 # Description: Generate C bindings from rust code
 # URL: https://github.com/eqrion/cbindgen
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: rustc
 # Optional: sccache
 

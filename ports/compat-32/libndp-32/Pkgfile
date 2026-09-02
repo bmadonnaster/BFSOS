@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Library for Neighbor Discovery Protocol
 # URL: http://libndp.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libndp
 
 name=libndp-32

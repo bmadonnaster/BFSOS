@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: xorg lib libICE
 # URL: https://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libice xorgproto-32 xtrans-32
 
 name=libice-32

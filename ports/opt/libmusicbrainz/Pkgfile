@@ -1,6 +1,6 @@
 # Description: The libmusicbrainz package contains a library which allows you to access the data held on the MusicBrainz server. This is useful for adding MusicBrainz lookup capabilities to other applications. MusicBrainz is a community music metadatabase that attempts to create a comprehensive music information site. You can use the MusicBrainz data either by browsing the web site, or you can access the data from a client program — for example, a CD player program can use MusicBrainz to identify CDs and provide information about the CD, about the artist or other related information.
 # URL:         http://ftp.musicbrainz.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  neon cmake libxml2
 # Optional: python doxygen
 

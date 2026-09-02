@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Secure Sockets Layer and Transport Layer Security tools
 # URL: https://www.openssl.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: zlib-32
 
 name=openssl-32

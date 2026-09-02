@@ -1,6 +1,6 @@
 # Description: Postscript interpreter
 # URL: https://www.ghostscript.com
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: fontconfig glib util-linux libXt libXext
 # Optional: cups fontconfig freetype lcms2 jbig2dec libjpeg-turbo libtiff openjpeg libpaper libpng cairo gtk+- libidn libwebp a graphical environment
 

@@ -1,6 +1,6 @@
 # Description: SOcket CAT - netcat-like utility with many enhancements
 # URL: http://www.dest-unreach.org/socat
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: openssl readline
 
 name=socat

@@ -1,6 +1,6 @@
 # Description: D-Bus GLib bindings
 # URL: https://freedesktop.org/wiki/Software/DBusBindings
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus glib
 # Optional: gtk-doc
 

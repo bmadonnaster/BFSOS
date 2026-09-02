@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: SDL, Simple DirectMedia Layer
 # URL: http://www.libsdl.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib-32 glib-32 libsdl mesa-32
 
 name=libsdl-32

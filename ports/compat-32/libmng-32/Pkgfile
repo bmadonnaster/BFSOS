@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: libmng - Mutliple Image Network Graphics 
 # URL: http://www.libmng.com
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: lcms2-32
 
 name=libmng-32

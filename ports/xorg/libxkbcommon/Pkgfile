@@ -1,6 +1,6 @@
 # Description: A library to handle keyboard descriptions.
 # URL: https://xkbcommon.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xkeyboard-config
 # Optional: libxcb wayland wayland-protocols doxygen
 

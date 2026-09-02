@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: qt6 extra-cmake-modules
 
 name=ktexttemplate

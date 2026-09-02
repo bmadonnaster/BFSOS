@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Userspace interface to kernel DRM services
 # URL: https://dri.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libdrm libpciaccess-32
 
 name=libdrm-32

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: The Oil Runtime Compiler.
 # URL: https://gstreamer.freedesktop.org/projects/orc.html
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: orc
 
 name=orc-32

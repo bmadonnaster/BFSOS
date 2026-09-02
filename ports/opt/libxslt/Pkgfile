@@ -1,6 +1,6 @@
 # Description: XSL Transformations library
 # URL: https://gitlab.gnome.org/GNOME/libxslt/-/wikis/home
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxml2 python3-setuptools
 # Optional: libgcrypt
 

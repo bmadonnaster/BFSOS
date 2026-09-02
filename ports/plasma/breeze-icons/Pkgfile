@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: extra-cmake-modules qt6 python3-lxml
 
 name=breeze-icons

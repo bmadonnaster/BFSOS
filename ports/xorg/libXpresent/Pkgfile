@@ -1,6 +1,6 @@
 # Description: Xlib-based library for the X Present Extension
 # URL: https://gitlab.freedesktop.org/xorg/lib/libxpresent
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXrandr libXrender libXfixes libXext libX11 libxcb libXau libXdmcp
 
 name=libXpresent

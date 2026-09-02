@@ -1,6 +1,6 @@
 # Description: Font package creation/installation utilities
 # URL: https://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=xorg-font-util
 version=1.4.1

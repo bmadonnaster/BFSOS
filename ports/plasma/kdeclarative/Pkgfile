@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kconfig kglobalaccel kguiaddons ki18n kwidgetsaddons extra-cmake-modules qt6
 
 name=kdeclarative

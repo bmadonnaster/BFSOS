@@ -1,6 +1,6 @@
 # Description: X Window System server
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxcvt pixman xorg-fonts xkeyboard-config libepoxy libtirpc libinput systemd xorg-apps
 
 name=xorg-server

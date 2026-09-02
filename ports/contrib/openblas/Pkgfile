@@ -1,6 +1,6 @@
 # Description: Optimized BLAS library
 # URL: https://www.openblas.net/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gcc-fortran
 
 name=openblas

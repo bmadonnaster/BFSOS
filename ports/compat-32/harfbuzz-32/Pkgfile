@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: An OpenType text shaping engine
 # URL: https://www.freedesktop.org/wiki/Software/HarfBuzz
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo-32 harfbuzz
 # Optional: icu-32
 

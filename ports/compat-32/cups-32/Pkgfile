@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: CUPS - Common UNIX Printing System
 # URL: https://www.cups.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: avahi-32 cups
 # Optional: dbus-32 gnutls-32
 

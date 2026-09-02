@@ -70,9 +70,51 @@ for dep in xfce4-session xfce4-settings xfce4-panel xfdesktop xfwm4 xfce4-appfin
 done
 [ -f ports/compiz/compiz-meta/Pkgfile ] || say_fail "compiz-meta package missing"
 compiz_deps="$(grep '^# Depends on:' ports/compiz/compiz-meta/Pkgfile 2>/dev/null || true)"
-for dep in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra emerald emerald-themes; do
+for dep in compiz compiz-bcop libcompizconfig compizconfig-python ccsm compiz-plugins-main compiz-plugins-extra compiz-plugins-experimental emerald emerald-themes fusion-icon; do
   grep -qw "$dep" <<<"$compiz_deps" || say_fail "compiz-meta missing $dep"
 done
+
+# Desktop activation/default layout and modern suite meta packages.
+[ -f ports/opt/wireplumber/90-bfsos-audio.preset ] || say_fail "desktop audio systemd user preset missing"
+for unit in pipewire.socket pipewire-pulse.socket wireplumber.service; do
+  grep -q "^enable $unit$" ports/opt/wireplumber/90-bfsos-audio.preset || say_fail "audio preset missing $unit"
+done
+for plugin in notification-plugin xfce4powermanager pulseaudio systray; do
+  grep -q "value=\"$plugin\"" ports/xfce/xfce4-panel/default.xml || say_fail "Xfce default panel missing $plugin"
+done
+[ -f ports/lxqt/lxqt-meta/Pkgfile ] || say_fail "lxqt-meta complete desktop package missing"
+lxqt_deps="$(grep '^# Depends on:' ports/lxqt/lxqt-meta/Pkgfile 2>/dev/null || true)"
+for dep in lxqt-session lxqt-panel pcmanfm-qt lxqt-notificationd lxqt-wayland-session   lximage-qt lxqt-archiver pavucontrol-qt qps qtermwidget qterminal screengrab   xdg-desktop-portal-lxqt openbox obconf-qt breeze-icons desktop-file-utils   sddm pipewire wireplumber; do
+  grep -qw "$dep" <<<"$lxqt_deps" || say_fail "lxqt-meta missing $dep"
+done
+# GNOME current BLFS chapter coverage and complete meta path.
+for f in \
+  ports/gnome/gweather-locations/Pkgfile \
+  ports/gnome/loupe/Pkgfile \
+  ports/gnome/showtime/Pkgfile \
+  ports/opt/glycin/Pkgfile \
+  ports/opt/blueprint-compiler/Pkgfile; do
+  [ -f "$f" ] || say_fail "GNOME/BLFS coverage missing $f"
+done
+
+grep -qw gweather-locations ports/gnome/libgweather/Pkgfile || say_fail "libgweather missing gweather-locations dependency"
+
+[ -f ports/gnome/gnome-apps-meta/Pkgfile ] || say_fail "gnome-apps-meta missing"
+gnome_apps_deps="$(grep '^# Depends on:' ports/gnome/gnome-apps-meta/Pkgfile 2>/dev/null || true)"
+for dep in baobab brasero evince evolution file-roller gnome-calculator gnome-color-manager   gnome-connections gnome-disk-utility gnome-logs gnome-maps gnome-nettool   gnome-power-manager gnome-system-monitor gnome-terminal gnome-weather gucharmap   loupe seahorse showtime snapshot; do
+  grep -qw "$dep" <<<"$gnome_apps_deps" || say_fail "gnome-apps-meta missing current BLFS app $dep"
+done
+! grep -qw eog <<<"$gnome_apps_deps" || say_fail "gnome-apps-meta still hard-depends on retired EOG"
+! grep -qw gnome-screenshot <<<"$gnome_apps_deps" || say_fail "gnome-apps-meta still hard-depends on legacy gnome-screenshot"
+
+[ -f ports/gnome/gnome-meta/Pkgfile ] || say_fail "gnome-meta complete desktop package missing"
+gnome_deps="$(grep '^# Depends on:' ports/gnome/gnome-meta/Pkgfile 2>/dev/null || true)"
+for dep in gdm gnome-session gnome-shell gnome-shell-extensions gnome-control-center   gnome-settings-daemon nautilus gnome-tweaks gnome-user-docs yelp dconf-editor   gnome-apps-meta xdg-desktop-portal-gnome pipewire wireplumber; do
+  grep -qw "$dep" <<<"$gnome_deps" || say_fail "gnome-meta missing $dep"
+done
+
+# New hard dependencies added to installed packages must be discovered before update/sysup.
+grep -q 'bfs_refresh_new_deps' ports/core/prt-get/Pkgfile || say_fail "prt-get missing new-dependency refresh"
 
 # Mainline/LTS MD policy must agree: core built in, personalities modular.
 for f in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile; do
@@ -110,6 +152,15 @@ for prefix in /opt/qt6 /opt/kf6 /opt/qt5; do
   grep -Fq "$prefix" ports/core/pkgutils/pkgmk.conf || say_fail "pkgmk build environment missing $prefix"
 done
 grep -Fq 'PKGMK_SOURCE_DIR="$PKGMK_SOURCE_ROOT/$name"' ports/core/pkgutils/pkgmk.conf || say_fail "source cache is not package-namespaced"
+grep -Fq 'PKGMK_SOURCE_ROOT="$sourcedir"' bootstrap.sh || say_fail "Stage-1 source-cache root does not reuse the authoritative source tree"
+grep -Fq 'PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"' bootstrap.sh || say_fail "bootstrap generated pkgmk source cache is not package-namespaced"
+grep -Fq '$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz' bootstrap.sh || say_fail "initial pkgutils archive is outside its package namespace"
+for fallback in \
+  'https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/' \
+  'https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/'; do
+  grep -Fq "$fallback" ports/core/pkgutils/pkgmk.conf || say_fail "installed pkgmk source fallback missing $fallback"
+  grep -Fq "$fallback" bootstrap.sh || say_fail "bootstrap source fallback missing $fallback"
+done
 
 # Sysup must bring package tooling current first.
 grep -q 'BFSOS sysup preflight' ports/core/prt-get/Pkgfile || say_fail "prt-get sysup pkgutils preflight missing"

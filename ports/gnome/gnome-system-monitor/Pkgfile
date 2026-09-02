@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: adwaita-icon-theme gtkmm itstool libgtop libadwaita librsvg
 
 name=gnome-system-monitor

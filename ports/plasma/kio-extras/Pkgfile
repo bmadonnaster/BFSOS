@@ -1,6 +1,6 @@
 # Description: Additional KIO workers and plugins for KDE resource and network access
 # URL: https://invent.kde.org/network/kio-extras
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: extra-cmake-modules kde-frameworks-6 kdsoap-ws-discovery-client libkexiv2 libproxy plasma-activities-stats qcoro qt6
 
 name=kio-extras

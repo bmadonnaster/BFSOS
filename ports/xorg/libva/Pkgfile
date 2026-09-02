@@ -1,6 +1,6 @@
 # Description: Video Acceleration API to enable hardware accelerated video decode/encode.
 # URL: https://github.com/intel/libva
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libdrm libglvnd libXfixes
 # Optional: wayland-protocols
 

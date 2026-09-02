@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Library for manipulating sound files.
 # URL: http://www.mega-nerd.com/libsndfile
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib-32 flac-32 libsndfile libvorbis-32
 
 name=libsndfile-32

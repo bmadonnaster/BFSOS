@@ -1,6 +1,7 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=prt-get
 version=5.19.9
-release=4
+release=5
 source=(http://crux.nu/files/prt-get-$version.tar.xz
 	prt-get.conf
 	prt-get.aliases
@@ -23,19 +24,89 @@ set -eu
 
 real=/usr/libexec/prt-get.real
 want_sysup=no
+want_update=no
 test_mode=no
+collect_update_targets=no
+update_targets=""
+
 for arg in "$@"; do
-    [ "$arg" = sysup ] && want_sysup=yes
-    case "$arg" in --test|-t) test_mode=yes ;; esac
+    case "$arg" in
+        --test|-t) test_mode=yes ;;
+        sysup) want_sysup=yes ;;
+        update)
+            want_update=yes
+            collect_update_targets=yes
+            continue
+            ;;
+    esac
+
+    if [ "$collect_update_targets" = yes ]; then
+        case "$arg" in
+            -*) ;;
+            *)
+                # Only retain real port names.  This avoids mistaking a value
+                # belonging to an update option for a package target.
+                if "$real" info "$arg" >/dev/null 2>&1; then
+                    update_targets="$update_targets $arg"
+                fi
+                ;;
+        esac
+    fi
 done
 
-if [ "$want_sysup" = yes ] && [ "$test_mode" = no ]; then
-    echo "BFSOS sysup preflight: updating package-management tooling first"
-    "$real" update pkgutils || {
-        status=$?
-        echo "BFSOS sysup preflight: pkgutils update failed (status $status); sysup aborted" >&2
-        exit "$status"
-    }
+bfs_missing_deps() {
+    [ "$#" -gt 0 ] || return 0
+
+    closure=$("$real" quickdep "$@" 2>/dev/null || true)
+    [ -n "$closure" ] || return 0
+
+    # CRUX documents this exact isinst/quickdep mechanism for discovering
+    # dependencies added after a package was originally installed.
+    # shellcheck disable=SC2086
+    "$real" isinst $closure 2>/dev/null | awk '/not installed/ {print $2}'
+}
+
+bfs_refresh_new_deps() {
+    label=$1
+    shift
+    [ "$#" -gt 0 ] || return 0
+
+    missing=$(bfs_missing_deps "$@")
+    [ -n "$missing" ] || return 0
+
+    echo "BFSOS dependency refresh ($label): newly required packages:"
+    printf '  %s\n' $missing
+
+    if [ "$test_mode" = yes ]; then
+        echo "BFSOS dependency refresh: test mode; dependencies were not installed"
+        return 0
+    fi
+
+    # depinst preserves normal prt-get recursion/alias behavior.  Only the
+    # missing closure is supplied, so already-installed dependencies are not
+    # rebuilt merely because an updated package gained a new hard dependency.
+    # shellcheck disable=SC2086
+    "$real" depinst $missing
+}
+
+if [ "$want_sysup" = yes ]; then
+    if [ "$test_mode" = no ]; then
+        echo "BFSOS sysup preflight: updating package-management tooling first"
+        "$real" update pkgutils || {
+            status=$?
+            echo "BFSOS sysup preflight: pkgutils update failed (status $status); sysup aborted" >&2
+            exit "$status"
+        }
+    fi
+
+    outdated=$("$real" quickdiff 2>/dev/null || true)
+    if [ -n "$outdated" ]; then
+        # shellcheck disable=SC2086
+        bfs_refresh_new_deps sysup $outdated
+    fi
+elif [ "$want_update" = yes ] && [ -n "$update_targets" ]; then
+    # shellcheck disable=SC2086
+    bfs_refresh_new_deps update $update_targets
 fi
 
 exec "$real" "$@"

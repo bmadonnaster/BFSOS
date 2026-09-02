@@ -1,6 +1,6 @@
 # Description: A built-package format for Python
 # URL: https://pypi.python.org/pypi/wheel
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-wheel

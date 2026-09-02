@@ -1,6 +1,6 @@
 # Description: Extremely fast non-cryptographic hash algorithm
 # URL: https://github.com/Cyan4973/xxHash
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=xxhash

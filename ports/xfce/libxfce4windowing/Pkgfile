@@ -1,5 +1,6 @@
 # Description: Xfce windowing abstraction library for X11 and Wayland
 # URL: https://docs.xfce.org/xfce/libxfce4windowing/start
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 libdisplay-info libwnck xfce4-dev-tools
 
 name=libxfce4windowing

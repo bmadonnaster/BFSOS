@@ -1,6 +1,6 @@
 # Description: embeddable Javascript engine, with a focus on portability and compact footprint
 # URL: https://duktape.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=duktape
 version=2.7.0

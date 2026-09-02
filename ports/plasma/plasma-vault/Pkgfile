@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kitemmodels libksysguard libplasma networkmanager-qt qt6
 
 name=plasma-vault

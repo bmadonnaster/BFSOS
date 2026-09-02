@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: CDDA extraction tool with jitter correction
 # URL:         https://xiph.org/paranoia/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cdparanoia
 
 name=cdparanoia-32

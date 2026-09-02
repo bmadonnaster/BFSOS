@@ -5,7 +5,7 @@
 # Optional: alsa-lib curl ffmpeg geoclue liboauth libproxy pciutils valgrind wget wireless-tools yasm
 
 name=firefox
-version=154.0
+version=155.0
 release=6
 source=(
     https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
@@ -18,7 +18,7 @@ pkg_build() {
         return 1
     fi
 
-    # Rust 1.98 added *-oe-linux-* targets. Firefox 154's Rust target detector
+    # Rust 1.98 added *-oe-linux-* targets. Older Firefox Rust target detection
     # can then fail to map config.guess's x86_64-pc-linux-gnu to Rust's generic
     # x86_64-unknown-linux-gnu target. Normalize the x86 vendor during the
     # final Rust target disambiguation. This is a targeted backport of the

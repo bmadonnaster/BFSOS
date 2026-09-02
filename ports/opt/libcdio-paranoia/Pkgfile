@@ -1,6 +1,6 @@
 # Description: CD paranoia libraries from libcdio
 # URL: https://github.com/rocky/libcdio-paranoia
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libcdio
 
 name=libcdio-paranoia

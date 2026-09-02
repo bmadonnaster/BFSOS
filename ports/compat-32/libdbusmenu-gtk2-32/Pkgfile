@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Library for passing menus over DBus - Common Files
 # URL: https://launchpad.net/libdbusmenu
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk-32 libdbusmenu-glib-32 libdbusmenu-gtk2 xorg-libxdamage-32
 
 name=libdbusmenu-gtk2-32

@@ -1,6 +1,6 @@
 # Description: KDE Framework for advanced plugin and service introspection
 # URL: https://invent.kde.org/frameworks/kservice
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kconfig kcoreaddons kdoctools extra-cmake-modules qt6
 
 name=kservice

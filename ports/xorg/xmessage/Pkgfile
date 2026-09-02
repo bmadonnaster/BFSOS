@@ -1,6 +1,6 @@
 # Description: x window sniper
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXaw
 
 name=xmessage

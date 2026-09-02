@@ -1,6 +1,6 @@
 # Description: Library for manipulating sound files
 # URL: https://libsndfile.github.io/libsndfile/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: flac libogg libvorbis opus alsa-lib lame mpg123
 # Optional: speex sqlite
 

@@ -1,6 +1,6 @@
 # Description: Utility for incremental file transfers over networks
 # URL: https://rsync.samba.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: acl openssl zlib zstd
 
 name=rsync

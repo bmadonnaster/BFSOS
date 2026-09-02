@@ -1,6 +1,6 @@
 # Description: gcc for mingw-w64 toolchain
 # URL: https://gcc.gnu.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: mingw-w64-binutils mingw-w64-headers mingw-w64-crt
 
 name=mingw-w64-gcc

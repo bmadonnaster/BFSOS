@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: NVIDIA Linux Display Driver (production branch)
 # URL: http://www.nvidia.com/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libglvnd-32
 
 name=nvidia-32

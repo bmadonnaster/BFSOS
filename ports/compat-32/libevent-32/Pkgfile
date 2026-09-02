@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Event notification library
 # URL: http://www.monkey.org/~provos/libevent/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: openssl-32 libevent
 
 name=libevent-32

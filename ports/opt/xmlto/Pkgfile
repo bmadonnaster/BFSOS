@@ -1,6 +1,6 @@
 # Description: Convert xml to many other formats.
 # URL: https://pagure.io/xmlto
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: docbook-xml docbook-xsl-nons libxslt
 
 name=xmlto

@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kcompletion kconfigwidgets qt6 sonnet extra-cmake-modules
 
 name=ktextwidgets

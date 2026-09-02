@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-editables python3-packaging python3-pathspec python3-pluggy python3-trove-classifiers python3-tomlkit
 
 name=python3-hatchling

@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # URL: http://gcc.gnu.org/fortran
 # Description: Fortran (f95) add-on for GNU GCC compiler.
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: mpfr
 
 name=gcc-fortran

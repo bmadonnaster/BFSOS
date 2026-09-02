@@ -1,6 +1,6 @@
 # Description: libnftnl is a userspace library providing a low-level netlink programming interface (API) to the in-kernel nf_tables subsystem
 # URL: https://netfilter.org/projects/libnftnl/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libmnl
 
 name=libnftnl

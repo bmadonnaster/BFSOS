@@ -1,6 +1,6 @@
 # Description: Linker from the LLVM project
 # URL: https://lld.llvm.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: llvm
 
 name=lld

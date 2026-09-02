@@ -1,6 +1,6 @@
 # Description: xorg lib libICE
 # URL: https://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorgproto xtrans
 
 name=libICE

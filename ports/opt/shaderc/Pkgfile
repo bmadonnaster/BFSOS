@@ -1,6 +1,6 @@
 # Description: A collection of tools, libraries and tests for shader compilation
 # URL: https://github.com/google/shaderc
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glslang
 # Optional: asciidoctor
 

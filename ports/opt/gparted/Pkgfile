@@ -1,6 +1,6 @@
 # Description: Gparted is the Gnome Partition Editor, a Gtk 3 GUI for other command line tools that can create, reorganise or delete disk partitions.
 # URL:        https://downloads.sourceforge.net/gparted/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  gtkmm3 parted glib itstool polkit
 
 

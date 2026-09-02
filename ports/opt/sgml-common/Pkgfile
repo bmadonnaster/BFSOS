@@ -1,6 +1,6 @@
 # Description: The SGML Common package contains install-catalog. This is useful for creating and maintaining centralized SGML catalogs.
 # URL:  https://sourceware.org/ftp/docbook-tools/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=sgml-common

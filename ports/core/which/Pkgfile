@@ -1,6 +1,6 @@
 # Description: A utility to show the full path of commands
 # URL:         https://savannah.gnu.org/projects/which
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  
 
 name=which

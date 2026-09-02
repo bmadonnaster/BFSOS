@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: A small and lightweight implementation of the XDG Sound Theme Specification
 # URL: http://0pointer.de/lennart/projects/libcanberra
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib-32 gtk-32 libcanberra libtool-32 libvorbis-32 libXdamage-32
 # Optional: pulseaudio-32
 

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: X11 toolkit intrinsics library
 # URL: https://xorg.freedesktop.org/wiki/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libSM-32 libX11-32 libXt
 
 name=libXt-32

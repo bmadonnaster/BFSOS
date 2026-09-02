@@ -1,6 +1,6 @@
 # Description: Root window parameter setting utility for X
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libXcursor libXmu xbitmaps
 
 name=xsetroot

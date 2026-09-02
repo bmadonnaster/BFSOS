@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Text based document generation.
 # URL: https://asciidoc.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: docbook-xsl-nons python3-build python3-installer
 
 name=asciidoc

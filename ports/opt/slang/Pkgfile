@@ -1,6 +1,6 @@
 # Description: S-Lang (slang) is an interpreted language that may be embedded into an application to make the application extensible. It provides facilities required by interactive applications such as display/screen management, keyboard input and keymaps.
 # URL:         https://www.jedsoft.org/releases/$name
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: libpng pcre oniguruma
 

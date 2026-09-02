@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: A thin layer of graphic data types
 # URL: https://ebassi.github.io/graphene/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib-32 graphene
 
 name=graphene-32

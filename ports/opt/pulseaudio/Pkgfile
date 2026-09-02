@@ -1,6 +1,6 @@
 # Description: PulseAudio is a cross-platform, networked sound server
 # URL: https://www.freedesktop.org/wiki/Software/PulseAudio/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libsndfile
 # Optional: avahi bluez5 doxygen fftw gtk3 libsamplerate sbc valgrind jack libasyncns lirc orc soxr tdb webrtc audioprocessing
 

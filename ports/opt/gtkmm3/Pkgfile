@@ -1,6 +1,6 @@
 # Description: A C++ wrapper for GTK3+
 # URL: https://www.gtkmm.org/en/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: atkmm cairomm gtk3 pangomm cairomm-1.0
 
 name=gtkmm3

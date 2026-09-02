@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libassuan libgcrypt libksba npth openldap gnutls pinentry
 
 name=gnupg

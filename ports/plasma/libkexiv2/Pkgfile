@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kde-frameworks-6 exiv2 qt6
 
 name=libkexiv2

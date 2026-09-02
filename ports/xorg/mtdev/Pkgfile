@@ -1,6 +1,6 @@
 # Description: Kernel multi-touch transformation library
 # URL: https://launchpad.net/mtdev
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=mtdev
 version=1.1.7

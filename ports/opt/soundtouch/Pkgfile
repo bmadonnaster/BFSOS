@@ -1,6 +1,6 @@
 # Description: Audio processing library for changing tempo, pitch and playback rates.
 # URL: https://codeberg.org/soundtouch/soundtouch
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=soundtouch

@@ -1,6 +1,6 @@
 # Description: Phonon is the multimedia API for KDE. It replaces the old aRts package. Phonon needs either the GStreamer or VLC backend.
 # URL:          https://kde.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  cmake extra-cmake-modules glib qt6 
 # Optional: pulseaudio
 

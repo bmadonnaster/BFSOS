@@ -1,6 +1,6 @@
 # Description: A set of python bindings for cairo.
 # URL: https://pypi.org/project/pycairo/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo
 
 name=python3-cairo

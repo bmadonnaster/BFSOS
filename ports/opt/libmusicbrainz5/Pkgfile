@@ -1,6 +1,6 @@
 # Description: The libmusicbrainz package contains a library which allows you to access the data held on the MusicBrainz server.
 # URL:          https://github.com/metabrainz/libmusicbrainz/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  cmake libxml2 neon doxygen
 # Optional:
 

@@ -1,6 +1,6 @@
 # Description: C++ interface for GLib, legacy glibmm-2.4 ABI.
 # URL: https://www.gtkmm.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib libsigc++2
 
 name=glibmm-2.4

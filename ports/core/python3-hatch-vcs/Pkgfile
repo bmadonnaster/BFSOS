@@ -1,6 +1,6 @@
 # Description: Hatch plugin for versioning with your preferred VCS
 # URL: https://github.com/ofek/hatch-vcs
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-hatchling
 
 name=python3-hatch-vcs

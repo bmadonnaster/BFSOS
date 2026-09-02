@@ -1,6 +1,6 @@
 # Description: Simple interface for userspace programs to export a virtual filesystem to the Linux kernel
 # URL:         https://github.com/libfuse/libfuse
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=fuse2

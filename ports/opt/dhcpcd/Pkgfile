@@ -1,6 +1,6 @@
 # Description: Implementation of the DHCP client specified in RFC2131
 # URL:
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 
 name=dhcpcd

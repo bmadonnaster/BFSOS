@@ -1,5 +1,6 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=linux-headers
-version=7.2
+version=7.2.3
 release=1
 source=(https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz)
 

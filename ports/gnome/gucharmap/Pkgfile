@@ -1,5 +1,4 @@
-# Add your top line text here
-# Your line to add at the top here
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: desktop-file-utils gsettings-desktop-schemas gtk3 itstool pcre unzip glib gobject-introspection
 
 name=gucharmap

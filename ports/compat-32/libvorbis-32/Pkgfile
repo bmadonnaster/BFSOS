@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Vorbis codec library
 # URL:         https://xiph.org/vorbis/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libogg-32 libvorbis
 
 name=libvorbis-32

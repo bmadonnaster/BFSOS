@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-pyproject_metadata patchelf
 
 name=python3-meson_python

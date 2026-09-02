@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kparts ktextwidgets syntax-highlighting extra-cmake-modules qt6
 
 name=ktexteditor

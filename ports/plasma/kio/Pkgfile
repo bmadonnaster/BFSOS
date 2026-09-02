@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kauth kbookmarks kcompletion kded kiconthemes kitemviews kjobwidgets qt6 solid extra-cmake-modules
 
 name=kio

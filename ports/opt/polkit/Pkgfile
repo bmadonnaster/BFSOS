@@ -1,6 +1,6 @@
 # Description: Application development toolkit for controlling system-wide privileges
 # URL: https://gitlab.freedesktop.org/polkit/polkit/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus duktape gobject-introspection intltool util-linux glib docbook-xml docbook-xsl-nons
 
 name=polkit

@@ -1,8 +1,6 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Display graphical dialog boxes from shell scripts.
 # URL: https://gitlab.gnome.org/GNOME/zenity
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libadwaita
 # Optional: help2man libnotify webkitgtk
 

@@ -1,6 +1,6 @@
 # Description: KDE optical-disc authoring, ripping, copying, and burning application.
 # URL: https://kde.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kde-frameworks-6 libkcddb libsamplerate shared-mime-info udisks libburn libdvdread taglib dvd+rw-tools cdrdao cdrtools qt6
 # Optional: ffmpeg flac lame libmad libsndfile libvorbis libmusicbrainz musepack libmpcdec
 

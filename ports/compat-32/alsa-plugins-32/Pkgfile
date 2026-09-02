@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: ALSA Plugins contains plugins for various audio libraries and sound servers.
 # URL: https://www.alsa-project.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib-32 alsa-plugins
 
 name=alsa-plugins-32

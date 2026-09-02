@@ -1,6 +1,6 @@
 # Description: GObject bindings for libudev
 # URL: https://wiki.gnome.org/Projects/libgudev
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib gobject-introspection
 # Optional: gtk-doc umockdev
 

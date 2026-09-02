@@ -1,6 +1,6 @@
 # Description: Utilities to access MS-DOS disks without mounting them
 # URL:         https://www.gnu.org/software/mtools/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=mtools
 version=4.0.49

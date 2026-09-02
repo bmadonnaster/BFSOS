@@ -1,6 +1,6 @@
 # Description: Gavl is short for Gmerlin Audio Video Library. It is a low level library that handles the details of audio and video formats like colorspaces, samplerates, multichannel configurations etc. It provides standardized definitions for those formats as well as container structures for carrying audio samples or video images inside an application.
 # URL:         https://downloads.sourceforge.net/gmerlin/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  libpng
 # Optional: doxygen
 

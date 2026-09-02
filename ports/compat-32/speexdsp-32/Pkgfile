@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: DSP library derived from speex
 # URL: https://www.speex.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: speexdsp
 
 name=speexdsp-32

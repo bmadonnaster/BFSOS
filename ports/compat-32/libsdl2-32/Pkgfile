@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: SDL version 2, Simple DirectMedia Layer
 # URL: https://www.libsdl.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libsdl2 mesa-32
 # Optional: alsa-lib-32 ibus-32 jack libxkbcommon-32 ninja pipewire pulseaudio wayland-protocols
 

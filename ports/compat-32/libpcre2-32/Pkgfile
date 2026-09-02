@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Perl Compatible Regular Expressions
 # URL: https://www.pcre.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libpcre2
 
 name=libpcre2-32

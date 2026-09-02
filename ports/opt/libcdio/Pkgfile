@@ -1,6 +1,6 @@
 # Description: A library for CD-ROM and CD image access.
 # URL: http://www.gnu.org/software/libcdio/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ncurses
 # Optional: libcddb
 

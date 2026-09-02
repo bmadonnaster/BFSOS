@@ -1,6 +1,6 @@
 # Description: Library used to retrieve audio CD metadata from the internet
 # URL: https://kde.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kde-frameworks-6 libmusicbrainz qt6
 
 name=libkcddb

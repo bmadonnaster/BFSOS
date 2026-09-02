@@ -1,6 +1,6 @@
 # Description: A lil' TOML parser
 # URL: https://github.com/hukkin/tomli
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-pip
 
 name=python3-tomli

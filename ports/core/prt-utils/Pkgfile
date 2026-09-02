@@ -1,6 +1,6 @@
 # Description: Collection of scripts for CRUX, mainly oriented towards package and port management
 # URL: https://git.crux.nu/tools/prt-utils
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: elfutils dialog
 
 name=prt-utils

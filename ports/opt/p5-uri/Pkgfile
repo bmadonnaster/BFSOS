@@ -1,6 +1,6 @@
 # Description:	Uniform Resource Identifiers (absolute and relative)
 # URL:		https://github.com/libwww-perl/URI
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:	perl
 # Optional:	p5-business-isbn
 

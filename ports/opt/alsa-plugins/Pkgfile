@@ -1,6 +1,6 @@
 # Description: The ALSA Plugins package contains plugins for various audio libraries and sound servers.
 # URL:          https://www.alsa-project.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  alsa-lib
 # Optional:   ffmpeg libsamplerate pulseaudio speex jack libavtp maemo
 

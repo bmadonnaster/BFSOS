@@ -1,6 +1,6 @@
 # Description: ini file parser
 # URL: https://github.com/ndevilla/iniparser
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: chrpath
 
 name=iniparser

@@ -1,6 +1,6 @@
 # Description: Run commands in an environment faking root privileges
 # URL: http://packages.debian.org/unstable/utils/fakeroot
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=fakeroot
 version=1.37.1.1

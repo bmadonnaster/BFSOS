@@ -1,6 +1,6 @@
 # Description: Free peer-reviewed portable C++ source libraries.
 # URL: https://www.boost.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bzip2 zstd
 # Optional: icu openmpi python3-numpy
 

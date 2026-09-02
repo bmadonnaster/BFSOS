@@ -1,6 +1,6 @@
 # Description: C runtime (crt) for mingw-w64 toolchain
 # URL: http://mingw-w64.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=mingw-w64-crt
 version=12.0.0

@@ -1,6 +1,6 @@
 # Description: Python 3 Module
 # URL:         https://files.pythonhosted.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  
 
 name=python3-webencodings

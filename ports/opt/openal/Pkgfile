@@ -1,6 +1,6 @@
 # Description: Cross-platform 3D audio
 # URL: https://github.com/kcat/openal-soft
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: alsa-lib
 # Optional: dbus ffmpeg fluidsynth libsdl2 libsndfile pipewire portaudio pulseaudio qt5
 

@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: An image loading library for GTK+
 # URL: https://www.gtk.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gdk-pixbuf glib-32 libpng-32 libtiff-32 libX11-32
 
 name=gdk-pixbuf-32

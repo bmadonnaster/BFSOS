@@ -1,6 +1,6 @@
 # Description: Evented I/O for V8 javascript.
 # URL: https://nodejs.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libnghttp2 libuv openssl zlib icu
 # Optional: brotli c-ares icu libnghttp3 libngtcp2 simdjson simdutf
 

@@ -1,6 +1,6 @@
 # Description: A callback framework for C++.
 # URL: https://libsigcplusplus.github.io/libsigcplusplus/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: mm-common
 
 name=libsigc++2

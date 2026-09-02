@@ -1,6 +1,6 @@
 # Description: Libraw is a library for reading RAW files obtained from digital photo cameras (CRW/CR2, NEF, RAF, DNG, and others).
 # URL:         https://www.libraw.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  libjpeg-turbo jasper lcms2
 
 name=libraw

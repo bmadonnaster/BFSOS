@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Sound sample rate conversion library
 # URL: https://libsndfile.github.io/libsamplerate/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake libsndfile-32
 
 name=libsamplerate-32

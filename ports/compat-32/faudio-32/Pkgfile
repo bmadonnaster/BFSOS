@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: XAudio2 reimplementation
 # URL: https://github.com/FNA-XNA/FAudio/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libsdl2-32 faudio
 
 name=faudio-32

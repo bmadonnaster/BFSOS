@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kconfigwidgets extra-cmake-modules qt6
 
 name=kbookmarks

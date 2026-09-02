@@ -1,6 +1,6 @@
 # Description: KDE Framework for processing and generating documentation
 # URL: https://invent.kde.org/frameworks/kdoctools
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: docbook-xsl-nons karchive ki18n p5-uri extra-cmake-modules qt6
 
 name=kdoctools

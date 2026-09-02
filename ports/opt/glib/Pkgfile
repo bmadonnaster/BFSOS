@@ -1,6 +1,6 @@
 # Description: Low-level data structure handling, portability wrappers, and interfaces for runtime functionality
 # URL: https://www.gtk.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-docutils libxslt pcre2
 
 

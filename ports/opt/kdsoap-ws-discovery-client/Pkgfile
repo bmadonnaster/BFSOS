@@ -1,6 +1,6 @@
 # Description: Qt 6 WS-Discovery client library based on KDSoap
 # URL: https://invent.kde.org/libraries/kdsoap-ws-discovery-client
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: extra-cmake-modules kdsoap qt6
 
 name=kdsoap-ws-discovery-client

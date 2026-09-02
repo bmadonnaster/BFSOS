@@ -1,6 +1,6 @@
 # Description: xorg font font-cursor-misc
 # URL: http://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bdftopcf mkfontscale
 
 name=xorg-font-cursor-misc

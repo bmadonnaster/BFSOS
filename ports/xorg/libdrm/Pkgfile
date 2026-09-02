@@ -1,6 +1,6 @@
 # Description: Userspace interface to kernel DRM services
 # URL: https://dri.freedesktop.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorg-libs valgrind
 # Optional:   cairo cmake docbook-xml docbook-xsl-nons docutils libxslt libatomic_ops valgrind cunit
 

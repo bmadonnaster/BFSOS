@@ -1,6 +1,6 @@
 # Description: ATI Radeon video driver for the Xorg X server
 # URL: https://www.x.org/wiki/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: xorg-server
 
 name=xf86-video-ati

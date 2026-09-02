@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kde-frameworks-6 plasma-activities libkexiv2 libtiff poppler qca phonon qt6
 
 name=okular

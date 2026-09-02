@@ -1,6 +1,6 @@
 # Description: A complete rewrite of the NASM assembler under the new BSD License
 # URL: https://www.tortall.net/projects/yasm/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Optional: python cython
 
 name=yasm

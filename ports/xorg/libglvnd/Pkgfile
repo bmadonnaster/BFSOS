@@ -1,5 +1,6 @@
 # Description: GL Vendor-Neutral Dispatch library
 # URL: https://github.com/NVIDIA/libglvnd
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: meson ninja libX11 libXext xorgproto
 
 name=libglvnd

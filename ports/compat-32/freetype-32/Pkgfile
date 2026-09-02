@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: A free and portable TrueType font rendering engine
 # URL: https://www.freetype.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: bzip2-32 freetype libpng-32
 
 name=freetype-32

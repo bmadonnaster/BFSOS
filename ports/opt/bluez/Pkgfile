@@ -1,6 +1,6 @@
 # Description:  The BlueZ package contains the Bluetooth protocol stack for Linux.
 # URL:         https://www.kernel.org/pub/linux/bluetooth/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  dbus glib libical
 # Optional:	docutils
 

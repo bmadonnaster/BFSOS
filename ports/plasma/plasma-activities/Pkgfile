@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: boost kconfig kcoreaddons qt6
 
 name=plasma-activities

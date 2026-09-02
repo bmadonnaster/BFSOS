@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: The OpenGL Extension Wrangler Library.
 # URL: https://glew.sourceforge.net/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glew mesa-32 libXi-32 libXmu-32
 
 name=glew-32

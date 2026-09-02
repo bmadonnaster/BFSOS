@@ -1,6 +1,6 @@
 # Description: A tool for installing and managing Python packages.
 # URL: https://pypi.python.org/pypi/pip/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-pip

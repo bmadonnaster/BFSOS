@@ -1,6 +1,6 @@
 # Description: xorg XKB keyboard description compiler
 # URL: https://xorg.freedesktop.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libxkbfile
 
 name=xkbcomp

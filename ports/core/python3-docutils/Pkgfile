@@ -1,6 +1,6 @@
 # Description: Docutils is an open-source text processing system for processing plaintext documentation into useful formats
 # URL: https://docutils.sourceforge.io/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-docutils

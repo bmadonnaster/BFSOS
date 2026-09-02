@@ -1,6 +1,6 @@
 # Description: Utilities and libraries for managing POSIX Access Control Lists.
 # URL: https://savannah.nongnu.org/projects/acl
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: attr
 
 name=acl

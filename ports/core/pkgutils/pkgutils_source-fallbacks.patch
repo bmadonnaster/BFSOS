@@ -15,7 +15,7 @@
 +	for REPO in "${PKGMK_SOURCE_FLAT_FALLBACKS[@]}"; do
 +		REPO="${REPO%/}"
 +		FALLBACK_URL="$REPO/$BASENAME"
-+		info "Trying flat source fallback '$FALLBACK_URL'."
++		info "Trying flat source fallback for '${name:-unknown}': '$FALLBACK_URL'."
 +		$PKGMK_DOWNLOAD_PROG $DOWNLOAD_OPTS $RESUME_OPTS "$FALLBACK_URL"
 +		error=$?
 +		[ $error -eq 0 ] && return 0
@@ -33,7 +33,7 @@
 +		case "$ORIGINAL_URL" in
 +			"$FROM"*)
 +				FALLBACK_URL="${TO}${ORIGINAL_URL#"$FROM"}"
-+				info "Trying path-preserving source fallback '$FALLBACK_URL'."
++				info "Trying path-preserving source fallback for '${name:-unknown}': '$FALLBACK_URL'."
 +				$PKGMK_DOWNLOAD_PROG $DOWNLOAD_OPTS $RESUME_OPTS "$FALLBACK_URL"
 +				error=$?
 +				[ $error -eq 0 ] && return 0
@@ -49,7 +49,7 @@
 +			case "$CATEGORY" in
 +				app|data|doc|driver|font|lib|proto|util|xcb|xserver)
 +					FALLBACK_URL="https://mirrors.slackware.com/slackware/slackware-current/source/x/x11/src/$CATEGORY/$BASENAME"
-+					info "Trying Slackware X.Org fallback '$FALLBACK_URL'."
++					info "Trying Slackware X.Org fallback for '${name:-unknown}': '$FALLBACK_URL'."
 +					$PKGMK_DOWNLOAD_PROG $DOWNLOAD_OPTS $RESUME_OPTS "$FALLBACK_URL"
 +					error=$?
 +					[ $error -eq 0 ] && return 0

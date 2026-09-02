@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: Kernel module utilities and library
 # URL: https://git.kernel.org/?p=utils/kernel/kmod/kmod.git
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kmod openssl-32 zstd-32
 
 name=kmod-32

@@ -1,3 +1,4 @@
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: kiconthemes kirigami sonnet extra-cmake-modules qt6
 
 name=qqc2-desktop-style

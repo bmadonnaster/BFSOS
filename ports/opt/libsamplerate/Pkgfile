@@ -1,6 +1,6 @@
 # Description: libsamplerate is a sample rate converter for audio.
 # URL:         https://github.com/libsndfile/$name/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 # Optional: alsa-lib libsndfile fftw
 

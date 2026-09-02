@@ -2,7 +2,7 @@
 # Your line to add at the top here
 # Description: An abstraction library that comes between applications and audio visualisation plugins.
 # URL: http://libvisual.org/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: autoconf-archive libsdl-32 libvisual
 
 name=libvisual-32

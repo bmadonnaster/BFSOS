@@ -1,6 +1,6 @@
 # Description: The JasPer Project is an open-source initiative to provide a free software-based reference implementation of the JPEG-2000 codec.
 # URL:          https://github.com/jasper-software/jasper/
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:  cmake libjpeg-turbo
 
 name=jasper
