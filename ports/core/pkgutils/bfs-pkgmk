@@ -66,9 +66,23 @@ package_glob="${pkg_name}#${pkg_version}-${pkg_release}.pkg.tar.*"
 # failure cleanup is not tied to BFSOS's default cache path.  Keep the default
 # as a fallback for early/bootstrap environments.
 package_dir="${PKGMK_PACKAGE_DIR:-}"
+
 if [ -z "$package_dir" ] && [ -r /etc/pkgmk.conf ]; then
-    package_dir="$(sed -n 's|^[[:space:]]*PKGMK_PACKAGE_DIR=["'"']\{0,1\}\([^"'"']*\)["'"']\{0,1\}[[:space:]]*$||p' /etc/pkgmk.conf | tail -n1 || true)"
+    package_dir="$(
+        awk -F= '
+            /^[[:space:]]*PKGMK_PACKAGE_DIR[[:space:]]*=/ {
+                value = substr($0, index($0, "=") + 1)
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+
+                if ((value ~ /^".*"$/) || (value ~ /^\047.*\047$/))
+                    value = substr(value, 2, length(value) - 2)
+
+                print value
+            }
+        ' /etc/pkgmk.conf | tail -n1
+    )"
 fi
+
 [ -n "$package_dir" ] || package_dir=/var/cache/pkg/packages
 
 cleanup_failed_archives() {
