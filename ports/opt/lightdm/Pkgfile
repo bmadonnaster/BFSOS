@@ -6,13 +6,22 @@
 
 name=lightdm
 version=1.33.1
-release=1
+release=2
 
 source=(
-    https://github.com/ubuntu/lightdm/releases/download/$version/lightdm-$version.tar.gz
+    https://github.com/ubuntu/lightdm/archive/$version/$name-$version.tar.gz
 )
 
 pkg_build() {
+    # GitHub tag archives do not contain a generated configure script.
+    # Current upstream/BLFS also removes obsolete Yelp help generation.
+    sed -i '/YELP_HELP/d' \
+        configure.ac \
+        help/Makefile.am \
+        || return 1
+
+    autoreconf -fiv || return 1
+
     ./configure \
         --prefix=/usr \
         --libexecdir=/usr/lib/lightdm \
@@ -23,14 +32,12 @@ pkg_build() {
         --disable-tests \
         --with-greeter-user=lightdm \
         --with-greeter-session=lightdm-gtk-greeter \
-        --docdir=/usr/share/doc/lightdm-$version \
         || return 1
 
     make -j"${JOBS:-1}" || return 1
     make DESTDIR="$PKG" install || return 1
 
-    # Session wrapper. Using a login shell ensures the normal BFSOS
-    # profile/environment is available inside graphical sessions.
+    # Ensure graphical sessions use the normal BFSOS login environment.
     install -Dm755 \
         tests/src/lightdm-session \
         "$PKG/usr/bin/lightdm-session" \
@@ -40,10 +47,11 @@ pkg_build() {
         "$PKG/usr/bin/lightdm-session" \
         || return 1
 
-    # Remove obsolete Upstart integration if upstream installs it.
+    # Remove obsolete Upstart integration.
     rm -rf "$PKG/etc/init"
 
-    # Runtime directories.
+    # Runtime directories. Ownership is applied by post-install after
+    # the lightdm service account exists.
     install -d \
         "$PKG/var/lib/lightdm" \
         "$PKG/var/lib/lightdm-data" \
@@ -51,10 +59,9 @@ pkg_build() {
         "$PKG/var/log/lightdm" \
         || return 1
 
-    # BFSOS systemd unit.
-    install -d "$PKG/usr/lib/systemd/system" || return 1
-
-    cat > "$PKG/usr/lib/systemd/system/lightdm.service" <<'UNIT'
+    # BFSOS systemd service.
+    install -Dm644 /dev/stdin \
+        "$PKG/usr/lib/systemd/system/lightdm.service" <<'UNIT'
 [Unit]
 Description=Light Display Manager
 Documentation=man:lightdm(1)
