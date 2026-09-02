@@ -10,7 +10,7 @@ release=1
 
 source=(
     https://download.qt.io/archive/qt/5.15/$version/submodules/qtwebengine-everywhere-opensource-src-$version.tar.xz
-    https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-7.debian.tar.xz
+    https://deb.debian.org/debian/pool/main/q/qtwebengine-opensource-src/qtwebengine-opensource-src_5.15.19+dfsg2-6.debian.tar.xz
 )
 
 renames=(
