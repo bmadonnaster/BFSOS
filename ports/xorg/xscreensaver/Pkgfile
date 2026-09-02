@@ -5,13 +5,13 @@
 
 name=xscreensaver
 version=6.15
-release=6
+release=7
 source=(https://ftp.ludd.ltu.se/pub/blfs/conglomeration/xscreensaver/${name}-${version}.tar.gz)
 
 pkg_build() {
     ./configure --prefix=/usr --with-systemd || return 1
     make -j"${JOBS:-1}" || return 1
-    make install_prefix="$PKG" install || return 1
+    make DESTDIR="$PKG" install || return 1
 
     chmod 755 "$PKG/usr/bin/xscreensaver" || return 1
     install -d "$PKG/usr/share/backgrounds" || return 1
