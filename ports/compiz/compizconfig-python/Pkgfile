@@ -1,7 +1,7 @@
 # Description: Python 3 bindings for CompizConfig
 # URL: https://gitlab.com/compiz/compizconfig-python
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: compiz libcompizconfig cython3 glib libSM libXdamage libXrandr python3
+# Depends on: compiz libcompizconfig python3-cython glib libSM libXdamage libXrandr python3
 
 name=compizconfig-python
 version=0.8.18
