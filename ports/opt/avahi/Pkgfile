@@ -6,28 +6,27 @@
 
 name=avahi
 version=0.9-rc5
-release=1
+release=2
+
 source=(
-    https://github.com/avahi/avahi/archive/v$version/avahi-$version.tar.gz
-    https://www.linuxfromscratch.org/patches/blfs/svn/avahi-$version-ipv6_race_condition_fix-1.patch
+  https://github.com/avahi/avahi/archive/v$version/avahi-$version.tar.gz
+  https://www.linuxfromscratch.org/patches/blfs/svn/avahi-$version-ipv6_race_condition_fix-1.patch
+)
+
+build_opt=(
+  --disable-static
+  --disable-libevent
+  --disable-mono
+  --disable-monodoc
+  --disable-python
+  --disable-qt3
+  --disable-qt4
+  --disable-qt5
+  --enable-core-docs
+  --disable-manpages
+  --with-distro=none
 )
 
 pre_build() {
-    # GitHub tag archives do not carry a pre-generated configure script.
-    autoreconf -fiv || return 1
+  autoreconf -fiv
 }
-
-build_opt="    --prefix=/usr
-    --sysconfdir=/etc
-    --localstatedir=/var
-    --disable-static
-    --disable-libevent
-    --disable-mono
-    --disable-monodoc
-    --disable-python
-    --disable-qt3
-    --disable-qt4
-    --disable-qt5
-    --enable-core-docs
-    --with-distro=none
-    --with-dbus-system-address='unix:path=/run/dbus/system_bus_socket'"
