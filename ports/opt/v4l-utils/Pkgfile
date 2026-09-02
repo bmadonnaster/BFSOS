@@ -1,21 +1,81 @@
-# Description: v4l-utils provides a series of utilities for media devices, allowing to handle the proprietary formats available at most webcams (libv4l), and providing tools to test V4L devices.
-# URL:          https://www.linuxtv.org
-# Maintainer: Brian Madonna email bmadonnaster@gmail.com
-# Depends on:  llvm alsa-lib glu libjpeg-turbo qt5
-# Optional: doxygen sdl2
+# Description: Video4Linux utilities and libraries for media devices
+# URL: https://www.linuxtv.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: alsa-lib libjpeg-turbo
+# Optional: qt6 qt5 glu llvm doxygen sdl2
 
 name=v4l-utils
 version=1.32.0
-release=3
-source=(https://www.linuxtv.org/downloads/$name/$name-$version.tar.xz)
-pkg_build() {
-mkdir build &&
-cd    build &&
+release=4
 
-meson setup --prefix=/usr          \
-            -Ddoxygen-doc=disabled \
-            -Dgconv=disabled       \
-            --buildtype=release    .. &&
-ninja
-DESTDIR=$PKG ninja install
+source=(
+    https://www.linuxtv.org/downloads/$name/$name-$version.tar.xz
+)
+
+build_opt=(
+    -Ddoxygen-doc=disabled
+    -Dgconv=disabled
+)
+
+pre_build() {
+    #
+    # qv4l2 and qvidcap are optional graphical utilities.
+    #
+    # Prefer Qt6 when its required compatibility modules are
+    # available. Upstream falls back to Qt5 otherwise.
+    #
+
+    if prt-get isinst qt6 >/dev/null 2>&1 &&
+       pkg-config --exists \
+           Qt6Core \
+           Qt6Gui \
+           Qt6Widgets \
+           Qt6Core5Compat
+    then
+        echo "v4l-utils: enabling Qt6 qv4l2 support"
+
+        build_opt+=( -Dqv4l2=enabled )
+
+        if pkg-config --exists \
+            Qt6OpenGL \
+            Qt6OpenGLWidgets \
+            gl
+        then
+            echo "v4l-utils: enabling Qt6 qvidcap support"
+            build_opt+=( -Dqvidcap=enabled )
+        else
+            echo "v4l-utils: Qt6 OpenGL support incomplete; disabling qvidcap"
+            build_opt+=( -Dqvidcap=disabled )
+        fi
+
+    elif prt-get isinst qt5 >/dev/null 2>&1 &&
+         pkg-config --exists \
+             Qt5Core \
+             Qt5Gui \
+             Qt5Widgets
+    then
+        echo "v4l-utils: enabling Qt5 qv4l2 support"
+
+        build_opt+=( -Dqv4l2=enabled )
+
+        if pkg-config --exists \
+            Qt5OpenGL \
+            gl
+        then
+            echo "v4l-utils: enabling Qt5 qvidcap support"
+            build_opt+=( -Dqvidcap=enabled )
+        else
+            echo "v4l-utils: Qt5 OpenGL support incomplete; disabling qvidcap"
+            build_opt+=( -Dqvidcap=disabled )
+        fi
+
+    else
+        echo "v4l-utils: no suitable Qt installation found"
+        echo "v4l-utils: disabling optional qv4l2 and qvidcap GUI tools"
+
+        build_opt+=(
+            -Dqv4l2=disabled
+            -Dqvidcap=disabled
+        )
+    fi
 }
