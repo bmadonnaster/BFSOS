@@ -5,7 +5,7 @@
 
 name=cairomm-1.0
 version=1.14.6
-release=2
+release=3
 source=(https://cairographics.org/releases/cairomm-$version.tar.xz)
 
 pkg_build() {
