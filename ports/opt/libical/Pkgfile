@@ -6,7 +6,7 @@
 
 name=libical
 version=4.0.5
-release=2
+release=3
 
 source=(
   https://github.com/$name/$name/releases/download/v$version/$name-$version.tar.gz
@@ -19,6 +19,7 @@ build_opt=(
   -DLIBICAL_BUILD_DOCS=false
   -DLIBICAL_GOBJECT_INTROSPECTION=true
   -DLIBICAL_GLIB_VAPI=true
+  -DLIBICAL_JAVA_BINDINGS=OFF
 )
 
 pkg_build() {
