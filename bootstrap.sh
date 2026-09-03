@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r67 - Stage-3 GLib introspection ordering + r66 Stage-2 Meson dependency ordering
+# BFSOS bootstrap r68 - Stage-3 installed gobject-introspection handling + r67 GLib introspection ordering
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -3499,22 +3499,31 @@ EOF
             echo "WARNING: development integrity bypass active:$integrity_opts"
         fi
 
-        chroot "$LFS" \
+        if chroot "$LFS" \
             env -i \
             HOME=/root \
-            TERM="${TERM:-dumb}" \
-            LANG=C \
-            LC_ALL=C \
-            LANGUAGE=C \
-            PATH="$STAGE_BUILD_PATH" \
-            CCACHE_DIR=/var/cache/ccache \
-            prt-get depinst $integrity_opts gobject-introspection \
-            || {
-                status=$?
-                _close_active_package_log "$status"
-                umountfs
-                return "$status"
-            }
+            PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+            /bin/sh -c 'pkginfo -i | awk '"'"'{print $1}'"'"' | grep -qx gobject-introspection'
+        then
+            echo "Stage 3: gobject-introspection is already installed; continuing."
+        else
+            chroot "$LFS" \
+                env -i \
+                HOME=/root \
+                TERM="${TERM:-dumb}" \
+                LANG=C \
+                LC_ALL=C \
+                LANGUAGE=C \
+                PATH="$STAGE_BUILD_PATH" \
+                CCACHE_DIR=/var/cache/ccache \
+                prt-get depinst $integrity_opts gobject-introspection \
+                || {
+                    status=$?
+                    _close_active_package_log "$status"
+                    umountfs
+                    return "$status"
+                }
+        fi
 
         _close_active_package_log 0
     fi
