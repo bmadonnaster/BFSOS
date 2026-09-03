@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r66 - Stage-2 Meson dependency ordering + r65 preflight hardening
+# BFSOS bootstrap r67 - Stage-3 GLib introspection ordering + r66 Stage-2 Meson dependency ordering
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -3484,6 +3484,41 @@ EOF
 
     mountfs
 
+    # Stage 3 must have gobject-introspection installed before GLib is rebuilt.
+    # Otherwise the early Stage-3 GLib rebuild does not generate the GLib/GObject/Gio
+    # GIR files and the later systemd dependency refresh can pull in polkit before
+    # Gio-2.0.gir exists.  Stage 2 is intentionally left unchanged.
+    if [ "${1:-}" = rebuild ]; then
+        _start_package_log base "gobject-introspection-bootstrap"
+
+        integrity_opts=""
+        [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
+        [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
+        [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
+        if [ -n "$integrity_opts" ]; then
+            echo "WARNING: development integrity bypass active:$integrity_opts"
+        fi
+
+        chroot "$LFS" \
+            env -i \
+            HOME=/root \
+            TERM="${TERM:-dumb}" \
+            LANG=C \
+            LC_ALL=C \
+            LANGUAGE=C \
+            PATH="$STAGE_BUILD_PATH" \
+            CCACHE_DIR=/var/cache/ccache \
+            prt-get depinst $integrity_opts gobject-introspection \
+            || {
+                status=$?
+                _close_active_package_log "$status"
+                umountfs
+                return "$status"
+            }
+
+        _close_active_package_log 0
+    fi
+
     for i in $basepkg; do
         if [ "${1:-}" != rebuild ]; then
             pkginfo -i -r "$LFS" |
@@ -3742,6 +3777,29 @@ EOF
                     umountfs
                     return "$status"
                 }
+
+            if [ "$i" = glib ]; then
+                echo "Stage 3: verifying GLib introspection data required by polkit..."
+                chroot "$LFS" \
+                    env -i \
+                    HOME=/root \
+                    PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                    /bin/sh -c '
+                        for gir in GLib-2.0 GObject-2.0 Gio-2.0; do
+                            if [ ! -s "/usr/share/gir-1.0/${gir}.gir" ]; then
+                                echo "ERROR: required GLib introspection file is missing or empty: ${gir}.gir" >&2
+                                exit 1
+                            fi
+                        done
+                    ' \
+                    || {
+                        status=$?
+                        _close_active_package_log "$status"
+                        umountfs
+                        return "$status"
+                    }
+                echo "Stage 3: GLib introspection data verified."
+            fi
 
             _close_active_package_log 0
         fi
