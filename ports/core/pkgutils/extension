@@ -48,7 +48,7 @@ if [ ! "$(command -v build)" ]; then
 				# separates arguments.  Arrays are preferred when an option itself
 				# needs embedded whitespace.
 				if [ -n "${build_opt:-}" ]; then
-					read -r -a _bfs_build_opts <<< "$build_opt"
+					read -r -a _bfs_build_opts <<< "${build_opt//$'\n'/ }"
 				fi
 				;;
 		esac

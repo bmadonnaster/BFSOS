@@ -180,6 +180,7 @@ check_version ports/xorg/glew/Pkgfile 2.3.1
 
 # r223-r232 systemic package/desktop policy guards.
 grep -q '_bfs_collect_build_opts' ports/core/pkgutils/extension || report "pkgutils generic extension lacks array-safe build_opt collection"
+grep -Fq "\${build_opt//\$'\\n'/ }" ports/core/pkgutils/extension || report "pkgutils generic extension lacks multiline scalar build_opt normalization"
 grep -q 'PKGMK_CMAKE_POLICY_VERSION_MINIMUM' ports/core/pkgutils/extension || report "pkgutils CMake policy compatibility default missing"
 grep -q '_bfs_meson_disable_supported_tests' ports/core/pkgutils/extension || report "pkgutils Meson supported-test default logic missing"
 grep -q '_bfs_configure_test_defaults' ports/core/pkgutils/extension || report "pkgutils Autotools supported-test default logic missing"
