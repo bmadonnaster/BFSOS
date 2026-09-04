@@ -4,7 +4,7 @@
 name=imagemagick
 version=7.1.2-30
 release=1
-source=(https://download.imagemagick.org/archive/ImageMagick-${version}.tar.xz)
+source=(https://download.imagemagick.org/releases/ImageMagick-${version}.tar.xz)
 
 build_opt="--prefix=/usr
             --sysconfdir=/etc
