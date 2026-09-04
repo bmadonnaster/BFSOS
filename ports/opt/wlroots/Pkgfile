@@ -1,11 +1,11 @@
 # Description: Modular Wayland compositor library
 # URL: https://gitlab.freedesktop.org/wlroots/wlroots
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: meson wayland wayland-protocols libdrm libxkbcommon pixman libinput seatd systemd mesa libdisplay-info hwdata
+# Depends on: meson wayland wayland-protocols libdrm libxkbcommon pixman libinput seatd systemd mesa libdisplay-info hwdata libliftoff
 
 name=wlroots
 version=0.20.2
-release=1
+release=2
 source=(https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/${version}/downloads/${name}-${version}.tar.gz)
 
 pkg_build() {
@@ -17,7 +17,7 @@ pkg_build() {
         -Dbackends=drm,libinput \
         -Drenderers=gles2 \
         -Dsession=enabled \
-        -Dlibliftoff=disabled \
+        -Dlibliftoff=enabled \
         -Dxwayland=disabled || return 1
 
     meson compile -C build || return 1
