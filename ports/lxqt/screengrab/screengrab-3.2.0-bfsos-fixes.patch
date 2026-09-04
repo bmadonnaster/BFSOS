@@ -9,12 +9,3 @@
 
  if (DEV_VERSION)
      set(VERSION "${SCREENGRAB_VERSION}-dev (${DEV_VERSION})")
-@@ -209,7 +209,7 @@
-
- # Link with Network. See pull#86. TODO: Should be optional when upload module is needed.
- target_link_libraries(screengrab qkeysequencewidget Qt6::Widgets KF6::WindowSystem Qt6::Network ${X11_LIBRARIES}
--LayerShellQtInterface Qt6::GuiPrivate Qt6::WaylandClient Qt6::WaylandClientPrivate Qt6::WaylandGlobalPrivate)
-+LayerShellQt::Interface Qt6::GuiPrivate Qt6::WaylandClient Qt6::WaylandClientPrivate Qt6::WaylandGlobalPrivate)
-
- qt6_generate_wayland_protocol_client_sources(screengrab FILES
-     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/wayland/wlr-screencopy-unstable-v1.xml
