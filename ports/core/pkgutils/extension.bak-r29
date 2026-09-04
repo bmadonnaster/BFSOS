@@ -7,54 +7,6 @@ else
         unset PKGMK_ARCH
 fi
 
-# Make BFSOS non-/usr Qt6/KF6 prefixes visible to all package builds.
-# This is intentionally done by pkgmk rather than relying on the invoking
-# login shell or sudo environment.
-_bfs_prepend_env_path() {
-        local var=$1
-        local dir=$2
-        local current="${!var:-}"
-
-        [ -d "$dir" ] || return 0
-
-        case ":$current:" in
-                *":$dir:"*) return 0 ;;
-        esac
-
-        if [ -n "$current" ]; then
-                printf -v "$var" '%s:%s' "$dir" "$current"
-        else
-                printf -v "$var" '%s' "$dir"
-        fi
-        export "$var"
-}
-
-_bfs_setup_prefix_env() {
-        # Do not contaminate compat32 builds with 64-bit /opt libraries.
-        [ "${PKGMK_ARCH:-}" != 32 ] || return 0
-
-        local qt6_prefix="${QT6DIR:-/opt/qt6}"
-        local kf6_prefix="${KF6_PREFIX:-/opt/kf6}"
-
-        if [ -d "$qt6_prefix" ]; then
-                export QT6DIR="$qt6_prefix"
-                _bfs_prepend_env_path CMAKE_PREFIX_PATH "$qt6_prefix"
-                _bfs_prepend_env_path CPLUS_INCLUDE_PATH "$qt6_prefix/include"
-                _bfs_prepend_env_path LIBRARY_PATH "$qt6_prefix/lib"
-                _bfs_prepend_env_path PKG_CONFIG_PATH "$qt6_prefix/lib/pkgconfig"
-        fi
-
-        if [ -d "$kf6_prefix" ]; then
-                export KF6_PREFIX="$kf6_prefix"
-                _bfs_prepend_env_path CMAKE_PREFIX_PATH "$kf6_prefix"
-                _bfs_prepend_env_path CPLUS_INCLUDE_PATH "$kf6_prefix/include"
-                _bfs_prepend_env_path LIBRARY_PATH "$kf6_prefix/lib"
-                _bfs_prepend_env_path PKG_CONFIG_PATH "$kf6_prefix/lib/pkgconfig"
-        fi
-}
-
-_bfs_setup_prefix_env
-
 # use these only if build() function not exist
 if [ ! "$(command -v build)" ]; then
 	# override stupid function in pkgmk
