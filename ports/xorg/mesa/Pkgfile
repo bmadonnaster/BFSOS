@@ -2,7 +2,7 @@
 # URL: https://www.mesa3d.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libdrm libglvnd llvm spirv-llvm-translator python3-mako python3-pyyaml xorg-libs rustc rust-bindgen cbindgen
-# Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors rust-bindgen valgrind vulkan-loader wayland-protocols
+# Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors valgrind vulkan-loader wayland-protocols
 
 name=mesa
 version=26.2.2

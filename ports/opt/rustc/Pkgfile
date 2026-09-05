@@ -6,7 +6,7 @@
 
 name=rustc
 version=1.98.0
-release=6
+release=7
 source=(https://static.rust-lang.org/dist/rustc-$version-src.tar.xz)
 
 pkg_build() {
@@ -59,6 +59,17 @@ EOF_BOOTSTRAP
 
     install -d "$PKG/opt"
     ln -sfn "rustc-$version" "$PKG/opt/rustc"
+
+    # Expose the Rust toolchain through the normal system PATH.
+    # /opt/rustc is the stable symlink to the currently packaged version.
+    install -d "$PKG/usr/bin"
+
+    for tool in         rustc         cargo         rustdoc         rustfmt         cargo-fmt         cargo-clippy         clippy-driver
+    do
+        if [ -x "$PKG$prefix/bin/$tool" ]; then
+            ln -sfn "/opt/rustc/bin/$tool" "$PKG/usr/bin/$tool"
+        fi
+    done
 
     install -d "$PKG/etc/profile.d"
     cat > "$PKG/etc/profile.d/rustc.sh" <<'EOF_PROFILE'
