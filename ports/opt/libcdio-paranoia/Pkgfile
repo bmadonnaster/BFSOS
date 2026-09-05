@@ -14,5 +14,5 @@ pkg_build() {
 make
 	make DESTDIR=$PKG install
 
-	rm -r $PKG/usr/share/man/jp
+	rm -rf "$PKG/usr/share/man/ja"
 }
