@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=exfatprogs
-version=1.4.2
+version=1.4.3
 release=1
 source=(https://github.com/exfatprogs/exfatprogs/releases/download/$version/$name-$version.tar.xz)
 

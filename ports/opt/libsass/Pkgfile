@@ -4,8 +4,8 @@
 # Depends on: autoconf automake libtool
 
 name=libsass
-version=3.6.5
-release=2
+version=3.6.6
+release=1
 source=(https://github.com/sass/$name/archive/$version/$name-$version.tar.gz)
 pkg_build() {
 	autoreconf -fi

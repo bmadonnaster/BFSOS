@@ -4,7 +4,7 @@
 # Depends on: xorg-server
 
 name=xf86-video-mga
-version=2.0.1
+version=2.1.0
 release=1
 source=(https://www.x.org/releases/individual/driver/xf86-video-mga-$version.tar.xz)
 

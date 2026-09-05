@@ -20,3 +20,5 @@ bfs-install*.log
 !/logs/installer/
 !/logs/installer/.gitkeep
 bfs-maintained-port-version-audit-*.log
+bfs-maintained-port-version-audit-*.tsv
+__pycache__/

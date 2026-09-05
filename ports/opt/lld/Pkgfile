@@ -4,17 +4,12 @@
 # Depends on: llvm
 
 name=lld
-version=20.1.1
+version=23.1.0
 release=1
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/lld-$version.src.tar.xz
-  https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/cmake-$version.src.tar.xz
-  0002-PATCH-lld-Import-compact_unwind_encoding.h-from-libu.patch)
-
-skip_patch=1
+  https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/cmake-$version.src.tar.xz)
 
 pkg_build() {
-  patch -d $name-$version.src -p2 -i $SRC/0002-PATCH-lld-Import-compact_unwind_encoding.h-from-libu.patch
-
   mv cmake-$version.src cmake
 
   cmake -S $name-$version.src -B build -G Ninja \

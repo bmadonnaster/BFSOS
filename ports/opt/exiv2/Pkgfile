@@ -5,8 +5,8 @@
 # Optional: libssh doxygen graphviz libxslt
 
 name=exiv2
-version=0.28.8
-release=2
+version=0.28.9
+release=1
 source=(https://github.com/$name/$name/archive/v$version/$name-$version.tar.gz)
 pkg_build() {
 mkdir build &&

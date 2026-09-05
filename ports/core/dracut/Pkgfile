@@ -5,8 +5,8 @@
 # Optional: cryptsetup lvm2 mdadm
 
 name=dracut
-version=111
-release=3
+version=112
+release=1
 
 source=(
     https://github.com/dracut-ng/dracut-ng/archive/refs/tags/$version.tar.gz

@@ -1,5 +1,5 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: atkmm gtk4 pangomm vulkan-loader
+# Depends on: cairomm glibmm-2.68 gtk4 libsigc++ pangomm-2.48 vulkan-loader
 
 name=gtkmm
 version=4.22.0

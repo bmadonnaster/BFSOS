@@ -4,9 +4,9 @@
 # Depends on:
 
 name=mobile-broadband-provider-info
-version=20230416
+version=20240407
 release=1
-source=(https://download.gnome.org/sources/mobile-broadband-provider-info/20230416/mobile-broadband-provider-info-20230416.tar.xz)
+source=(https://download.gnome.org/sources/mobile-broadband-provider-info/20240407/mobile-broadband-provider-info-20240407.tar.xz)
 
 pkg_build() {
 	./configure \

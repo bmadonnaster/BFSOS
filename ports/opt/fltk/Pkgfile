@@ -5,9 +5,9 @@
 # Optional:    alsa-lib desktop-file-utils glu mesa texlive
 
 name=fltk
-version=1.3.11
+version=1.4.5
 release=2
-source=(https://fltk.org/pub/fltk/$version/fltk-$version-source.tar.gz)
+source=(https://github.com/fltk/fltk/releases/download/release-$version/fltk-$version-source.tar.gz)
 
 pkg_build() {
 

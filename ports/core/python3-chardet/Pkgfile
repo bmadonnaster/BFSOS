@@ -2,7 +2,7 @@
 # Depends on: 
 
 name=python3-chardet
-version=5.2.0
+version=7.6.0
 release=1
 source=(https://files.pythonhosted.org/packages/source/c/chardet/chardet-${version}.tar.gz)
 pkg_build() {

@@ -4,8 +4,8 @@
 # Depends on: libX11 libXmu
 
 name=xpr
-version=1.2.0
-release=2
+version=1.2.1
+release=1
 source=(https://www.x.org/releases/individual/app/xpr-$version.tar.xz)
 
 pkg_build() {

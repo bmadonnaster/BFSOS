@@ -5,8 +5,8 @@
 # Optional: cairo fontconfig ghostscript gtk3 libgd libpng librsvg pango poppler swig tcl
 
 name=graphviz
-version=15.1.1
-release=2
+version=16.1.0
+release=1
 source=(https://gitlab.com/graphviz/graphviz/-/archive/$version/graphviz-$version.tar.bz2)
 
 pkg_build() {

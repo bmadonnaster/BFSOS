@@ -4,8 +4,8 @@
 # Depends on: xcb-util-image xcb-util-renderutil
 
 name=xcb-util-cursor
-version=0.1.4
-release=2
+version=0.1.6
+release=1
 source=(https://xcb.freedesktop.org/dist/xcb-util-cursor-$version.tar.xz)
 
 pkg_build() {

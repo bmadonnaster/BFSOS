@@ -4,13 +4,12 @@
 # Depends on: cairo fontconfig freetype graphite2 harfbuzz icu libpaper libpng
 
 name=texlive
-version=20250308
+version=20260301
 release=3
 source=(
-    https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/texlive-$version-source.tar.xz
-    https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/texlive-$version-texmf.tar.xz
-    https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2025/texlive-$version-extra.tar.xz
-    https://www.linuxfromscratch.org/patches/blfs/svn/texlive-$version-source-upstream_fixes-1.patch
+    https://texlive.info/historic/systems/texlive/2026/texlive-$version-source.tar.xz
+    https://texlive.info/historic/systems/texlive/2026/texlive-$version-texmf.tar.xz
+    https://texlive.info/historic/systems/texlive/2026/texlive-$version-extra.tar.xz
 )
 
 pkg_build() {

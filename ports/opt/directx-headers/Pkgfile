@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=directx-headers
-version=1.615.0
+version=1.619.5
 release=1
 source=(https://github.com/microsoft/DirectX-Headers/archive/v$version/$name-$version.tar.gz)
 

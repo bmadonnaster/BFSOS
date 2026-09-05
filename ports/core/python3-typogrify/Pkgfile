@@ -2,6 +2,6 @@
 # Depends on: smartypants
 
 name=python3-typogrify
-version=2.0.7
+version=2.1.0
 release=1
 source=(https://files.pythonhosted.org/packages/source/t/typogrify/typogrify-${version}.tar.gz)

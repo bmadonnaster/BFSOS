@@ -4,8 +4,8 @@
 # Depends on: libxml2 llvm spirv-headers spirv-tools
 
 name=spirv-llvm-translator
-version=22.1.5
-release=3
+version=23.1.1
+release=1
 source=(https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v${version}/SPIRV-LLVM-Translator-${version}.tar.gz)
 
 pkg_build() {

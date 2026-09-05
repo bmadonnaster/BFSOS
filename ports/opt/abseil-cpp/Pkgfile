@@ -2,8 +2,8 @@
 # Depends on: cmake
 
 name=abseil-cpp
-version=20260526.0
-release=2
+version=20260817.0
+release=1
 source=(https://github.com/abseil/${name}/releases/download/${version}/${name}-${version}.tar.gz)
 build_opt="-DCMAKE_INSTALL_PREFIX=/usr
       -DCMAKE_BUILD_TYPE=Release

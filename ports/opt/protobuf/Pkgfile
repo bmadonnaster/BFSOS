@@ -2,8 +2,8 @@
 # Depends on: cmake abseil-cpp
 
 name=protobuf
-version=35.1
-release=3
+version=36.1
+release=1
 source=(https://github.com/protocolbuffers/${name}/releases/download/v${version}/${name}-${version}.tar.gz)
 pkg_build() {
   cmake -S . -B build -G Ninja \

@@ -4,7 +4,7 @@
 # Depends on: cmake
 
 name=imath
-version=3.2.2
+version=3.2.3
 release=1
 source=(https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v$version.tar.gz)
 

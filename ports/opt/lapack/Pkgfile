@@ -4,8 +4,8 @@
 # Depends on: openblas python3
 
 name=lapack
-version=3.12.0
-release=2
+version=3.12.1
+release=1
 source=(https://github.com/Reference-LAPACK/lapack/archive/v$version/$name-$version.tar.gz)
 
 pkg_build() {

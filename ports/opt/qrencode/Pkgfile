@@ -7,7 +7,7 @@
 name=qrencode
 version=4.1.1
 release=2
-source=(https://fukuchi.org/works/$name/$name-$version.tar.bz2)
+source=(https://distfiles.gentoo.org/distfiles/c8/$name-$version.tar.bz2)
 
 pkg_build() {
     ./configure \

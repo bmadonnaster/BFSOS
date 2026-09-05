@@ -2,7 +2,7 @@
 # Depends on: 
 
 name=python3-charset-normalizer
-version=3.4.7
+version=3.5.1
 release=1
 source=(https://files.pythonhosted.org/packages/source/c/charset_normalizer/charset_normalizer-${version}.tar.gz)
 pkg_build() {

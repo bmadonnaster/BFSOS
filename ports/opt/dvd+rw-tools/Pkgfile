@@ -6,7 +6,7 @@
 name=dvd+rw-tools
 version=7.1
 release=1
-source=(http://fy.chalmers.se/~appro/linux/DVD+RW/tools/$name-$version.tar.gz)
+source=(https://anduin.linuxfromscratch.org/BLFS/dvd+rw-tools/dvd+rw-tools-$version.tar.gz)
 
 pkg_build() {
 sed -i '/stat.h/a #include <sys/sysmacros.h>' growisofs.c &&

@@ -4,4 +4,4 @@
 name=dbus-python
 version=1.4.0
 release=1
-source=(https://dbus.freedesktop.org/releases/${name}/${name}-${version}.tar.gz)
+source=(https://dbus.freedesktop.org/releases/${name}/${name}-${version}.tar.xz)

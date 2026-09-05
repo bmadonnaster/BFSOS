@@ -1,7 +1,7 @@
 # Description: A C++ wrapper for GTK3+
 # URL: https://www.gtkmm.org/en/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: atkmm cairomm gtk3 pangomm cairomm-1.0
+# Depends on: atkmm cairomm-1.0 glibmm-2.4 gtk3 pangomm
 
 name=gtkmm3
 version=3.24.11
