@@ -1,5 +1,5 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: curl itstool libxml2 libxmlb libyaml
+# Depends on: curl itstool libxml2 libxmlb libyaml libfyaml
 
 name=appstream
 version=1.2.0
@@ -15,5 +15,5 @@ meson setup --prefix=/usr       \
             -Dapidocs=false     \
             -Dstemming=false    .. &&
 ninja
-DESTDIR=$PKG ninja install
+DESTDIR=$PKG DESTDIR="$PKG" ninja install || return 1
 }
