@@ -1,25 +1,30 @@
 #!/bin/bash
-# BFSOS maintained-tree upstream version audit.
+# BFSOS maintained-tree upstream version audit v8.
 # contrib and compat-32 are intentionally excluded.
-set -u
+set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 STAMP=$(date +%Y%m%d-%H%M%S)
-OUT=${1:-"$ROOT/bfs-maintained-port-version-audit-$STAMP.log"}
+LOG=${1:-"$ROOT/bfs-maintained-port-version-audit-$STAMP.log"}
+TSV=${2:-"${LOG%.log}.tsv"}
 
 export REPO="$ROOT/ports/core $ROOT/ports/opt $ROOT/ports/xorg $ROOT/ports/plasma $ROOT/ports/gnome $ROOT/ports/lxqt $ROOT/ports/xfce $ROOT/ports/compiz"
 
-echo "BFSOS maintained-port online version audit"
+echo "BFSOS maintained-port online version audit v8"
 echo "Trees: core opt xorg plasma gnome lxqt xfce compiz"
 echo "Excluded: contrib compat-32"
-echo "Output: $OUT"
+echo "Safety: read-only; automatic Pkgfile updates are disabled"
+echo "Log: $LOG"
+echo "TSV: $TSV"
 echo
 
-set -o pipefail
-"$ROOT/scripts/checkupdate.sh" 2>&1 | tee "$OUT"
+set +e
+"$ROOT/scripts/checkupdate.sh" --jobs "${BFS_AUDIT_JOBS:-10}" --timeout "${BFS_AUDIT_TIMEOUT:-10}" --tsv "$TSV" 2>&1 | tee "$LOG"
 status=${PIPESTATUS[0]}
+set -e
 
 echo
-echo "Audit saved to: $OUT"
-echo "Review every version result before using checkupdate.sh -u."
+echo "Audit saved to: $LOG"
+echo "Machine-readable results: $TSV"
+echo "Only UPDATE rows are verified update candidates; UNVERIFIABLE rows require a provider override or manual upstream review."
 exit "$status"

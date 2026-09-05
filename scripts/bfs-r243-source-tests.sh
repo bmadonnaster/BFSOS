@@ -21,6 +21,9 @@ echo "== prt-get regression =="
 echo "== installer build-work sizing regression =="
 ./scripts/tests/test-installer-build-work-sizing.sh
 
+echo "== checkupdate v8 regression =="
+python3 ./scripts/tests/test-checkupdate-v2.py
+
 echo "== excluded trees unchanged relative to git =="
 if [ -n "$(git status --short -- ports/contrib ports/compat-32)" ]; then
     git status --short -- ports/contrib ports/compat-32

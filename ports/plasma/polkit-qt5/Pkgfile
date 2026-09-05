@@ -4,14 +4,15 @@
 # Depends on: cmake polkit qt5
 
 name=polkit-qt5
-version=0.114.0
-release=4
+version=0.201.1
+release=1
 source=(https://download.kde.org/stable/polkit-qt-1/polkit-qt-1-$version.tar.xz)
 
 pkg_build() {
     cmake -S . -B build \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_PREFIX_PATH=/opt/qt5 \
+        -DQT_MAJOR_VERSION=5 \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_TESTING=OFF \
         -Wno-dev || return 1
