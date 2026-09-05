@@ -1,12 +1,12 @@
 # Description: Rust compiler and Cargo toolchain
 # URL: https://www.rust-lang.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cmake curl llvm python3
+# Depends on: cmake curl ninja python3
 # Optional: git libssh2
 
 name=rustc
-version=1.98.0
-release=7
+version=1.98.1
+release=1
 source=(https://static.rust-lang.org/dist/rustc-$version-src.tar.xz)
 
 pkg_build() {
@@ -16,7 +16,9 @@ pkg_build() {
 change-id = "ignore"
 
 [llvm]
-link-shared = true
+download-ci-llvm = false
+link-shared = false
+ninja = true
 
 [build]
 docs = false
@@ -40,7 +42,6 @@ cc = "/usr/bin/gcc"
 cxx = "/usr/bin/g++"
 ar = "/usr/bin/gcc-ar"
 ranlib = "/usr/bin/gcc-ranlib"
-llvm-config = "/usr/bin/llvm-config"
 EOF_BOOTSTRAP
 
     python3 x.py build || return 1
