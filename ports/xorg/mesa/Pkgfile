@@ -1,7 +1,7 @@
 # Description: Mesa 3D graphics library and open-source GPU drivers
 # URL: https://www.mesa3d.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libdrm libglvnd llvm spirv-llvm-translator python3-mako python3-pyyaml xorg-libs
+# Depends on: libdrm libglvnd llvm spirv-llvm-translator python3-mako python3-pyyaml xorg-libs rustc rust-bindgen cbindgen
 # Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors rust-bindgen valgrind vulkan-loader wayland-protocols
 
 name=mesa
