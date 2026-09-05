@@ -1,3 +1,4 @@
+# Depends on: perl perl-file-sharedir-install
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=perl-xml-parser
 version=2.59
