@@ -9,6 +9,10 @@ source=(https://www.freedesktop.org/software/${name}/releases/AppStream-${versio
 pkg_build() {
     cd "$SRC/AppStream-$version" || return 1
 
+    # AppStream still references the obsolete xsl-ns URL.
+    # BFSOS ships the current DocBook XSL non-NS stylesheets.
+    sed -i 's/xsl-ns/xsl/g' docs/meson.build || return 1
+
     meson setup build \
         --prefix=/usr \
         --buildtype=release \
