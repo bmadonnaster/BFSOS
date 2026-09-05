@@ -306,11 +306,11 @@ Fresh/current BFSOS installations can emit invalid `sudoers` snippets for build-
 
 ```text
 /etc/sudoers.d/kf6:1:33: syntax error
-Defaults env_keep += KF6_PREFIX QT6DIR QT5DIR CMAKE_PREFIX_PATH PKG_CONFIG_PATH
+Defaults env_keep += "KF6_PREFIX QT6DIR QT5DIR CMAKE_PREFIX_PATH PKG_CONFIG_PATH"
                                 ^~~~~
 
 /etc/sudoers.d/xorg:1:34: syntax error
-Defaults env_keep += XORG_PREFIX XORG_CONFIG
+Defaults env_keep += "XORG_PREFIX XORG_CONFIG"
 ```
 
 The intended variables still need to be preserved across `sudo`, but the generated `Defaults env_keep` syntax must be valid `sudoers` syntax.
