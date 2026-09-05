@@ -25,8 +25,8 @@ grep -Fq '3 "Integrity verification"' bootstrap.sh || say_fail "Integrity verifi
 # Current installer must be the newest maintained implementation.
 current_target="$(readlink scripts/install-bfs-menu-current.sh 2>/dev/null || true)"
 case "$current_target" in
-  *r71-lvm-equal-split.sh) ;;
-  *) say_fail "current installer does not point at r71: $current_target" ;;
+  *r72-tracker-maintenance.sh) ;;
+  *) say_fail "current installer does not point at r72: $current_target" ;;
 esac
 
 # Base diagnostics and trust stack.

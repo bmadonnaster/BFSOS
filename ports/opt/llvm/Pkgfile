@@ -6,7 +6,7 @@
 
 name=llvm
 version=22.1.8
-release=3
+release=4
 keep_static=1
 source=(
     https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz
@@ -29,7 +29,7 @@ pkg_build() {
         -DLLVM_LINK_LLVM_DYLIB=ON \
         -DLLVM_ENABLE_RTTI=ON \
         -DLLVM_TARGETS_TO_BUILD='host;AMDGPU;BPF' \
-        -DLLVM_ENABLE_PROJECTS=clang \
+        -DLLVM_ENABLE_PROJECTS='clang;lld' \
         -DLLVM_ENABLE_RUNTIMES=compiler-rt \
         -DLLVM_BINUTILS_INCDIR=/usr/include \
         -DLLVM_INCLUDE_BENCHMARKS=OFF \

@@ -1,11 +1,12 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=prt-get
 version=5.19.9
-release=5
+release=6
 source=(http://crux.nu/files/prt-get-$version.tar.xz
 	prt-get.conf
 	prt-get.aliases
-	bfsos.git)
+	bfsos.git
+	README)
 
 post_build() {
     install -m 644 "$SRC"/prt-get.{conf,aliases} "$PKG/etc/" || return 1
@@ -26,17 +27,55 @@ real=/usr/libexec/prt-get.real
 want_sysup=no
 want_update=no
 test_mode=no
+no_new_deps=no
+help_requested=no
 collect_update_targets=no
 update_targets=""
+filtered_args=""
+
+# --no-new-deps is a BFSOS front-end option; remove it before invoking the
+# upstream prt-get binary so upstream does not see an unknown option.
+for arg in "$@"; do
+    case "$arg" in
+        --no-new-deps)
+            no_new_deps=yes
+            continue
+            ;;
+        --help|-h)
+            help_requested=yes
+            ;;
+    esac
+    filtered_args="${filtered_args}${arg}
+"
+done
+
+# Rebuild positional parameters without word-splitting spaces inside an
+# argument.  prt-get package names/options cannot contain literal newlines.
+old_ifs=$IFS
+IFS='
+'
+set -f
+# shellcheck disable=SC2086
+set -- $filtered_args
+set +f
+IFS=$old_ifs
 
 for arg in "$@"; do
     case "$arg" in
         --test|-t) test_mode=yes ;;
-        sysup) want_sysup=yes ;;
+        sysup)
+            want_sysup=yes
+            collect_update_targets=no
+            ;;
         update)
             want_update=yes
             collect_update_targets=yes
             continue
+            ;;
+        depinst|install|remove|search|info|listinst|quickdiff|quickdep|isinst)
+            # If another command token follows an earlier accidental "update"
+            # token, do not keep harvesting arbitrary arguments as packages.
+            [ "$want_update" = yes ] || collect_update_targets=no
             ;;
     esac
 
@@ -44,8 +83,8 @@ for arg in "$@"; do
         case "$arg" in
             -*) ;;
             *)
-                # Only retain real port names.  This avoids mistaking a value
-                # belonging to an update option for a package target.
+                # Only retain real port names. This avoids mistaking an option
+                # value for an update target.
                 if "$real" info "$arg" >/dev/null 2>&1; then
                     update_targets="$update_targets $arg"
                 fi
@@ -53,6 +92,27 @@ for arg in "$@"; do
         esac
     fi
 done
+
+print_bfsos_help() {
+    cat <<'EOF_HELP'
+
+BFSOS update options:
+  --no-new-deps    For update/sysup only, detect and report newly required
+                   dependencies but do not install them automatically.
+                   Explicit dependency commands such as depinst are unchanged.
+
+Examples:
+  prt-get update --no-new-deps <package>
+  prt-get sysup --no-new-deps
+EOF_HELP
+}
+
+if [ "$help_requested" = yes ]; then
+    status=0
+    "$real" "$@" || status=$?
+    print_bfsos_help
+    exit "$status"
+fi
 
 bfs_missing_deps() {
     [ "$#" -gt 0 ] || return 0
@@ -75,19 +135,32 @@ bfs_refresh_new_deps() {
     [ -n "$missing" ] || return 0
 
     echo "BFSOS dependency refresh ($label): newly required packages:"
+    # shellcheck disable=SC2086
     printf '  %s\n' $missing
+
+    if [ "$no_new_deps" = yes ]; then
+        echo "WARNING: automatic installation of newly required dependencies is disabled for this transaction." >&2
+        echo "BFSOS dependency refresh: intentionally skipped new dependencies:" >&2
+        # shellcheck disable=SC2086
+        printf '  %s\n' $missing >&2
+        return 0
+    fi
 
     if [ "$test_mode" = yes ]; then
         echo "BFSOS dependency refresh: test mode; dependencies were not installed"
         return 0
     fi
 
-    # depinst preserves normal prt-get recursion/alias behavior.  Only the
+    # depinst preserves normal prt-get recursion/alias behavior. Only the
     # missing closure is supplied, so already-installed dependencies are not
     # rebuilt merely because an updated package gained a new hard dependency.
     # shellcheck disable=SC2086
     "$real" depinst $missing
 }
+
+if [ "$no_new_deps" = yes ] && [ "$want_sysup" = no ] && [ "$want_update" = no ]; then
+    echo "WARNING: --no-new-deps only affects update and sysup; this command is unchanged." >&2
+fi
 
 if [ "$want_sysup" = yes ]; then
     if [ "$test_mode" = no ]; then
@@ -112,4 +185,32 @@ fi
 exec "$real" "$@"
 EOF_WRAPPER
     chmod 0755 "$PKG/usr/bin/prt-get" || return 1
+
+    install -Dm644 "$SRC/README" "$PKG/usr/share/doc/prt-get/README.BFSOS" || return 1
+
+    # Keep the packaged manual discoverable even though the implementation is
+    # a BFSOS front-end policy layered over upstream prt-get.
+    if [ -f "$PKG/usr/share/man/man8/prt-get.8" ]; then
+        cat >> "$PKG/usr/share/man/man8/prt-get.8" <<'EOF_MAN'
+.SH BFSOS UPDATE OPTIONS
+.TP
+.B --no-new-deps
+For
+.B update
+and
+.B sysup,
+detect and report newly required dependencies but do not install those newly
+introduced dependencies automatically.  The requested package update/system
+update is still attempted.  Explicit dependency installation through
+.B depinst
+is unchanged.  Without this option, BFSOS retains its normal automatic
+new-dependency installation behavior.
+.PP
+Examples:
+.nf
+prt-get update --no-new-deps <package>
+prt-get sysup --no-new-deps
+.fi
+EOF_MAN
+    fi
 }

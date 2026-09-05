@@ -19,3 +19,4 @@ bfs-install*.log
 !/logs/base/.gitkeep
 !/logs/installer/
 !/logs/installer/.gitkeep
+bfs-maintained-port-version-audit-*.log

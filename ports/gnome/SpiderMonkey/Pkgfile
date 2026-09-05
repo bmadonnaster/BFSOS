@@ -1,27 +1,29 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: icu rustc which llvm 
+# Depends on: icu rustc which llvm
 
 name=SpiderMonkey
-version=128.7.0esr.source
+version=140.15.0esr
 release=1
-source=(https://archive.mozilla.org/pub/firefox/releases/128.7.0esr/source/firefox-128.7.0esr.source.tar.xz)
+source=(https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz)
+
 pkg_build () {
-cd $SRC/firefox-128.7.0
-sed -i 's/icu-i18n/icu-uc &/' js/moz.configure
-mkdir obj &&
-cd    obj &&
+    cd "$SRC/firefox-${version%esr}"
 
-../js/src/configure --prefix=/usr            \
-                    --disable-debug-symbols  \
-                    --disable-jemalloc       \
-                    --enable-readline        \
-                    --enable-rust-simd       \
-                    --with-intl-api          \
-                    --with-system-icu        \
-                    --with-system-zlib       &&
-make
-make install &&
-rm -v $PKG/usr/lib/libjs_static.ajs &&
-sed -i '/@NSPR_CFLAGS@/d' $PKG/usr/bin/js128-config
+    mkdir -p obj
+    cd obj
+
+    ../js/src/configure --prefix=/usr           \
+                        --disable-debug-symbols \
+                        --disable-jemalloc      \
+                        --enable-readline       \
+                        --enable-rust-simd      \
+                        --with-intl-api         \
+                        --with-system-icu       \
+                        --with-system-zlib
+    make
+    make install
+
+    rm -vf "$PKG/usr/lib/libjs_static.ajs"
+    sed -i '/@NSPR_CFLAGS@/d' "$PKG/usr/bin/js140-config"
+    sed '$i#define XP_UNIX' -i "$PKG/usr/include/mozjs-140/js-config.h"
 }
-

@@ -1,12 +1,12 @@
 # Description: Linux 6.18 LTS compatibility kernel with broad x86_64 hardware support
 # URL: https://www.kernel.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: bc bison cpio dracut elfutils flex linux-firmware openssl zstd
+# Depends on: bc bfs-kernel-maintenance bison cpio dracut elfutils flex linux-firmware openssl zstd
 # Optional: pahole
 
 name=linux-lts
 version=6.18.49
-release=4
+release=5
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
 # mix a months-old Debian patch snapshot from another 6.18.y point release into

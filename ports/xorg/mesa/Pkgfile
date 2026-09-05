@@ -5,10 +5,9 @@
 # Optional: glslang libclc libdisplay-info libunwind libva libvdpau lm_sensors rust-bindgen valgrind vulkan-loader wayland-protocols
 
 name=mesa
-version=26.2.1
-release=5
-source=(https://www.artfiles.org/debian.org/pool/main/m/mesa/mesa_$version.orig.tar.xz)
-renames=(mesa-$version.tar.xz)
+version=26.2.2
+release=1
+source=(https://archive.mesa3d.org/mesa-$version.tar.xz)
 
 pkg_build() {
     local platforms=x11

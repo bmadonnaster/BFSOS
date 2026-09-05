@@ -3,3 +3,8 @@
 enable pipewire.socket
 enable pipewire-pulse.socket
 enable wireplumber.service
+
+# Never allow the legacy PulseAudio user daemon to compete for the PulseAudio
+# socket when BFSOS uses PipeWire as the desktop audio stack.
+disable pulseaudio.socket
+disable pulseaudio.service

@@ -2,6 +2,6 @@
 # Depends on: libxslt itstool
 
 name=yelp-xsl
-version=42.1
+version=49.0
 release=1
-source=(https://download.gnome.org/sources/${name}/42/${name}-${version}.tar.xz)
+source=(https://download.gnome.org/sources/${name}/49/${name}-${version}.tar.xz)

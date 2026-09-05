@@ -76,13 +76,19 @@ getver_python() {
 
 # main
 fetch() {
-	#wget -qO - -t 3 -T 10 $url
-	curl -Lsk $url
+    # Record transport failures separately from parser/no-version failures.
+    # Older revisions converted both cases to a fake "404" result.
+    if ! curl --fail --location --silent --show-error \
+            --connect-timeout 10 --max-time 45 "$url"; then
+        printf '%s\n' "$url" > "$FETCH_ERROR_FILE"
+        return 0
+    fi
 }
 
 run_check() {
 	checkver_cmd=${1}
 	
+	rm -f "$FETCH_ERROR_FILE"
 	if [ "$VERBOSE" = 1 ]; then
 		echo "file     : $file"
 		echo "filename : $filename"
@@ -91,30 +97,37 @@ run_check() {
 		echo "url      : $url"
 		echo "cmd      : $checkver_cmd"
 		$checkver_cmd | sort -V | uniq | tail -n10
+        if [ -s "$FETCH_ERROR_FILE" ]; then
+            echo "fetch   : FAILED ($(cat "$FETCH_ERROR_FILE"))"
+        fi
 	else
 		print_progress "Checking '$ppath'"
 		upver=$($checkver_cmd | sort -V | uniq | tail -n1)
 		echo -ne "\033[0K"
 
-		upver=${upver:-404}
+        if [ -s "$FETCH_ERROR_FILE" ]; then
+            echo -e " $ppath ${RED}FETCH-ERROR${CRESET} ($version)"
+            return 0
+        fi
+        if [ -z "$upver" ]; then
+            echo -e " $ppath ${YELLOW}NO-MATCH${CRESET} ($version)"
+            return 0
+        fi
 		
 		#touch $outdateerror $outdatelist
 		
 		#sed "\,^$ppath ,d" -i $outdateerror
 		#sed "\,^$ppath ,d" -i $outdatelist
 
-		if [ "$upver" = "404" ]; then
-			echo -e " $ppath ${RED}404${CRESET} ($version)"
-			#echo "$ppath $version" >> $outdateerror
-		elif [ "$version" != "$upver" ]; then
+		if [ "$version" != "$upver" ]; then
 			echo -e " $ppath ${YELLOW}$upver${CRESET} ($version)"
 			#echo "$ppath $upver $version" >> $outdatelist
 		fi
 	fi
 	
 	if [ "$update" ]; then
-		if [ "$upver" = 404 ]; then
-			echo "cant update $ppath"
+		if [ -z "$upver" ] || [ -s "$FETCH_ERROR_FILE" ]; then
+			echo "cant update $ppath: upstream version could not be determined"
 		elif [ "$version" = "$upver" ]; then
 			echo "$ppath already uptodate"
 		else
@@ -256,7 +269,13 @@ Usage:
 Options:
   -n            dont use update file override
   -v            print port's details
+  -u            update stale ports (use only after reviewing output)
   -h            show this help message
+
+With no package arguments, BFSOS checks core, opt, xorg, plasma, gnome, lxqt,
+xfce, and compiz. contrib and compat-32 are excluded from the default audit.
+FETCH-ERROR means the upstream endpoint could not be fetched; NO-MATCH means
+it was fetched but this script could not parse a stable version from it.
       
 EOF
 }
@@ -302,9 +321,14 @@ main() {
 	fi
 }
 
-PORTREPO="core extra multilib"
 PORTSDIR="$(dirname $(dirname $(realpath $0)))"
 SCRIPTDIR="$(dirname $(realpath $0))"
+
+# BFSOS maintained-tree default. contrib and compat-32 are deliberately not
+# included in a no-argument audit.
+PORTREPO="$PORTSDIR/ports/core $PORTSDIR/ports/opt $PORTSDIR/ports/xorg $PORTSDIR/ports/plasma $PORTSDIR/ports/gnome $PORTSDIR/ports/lxqt $PORTSDIR/ports/xfce $PORTSDIR/ports/compiz"
+FETCH_ERROR_FILE="${TMPDIR:-/tmp}/bfs-checkupdate-fetch.$$"
+trap 'rm -f "$FETCH_ERROR_FILE"' EXIT HUP INT TERM
 
 outdatelist="$SCRIPTDIR/.${0##*/}.list"
 outdateerror="$SCRIPTDIR/.${0##*/}.error"

@@ -1,1 +1,1 @@
-Defaults env_keep += XORG_PREFIX XORG_CONFIG
+Defaults env_keep += "XORG_PREFIX XORG_CONFIG"

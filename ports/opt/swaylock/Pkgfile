@@ -1,7 +1,7 @@
 # Description: Screen locker for Wayland compositors
 # URL: https://github.com/swaywm/swaylock
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: meson wayland wayland-protocols libxkbcommon cairo pam
+# Depends on: meson wayland wayland-protocols libxkbcommon cairo linux-pam
 
 name=swaylock
 version=1.8.6

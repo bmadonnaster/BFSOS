@@ -3,7 +3,7 @@
 
 
 name=webkitgtk
-version=2.46.6
+version=2.52.6
 release=1
 source=(https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz)
 pkg_build() {
@@ -25,7 +25,7 @@ pkg_build() {
   prt-get isinst libavif || PKGMK_WEBKITGTK+=' -DUSE_AVIF=OFF'
   prt-get isinst gst-plugins-bad || PKGMK_WEBKITGTK+=' -DUSE_GSTREAMER_TRANSCODER=OFF'
 
-   cmake -S webkitgtk-$version -B build -G Ninja ${PKGMK_WEBKITGTK} \
+   cmake -S . -B build -G Ninja ${PKGMK_WEBKITGTK} \
           -D CMAKE_INSTALL_PREFIX=/usr        \
       -D CMAKE_SKIP_INSTALL_RPATH=ON      \
       -D PORT=GTK                         \
@@ -39,7 +39,7 @@ pkg_build() {
       -D USE_GTK4=ON                      \
       -D ENABLE_BUBBLEWRAP_SANDBOX=ON     \
       -D USE_SYSPROF_CAPTURE=NO           \
-      -W no-dev -G Ninja ..               
+      -W no-dev
 
  CFLAGS+=' -fcf-protection=none'
  CXXFLAGS+=' -fcf-protection=none'

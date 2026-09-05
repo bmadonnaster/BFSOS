@@ -1,8 +1,8 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cairo cmake gst-plugins-base gst-plugins-bad gtk3 gtk4 icu lcms2 libgudev libsecret libsoup libtasn1 libwebp  mesa openjpeg2 ruby  sqlite unifdef which bubblewrap enchant geoclue glib gobject-introspection hicolor-icon-theme libavif libjxl libseccomp xdg-dbus-proxy
+# Depends on: cairo cmake gst-plugins-base gst-plugins-bad gtk3 icu lcms2 libgudev libsecret libsoup3 libtasn1 libwebp  mesa openjpeg2 ruby  sqlite unifdef which bubblewrap enchant geoclue glib gobject-introspection hicolor-icon-theme libavif libjxl libseccomp xdg-dbus-proxy
 
 name=webkitgtk-41
-version=2.46.6
+version=2.52.6
 release=1
 source=(https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz)
 pkg_build() {
@@ -21,9 +21,9 @@ pkg_build() {
   prt-get isinst wpebackend-fdo || PKGMK_WEBKITGTK+=' -DUSE_WPE_RENDERER=OFF'
   prt-get isinst libmanette || PKGMK_WEBKITGTK+=' -DENABLE_GAMEPAD=OFF'
   prt-get isinst libavif || PKGMK_WEBKITGTK+=' -DUSE_AVIF=OFF'
-  prt-get isinst gst_plugins-bad || PKGMK_WEBKITGTK+=' -DUSE_GSTREAMER_TRANSCODER=OFF'
+  prt-get isinst gst-plugins-bad || PKGMK_WEBKITGTK+=' -DUSE_GSTREAMER_TRANSCODER=OFF'
 
-  cmake -S webkitgtk-$version -B build -G Ninja ${PKGMK_WEBKITGTK} \
+  cmake -S . -B build -G Ninja ${PKGMK_WEBKITGTK} \
     -D CMAKE_BUILD_TYPE=Release     \
       -D CMAKE_INSTALL_PREFIX=/usr     \
       -D CMAKE_SKIP_INSTALL_RPATH=ON   \
@@ -36,10 +36,10 @@ pkg_build() {
       -D ENABLE_DOCUMENTATION=OFF      \
       -D ENABLE_WEBDRIVER=OFF          \
       -D USE_WOFF2=OFF                 \
-      -D USE_GTK4=OFF                  \
+      -D USE_GTK3=ON                  \
       -D ENABLE_BUBBLEWRAP_SANDBOX=ON  \
       -D USE_SYSPROF_CAPTURE=NO        \
-      -W no-dev -G Ninja ..                 &&
+      -W no-dev  &&
    
 
   cmake --build build
