@@ -56,6 +56,16 @@ for md_option in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
     }
 done
 
+# BFSOS 6.18 carries the upstream MD compatibility parameter, but it remains
+# enabled (strict) by default. Verify the backport really made it into this
+# kernel before an installer or recovery path can rely on it.
+builtin_modinfo="/lib/modules/$kver/modules.builtin.modinfo"
+if [ ! -r "$builtin_modinfo" ] ||
+   ! grep -aFq 'md_mod.parmtype=check_new_feature:bool' "$builtin_modinfo"; then
+    echo "ERROR: $kver is missing md_mod.check_new_feature compatibility support" >&2
+    exit 1
+fi
+
 mkdir -p /etc/bfsos
 selected_flavor="$(cat /etc/bfsos/kernel-flavor 2>/dev/null || true)"
 case "$selected_flavor" in
