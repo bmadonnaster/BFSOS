@@ -3,7 +3,7 @@
 name=attr
 version=2.6.0
 release=2
-source=(https://download.savannah.nongnu.org/releases/attr/attr-$version.tar.gz)
+source=(https://debian.netcologne.de/savannah/attr/attr-$version.tar.gz)
 
 pkg_build() {
     ./configure \
