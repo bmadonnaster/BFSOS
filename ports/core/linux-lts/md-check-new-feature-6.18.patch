@@ -1,4 +1,5 @@
 diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 4e033c26fdd4..9d9cb7e1e6e8 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
 @@ -340,6 +340,7 @@ static int start_readonly;
@@ -6,6 +7,7 @@ diff --git a/drivers/md/md.c b/drivers/md/md.c
  static bool create_on_open = true;
  static bool legacy_async_del_gendisk = true;
 +static bool check_new_feature = true;
+ 
  /*
   * We have a system wide 'event count' that is incremented
 @@ -1752,9 +1753,13 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
@@ -22,6 +24,7 @@ diff --git a/drivers/md/md.c b/drivers/md/md.c
 +			return -EINVAL;
 +		pr_warn("check_new_feature is disabled, data corruption possible\n");
 +	}
+ 
  	rdev->preferred_minor = 0xffff;
  	rdev->data_offset = le64_to_cpu(sb->data_offset);
 @@ -10459,6 +10464,7 @@ module_param(start_dirty_degraded, int, S_IRUGO|S_IWUSR);
@@ -29,5 +32,6 @@ diff --git a/drivers/md/md.c b/drivers/md/md.c
  module_param(create_on_open, bool, S_IRUSR|S_IWUSR);
  module_param(legacy_async_del_gendisk, bool, 0600);
 +module_param(check_new_feature, bool, 0600);
+ 
  MODULE_LICENSE("GPL");
  MODULE_DESCRIPTION("MD RAID framework");

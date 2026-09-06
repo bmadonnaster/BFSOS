@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.18.49
-release=6
+release=7
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
 # mix a months-old Debian patch snapshot from another 6.18.y point release into
