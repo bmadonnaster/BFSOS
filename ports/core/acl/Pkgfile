@@ -9,7 +9,7 @@ release=2
 keep_static=1
 
 source=(
-    https://download.savannah.gnu.org/releases/acl/acl-$version.tar.xz)
+    https://debian.netcologne.de/savannah/acl/acl-$version.tar.xz)
 
 post_build() {
     find "$PKG" -type f -name '*.la' -delete

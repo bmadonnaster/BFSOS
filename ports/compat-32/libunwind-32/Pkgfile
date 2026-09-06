@@ -8,7 +8,7 @@
 name=libunwind-32
 version=1.8.1
 release=1
-source=(https://download.savannah.gnu.org/releases/libunwind/libunwind-$version.tar.gz)
+source=(https://debian.netcologne.de/savannah/libunwind/libunwind-$version.tar.gz)
 
 build() {
   cd libunwind-$version
