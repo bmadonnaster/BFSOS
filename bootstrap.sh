@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r68 - Stage-3 installed gobject-introspection handling + r67 GLib introspection ordering
+# BFSOS bootstrap r69 - Stage-3 exact-package rebuild; no dependency expansion
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -3337,8 +3337,9 @@ PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-
 EOF
 
     # Keep the installed/final pkgmk configuration on the external build-work
-    # bind mount too. Stage 3 uses the installed pkgmk/prt-get configuration,
-    # so without this it falls back to /var/cache/pkg/work inside the small
+    # bind mount too. Stage 3 uses the installed pkgmk configuration for its
+    # exact-package rebuilds, so without this it falls back to
+    # /var/cache/pkg/work inside the small
     # LiveGUI-backed rootfs and GCC can exhaust that filesystem.
     if [ -f "$LFS/etc/pkgmk.conf" ]; then
         if [ "$BFS_BUILD_SETTINGS_CHANGED" = yes ]; then
@@ -3484,49 +3485,10 @@ EOF
 
     mountfs
 
-    # Stage 3 must have gobject-introspection installed before GLib is rebuilt.
-    # Otherwise the early Stage-3 GLib rebuild does not generate the GLib/GObject/Gio
-    # GIR files and the later systemd dependency refresh can pull in polkit before
-    # Gio-2.0.gir exists.  Stage 2 is intentionally left unchanged.
-    if [ "${1:-}" = rebuild ]; then
-        _start_package_log base "gobject-introspection-bootstrap"
-
-        integrity_opts=""
-        [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
-        [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
-        [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
-        if [ -n "$integrity_opts" ]; then
-            echo "WARNING: development integrity bypass active:$integrity_opts"
-        fi
-
-        if chroot "$LFS" \
-            env -i \
-            HOME=/root \
-            PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-            /bin/sh -c 'pkginfo -i | awk '"'"'{print $1}'"'"' | grep -qx gobject-introspection'
-        then
-            echo "Stage 3: gobject-introspection is already installed; continuing."
-        else
-            chroot "$LFS" \
-                env -i \
-                HOME=/root \
-                TERM="${TERM:-dumb}" \
-                LANG=C \
-                LC_ALL=C \
-                LANGUAGE=C \
-                PATH="$STAGE_BUILD_PATH" \
-                CCACHE_DIR=/var/cache/ccache \
-                prt-get depinst $integrity_opts gobject-introspection \
-                || {
-                    status=$?
-                    _close_active_package_log "$status"
-                    umountfs
-                    return "$status"
-                }
-        fi
-
-        _close_active_package_log 0
-    fi
+    # Stage 3 is an exact rebuild pass. Stage 2 has already established the
+    # base package set, so Stage 3 must never resolve or install newly declared
+    # dependencies. Normal prt-get update dependency refresh remains useful on
+    # an installed BFSOS system, but it is intentionally bypassed here.
 
     for i in $basepkg; do
         if [ "${1:-}" != rebuild ]; then
@@ -3770,6 +3732,31 @@ EOF
                 echo "WARNING: development integrity bypass active:$integrity_opts"
             fi
 
+            # Stage 3 may only rebuild packages that Stage 2 already installed.
+            # If basepkg changed after Stage 2, stop and require Stage 2 again
+            # instead of silently growing the base through dependency resolution.
+            if ! chroot "$LFS" \
+                env -i \
+                HOME=/root \
+                PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                /usr/bin/pkginfo -i | awk '{print $1}' | grep -qx "$i"
+            then
+                echo "ERROR: Stage 3 expected '$i' to already be installed by Stage 2." >&2
+                echo "ERROR: Re-run Stage 2 before Stage 3; Stage 3 will not install new base packages." >&2
+                _close_active_package_log 1
+                umountfs
+                return 1
+            fi
+
+            # Rebuild exactly this base package with the final BFSOS toolchain.
+            # Stage 2 left its package archive in the shared package cache, so
+            # remove cached copies first; otherwise pkgmk may consider the package
+            # already built and Stage 3 would not actually recompile it.
+            rm -f "$packagedir/$i#"*
+
+            # Use pkgin only as the single-port pkgmk wrapper, exactly as Stage 2
+            # does; do not invoke prt-get here because current prt-get update
+            # intentionally discovers and installs newly required dependencies.
             chroot "$LFS" \
                 env -i \
                 HOME=/root \
@@ -3779,7 +3766,7 @@ EOF
                 LANGUAGE=C \
                 PATH="$STAGE_BUILD_PATH" \
                 CCACHE_DIR=/var/cache/ccache \
-                prt-get update $integrity_opts -fr -fi "$i" \
+                /tmp/lfs-tools/bin/pkgin -d "$i" $integrity_opts -cf /etc/pkgmk.conf \
                 || {
                     status=$?
                     _close_active_package_log "$status"
@@ -3787,28 +3774,26 @@ EOF
                     return "$status"
                 }
 
-            if [ "$i" = glib ]; then
-                echo "Stage 3: verifying GLib introspection data required by polkit..."
-                chroot "$LFS" \
-                    env -i \
-                    HOME=/root \
-                    PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-                    /bin/sh -c '
-                        for gir in GLib-2.0 GObject-2.0 Gio-2.0; do
-                            if [ ! -s "/usr/share/gir-1.0/${gir}.gir" ]; then
-                                echo "ERROR: required GLib introspection file is missing or empty: ${gir}.gir" >&2
-                                exit 1
-                            fi
-                        done
-                    ' \
-                    || {
-                        status=$?
-                        _close_active_package_log "$status"
-                        umountfs
-                        return "$status"
-                    }
-                echo "Stage 3: GLib introspection data verified."
+            package_file="$(ls -1 "$packagedir/$i#"* 2>/dev/null | tail -n1)"
+            if [ -z "$package_file" ] || [ ! -f "$package_file" ]; then
+                echo "ERROR: Stage 3 rebuilt $i but no package archive was found in $packagedir." >&2
+                _close_active_package_log 1
+                umountfs
+                return 1
             fi
+
+            echo "Stage 3: reinstalling exact rebuilt package: $(basename "$package_file")"
+            chroot "$LFS" \
+                env -i \
+                HOME=/root \
+                PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+                /usr/bin/pkgadd -u -f "/$pkgmkpkg/$(basename "$package_file")" \
+                || {
+                    status=$?
+                    _close_active_package_log "$status"
+                    umountfs
+                    return "$status"
+                }
 
             _close_active_package_log 0
         fi
