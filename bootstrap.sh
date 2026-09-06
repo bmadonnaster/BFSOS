@@ -3980,6 +3980,7 @@ gperf
 expat
 inetutils
 perl
+perl-file-sharedir-install
 perl-xml-parser
 intltool
 automake
