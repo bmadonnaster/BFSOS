@@ -1,4 +1,4 @@
-# Depends on: perl perl-file-sharedir-install
+# Depends on: perl perl-file-sharedir-install perl-class-inspector perl-file-sharedir
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=perl-xml-parser
 version=2.59

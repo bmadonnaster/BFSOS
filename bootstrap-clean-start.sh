@@ -783,7 +783,9 @@ gperf
 expat
 inetutils
 perl
+perl-class-inspector
 perl-file-sharedir-install
+perl-file-sharedir
 perl-xml-parser
 intltool
 autoconf
