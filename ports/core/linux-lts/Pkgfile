@@ -6,7 +6,7 @@
 
 name=linux-lts
 version=6.18.49
-release=7
+release=8
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
 # mix a months-old Debian patch snapshot from another 6.18.y point release into
@@ -22,11 +22,9 @@ source=(
 pkg_build() {
     local kernver=""
 
-    # Linux 6.18 predates the MD v1.x logical-block-size metadata field used
-    # by newer kernels. Backport upstream commit 9c47127a807d so the strict
-    # check remains enabled by default but a controlled compatibility boot can
-    # opt out with md_mod.check_new_feature=0 when BFSOS has verified it is safe.
-    patch -Np1 -i "$SRC/md-check-new-feature-6.18.patch" || return 1
+    # pkgmk automatically applies *.patch entries from source=() before
+    # pkg_build() runs. Verify that the MD compatibility backport is present,
+    # but do not apply it a second time here.
     grep -q 'module_param(check_new_feature, bool, 0600);' drivers/md/md.c || {
         echo "linux-lts patch error: MD check_new_feature backport is missing" >&2
         return 1
