@@ -5,18 +5,13 @@
 
 name=python3-hatch-fancy-pypi-readme
 version=25.1.0
-release=2
+release=1
 source=(https://github.com/hynek/hatch-fancy-pypi-readme/archive/$version/$name-$version.tar.gz)
 
 pkg_build() {
-    /usr/bin/python3 -m build --wheel --no-isolation || return 1
+    /usr/bin/python3 -m build --wheel --no-isolation
+    PIP_CONFIG_FILE=/dev/null /usr/bin/pip3 install --isolated --root=$PKG \
+        --ignore-installed --no-deps dist/*.whl
 
-    PIP_CONFIG_FILE=/dev/null /usr/bin/pip3 install \
-        --isolated \
-        --root="$PKG" \
-        --ignore-installed \
-        --no-deps \
-        dist/*.whl || return 1
-
-    rm -f "$PKG"/usr/lib/python*/site-packages/hatch_fancy_pypi_readme-*/{licenses/AUTHORS.md,INSTALLER}
+    rm $PKG/usr/lib/python*/site-packages/hatch_fancy_pypi_readme-*/{licenses/AUTHORS.md,INSTALLER}
 }
