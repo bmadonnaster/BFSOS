@@ -1,12 +1,12 @@
 # Description: Sandboxed and extensible image loading framework used by modern GNOME applications
 # URL: https://gitlab.gnome.org/GNOME/glycin
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: bubblewrap fontconfig glib lcms2 libseccomp libjxl librsvg rustc
+# Depends on: bubblewrap fontconfig glib lcms2 libseccomp libjxl librsvg rustc gtk4
 # Optional: libheif vala python3-gi_docgen gtk4
 
 name=glycin
 version=2.1.5
-release=2
+release=3
 source=(https://download.gnome.org/sources/$name/${version%.*}/$name-$version.tar.xz)
 
 pkg_build() {
@@ -19,7 +19,7 @@ pkg_build() {
         --prefix=/usr \
         --buildtype=release \
         --wrap-mode=nodownload \
-        -Dlibglycin-gtk4=false \
+        -Dlibglycin-gtk4=true \
         -Dtests=false \
         -Dcapi_docs=false \
         -Dglycin-loaders=true -Dloaders=glycin-image-rs,glycin-jxl,glycin-svg \
