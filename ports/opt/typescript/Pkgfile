@@ -9,7 +9,6 @@ release=1
 source=(https://registry.npmjs.org/typescript/-/typescript-$version.tgz)
 
 pkg_build() {
-    cd package || return 1
 
     install -d "$PKG/usr/lib/node_modules/typescript"
     cp -a bin lib package.json \
