@@ -1,5 +1,5 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: geoclue gjs libadwaita libgweather 
+# Depends on: geoclue gjs libadwaita libgweather typescript
 
 name=gnome-weather
 version=50.0
