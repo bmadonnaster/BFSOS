@@ -3,8 +3,9 @@
 
 name=SpiderMonkey
 version=140.15.0esr
-release=1
-source=(https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz)
+release=2
+source=(https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
+        rust-1.98-target-detection.patch)
 
 pkg_build () {
     cd "$SRC/firefox-${version%esr}"
@@ -19,9 +20,10 @@ pkg_build () {
                         --enable-rust-simd      \
                         --with-intl-api         \
                         --with-system-icu       \
-                        --with-system-zlib
-    make
-    make install
+                        --with-system-zlib || return 1
+
+    make || return 1
+    DESTDIR="$PKG" make install || return 1
 
     rm -vf "$PKG/usr/lib/libjs_static.ajs"
     sed -i '/@NSPR_CFLAGS@/d' "$PKG/usr/bin/js140-config"
