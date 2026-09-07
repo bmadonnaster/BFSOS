@@ -5,8 +5,8 @@
 # Optional:  doxygen graphviz gnupg clisp qt5 swig
 
 name=gpgme
-version=2.2.0
-release=3
+version=2.1.2
+release=2
 source=(https://mirrors.dotsrc.org/gcrypt/$name/$name-$version.tar.bz2)
 
 pkg_build() {
