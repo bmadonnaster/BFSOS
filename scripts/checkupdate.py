@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BFSOS upstream version checker v8.
+"""BFSOS upstream version checker v9.
 
 Design goals:
 - never claim an update unless the current port version can be mapped back to the
@@ -27,7 +27,7 @@ import time
 from typing import Iterable
 from urllib.parse import unquote, urlsplit, urlunsplit
 
-TREES = ("core", "opt", "xorg", "plasma", "gnome", "lxqt", "xfce", "compiz")
+TREES = ("core", "opt", "xorg", "plasma", "gnome", "lxqt", "xfce", "compiz", "contrib")
 SKIP_WORDS = ("alpha", "beta", "rc", "pre", "dev", "snapshot", "nightly", "preview")
 BLOCKED_QUALIFIERS = (
     "alt", "cqp", "darwin", "dist", "extended", "init", "kernel", "linux",
@@ -167,7 +167,7 @@ class HttpCache:
                 [
                     "curl", "--fail", "--location", "--silent", "--show-error",
                     "--compressed", "--connect-timeout", "4", "--max-time",
-                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/8", url,
+                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/9", url,
                 ],
                 text=True,
                 encoding="utf-8", errors="replace",
@@ -197,7 +197,7 @@ class HttpCache:
         common = [
             "curl", "--fail", "--location", "--silent", "--show-error",
             "--connect-timeout", "4", "--max-time", str(self.timeout),
-            "--user-agent", "BFSOS-checkupdate/8",
+            "--user-agent", "BFSOS-checkupdate/9",
         ]
         errors: list[str] = []
         for extra in (["--head"], ["--range", "0-0", "--output", "/dev/null"]):
@@ -256,6 +256,14 @@ def is_prerelease(v: str, current: str = "") -> bool:
 def candidate_allowed(v: str, current: str, port: Port | None = None, provider: str = "") -> bool:
     if v == current:
         return True
+    # Preserve explicit release channels.  In particular, Mozilla ESR ports
+    # must never be "updated" to a numerically newer rapid-release build.
+    # The same rule protects explicit LTS-labelled packages/providers.
+    current_low = current.lower()
+    candidate_low = v.lower()
+    for channel in ("esr", "lts"):
+        if channel in current_low and channel not in candidate_low:
+            return False
     if not re.search(r"\d", v) or is_prerelease(v, current):
         return False
 
@@ -812,17 +820,17 @@ def print_result(r: Result, verbose: bool = False):
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v8")
+    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v9")
     ap.add_argument("ports", nargs="*", help="port path or unique package name")
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("-n", action="store_true", help="accepted for compatibility; update overrides are not used by v2")
-    ap.add_argument("-u", "--update", action="store_true", help="disabled: v6 never edits Pkgfiles automatically")
+    ap.add_argument("-u", "--update", action="store_true", help="disabled: v9 never edits Pkgfiles automatically")
     ap.add_argument("--jobs", type=int, default=10)
     ap.add_argument("--timeout", type=int, default=10)
     ap.add_argument("--tsv", help="write complete machine-readable results to this path")
     ns = ap.parse_args()
     if ns.update:
-        print("ERROR: -u is intentionally disabled in checker v8. Review verified UPDATE results before editing Pkgfiles.", file=sys.stderr)
+        print("ERROR: -u is intentionally disabled in checker v9. Review verified UPDATE results before editing Pkgfiles.", file=sys.stderr)
         return 2
 
     root = Path(__file__).resolve().parents[1]
@@ -840,7 +848,7 @@ def main() -> int:
             fake = Port(p.parent, str(p.parent), p.parent.name, "?", [])
             early.append(Result(fake, "ERROR", reason=str(exc)))
 
-    print(f"BFSOS verified upstream version checker v8")
+    print(f"BFSOS verified upstream version checker v9")
     print(f"Ports: {len(pkgfiles)}   Jobs: {max(1, ns.jobs)}   Timeout: {ns.timeout}s")
     print("Policy: UPDATE is emitted only when the provider can map the current version back to the same release set.")
     print()

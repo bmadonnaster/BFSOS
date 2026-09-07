@@ -7,11 +7,11 @@
 # Optional: avahi-32 jack-32 libsdl2-32 libsndfile-32 pulseaudio-32 vulkan-loader-32 xorg-libxcb-32
 
 name=pipewire-32
-version=1.2.6
+version=1.6.8
 release=1
 source=(https://gitlab.freedesktop.org/pipewire/pipewire/-/archive/$version/pipewire-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	prt-get isinst alsa-lib-32 && PKGMK_PW+=' -D alsa=enabled -D pipewire-alsa=enabled'
 	prt-get isinst avahi-32 && PKGMK_PW+=' -D avahi=enabled'
 	prt-get isinst dbus-32 && PKGMK_PW+=' -D dbus=enabled'

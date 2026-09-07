@@ -6,11 +6,11 @@
 # Depends on: fontconfig-32 libXft libXrender-32
 
 name=libXft-32
-version=2.3.8
+version=2.3.9
 release=1
 source=(https://www.x.org/releases/individual/lib/libXft-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXft-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

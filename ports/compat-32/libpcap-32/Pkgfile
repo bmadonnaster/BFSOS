@@ -6,11 +6,11 @@
 # Depends on: libpcap libusb-32
 
 name=libpcap-32
-version=1.10.5
+version=1.10.6
 release=1
 source=(https://www.tcpdump.org/release/${name%-*}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

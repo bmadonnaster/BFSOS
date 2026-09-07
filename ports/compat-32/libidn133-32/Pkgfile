@@ -11,7 +11,7 @@ release=1
 source=(https://ftp.gnu.org/gnu/libidn/libidn-$version.tar.gz
 	libidn11-subdirs.patch makefile.patch)
 
-build() {
+pkg_build() {
 	cd libidn-$version
 	./configure \
 		--prefix=/usr \

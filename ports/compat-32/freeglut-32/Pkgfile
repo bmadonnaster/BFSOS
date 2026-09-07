@@ -6,11 +6,11 @@
 # Depends on: freeglut glu-32 libXi-32
 
 name=freeglut-32
-version=3.6.0
+version=3.8.0
 release=1
 source=(https://downloads.sourceforge.net/project/freeglut/freeglut/$version/freeglut-$version.tar.gz)
 
-build() {
+pkg_build() {
 
 	cmake -Sfreeglut-$version -Bbuild -GNinja \
 		-DCMAKE_INSTALL_PREFIX=/usr \

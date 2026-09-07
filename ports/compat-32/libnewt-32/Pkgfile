@@ -7,11 +7,11 @@
 # Optional: tcl-32
 
 name=libnewt-32
-version=0.52.24
+version=0.52.25
 release=1
 source=(https://releases.pagure.org/newt/newt-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd newt-$version
 
 	if prt-get isinst tcl-32; then

@@ -6,11 +6,11 @@
 # Depends on: libidn2-32 libpsl
 
 name=libpsl-32
-version=0.21.5
+version=0.23.3
 release=2
 source=(https://github.com/rockdaboot/${name%-*}/releases/download/$version/${name%-*}-$version.tar.lz)
 
-build() {
+pkg_build() {
 	meson setup build ${name%-*}-$version --prefix=/usr --libdir=/usr/lib32 \
 		-D runtime=libidn2 \
 		-D builtin=true \

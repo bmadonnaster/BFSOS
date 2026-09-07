@@ -9,10 +9,10 @@ version=8.45
 release=1
 source=(https://downloads.sourceforge.net/project/pcre/pcre/$version/pcre-$version.tar.bz2)
 
-build() {
+pkg_build() {
     cd pcre-$version
-  export CC="gcc -m32"
-  export CXX="g++ -m32"
+  export CC="${CC:-gcc}"
+  export CXX="${CXX:-g++}"
   export PKG_CONFIG="i686-pc-linux-gnu-pkg-config"
 autoreconf -fi 
       ./configure \

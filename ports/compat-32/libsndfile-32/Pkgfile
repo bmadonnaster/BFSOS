@@ -10,7 +10,7 @@ version=1.2.2
 release=1
 source=(https://github.com/libsndfile/libsndfile/releases/download/$version/libsndfile-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libsndfile-$version
 
 	./configure \

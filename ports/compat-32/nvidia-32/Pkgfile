@@ -6,11 +6,11 @@
 # Depends on: libglvnd-32
 
 name=nvidia-32
-version=550.107.02
+version=595.99.02
 release=1
 source=(http://us.download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run)
 
-build() {
+pkg_build() {
 	sh NVIDIA-Linux-x86_64-$version.run --extract-only
 	cd NVIDIA-Linux-x86_64-$version/32
 

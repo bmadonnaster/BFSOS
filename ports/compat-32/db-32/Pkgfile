@@ -10,7 +10,7 @@ release=2
 source=(https://download.oracle.com/berkeley-db/db-$version.tar.gz
 	0001-atomic-Rename-local-__atomic_compare_exchange-to-avo.patch)
 
-build() {
+pkg_build() {
     cd db-$version/build_unix
 
     patch -p1 -d .. -i $SRC/0001-atomic-Rename-local-__atomic_compare_exchange-to-avo.patch

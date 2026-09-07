@@ -10,7 +10,7 @@ version=1.2.12
 release=1
 source=(ftp://ftp.alsa-project.org/pub/plugins/alsa-plugins-${version}.tar.bz2)
 
-build() {
+pkg_build() {
 	cd alsa-plugins-${version}
 
 	./configure \

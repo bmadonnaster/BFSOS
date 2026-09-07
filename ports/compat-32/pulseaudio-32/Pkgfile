@@ -11,7 +11,7 @@ version=17.0
 release=1
 source=(http://freedesktop.org/software/pulseaudio/releases/pulseaudio-$version.tar.xz)
 
-build() {
+pkg_build() {
   prt-get isinst bluez-32 sbc-32 || PKGMK_PULSEAUDIO+=' -D bluez5=disabled'
   prt-get isinst gst-plugins-base-32 || PKGMK_PULSEAUDIO+=' -D gstreamer=disabled'
   prt-get isinst xorg-libice-32 xorg-libsm-32 xorg-libxtst-32 || PKGMK_PULSEAUDIO+=' -D x11=disabled'

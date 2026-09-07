@@ -10,7 +10,7 @@ version=1.10.8
 release=1
 source=(https://github.com/ebassi/graphene/archive/$version/graphene-$version.tar.gz)
 
-build() {
+pkg_build() {
 	meson setup build graphene-$version \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

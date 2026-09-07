@@ -34,7 +34,7 @@ vals, reason = mod.git_tag_versions(["foo-9.9", "foo-10.0"], "2.4.0")
 assert reason and not vals
 
 
-# v8 must reject known false-positive classes seen in the full r243 audit.
+# v9 must reject known false-positive classes seen in the full maintained-tree audit.
 def fake(rel, version):
     return mod.Port(Path('/tmp') / rel, rel, rel.rsplit('/', 1)[-1], version, [])
 
@@ -65,6 +65,9 @@ assert not mod.candidate_allowed('4.1-video', '2.24.1', fake('xorg/libva','2.24.
 assert mod.only_if_newer('0.9.7', '0.8.2') == '0.9.7'
 assert mod.candidate_allowed('8.22.0', '8.21.0', fake('core/curl','8.21.0'), 'directory')
 assert mod.candidate_allowed('20260817', '20260805', fake('core/iana-etc','20260805'), 'git-tags')
+# Explicit release channels must not be crossed by numeric sorting.
+assert not mod.candidate_allowed('155.0', '153.2.0esr', fake('opt/firefox-esr','153.2.0esr'), 'directory')
+assert mod.candidate_allowed('153.3.0esr', '153.2.0esr', fake('opt/firefox-esr','153.2.0esr'), 'directory')
 
 # ABI-family package names must remain on their legacy compatibility lines.
 assert not mod.candidate_allowed('2.2.1', '1.38.1', fake('gnome/libpeas','1.38.1'), 'gnome-cache')
@@ -81,7 +84,7 @@ for tree in mod.TREES:
         assert not any(ch.isspace() for ch in port.name), f"invalid whitespace in name for {pkgfile}: {port.name!r}"
         count += 1
 
-assert count >= 1100, count
+assert count >= 1110, count
 
 
 # v6 source-repair regressions: these are specific failures found during the
@@ -147,9 +150,9 @@ assert any("/Public/17.0.0/ucd/Unihan.zip" in x for x in p.sources), p.sources
 p = port("opt/texlive")
 assert p.version == "20260301" and all("texlive.info/historic/" in x for x in p.sources), p.sources
 
-print(f"checkupdate v8 regression: PASS ({count} maintained Pkgfiles evaluated)")
+print(f"checkupdate v9 regression: PASS ({count} maintained Pkgfiles evaluated)")
 
-# v8 provider regressions: source-hosting oddities must map through authoritative providers.
+# v9 provider regressions: source-hosting oddities must map through authoritative providers.
 assert mod.PYPI_PROJECT_OVERRIDES["core/python3-docutils"] == "docutils"
 assert mod.PYPI_PROJECT_OVERRIDES["opt/scons"] == "SCons"
 assert mod.GIT_REPO_OVERRIDES["core/procps-ng"].endswith("procps.git")

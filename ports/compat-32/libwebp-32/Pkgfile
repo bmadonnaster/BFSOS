@@ -7,11 +7,11 @@
 # Optional: freeglut-32 libsdl-32 ninja
 
 name=libwebp-32
-version=1.4.0
+version=1.6.0
 release=1
 source=(https://storage.googleapis.com/downloads.webmproject.org/releases/webp/${name%-*}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	prt-get isinst ninja && PKGMK_LIBWEBP_32+=' -G Ninja'
 
 prt-get isinst freeglut && ! prt-get isinst freeglut-32 && printf "\e[031mfreeglut is detected on your system, please run:

@@ -10,7 +10,7 @@ version=1.7.0
 release=1
 source=(https://github.com/NVIDIA/${name%-32}/archive/v$version/${name%-32}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-32}-$version
 	./autogen.sh
 	./configure --prefix=/usr \

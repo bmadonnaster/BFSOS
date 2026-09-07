@@ -6,11 +6,11 @@
 # Depends on: spirv-tools
 
 name=spirv-tools-32
-version=1.4.304.1
+version=1.4.357.0
 release=1
 source=(https://github.com/KhronosGroup/SPIRV-Tools/archive/vulkan-sdk-$version/SPIRV-Tools-v$version.tar.gz)
 
-build() {
+pkg_build() {
 	PKGMK_SPIRV_TOOLS+=" \
 -G Ninja \
 -S SPIRV-Tools-vulkan-sdk-$version \

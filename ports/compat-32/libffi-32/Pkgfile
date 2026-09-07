@@ -6,11 +6,11 @@
 # Depends on: libffi
 
 name=libffi-32
-version=3.5.1
+version=3.8.0
 release=1
 source=(https://github.com/libffi/libffi/releases/download/v$version/libffi-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	# ffi.h is target-dependent

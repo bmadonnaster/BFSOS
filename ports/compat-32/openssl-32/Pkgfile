@@ -6,13 +6,12 @@
 # Depends on: zlib-32
 
 name=openssl-32
-version=3.4.1
+version=4.0.2
 release=1
 source=(https://github.com/openssl/openssl/releases/download/openssl-$version/openssl-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd openssl-$version
-CFLAGS+=" -m32" CXXFLAGS+=" -m32" \
 	./Configure --prefix=/usr \
 		--libdir=/usr/lib32 \
 		--openssldir=/etc/ssl \

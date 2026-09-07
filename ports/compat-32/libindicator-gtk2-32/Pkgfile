@@ -10,7 +10,7 @@ version=16.10.0
 release=1
 source=(http://archive.ubuntu.com/ubuntu/pool/universe/libi/libindicator/libindicator_${version}+18.04.20180321.1.orig.tar.gz)
 
-build() {
+pkg_build() {
   sed -e 's/-Werror -Wno-error=deprecated-declarations//g' -i libindicator/Makefile.am
   sed -e 's/--enable-gtk-doc//g' -i autogen.sh
 

@@ -7,12 +7,12 @@
 # Optional: wayland-32
 
 name=vulkan-loader-32
-version=1.4.304
+version=1.4.357.0
 release=1
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/v${version}/Vulkan-Loader-${version}.tar.gz)
 
 
-build() {
+pkg_build() {
 	prt-get isinst wayland-32 || PKGMK_VULKAN_LOADER+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
 
 	export ASFLAGS='--32'

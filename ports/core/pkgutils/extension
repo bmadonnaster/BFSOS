@@ -1,8 +1,14 @@
 # extra function for pkgmk
-if [ "$PKGMK_ARCH" = 32 ]; then
+if [ "${PKGMK_ARCH:-}" = 32 ]; then
+        # pkgmk.conf owns the multilib flags and host policy.  Keep compiler
+        # command names plain here so recipes can safely pass CC/CXX through
+        # build systems without embedding duplicate -m32 options.
+        export BFS_MULTILIB_HOST="${BFS_MULTILIB_HOST:-i686-pc-linux-gnu}"
+        export CHOST="${CHOST:-$BFS_MULTILIB_HOST}"
         export PKG_CONFIG_LIBDIR="/usr/lib32/pkgconfig:/usr/share/pkgconfig"
-        export CC="${CC:-gcc} -m32"
-        export CXX="${CXX:-g++} -m32"
+        export PKG_CONFIG_PATH=""
+        export CC="${CC:-gcc}"
+        export CXX="${CXX:-g++}"
 else
         unset PKGMK_ARCH
 fi
@@ -265,6 +271,9 @@ if [ ! "$(command -v build)" ]; then
 			"${_bfs_build_opts[@]}" || return $?
 		_bfs_meson_disable_supported_tests || return $?
 		meson compile -C _meson_build -j "${JOBS:-1}" || return $?
+		if [ "${PKGMK_RUN_TESTS:-no}" = yes ] || [ "${run_tests:-no}" = yes ]; then
+			meson test -C _meson_build --print-errorlogs || return $?
+		fi
 		DESTDIR="$PKG" meson install --no-rebuild -C _meson_build || return $?
 	}
 

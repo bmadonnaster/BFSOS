@@ -5,8 +5,8 @@
 # Optional: apulse-32 libappindicator-sharp-32 pulseaudio-32
 
 name=steam-native-runtime
-version=1.0.0.75
-release=2
+version=1.0.0.87
+release=3
 source=(steam-native.sh)
 
 pkg_build() {

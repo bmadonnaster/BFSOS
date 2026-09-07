@@ -190,7 +190,7 @@ for unit in pipewire.socket pipewire-pulse.socket wireplumber.service; do
     grep -q "^enable $unit$" ports/opt/wireplumber/90-bfsos-audio.preset || report "audio preset missing $unit"
 done
 [ -f ports/xfce/xfce4-panel/default.xml ] || report "Xfce default panel layout missing"
-for plugin in notification-plugin xfce4powermanager pulseaudio systray; do
+for plugin in notification-plugin power-manager-plugin pulseaudio systray; do
     grep -q "value=\"$plugin\"" ports/xfce/xfce4-panel/default.xml || report "Xfce default panel missing $plugin"
 done
 grep -q 'bfs_refresh_new_deps' ports/core/prt-get/Pkgfile || report "prt-get wrapper lacks newly-added dependency refresh"

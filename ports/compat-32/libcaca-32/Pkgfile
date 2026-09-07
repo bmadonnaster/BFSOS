@@ -10,7 +10,7 @@ version=0.99.beta20
 release=1
 source=(https://github.com/cacalabs/libcaca/releases/download/v$version/libcaca-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

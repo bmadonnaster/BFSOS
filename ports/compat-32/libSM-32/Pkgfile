@@ -6,11 +6,11 @@
 # Depends on: util-linux-32 libice-32 libSM
 
 name=libSM-32
-version=1.2.4
+version=1.2.6
 release=2
 source=(https://www.x.org/releases/individual/lib/libSM-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libSM-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

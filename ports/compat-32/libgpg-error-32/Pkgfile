@@ -6,11 +6,11 @@
 # Depends on: libgpg-error
 
 name=libgpg-error-32
-version=1.50
+version=1.61
 release=1
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/${name%-*}-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

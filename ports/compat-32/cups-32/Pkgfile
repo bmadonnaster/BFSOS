@@ -7,11 +7,11 @@
 # Optional: dbus-32 gnutls-32
 
 name=cups-32
-version=2.4.11
+version=2.4.19
 release=1
 source=(https://github.com/OpenPrinting/cups/releases/download/v$version/${name%-*}-$version-source.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	PKGMK_CUPS=' --with-tls=openssl'

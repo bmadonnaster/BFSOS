@@ -1,6 +1,6 @@
 #!/bin/bash
-# BFSOS maintained-tree upstream version audit v8.
-# contrib and compat-32 are intentionally excluded.
+# BFSOS maintained-tree upstream version audit v9.
+# compat-32 is version-synchronized against native ports by multilibvercheck.sh.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -8,11 +8,11 @@ STAMP=$(date +%Y%m%d-%H%M%S)
 LOG=${1:-"$ROOT/bfs-maintained-port-version-audit-$STAMP.log"}
 TSV=${2:-"${LOG%.log}.tsv"}
 
-export REPO="$ROOT/ports/core $ROOT/ports/opt $ROOT/ports/xorg $ROOT/ports/plasma $ROOT/ports/gnome $ROOT/ports/lxqt $ROOT/ports/xfce $ROOT/ports/compiz"
+export REPO="$ROOT/ports/core $ROOT/ports/opt $ROOT/ports/xorg $ROOT/ports/plasma $ROOT/ports/gnome $ROOT/ports/lxqt $ROOT/ports/xfce $ROOT/ports/compiz $ROOT/ports/contrib"
 
-echo "BFSOS maintained-port online version audit v8"
-echo "Trees: core opt xorg plasma gnome lxqt xfce compiz"
-echo "Excluded: contrib compat-32"
+echo "BFSOS maintained-port online version audit v9"
+echo "Trees: core opt xorg plasma gnome lxqt xfce compiz contrib"
+echo "Excluded from online provider audit: compat-32 (checked against native counterparts separately)"
 echo "Safety: read-only; automatic Pkgfile updates are disabled"
 echo "Log: $LOG"
 echo "TSV: $TSV"

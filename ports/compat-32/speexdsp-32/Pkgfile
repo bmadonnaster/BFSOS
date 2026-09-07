@@ -10,7 +10,7 @@ version=1.2.1
 release=1
 source=(https://ftp.osuosl.org/pub/xiph/releases/speex/speexdsp-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd speexdsp-$version
 
 	./configure \

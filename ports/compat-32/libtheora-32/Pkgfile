@@ -10,7 +10,7 @@ version=1.2.0
 release=1
 source=(https://downloads.xiph.org/releases/theora/libtheora-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd libtheora-$version
 
 	./configure \

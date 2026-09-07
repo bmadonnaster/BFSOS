@@ -174,12 +174,35 @@ regenerate_grub() (
     set_grub_top_level
     target="$BOOT_ROOT/grub/grub.cfg"
     tmp="$BOOT_ROOT/grub/.grub.cfg.bfs.$$"
-    trap 'rm -f -- "$tmp"' EXIT HUP INT TERM
+    lts_alias="$BOOT_ROOT/vmlinuz-lts"
+    alias_tmp="$BOOT_ROOT/.bfs-vmlinuz-lts.$$"
+
+    cleanup_grub_generation() {
+        rm -f -- "$tmp"
+        if [ -L "$alias_tmp" ]; then
+            mv -Tf -- "$alias_tmp" "$lts_alias"
+        fi
+    }
+    trap cleanup_grub_generation EXIT HUP INT TERM
+
+    # /boot/vmlinuz-lts is a convenience alias, not a distinct installed
+    # kernel. Hide it only while GRUB scans /boot so 10_linux cannot emit a
+    # duplicate menu entry for the same versioned BFS-LTS image.
+    if [ -L "$lts_alias" ]; then
+        rm -f -- "$alias_tmp"
+        mv -Tf -- "$lts_alias" "$alias_tmp"
+    fi
 
     grub-mkconfig -o "$tmp" || {
         echo "BFSOS kernel maintenance: grub-mkconfig failed; existing grub.cfg was preserved." >&2
         return 1
     }
+
+    # Restore the public alias immediately after discovery; later validation
+    # operates only on the generated temporary configuration.
+    if [ -L "$alias_tmp" ]; then
+        mv -Tf -- "$alias_tmp" "$lts_alias"
+    fi
     [ -s "$tmp" ] || {
         echo "BFSOS kernel maintenance: generated GRUB configuration is empty." >&2
         return 1

@@ -6,11 +6,11 @@
 # Depends on: cairo fontconfig-32 glib-32 pixman-32 libXext-32 libXrender-32 xcb-util-32
 
 name=cairo-32
-version=1.18.2
+version=1.18.4
 release=1
 source=(https://gitlab.freedesktop.org/cairo/cairo/-/archive/$version/cairo-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	meson setup build ${name%-*}-$version \
 		--prefix=/usr \
 		--libdir=lib32 \

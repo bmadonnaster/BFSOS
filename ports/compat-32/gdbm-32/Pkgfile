@@ -5,11 +5,11 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=gdbm-32
-version=1.25
+version=1.26
 release=1
 source=(https://ftp.gnu.org/gnu/${name%-*}/${name%-*}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	export CC="${CC:-gcc} ${CFLAGS}"
 	export CFLAGS="$CFLAGS -fcommon"
 

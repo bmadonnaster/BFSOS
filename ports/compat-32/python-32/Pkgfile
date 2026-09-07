@@ -10,7 +10,7 @@ version=2.7.18
 release=2
 source=(https://www.python.org/ftp/python/$version/Python-$version.tar.xz)
 
-build() {
+pkg_build() {
     cd Python-$version
 
     # set OPT to the python default without -O3

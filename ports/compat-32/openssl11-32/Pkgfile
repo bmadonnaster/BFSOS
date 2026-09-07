@@ -10,10 +10,10 @@ release=1
 source=(https://www.openssl.org/source/${name:0:7}-$version.tar.gz \
 	no-rpath.patch openssl-1.0-versioned-symbols.patch)
 
-build() {
+pkg_build() {
 	cd ${name:0:7}-$version
 	#export MAKEFLAGS="$MAKEFLAGS -j1"
-	export CC='gcc -m32'
+	export CC="${CC:-gcc}"
 
 	./Configure --prefix=/usr \
 		--openssldir=/etc/ssl \

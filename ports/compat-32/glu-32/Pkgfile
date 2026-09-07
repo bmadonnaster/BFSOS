@@ -10,7 +10,7 @@ version=9.0.3
 release=1
 source=(https://mesa.freedesktop.org/archive/glu/glu-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson build glu-$version \
 		--prefix /usr \
 		--libdir lib32 \

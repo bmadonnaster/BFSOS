@@ -6,11 +6,11 @@
 # Depends on: glew mesa-32 libXi-32 libXmu-32
 
 name=glew-32
-version=2.2.0
+version=2.3.1
 release=1
 source=(https://downloads.sourceforge.net/project/glew/glew/$version/glew-$version.tgz)
 
-build() {
+pkg_build() {
 	cd glew-$version
 
 	make \

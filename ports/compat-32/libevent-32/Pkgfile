@@ -6,11 +6,11 @@
 # Depends on: openssl-32 libevent
 
 name=libevent-32
-version=2.1.12
+version=2.1.13
 release=1
 source=(https://github.com/libevent/libevent/releases/download/release-$version-stable/libevent-$version-stable.tar.gz)
 
-build() {
+pkg_build() {
 	cd libevent-$version-stable
 
 	./configure --prefix=/usr --libdir=/usr/lib32

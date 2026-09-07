@@ -23,13 +23,14 @@ case "${1:-}" in
   info) exit 0 ;;
   quickdep) echo newdep ;;
   isinst) echo 'Package newdep not installed' ;;
-  quickdiff) echo demo ;;
+  quickdiff) printf '%s\n' "${PRT_TEST_QUICKDIFF:-demo}" ;;
   --help|-h) echo 'upstream help' ;;
 esac
 exit 0
 SH
 chmod +x "$T/prt-get.real"
 export PRT_TEST_LOG="$T/log"
+export PRT_TEST_QUICKDIFF=demo
 
 : > "$PRT_TEST_LOG"
 "$T/prt-get" update demo >/dev/null 2>&1
@@ -45,10 +46,20 @@ grep -q 'intentionally skipped new dependencies' <<<"$out"
 grep -q '^  newdep$' <<<"$out"
 
 : > "$PRT_TEST_LOG"
+export PRT_TEST_QUICKDIFF=demo
+"$T/prt-get" sysup --no-new-deps >/dev/null 2>&1
+! grep -q '^update pkgutils$' "$PRT_TEST_LOG"
+grep -q '^sysup$' "$PRT_TEST_LOG"
+! grep -q '^depinst ' "$PRT_TEST_LOG"
+
+: > "$PRT_TEST_LOG"
+export PRT_TEST_QUICKDIFF='pkgutils
+demo'
 "$T/prt-get" sysup --no-new-deps >/dev/null 2>&1
 grep -q '^update pkgutils$' "$PRT_TEST_LOG"
 grep -q '^sysup$' "$PRT_TEST_LOG"
 ! grep -q '^depinst ' "$PRT_TEST_LOG"
+export PRT_TEST_QUICKDIFF=demo
 
 : > "$PRT_TEST_LOG"
 "$T/prt-get" depinst demo >/dev/null 2>&1

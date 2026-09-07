@@ -17,7 +17,7 @@ source=(https://downloads.xiph.org/releases/cdparanoia/cdparanoia-III-$version.s
 	cdparanoia-10.2-ldflags.patch
 	cdparanoia-10.2-add-pkgconfig.patch)
 
-build() {
+pkg_build() {
 	cd cdparanoia-III-$version
 	patch -p3 -i $SRC/cdparanoia-10.2-463009.patch
 	patch -p1 -i $SRC/cdparanoia-10.2-endian.patch

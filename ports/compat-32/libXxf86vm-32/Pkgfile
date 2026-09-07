@@ -6,11 +6,11 @@
 # Depends on: libXext-32
 
 name=libXxf86vm-32
-version=1.1.5
+version=1.1.7
 release=1
 source=(https://www.x.org/releases/individual/lib/libXxf86vm-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXxf86vm-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

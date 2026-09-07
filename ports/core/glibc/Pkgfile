@@ -4,7 +4,7 @@
 
 name=glibc
 version=2.44
-release=1
+release=2
 
 source=(
     https://ftp.gnu.org/gnu/glibc/glibc-$version.tar.xz

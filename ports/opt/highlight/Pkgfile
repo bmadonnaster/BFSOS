@@ -1,32 +1,22 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: qt5 boost lua
+# Depends on: boost lua
 
 name=highlight
 version=4.21
-release=4
+release=5
 source=(http://www.andre-simon.de/zip/${name}-${version}.tar.bz2)
 
 pkg_build() {
     sed -i '/GZIP/s/^/#/' makefile || return 1
 
+    # BFSOS ships Highlight as the CLI syntax-highlighter.  The optional Qt5
+    # GUI is intentionally omitted so packages such as Evolution do not pull
+    # the legacy Qt5 stack into an otherwise GTK/GNOME installation.
     make || return 1
 
-    # BFSOS Qt5 provides qmake as qmake-qt5.
-    make \
-        QMAKE=/opt/qt5/bin/qmake \
-        doc_dir=/usr/share/doc/${name}-${version}/ \
-        gui || return 1
-
     mkdir -p "${PKG}/usr/share/doc/${name}-${version}" || return 1
-
-    # doc_dir must remain relative to the installed filesystem.
-    # DESTDIR applies the package staging prefix.
     make \
         DESTDIR="${PKG}" \
         doc_dir=/usr/share/doc/${name}-${version}/ \
         install || return 1
-
-    make \
-        DESTDIR="${PKG}" \
-        install-gui || return 1
 }

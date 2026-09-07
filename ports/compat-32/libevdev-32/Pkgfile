@@ -6,12 +6,12 @@
 # Depends on: libevdev
 
 name=libevdev-32
-version=1.13.4
+version=1.13.7
 release=1
 source=(https://www.freedesktop.org/software/libevdev/libevdev-$version.tar.xz
 cross-file.txt)
 
-build() {
+pkg_build() {
 	meson setup build libevdev-$version --cross-file cross-file.txt \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

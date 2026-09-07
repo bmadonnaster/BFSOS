@@ -10,7 +10,7 @@ version=34.2
 release=1
 source=(https://www.kernel.org/pub/linux/utils/kernel/${name%-*}/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup build kmod-$version \
 		--prefix=/usr \
 		--bindir=/bin \

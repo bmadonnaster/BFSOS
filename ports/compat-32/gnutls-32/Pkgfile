@@ -6,11 +6,11 @@
 # Depends on: gnutls libidn2-32 nettle-32 p11-kit-32
 
 name=gnutls-32
-version=3.8.9
+version=3.8.13
 release=1
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/v${version:0:3}/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-${version:0:5}
 
 	./configure \

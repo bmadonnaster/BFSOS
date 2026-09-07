@@ -6,13 +6,13 @@
 # Depends on: libpng zlib-32
 
 name=libpng-32
-version=1.6.49
+version=1.6.58
 _base=${version:0:3}
 _base=${_base/./}
 release=1
 source=(https://downloads.sourceforge.net/project/${name%-*}/${name%-*}$_base/$version/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

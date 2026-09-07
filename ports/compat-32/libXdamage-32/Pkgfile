@@ -6,11 +6,11 @@
 # Depends on: libXdamage libXfixes-32
 
 name=libXdamage-32
-version=1.1.6
+version=1.1.7
 release=1
 source=(https://www.x.org/releases/individual/lib/libXdamage-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXdamage-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

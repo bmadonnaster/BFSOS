@@ -9,7 +9,7 @@ version=6.3.0
 release=1
 source=(https://gmplib.org/download/gmp/gmp-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd gmp-$version
 
 	./configure \

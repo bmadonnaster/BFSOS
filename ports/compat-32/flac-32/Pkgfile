@@ -6,11 +6,11 @@
 # Depends on: libogg-32
 
 name=flac-32
-version=1.4.3
+version=1.5.0
 release=1
 source=(https://downloads.xiph.org/releases/flac/flac-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cmake -S flac-$version -B build -G Ninja \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \

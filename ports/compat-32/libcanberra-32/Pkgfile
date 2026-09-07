@@ -16,7 +16,7 @@ source=(
 	libcanberra-broadway-fix.patch
 	libcanberra-multi-backend.patch)
 
-build() {
+pkg_build() {
 	cd ${name:0:11}-$version
 
 	patch -p1 -i $SRC/libcanberra-broadway-fix.patch

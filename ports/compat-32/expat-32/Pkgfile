@@ -6,11 +6,11 @@
 # Depends on: expat
 
 name=expat-32
-version=2.7.1
+version=2.8.4
 release=1
 source=(https://downloads.sourceforge.net/project/${name%-*}/${name%-*}/$version/${name%-*}-$version.tar.bz2)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

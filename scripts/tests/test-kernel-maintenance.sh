@@ -14,6 +14,12 @@ SH
 cat > "$T/bin/grub-mkconfig" <<'SH'
 #!/bin/sh
 [ "${1:-}" = -o ] || exit 2
+# The public LTS alias must be hidden during discovery or GRUB's Linux scanner
+# can emit a second menu entry for the same versioned kernel image.
+[ ! -L "$BFS_KERNEL_BOOT_ROOT/vmlinuz-lts" ] || {
+    echo "vmlinuz-lts alias visible during grub-mkconfig" >&2
+    exit 44
+}
 printf '# generated for %s\nmenuentry BFSOS {}\n' "$BFS_TEST_UNAME" > "$2"
 SH
 cat > "$T/bin/grub-script-check" <<'SH'
@@ -95,6 +101,8 @@ run_family linux 7.2.1-BFS-Linux 7.2.2-BFS-Linux 7.2.3-BFS-Linux
 rm -rf "$T"/{boot,modules,src,state,rollback,etc}
 mkdir -p "$T"/{boot/grub,modules,src,etc/bfsos,etc/default,state,rollback}
 run_family linux-lts 6.18.47-BFS-LTS 6.18.48-BFS-LTS 6.18.49-BFS-LTS
+[ -L "$T/boot/vmlinuz-lts" ]
+[ "$(readlink "$T/boot/vmlinuz-lts")" = "vmlinuz-6.18.49-BFS-LTS" ]
 
 # Failed-boot path: pending state and rollback files must survive.
 env_for 6.18.49-BFS-LTS

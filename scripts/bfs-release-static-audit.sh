@@ -25,8 +25,8 @@ grep -Fq '3 "Integrity verification"' bootstrap.sh || say_fail "Integrity verifi
 # Current installer must be the newest maintained implementation.
 current_target="$(readlink scripts/install-bfs-menu-current.sh 2>/dev/null || true)"
 case "$current_target" in
-  *r72-tracker-maintenance.sh) ;;
-  *) say_fail "current installer does not point at r72: $current_target" ;;
+  *r73-tracker-source-fixes.sh) ;;
+  *) say_fail "current installer does not point at r73: $current_target" ;;
 esac
 
 # Base diagnostics and trust stack.
@@ -79,7 +79,7 @@ done
 for unit in pipewire.socket pipewire-pulse.socket wireplumber.service; do
   grep -q "^enable $unit$" ports/opt/wireplumber/90-bfsos-audio.preset || say_fail "audio preset missing $unit"
 done
-for plugin in notification-plugin xfce4powermanager pulseaudio systray; do
+for plugin in notification-plugin power-manager-plugin pulseaudio systray; do
   grep -q "value=\"$plugin\"" ports/xfce/xfce4-panel/default.xml || say_fail "Xfce default panel missing $plugin"
 done
 [ -f ports/lxqt/lxqt-meta/Pkgfile ] || say_fail "lxqt-meta complete desktop package missing"

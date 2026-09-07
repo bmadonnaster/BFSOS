@@ -5,12 +5,12 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libffi-32 libxml2-32 llvm ncurses-32 zstd-32
 name=llvm-32
-version=20.1.1
+version=23.1.0
 release=1
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-$version.src.tar.xz
 	https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/cmake-$version.src.tar.xz
 	https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/third-party-$version.src.tar.xz)
-build() {
+pkg_build() {
         mkdir -p $SRC/keep
 
         #prt-get isinst ccache && PKGMK_LLVM+=' -D LLVM_CCACHE_BUILD=ON'
@@ -22,8 +22,8 @@ build() {
                 -D CMAKE_INSTALL_PREFIX=/usr \
                 -D LLVM_LIBDIR_SUFFIX=32 \
                 -D CMAKE_BUILD_TYPE=Release \
-                -D CMAKE_C_FLAGS_RELEASE="-O2 -march=x86-64 -pipe -m32" \
-                -D CMAKE_CXX_FLAGS_RELEASE="-O2 -march=x86-64 -pipe -m32" \
+                -D CMAKE_C_FLAGS_RELEASE="-O2 -march=x86-64 -pipe" \
+                -D CMAKE_CXX_FLAGS_RELEASE="-O2 -march=x86-64 -pipe" \
                 -D LLVM_TARGET_ARCH=i686 \
                 -D LLVM_BINUTILS_INCDIR=/usr/include \
                 -D LLVM_BUILD_LLVM_DYLIB=ON \

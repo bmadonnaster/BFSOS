@@ -5,8 +5,8 @@
 # Optional: bash-completion scdoc zsh
 
 name=alacritty
-version=0.13.2
-release=1
+version=0.17.0
+release=2
 source=(https://github.com/alacritty/alacritty/archive/refs/tags/v$version.tar.gz)
 renames=($name-$version.tar.gz)
 
@@ -21,7 +21,7 @@ pkg_build() {
     $PKG/usr/bin/alacritty
 
   if prt-get isinst scdoc; then
-    for i in 1 5; do
+    for i in 1 5 7; do
       scdoc < $name-$version/extra/man/alacritty.${i}.scd | tee alacritty.${i}
     install -D -m644 alacritty.${i} \
       $PKG/usr/share/man/man${i}/alacritty.${i}

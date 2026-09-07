@@ -1,7 +1,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=prt-get
 version=5.19.10
-release=1
+release=2
 source=(http://crux.nu/files/prt-get-$version.tar.xz
 	prt-get.conf
 	prt-get.aliases
@@ -163,16 +163,21 @@ if [ "$no_new_deps" = yes ] && [ "$want_sysup" = no ] && [ "$want_update" = no ]
 fi
 
 if [ "$want_sysup" = yes ]; then
-    if [ "$test_mode" = no ]; then
-        echo "BFSOS sysup preflight: updating package-management tooling first"
+    outdated=$("$real" quickdiff 2>/dev/null || true)
+
+    # Keep package-management tooling first *when it is actually stale*.  The
+    # previous unconditional update rebuilt/reinstalled pkgutils on every sysup.
+    if [ "$test_mode" = no ] && printf '%s\n' "$outdated" | grep -qx 'pkgutils'; then
+        echo "BFSOS sysup preflight: pkgutils is stale; updating package-management tooling first"
         "$real" update pkgutils || {
             status=$?
             echo "BFSOS sysup preflight: pkgutils update failed (status $status); sysup aborted" >&2
             exit "$status"
         }
+        # Re-evaluate after the tooling update so dependency closure and sysup
+        # operate on the current package database.
+        outdated=$("$real" quickdiff 2>/dev/null || true)
     fi
-
-    outdated=$("$real" quickdiff 2>/dev/null || true)
     if [ -n "$outdated" ]; then
         # shellcheck disable=SC2086
         bfs_refresh_new_deps sysup $outdated

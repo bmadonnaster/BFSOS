@@ -10,7 +10,7 @@ version=1.0.16
 release=1
 source=(https://github.com/${name%-*}/${name%-*}/releases/download/v$version/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup ${name%-*}-$version build \
 		-D prefix=/usr \
 		--libdir=/usr/lib32 \

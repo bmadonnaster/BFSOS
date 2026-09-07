@@ -11,7 +11,7 @@ _commit=6f6bb1353fc84f4cc37138baa99f586750028a01
 release=4
 source=(https://crux.nu/files/distfiles/rtmpdump-2.6.tar.gz)
 
-build() {
+pkg_build() {
   cd rtmpdump-*
   sed \
     -e 's/^CRYPTO=OPENSSL/#CRYPTO=OPENSSL/' \

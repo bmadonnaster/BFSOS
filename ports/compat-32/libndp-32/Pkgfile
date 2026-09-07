@@ -10,7 +10,7 @@ version=1.9
 release=1
 source=(http://libndp.org/files/${name%-*}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

@@ -5,11 +5,11 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=xz-32
-version=5.8.0
+version=5.8.3
 release=1
 source=(https://github.com/tukaani-project/xz/releases/download/v$version/xz-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd xz-$version
 
 	autoreconf -vfi

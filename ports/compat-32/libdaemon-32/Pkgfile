@@ -10,7 +10,7 @@ version=0.14
 release=1
 source=(http://0pointer.de/lennart/projects/${name%-*}/${name%-*}-$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd ${name%-*}-$version
 
 	./configure \

@@ -6,11 +6,11 @@
 # Depends on: libX11-32
 
 name=libXfixes-32
-version=6.0.1
+version=6.0.2
 release=1
 source=(https://www.x.org/releases/individual/lib/libXfixes-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXfixes-$version
 
 	./configure \

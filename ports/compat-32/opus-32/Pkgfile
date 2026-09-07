@@ -6,11 +6,11 @@
 # Depends on: opus
 
 name=opus-32
-version=1.5.2
+version=1.6.1
 release=1
 source=(https://downloads.xiph.org/releases/opus/opus-$version.tar.gz)
 
-build() {
+pkg_build() {
 	meson setup opus-$version build \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

@@ -6,12 +6,12 @@
 # Depends on: glib-32 gstreamer libcap-32 libgmp-32
 
 name=gstreamer-32
-version=1.24.12
+version=1.28.6
 release=1
 source=(https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-$version.tar.xz
 	x86-linux-gnu x86-linux-gnu-ccache)
 
-build() {
+pkg_build() {
 	prt-get isinst ccache && local _cross_file='x86-linux-gnu-ccache' || local _cross_file='x86-linux-gnu'
 
 	meson setup build gstreamer-$version \

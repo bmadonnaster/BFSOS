@@ -6,11 +6,11 @@
 # Depends on: xtrans
 
 name=xtrans-32
-version=1.5.1
+version=1.6.0
 release=1
 source=(https://www.x.org/releases/individual/lib/xtrans-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd xtrans-$version
 
 	sed -i -e 's,$(datadir)/pkgconfig,$(libdir)/pkgconfig,' Makefile.in

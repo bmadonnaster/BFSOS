@@ -10,7 +10,7 @@ version=1.15
 release=1
 source=(https://dl.winehq.org/vkd3d/source/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
     cd ${name%-*}-$version
 
     ./configure \

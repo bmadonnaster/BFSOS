@@ -6,11 +6,11 @@
 # Depends on: libdrm libpciaccess-32
 
 name=libdrm-32
-version=2.4.125
+version=2.4.134
 release=1
 source=(https://dri.freedesktop.org/${name%-*}/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup build ${name%-*}-$version \
 		--prefix=/usr \
 		--libdir=lib32 \

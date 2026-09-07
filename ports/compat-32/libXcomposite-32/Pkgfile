@@ -6,11 +6,11 @@
 # Depends on: libXcomposite libXext-32 libXfixes-32
 
 name=libXcomposite-32
-version=0.4.6
+version=0.4.7
 release=1
 source=(https://www.x.org/releases/individual/lib/libXcomposite-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXcomposite-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

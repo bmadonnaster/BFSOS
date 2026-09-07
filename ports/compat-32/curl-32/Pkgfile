@@ -7,11 +7,11 @@
 # Optional:
 
 name=curl-32
-version=8.12.1
+version=8.22.0
 release=1
 source=(https://curl.se/download/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
   cd ${name%-*}-$version
 
   prt-get isinst brotli && ! prt-get isinst brotli-32 && printf "\e[031mbrotli is detected on your system, please run:

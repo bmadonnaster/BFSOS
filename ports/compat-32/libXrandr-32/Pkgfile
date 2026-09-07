@@ -6,11 +6,11 @@
 # Depends on: libXext-32 libXrandr libXrender-32
 
 name=libXrandr-32
-version=1.5.4
+version=1.5.5
 release=1
 source=(https://www.x.org/releases/individual/lib/libXrandr-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libXrandr-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32

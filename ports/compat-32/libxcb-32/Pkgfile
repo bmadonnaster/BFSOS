@@ -10,7 +10,7 @@ version=1.17.0
 release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/libxcb-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd libxcb-$version
 
 	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'

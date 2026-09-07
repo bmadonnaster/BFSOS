@@ -11,7 +11,7 @@ release=1
 source=(https://download.gnome.org/sources/NetworkManager/${version::4}/NetworkManager-$version.tar.xz
 	1966.patch)
 
-build() {
+pkg_build() {
 	patch -Np1 -d $SRC/NetworkManager-$version -i $SRC/1966.patch
 
 	meson setup NetworkManager-$version build $PKGMK_NM \

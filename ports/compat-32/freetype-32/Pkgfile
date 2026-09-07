@@ -6,12 +6,12 @@
 # Depends on: bzip2-32 freetype libpng-32
 
 name=freetype-32
-version=2.13.3
+version=2.14.3
 release=1
 source=(https://sourceforge.net/projects/freetype/files/freetype2/$version/freetype-$version.tar.xz
 cross-file.txt)
 
-build() {
+pkg_build() {
 	meson setup ${name%-*}-$version build --cross-file cross-file.txt  \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

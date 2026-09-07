@@ -6,13 +6,12 @@
 # Depends on: expat-32 libffi-32 libxml2-32 wayland libX11-32
 
 name=wayland-32
-version=1.23.1
+version=1.26.0
 release=1
 source=(https://gitlab.freedesktop.org/wayland/wayland/-/releases/$version/downloads/wayland-$version.tar.xz)
 
-build() {
-	CC="gcc -m32" CXX="g++ -m32"         \
-	PKG_CONFIG_PATH=/usr/lib32/pkgconfig \
+pkg_build() {
+		PKG_CONFIG_PATH=/usr/lib32/pkgconfig \
 	meson setup ${name%-*}-$version build \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

@@ -6,11 +6,11 @@
 # Depends on: orc
 
 name=orc-32
-version=0.4.41
+version=0.4.43
 release=1
 source=(https://gstreamer.freedesktop.org/src/orc/orc-$version.tar.xz)
 
-build() {
+pkg_build() {
   meson setup orc-$version build --cross-file lib32 \
     --prefix=/usr \
     --libdir=/usr/lib32 \

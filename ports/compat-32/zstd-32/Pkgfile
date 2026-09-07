@@ -10,7 +10,7 @@ version=1.5.7
 release=1
 source=(https://github.com/facebook/zstd/archive/v$version/zstd-v$version.tar.gz)
 
-build() {
+pkg_build() {
 	cd zstd-$version
 
 	make HAVE_THREAD=1

@@ -10,7 +10,7 @@ version=9.0.0
 release=1
 source=(https://archive.mesa3d.org/demos/${name%-*}-$version.tar.xz)
 
-build() {
+pkg_build() {
 	meson setup ${name%-*}-$version build \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

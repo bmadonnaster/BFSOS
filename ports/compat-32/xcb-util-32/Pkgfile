@@ -10,7 +10,7 @@ version=0.4.1
 release=1
 source=(https://www.x.org/releases/individual/xcb/xcb-util-$version.tar.xz)
 
-build() {
+pkg_build() {
 	cd xcb-util-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32
