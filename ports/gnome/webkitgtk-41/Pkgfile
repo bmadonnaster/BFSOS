@@ -3,7 +3,7 @@
 
 name=webkitgtk-41
 version=2.52.6
-release=2
+release=3
 source=(https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz)
 pkg_build() {
   # fail the build if dependencies are not met
@@ -42,10 +42,9 @@ pkg_build() {
       -W no-dev  &&
    
 
-  cmake --build build
-  DESTDIR=$PKG cmake --install build
-
-  rm -r $PKG/usr/share/locale
+  cmake --build build || return 1
+  DESTDIR="$PKG" cmake --install build || return 1
+  rm -rf "$PKG/usr/share/locale"
   # avoid a footprint collision with webkitgtk
 #  mv $PKG/usr/bin/WebKitWebDriver{,-4.1}
 }
