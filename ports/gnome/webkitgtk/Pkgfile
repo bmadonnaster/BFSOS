@@ -1,10 +1,10 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cairo cmake gst-plugins-base gst-plugins-bad gtk3 gtk4 icu lcms2 libgudev libsecret libsoup3 libtasn1 libwebp mesa openjpeg2 ruby sqlite unifdef which bubblewrap enchant geoclue glib gobject-introspection hicolor-icon-theme libavif libjxl libseccomp xdg-dbus-proxy hyphen woff2 libXcomposite
+# Depends on: cairo cmake gst-plugins-base gst-plugins-bad gtk3 gtk4 icu lcms2 libgudev libsecret libsoup3 libtasn1 libwebp mesa openjpeg2 ruby sqlite unifdef which bubblewrap enchant geoclue glib gobject-introspection hicolor-icon-theme libavif libjxl libseccomp xdg-dbus-proxy hyphen woff2 libXcomposite flite
 
 
 name=webkitgtk
 version=2.52.6
-release=1
+release=3
 source=(https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz)
 pkg_build() {
 
