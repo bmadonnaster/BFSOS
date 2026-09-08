@@ -6,10 +6,10 @@
 
 name=qca
 version=2.3.12
-release=1
+release=2
 source=(
     https://download.kde.org/stable/qca/$version/qca-$version.tar.xz
-    https://www.linuxfromscratch.org/patches/blfs/svn/qca-$version-openssl4_fixes-1.patch
+    
 )
 
 pkg_build() {
