@@ -1,5 +1,5 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cups libplasma qt6
+# Depends on: cups libplasma qt6 kirigami-addons
 
 name=print-manager
 version=6.7.4
