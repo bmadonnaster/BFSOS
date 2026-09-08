@@ -5,8 +5,8 @@
 # Optional: botan cyrus-sasl doxygen gnupg libgcrypt nss p11-kit
 
 name=qca
-version=2.3.10
-release=2
+version=2.3.12
+release=1
 source=(
     https://download.kde.org/stable/qca/$version/qca-$version.tar.xz
     https://www.linuxfromscratch.org/patches/blfs/svn/qca-$version-openssl4_fixes-1.patch
