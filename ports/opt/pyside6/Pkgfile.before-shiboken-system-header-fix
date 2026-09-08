@@ -5,7 +5,7 @@
 
 name=pyside6
 version=6.11.2
-release=2
+release=1
 source=(https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-$version-src/pyside-setup-everywhere-src-$version.tar.xz)
 
 pkg_build() {
@@ -19,8 +19,7 @@ pkg_build() {
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_PREFIX_PATH=/opt/qt6 \
         -DPython_EXECUTABLE=/usr/bin/python3 \
-        -DPYSIDE_TREAT_QT_INCLUDE_DIRS_AS_NON_SYSTEM=ON \
-    -DBUILD_TESTS=OFF || return 1
+        -DBUILD_TESTS=OFF || return 1
 
     export PYTHONPATH="$PWD/_build/sources${PYTHONPATH:+:$PYTHONPATH}"
     cmake --build _build --parallel "${JOBS:-1}" || return 1
