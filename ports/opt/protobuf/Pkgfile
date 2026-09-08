@@ -3,8 +3,12 @@
 
 name=protobuf
 version=36.1
-release=1
+release=2
+
+keep_static=yes
+
 source=(https://github.com/protocolbuffers/${name}/releases/download/v${version}/${name}-${version}.tar.gz)
+
 pkg_build() {
   cmake -S . -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
@@ -15,7 +19,6 @@ pkg_build() {
     -D protobuf_BUILD_SHARED_LIBS=ON \
     -D protobuf_BUILD_TESTS=OFF \
     -D protobuf_ABSL_PROVIDER=package \
-    -D protobuf_BUILD_SHARED_LIBS=ON  \
     -Wno-dev
 
   cmake --build build
