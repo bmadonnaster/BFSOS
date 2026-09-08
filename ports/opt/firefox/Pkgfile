@@ -6,11 +6,11 @@
 
 name=firefox
 version=155.0
-release=6
+release=7
 source=(
     https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
     firefox.desktop
-)
+firefox-155-system-av1-gkcodecs.patch)
 
 pkg_build() {
     if [ "$(python3 -c 'import sys; print(sys.stdout.encoding.lower())')" != 'utf-8' ]; then
