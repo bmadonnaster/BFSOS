@@ -7,7 +7,7 @@
 name=xapian
 version=1.4.25
 release=1
-source=(https://oligarchy.co.uk/$name/$version/$name-core-$version.tar.xz)
+source=(https://mirror.freedif.org/pub/blfs/conglomeration/xapian/xapian-core-$version.tar.xz)
 
 pkg_build() {
 
