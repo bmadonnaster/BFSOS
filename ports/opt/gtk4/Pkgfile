@@ -10,4 +10,8 @@ build_opt="--prefix=/usr
             --buildtype=release
             -Dbroadway-backend=true
             -Dintrospection=enabled
-            -Dvulkan=enabled"
+            -Dvulkan=enabled
+	    -Dbuild-tests=false
+	    -Dbuild-testsuite=false
+            -Dbuild-examples=false
+            -Dbuild-demos=false"
