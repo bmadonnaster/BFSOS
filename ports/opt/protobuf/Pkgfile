@@ -15,6 +15,7 @@ pkg_build() {
     -D protobuf_BUILD_SHARED_LIBS=ON \
     -D protobuf_BUILD_TESTS=OFF \
     -D protobuf_ABSL_PROVIDER=package \
+    -D protobuf_BUILD_SHARED_LIBS=ON  \
     -Wno-dev
 
   cmake --build build
