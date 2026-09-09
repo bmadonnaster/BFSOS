@@ -4,7 +4,7 @@
 
 name=ncurses-32
 version=6.6
-release=2
+release=3
 
 source=(
     https://invisible-mirror.net/archives/ncurses/ncurses-$version.tar.gz
@@ -36,7 +36,8 @@ pkg_build() {
     rm -rf \
         "$PKG/usr/bin" \
         "$PKG/usr/include" \
-        "$PKG/usr/share"
+        "$PKG/usr/share" \
+        "$PKG/usr/lib/terminfo"
 
     #
     # Wide-character compatibility names.
