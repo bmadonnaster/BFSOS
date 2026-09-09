@@ -6,12 +6,13 @@
 
 name=libgmp-32
 version=6.3.0
-release=1
+release=2
 source=(https://gmplib.org/download/gmp/gmp-$version.tar.xz)
 
 pkg_build() {
-	cd gmp-$version
 
+	CC="gcc -std=gnu17" \
+	CXX="g++ -std=gnu++17" \
 	./configure \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
