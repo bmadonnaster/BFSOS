@@ -6,6 +6,7 @@
 name=mingw-w64-gcc
 version=16.2.0
 release=1
+keep_static=1
 source=(https://gcc.gnu.org/pub/gcc/releases/gcc-$version/gcc-$version.tar.xz)
 
 pkg_build() {
