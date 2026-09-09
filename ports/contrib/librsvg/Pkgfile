@@ -5,7 +5,7 @@
 # Optional: object-introspection vala docutils gi-docgen xorg-fonts
 name=librsvg
 version=2.62.3
-release=2
+release=3
 source=(https://download.gnome.org/sources/$name/${version%.*}/$name-$version.tar.xz)
 
 
@@ -25,7 +25,9 @@ pkg_build() {
     -D b_lto=true \
     -D b_pie=true \
     -D docs=disabled \
-    -D tests=false
+    -D tests=false \
+    -D pixbuf=enabled \
+    -D pixbuf-loader=enabled
   meson compile -C build
   DESTDIR=$PKG meson install -C build
 }
