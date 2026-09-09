@@ -25,7 +25,7 @@ pkg_build() {
                         --enable-threads=win32 \
                         --enable-libstdcxx-time=yes \
                         --enable-lto \
-                        --enable-libgomp \
+                        --disable-libgomp \
                         --disable-multilib \
                         --enable-checking=release \
                         --disable-nls \
