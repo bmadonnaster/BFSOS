@@ -6,11 +6,11 @@
 
 name=openal
 version=1.25.2
-release=1
+release=2
 source=(https://github.com/kcat/openal-soft/archive/$version/openal-soft-$version.tar.gz)
 
 pkg_build() {
-  cmake -S openal-soft-$version -B build -G Ninja \
+  cmake -S . -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \
     -D CMAKE_BUILD_TYPE=Release \
