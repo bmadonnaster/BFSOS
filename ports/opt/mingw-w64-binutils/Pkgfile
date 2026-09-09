@@ -4,14 +4,14 @@
 
 name=mingw-w64-binutils
 version=2.47
-release=1
+release=2
 source=(https://ftp.gnu.org/gnu/binutils/binutils-$version.tar.xz)
 
 pkg_build() {
 	for T in {i686,x86_64}-w64-mingw32; do
 		mkdir build-$T
 		cd build-$T
-		../binutils-$version/configure \
+		../configure \
 			--prefix=/usr \
 			--target=$T \
 			--disable-nls \
