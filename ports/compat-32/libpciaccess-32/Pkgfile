@@ -8,14 +8,14 @@
 
 name=libpciaccess-32
 version=0.19
-release=1
+release=2
 source=(https://www.x.org/releases/individual/lib/libpciaccess-$version.tar.xz
 cross-file.txt)
 
 pkg_build() {
 	prt-get isinst hwdata && PKGMK_LIBPCIA+=' -D pci-ids=hwdata'
 
-	meson setup libpciaccess-$version build $PKGMK_LIBPCIA --cross-file cross-file.txt  \
+	meson setup build . $PKGMK_LIBPCIA --cross-file ../cross-file.txt  \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--buildtype=plain \
