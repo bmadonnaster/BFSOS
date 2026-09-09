@@ -4,7 +4,7 @@
 
 name=glibc
 version=2.44
-release=2
+release=3
 
 source=(
     https://ftp.gnu.org/gnu/glibc/glibc-$version.tar.xz
@@ -218,11 +218,15 @@ pkg_build() {
     #
     # 32-bit dynamic linker compatibility path.
     #
-    install -d -m 0755 "$PKG/lib"
-
+    # BFSOS uses merged /usr:
+    #   /lib -> /usr/lib
+    #
+    # ELF32 binaries request /lib/ld-linux.so.2, so install the
+    # compatibility symlink in /usr/lib where /lib resolves.
+    #
     ln -sfn \
-        ../usr/lib32/ld-linux.so.2 \
-        "$PKG/lib/ld-linux.so.2"
+        ../lib32/ld-linux.so.2 \
+        "$PKG/usr/lib/ld-linux.so.2"
 
     #
     # Locale data is architecture-independent. Both 64-bit and 32-bit
