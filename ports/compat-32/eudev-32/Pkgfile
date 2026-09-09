@@ -11,7 +11,6 @@ release=1
 source=(https://github.com/eudev-project/eudev/releases/download/v$version/eudev-$version.tar.gz)
 
 pkg_build() {
-	cd eudev-$version
 
 	# needed for static linking, e.g. dmsetup.static
 	sed -i '/^Libs:/s/-ludev/-ludev -lrt/' src/libudev/libudev.pc.in

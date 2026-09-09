@@ -12,7 +12,6 @@ release=1
 source=(https://github.com/OpenPrinting/cups/releases/download/v$version/${name%-*}-$version-source.tar.gz)
 
 pkg_build() {
-	cd ${name%-*}-$version
 
 	PKGMK_CUPS=' --with-tls=openssl'
 	prt-get isinst gnutls-32 && PKGMK_CUPS=' --with-tls=gnutls'

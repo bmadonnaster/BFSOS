@@ -11,7 +11,6 @@ release=1
 source=(https://www.x.org/releases/individual/xcb/xcb-util-$version.tar.xz)
 
 pkg_build() {
-	cd xcb-util-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32
 

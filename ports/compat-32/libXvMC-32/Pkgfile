@@ -11,7 +11,6 @@ release=1
 source=(https://www.x.org/releases/individual/lib/libXvMC-$version.tar.xz)
 
 pkg_build() {
-	cd libXvMC-$version
 
 	# prevent linking against libxv
 	export XVMC_LIBS="-lX11 -lXext"

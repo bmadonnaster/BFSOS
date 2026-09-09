@@ -13,7 +13,6 @@ release=1
 source=(https://downloads.sourceforge.net/project/${name%-*}/${name%-*}$_base/$version/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-	cd ${name%-*}-$version
 
 	./configure \
 	 --host=i686-pc-linux-gnu      \

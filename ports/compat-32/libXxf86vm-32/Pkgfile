@@ -11,7 +11,6 @@ release=1
 source=(https://www.x.org/releases/individual/lib/libXxf86vm-$version.tar.xz)
 
 pkg_build() {
-	cd libXxf86vm-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32
 

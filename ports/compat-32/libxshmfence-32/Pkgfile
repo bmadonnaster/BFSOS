@@ -11,7 +11,6 @@ release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/libxshmfence-$version.tar.xz)
 
 pkg_build() {
-	cd libxshmfence-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32
 

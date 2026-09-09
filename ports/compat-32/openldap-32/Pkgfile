@@ -11,7 +11,6 @@ release=1
 source=(https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-$version.tgz)
 
 pkg_build() {
-	cd openldap-$version
 
 	export CC="${CC:-gcc}"
 	export CXX="${CXX:-g++}"

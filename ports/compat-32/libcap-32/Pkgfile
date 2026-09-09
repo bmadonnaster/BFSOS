@@ -11,7 +11,6 @@ release=1
 source=(https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-	cd ${name%-*}-$version
 
 	sed -i '/install -m.*STA/d' libcap/Makefile
 #	make CC="gcc -march=i686"

@@ -11,7 +11,6 @@ release=1
 source=(https://github.com/archlinux/libudev0-shim/archive/v$version/${name%-*}-$version.tar.gz)
 
 pkg_build() {
-	cd ${name%-*}-$version
 	make
 	install -Dm 755 libudev.so.0.13.9999 -t $PKG/usr/lib32
 	ln -s libudev.so.0.13.9999 $PKG/usr/lib32/libudev.so.0

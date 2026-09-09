@@ -11,7 +11,6 @@ release=1
 source=(https://github.com/libsndfile/libsndfile/releases/download/$version/libsndfile-$version.tar.xz)
 
 pkg_build() {
-	cd libsndfile-$version
 
 	./configure \
 		--prefix=/usr \

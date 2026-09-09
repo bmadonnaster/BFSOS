@@ -12,7 +12,6 @@ release=1
 source=(https://curl.se/download/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-  cd ${name%-*}-$version
 
   prt-get isinst brotli && ! prt-get isinst brotli-32 && printf "\e[031mbrotli is detected on your system, please run:
   prt-get depinst brotli-32

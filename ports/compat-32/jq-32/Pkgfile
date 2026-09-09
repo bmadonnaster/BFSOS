@@ -11,7 +11,6 @@ release=1
 source=(https://github.com/stedolan/jq/releases/download/jq-$version/jq-$version.tar.gz)
 
 pkg_build() {
-	cd jq-$version
 
 	autoreconf -i modules/oniguruma
 

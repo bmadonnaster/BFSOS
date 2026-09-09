@@ -11,7 +11,6 @@ release=1
 source=(https://downloads.sourceforge.net/project/libmng//libmng-devel/$version/libmng-$version.tar.gz)
 
 pkg_build() {
-	cd libmng-$version
 
 	./configure \
 		--prefix=/usr \

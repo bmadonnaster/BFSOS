@@ -12,7 +12,6 @@ release=1
 source=(https://downloads.sourceforge.net/project/enlightenment/imlib2-src/$version/imlib2-$version.tar.xz)
 
 pkg_build() {
-	cd imlib2-$version
 
 	./configure --prefix=/usr \
 		--libdir=/usr/lib32 \

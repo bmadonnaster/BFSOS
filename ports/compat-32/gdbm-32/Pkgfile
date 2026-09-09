@@ -13,7 +13,6 @@ pkg_build() {
 	export CC="${CC:-gcc} ${CFLAGS}"
 	export CFLAGS="$CFLAGS -fcommon"
 
-	cd ${name%-*}-$version
 
 	./configure --prefix=/usr \
 		--libdir=/usr/lib32 \

@@ -10,7 +10,6 @@ release=1
 source=(https://github.com/tukaani-project/xz/releases/download/v$version/xz-$version.tar.gz)
 
 pkg_build() {
-	cd xz-$version
 
 	autoreconf -vfi
 	./configure \

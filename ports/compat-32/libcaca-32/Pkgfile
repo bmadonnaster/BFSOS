@@ -11,7 +11,6 @@ release=1
 source=(https://github.com/cacalabs/libcaca/releases/download/v$version/libcaca-$version.tar.bz2)
 
 pkg_build() {
-	cd ${name%-*}-$version
 
 	./configure \
 		--prefix=/usr \

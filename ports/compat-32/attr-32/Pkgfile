@@ -10,7 +10,6 @@ release=1
 source=(http://download-mirror.savannah.gnu.org/releases/${name%-*}/${name%-*}-$version.tar.gz)
 
 pkg_build() {
-	cd ${name%-*}-$version
 
 	./configure \
 		--prefix=/usr \

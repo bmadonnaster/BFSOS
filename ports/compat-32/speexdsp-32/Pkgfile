@@ -11,7 +11,6 @@ release=1
 source=(https://ftp.osuosl.org/pub/xiph/releases/speex/speexdsp-$version.tar.gz)
 
 pkg_build() {
-	cd speexdsp-$version
 
 	./configure \
 		--prefix=/usr \
