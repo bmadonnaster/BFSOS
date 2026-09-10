@@ -18,7 +18,9 @@ pkg_build() {
                 --host=i686-pc-linux-gnu \
                 --prefix=/usr \
                 --libdir=/usr/lib32 \
-                --enable-readline || return 1
+                --enable-readline \
+                --with-readline-inc='-I/usr/include' \
+                --with-readline-lib='-L/usr/lib32 -lreadline' || return 1
 
         make -j "${JOBS:-1}" || return 1
         make DESTDIR="$PKG" install || return 1
