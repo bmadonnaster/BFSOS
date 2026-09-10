@@ -7,11 +7,11 @@
 
 name=kmod-32
 version=34.2
-release=1
+release=2
 source=(https://www.kernel.org/pub/linux/utils/kernel/${name%-*}/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-	meson setup build kmod-$version \
+	meson setup build . --cross-file lib32 \
 		--prefix=/usr \
 		--bindir=/bin \
 		--sbindir=/sbin \
@@ -26,7 +26,7 @@ pkg_build() {
 		-D manpages=false \
 		-D bashcompletiondir=no \
 		-D fishcompletiondir=no \
-		-D zshcompletiondir=no
+		-D zshcompletiondir=no || return 1
 
 	meson compile -C build -j "${JOBS:-1}" || return 1
 	DESTDIR="$PKG" meson install -C build || return 1

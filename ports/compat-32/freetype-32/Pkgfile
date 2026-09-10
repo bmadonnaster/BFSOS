@@ -5,11 +5,11 @@
 
 name=freetype-32
 version=2.14.3
-release=1
+release=2
 source=(https://sourceforge.net/projects/freetype/files/freetype2/$version/freetype-$version.tar.xz)
 
 pkg_build() {
-        meson setup build . \
+        meson setup build . --cross-file lib32 \
                 --prefix=/usr \
                 --libdir=/usr/lib32 \
                 --buildtype=plain \
