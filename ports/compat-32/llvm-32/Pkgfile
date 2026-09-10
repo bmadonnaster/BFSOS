@@ -1,11 +1,9 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: LLVM compiler backend
 # URL: https://llvm.org
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libffi-32 libxml2-32 llvm ncurses-32 zstd-32
 name=llvm-32
-version=23.1.0
+version=23.1.1
 release=1
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-$version.src.tar.xz
 	https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/cmake-$version.src.tar.xz

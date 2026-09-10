@@ -1,12 +1,10 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: A general purpose cryptographic library based on GnuPG
 # URL: https://www.gnupg.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libgcrypt libgpg-error-32
 
 name=libgcrypt-32
-version=1.12.2
+version=1.12.3
 release=1
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/${name%-*}-$version.tar.bz2)
 

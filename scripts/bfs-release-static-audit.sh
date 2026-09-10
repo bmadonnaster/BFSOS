@@ -25,13 +25,13 @@ grep -Fq '3 "Integrity verification"' bootstrap.sh || say_fail "Integrity verifi
 # Current installer must be the newest maintained implementation.
 current_target="$(readlink scripts/install-bfs-menu-current.sh 2>/dev/null || true)"
 case "$current_target" in
-  *r73-tracker-source-fixes.sh) ;;
-  *) say_fail "current installer does not point at r73: $current_target" ;;
+  *r74-pre-rc-source-fixes.sh) ;;
+  *) say_fail "current installer does not point at r74: $current_target" ;;
 esac
 
 # Base diagnostics and trust stack.
 [ -f ports/core/traceroute/Pkgfile ] || say_fail "traceroute diagnostic port missing"
-grep -q '^# Depends on: p11-kit' ports/core/make-ca/Pkgfile || say_fail "make-ca must depend on p11-kit"
+grep -Eq '^# Depends on:.*(^|[[:space:]])p11-kit([[:space:]]|$)' ports/core/make-ca/Pkgfile || say_fail "make-ca must depend on p11-kit"
 ! grep -Eq '^# Depends on:.*(^|[[:space:]])make-ca([[:space:]]|$)' ports/opt/p11-kit/Pkgfile || say_fail "p11-kit must not depend on make-ca"
 grep -Eq '^# Depends on:.*(^|[[:space:]])meson([[:space:]]|$)' ports/opt/p11-kit/Pkgfile || say_fail "p11-kit must depend on meson"
 grep -Eq '^# Depends on:.*(^|[[:space:]])ninja([[:space:]]|$)' ports/core/meson/Pkgfile || say_fail "meson must depend on ninja"

@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: a programming library for color text mode
 # URL: https://pagure.io/newt
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libnewt popt-32 slang-32
+# Depends on: newt popt-32 slang-32
 # Optional: tcl-32
 
 name=libnewt-32

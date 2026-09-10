@@ -16,11 +16,13 @@ pkg_build() {
         make clean
 
         make -f Makefile-libbz2_so \
-                CC="gcc -m32"
+                CC="${CC:-gcc}" \
+                CFLAGS="$CFLAGS -fPIC -D_FILE_OFFSET_BITS=64"
 
         rm -f libbz2.a
         make libbz2.a \
-                CC="gcc -m32"
+                CC="${CC:-gcc}" \
+                CFLAGS="$CFLAGS"
 
         install -m 0644 \
                 libbz2.so.$version \

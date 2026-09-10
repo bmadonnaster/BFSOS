@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=14
+release=15
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.0
@@ -31,6 +31,8 @@ source=(
     umask.sh
     i18n.sh
     kf6.sh
+    bfs-opt.sh
+    60-bfsos-opt.conf
     kf6.sudoers
     xorg.sudoers
     xorg.sh
@@ -177,6 +179,7 @@ pkg_build() {
 
     install -d -m 0755 \
         "$PKG/etc/profile.d" \
+        "$PKG/usr/lib/environment.d" \
         "$PKG/etc/bash_completion.d" \
         "$PKG/etc/skel" \
         "$PKG/etc/sudoers.d"
@@ -198,12 +201,19 @@ pkg_build() {
         gawk.sh \
         i18n.sh \
         kf6.sh \
+        bfs-opt.sh \
         readline.sh \
         umask.sh \
         xorg.sh
     do
         install -m 0644 "$file" "$PKG/etc/profile.d/$file"
     done
+
+    # systemd user managers do not source /etc/profile.  Install the proven
+    # KF6/Qt6 executable/data paths through environment.d so early Plasma
+    # Wayland units receive them deterministically.
+    install -m 0644 60-bfsos-opt.conf \
+        "$PKG/usr/lib/environment.d/60-bfsos-opt.conf"
 
     #
     # Default user skeleton.

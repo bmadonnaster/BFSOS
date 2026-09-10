@@ -1,28 +1,26 @@
 #!/bin/sh
 set -eu
 
-# make-ca requires the p11-kit trust module at runtime.  On first install,
-# fetch Mozilla certdata and generate every system trust representation.  On
-# subsequent installs/upgrades, regenerate from the already downloaded data.
-if [ ! -x /usr/bin/trust ]; then
+# CA population must be reproducible and offline during package installation.
+# ca-certificates owns the pinned Mozilla certdata source and compatibility link.
+[ -x /usr/bin/trust ] || {
     echo "make-ca: p11-kit trust utility is required before CA initialization" >&2
     exit 1
-fi
+}
+[ -s /etc/ssl/certdata.txt ] || {
+    echo "make-ca: /etc/ssl/certdata.txt is missing; reinstall ca-certificates" >&2
+    exit 1
+}
 
-if [ -s /etc/pki/tls/certs/ca-bundle.crt ] &&
-   find /etc/pki/anchors -mindepth 1 -type f -print -quit 2>/dev/null | grep -q .; then
-    /usr/sbin/make-ca -r
-else
-    /usr/sbin/make-ca -g
-fi
+/usr/sbin/make-ca -r
 
 test -s /etc/pki/tls/certs/ca-bundle.crt || {
     echo "make-ca: canonical CA bundle is empty after trust-store generation" >&2
     exit 1
 }
 
-if ! /usr/bin/trust list 2>/dev/null | grep -q 'type: certificate'; then
-    echo "make-ca: p11-kit trust view contains no certificates after generation" >&2
+if ! /usr/bin/trust list --filter=ca-anchors 2>/dev/null | grep -q '^pkcs11:'; then
+    echo "make-ca: p11-kit trust view contains no CA anchors after generation" >&2
     exit 1
 fi
 

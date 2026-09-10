@@ -10,9 +10,6 @@ if command -v systemd-tmpfiles >/dev/null 2>&1 && [ -f /usr/lib/tmpfiles.d/plasm
     systemd-tmpfiles --create /usr/lib/tmpfiles.d/plasmalogin.conf || exit $?
 fi
 
-# Installation is deliberately non-disruptive. SDDM remains the conservative
-# default unless the administrator/installer has explicitly selected Plasma
-# Login Manager through the persistent BFSOS display-manager state.
-if [ "$(cat /etc/bfsos/display-manager 2>/dev/null || true)" = plasmalogin ]; then
-    /usr/sbin/bfs-display-manager plasmalogin
-fi
+# Installation is deliberately non-disruptive.  Service activation belongs to
+# an explicit installer/administrator bfs-display-manager selection, never a
+# package post-install/update hook.

@@ -1,19 +1,14 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Network configuration tool
 # URL: https://wiki.gnome.org/Projects/NetworkManager/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: curl-32 dbus-glib-32 jansson-32 libndp-32 libpsl-32 networkmanager nss-32
 
 name=libnm-32
-version=1.48.10
+version=1.58.1
 release=1
-source=(https://download.gnome.org/sources/NetworkManager/${version::4}/NetworkManager-$version.tar.xz
-	1966.patch)
+source=(https://download.gnome.org/sources/NetworkManager/${version::4}/NetworkManager-$version.tar.xz)
 
 pkg_build() {
-	patch -Np1 -d $SRC/NetworkManager-$version -i $SRC/1966.patch
-
 	meson setup NetworkManager-$version build $PKGMK_NM \
 		--prefix /usr \
 		--libdir /usr/lib32 \

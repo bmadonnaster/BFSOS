@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: libjpeg derivative with accelerated baseline JPEG compression and decompression
 # URL: https://libjpeg-turbo.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libjpeg6-turbo
+# Depends on:
 
 name=libjpeg6-turbo-32
 version=1.5.3

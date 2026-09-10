@@ -5,8 +5,8 @@
 # Optional: libcdio libsidplay libmpeg2 opencore-amr valgrind hotdoc orc twolame
 
 name=gst-plugins-ugly
-version=1.28.6
-release=3
+version=1.28.7
+release=1
 source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz)
 
 pkg_build() {

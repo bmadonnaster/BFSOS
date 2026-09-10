@@ -3,9 +3,9 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=ftjam
-version=2.5.2
+version=2.5.3rc2
 release=1
-source=(https://downloads.sourceforge.net/project/freetype/ftjam/$version/$name-$version.tar.bz2)
+source=(https://distfiles.gentoo.org/distfiles/72/$name-$version.tar.bz2)
 
 pkg_build() {
     ./configure --prefix=/usr

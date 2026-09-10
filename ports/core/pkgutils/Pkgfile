@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=31
+release=32
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -122,7 +122,8 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
         install -dm775 -o 82 -g 82 \
                 "$PKG/var/cache/pkg/sources" \
                 "$PKG/var/cache/pkg/packages" \
-                "$PKG/var/cache/pkg/build-work"
+                "$PKG/var/cache/pkg/build-work" \
+                "$PKG/var/cache/pkg/build-work-disk"
 
         install -dm775 -o 82 -g 82 "$PKG/var/cache/ccache"
 

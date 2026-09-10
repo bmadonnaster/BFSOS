@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Perl Compatible Regular Expressions
 # URL: https://www.pcre.org
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libpcre2
+# Depends on: pcre2
 
 name=libpcre2-32
 version=10.48

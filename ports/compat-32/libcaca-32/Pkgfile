@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Color AsCii Art library (32-bit)
 # URL: http://caca.zoy.org/wiki/libcaca
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: imlib2-32 libcaca ncurses-32 libX11-32
+# Depends on: imlib2-32 ncurses-32 libX11-32
 
 name=libcaca-32
 version=0.99.beta20

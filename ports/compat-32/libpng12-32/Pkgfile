@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Library of PNG support functions with APNG support.
 # URL: http://www.libpng.org/pub/png/libpng.html
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libpng12 zlib-32
+# Depends on: zlib-32
 
 name=libpng12-32
 version=1.2.59

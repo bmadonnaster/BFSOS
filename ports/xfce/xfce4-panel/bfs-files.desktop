@@ -2,6 +2,6 @@
 Type=Application
 Name=Files
 Exec=thunar
-Icon=system-file-manager
+Icon=org.xfce.thunar
 Terminal=false
 StartupNotify=true

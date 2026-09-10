@@ -5,6 +5,27 @@ start_epoch="$(date +%s)"
 start_stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 status=0
 
+# Select the build-work backend before pkgmk creates or extracts any work.
+# An administrator-provided BFS_PKG_BUILD_WORK wins; otherwise read only the
+# simple top-level build_work= metadata rather than sourcing arbitrary Pkgfile
+# code in this wrapper.
+if [ -z "${BFS_PKG_BUILD_WORK:-}" ] && [ -r ./Pkgfile ]; then
+    bfs_port_build_work="$(
+        sed -n 's/^[[:space:]]*build_work[[:space:]]*=[[:space:]]*["'"'"']\{0,1\}\([^"'"'"'[:space:]#]*\).*/\1/p' ./Pkgfile | head -n1
+    )"
+    [ -n "$bfs_port_build_work" ] && BFS_PKG_BUILD_WORK="$bfs_port_build_work"
+fi
+BFS_PKG_BUILD_WORK="${BFS_PKG_BUILD_WORK:-tmpfs}"
+case "$BFS_PKG_BUILD_WORK" in
+    tmpfs|disk) export BFS_PKG_BUILD_WORK ;;
+    *)
+        printf 'BFSOS pkgmk: invalid build_work backend %s (expected tmpfs or disk)\n' \
+            "$BFS_PKG_BUILD_WORK" >&2
+        exit 2
+        ;;
+esac
+unset bfs_port_build_work
+
 human_elapsed() {
     total="${1:-0}"
     case "$total" in *[!0-9]*|'') total=0 ;; esac
@@ -96,6 +117,15 @@ if [ "$status" -eq 0 ] && [ "$pkg_name" != unknown ]; then
         [ -f "$archive" ] || continue
         if ! bsdtar -tf "$archive" >"$archive_list" 2>/dev/null || [ ! -s "$archive_list" ]; then
             printf 'BFSOS pkgmk: rejecting invalid or empty package archive: %s\n' "$archive" >&2
+            status=1
+            cleanup_failed_archives
+            break
+        fi
+        # A directory-only archive is not an installable package payload. This
+        # catches failed builds that previously produced only entries such as
+        # usr/ while still returning a successful pkgmk status.
+        if ! awk 'substr($0, length($0), 1) != "/" { found=1; exit } END { exit !found }' "$archive_list"; then
+            printf 'BFSOS pkgmk: rejecting directory-only package archive: %s\n' "$archive" >&2
             status=1
             cleanup_failed_archives
             break

@@ -115,3 +115,50 @@ assert_file "$T/boot/vmlinuz-6.18.50-BFS-LTS"
 [ "$(cat "$T/state/linux-lts/pending")" = 6.18.50-BFS-LTS ]
 
 echo "kernel-maintenance regression: PASS"
+
+# Per-kernel Linux 6.18 MD metadata compatibility policy: append the bypass
+# only to matching BFS-LTS entries and only when the installed kernel exposes
+# the backported parameter.
+rm -rf "$T"/{boot,modules,src,state,rollback,etc}
+mkdir -p "$T"/{boot/grub,modules,src,etc/bfsos,etc/default,state,rollback}
+env_for 6.18.50-BFS-LTS
+cat > "$T/bin/grub-mkconfig" <<'MOCK_GRUB'
+#!/bin/sh
+[ "${1:-}" = -o ] || exit 2
+cat > "$2" <<EOF
+menuentry 'BFS mainline' {
+  linux /vmlinuz-7.2.4-BFS-Linux root=/dev/mapper/root ro rd.md.uuid=1111:2222
+  initrd /initramfs-7.2.4-BFS-Linux.img
+}
+menuentry 'BFS LTS' {
+  linux /vmlinuz-6.18.50-BFS-LTS root=/dev/mapper/root ro rd.md.uuid=1111:2222 rd.driver.pre=raid10
+  initrd /initramfs-6.18.50-BFS-LTS.img
+}
+EOF
+MOCK_GRUB
+chmod +x "$T/bin/grub-mkconfig"
+printf kernel > "$T/boot/vmlinuz-6.18.50-BFS-LTS"
+mkdir -p "$T/modules/6.18.50-BFS-LTS"
+printf '%s\n' 'md_mod.parm=check_new_feature:bool' > "$T/modules/6.18.50-BFS-LTS/modules.builtin.modinfo"
+printf '%s\n' 'reason=md-v1.2-nonzero-reserved-padding' 'uuid=1111:2222' > "$T/etc/bfsos/md-compat.conf"
+"$HELPER" regenerate-grub
+grep -E 'vmlinuz-6\.18\.50-BFS-LTS.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null
+if grep -E 'vmlinuz-7\.2\.4-BFS-Linux.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null; then
+    echo "6.18 MD compatibility token leaked into mainline kernel" >&2
+    exit 1
+fi
+
+# If the matching LTS build does not expose the parameter, regeneration must
+# fail and preserve the previous known-good grub.cfg atomically.
+printf '%s\n' 'known-good-config' > "$T/boot/grub/grub.cfg"
+: > "$T/modules/6.18.50-BFS-LTS/modules.builtin.modinfo"
+if "$HELPER" regenerate-grub >/dev/null 2>&1; then
+    echo "MD compatibility generation unexpectedly accepted a kernel without the parameter" >&2
+    exit 1
+fi
+[ "$(cat "$T/boot/grub/grub.cfg")" = 'known-good-config' ] || {
+    echo "failed MD compatibility generation overwrote grub.cfg" >&2
+    exit 1
+}
+
+echo "kernel-maintenance MD compatibility regression: PASS"

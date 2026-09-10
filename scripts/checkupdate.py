@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BFSOS upstream version checker v9.
+"""BFSOS upstream version checker v10.
 
 Design goals:
 - never claim an update unless the current port version can be mapped back to the
@@ -167,7 +167,7 @@ class HttpCache:
                 [
                     "curl", "--fail", "--location", "--silent", "--show-error",
                     "--compressed", "--connect-timeout", "4", "--max-time",
-                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/9", url,
+                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/10", url,
                 ],
                 text=True,
                 encoding="utf-8", errors="replace",
@@ -197,7 +197,7 @@ class HttpCache:
         common = [
             "curl", "--fail", "--location", "--silent", "--show-error",
             "--connect-timeout", "4", "--max-time", str(self.timeout),
-            "--user-agent", "BFSOS-checkupdate/9",
+            "--user-agent", "BFSOS-checkupdate/10",
         ]
         errors: list[str] = []
         for extra in (["--head"], ["--range", "0-0", "--output", "/dev/null"]):
@@ -219,6 +219,81 @@ class HttpCache:
             except subprocess.TimeoutExpired:
                 errors.append("timeout")
         return False, errors[-1] if errors else "source check failed"
+
+
+    def resolve(self, url: str) -> tuple[str, str]:
+        """Resolve redirects without keeping the response body."""
+        cmd = [
+            "curl", "--fail", "--location", "--silent", "--show-error",
+            "--connect-timeout", "4", "--max-time", str(self.timeout),
+            "--user-agent", "BFSOS-checkupdate/10", "--range", "0-0",
+            "--output", "/dev/null", "--write-out", "%{url_effective}", url,
+        ]
+        try:
+            cp = subprocess.run(
+                cmd, text=True, encoding="utf-8", errors="replace",
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                timeout=self.timeout + 3, env={**os.environ, "LC_ALL": "C"},
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise FetchError("timeout") from exc
+        if cp.returncode != 0:
+            msg = cp.stderr.strip() or f"curl exit {cp.returncode}"
+            head = cmd[:]
+            range_i = head.index("--range")
+            del head[range_i:range_i + 2]
+            head.insert(range_i, "--head")
+            cp = subprocess.run(
+                head, text=True, encoding="utf-8", errors="replace",
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                timeout=self.timeout + 3, env={**os.environ, "LC_ALL": "C"},
+            )
+            if cp.returncode != 0:
+                raise FetchError(cp.stderr.strip() or msg)
+        effective = cp.stdout.strip()
+        if not effective:
+            raise FetchError("redirect resolver returned no effective URL")
+        return effective, ""
+
+
+def gcc_release_directory(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    """Enumerate sibling gcc-X.Y.Z release directories, not one release dir."""
+    index = "https://gcc.gnu.org/pub/gcc/releases/"
+    text = http.get(index)
+    vals = re.findall(r"(?:href=[\"']|>)(?:gcc-)([0-9][0-9A-Za-z._+~-]*)/?", text, re.I)
+    vals = uniq_sorted_versions(vals, port.version, port, "gcc-releases")
+    if port.version not in vals:
+        return None, "gcc-releases", "current GCC release directory is not present in upstream release index"
+    latest, reason = choose_verified(port.version, vals, port, "gcc-releases")
+    return latest, "gcc-releases", reason
+
+
+def nss_release_directory(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    """Enumerate NSS RTM release directories instead of one version-specific directory."""
+    index = "https://archive.mozilla.org/pub/security/nss/releases/"
+    text = http.get(index)
+    vals = []
+    for raw in re.findall(r"NSS_([0-9]+(?:_[0-9]+)+)_RTM/?", text, re.I):
+        vals.append(raw.replace("_", "."))
+    vals = uniq_sorted_versions(vals, port.version, port, "nss-releases")
+    if port.version not in vals:
+        return None, "nss-releases", "current NSS RTM directory is not present in upstream release index"
+    latest, reason = choose_verified(port.version, vals, port, "nss-releases")
+    return latest, "nss-releases", reason
+
+
+def discord_stable(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    """Use Discord's stable Linux download redirect as the authoritative channel."""
+    endpoint = "https://discord.com/api/download/stable?platform=linux&format=tar.gz"
+    effective, _ = http.resolve(endpoint)
+    m = re.search(r"/apps/linux/([^/]+)/discord-([^/]+)\.tar\.gz(?:$|[?#])", effective)
+    if not m or m.group(1) != m.group(2):
+        return None, "discord-stable", f"stable redirect did not resolve to a versioned Linux tarball: {effective}"
+    latest = m.group(1)
+    if not candidate_allowed(latest, port.version, port, "discord-stable"):
+        return None, "discord-stable", f"resolved version rejected by stable-channel policy: {latest}"
+    latest = only_if_newer(port.version, latest)
+    return latest, "discord-stable", ""
 
 
 def natural_key(v: str):
@@ -733,6 +808,12 @@ def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tu
         return git_tags(port, source, timeout, GIT_REPO_OVERRIDES[port.rel])
     if port.rel in {"core/iptables", "core/libmnl"}:
         return netfilter_release_page(port, http)
+    if port.rel == "opt/mingw-w64-gcc":
+        return gcc_release_directory(port, http)
+    if port.rel == "opt/discord":
+        return discord_stable(port, http)
+    if port.rel == "opt/nss":
+        return nss_release_directory(port, http)
 
     if host in {"download.gnome.org", "ftp.gnome.org"}:
         return gnome(port, source, http)
@@ -820,17 +901,17 @@ def print_result(r: Result, verbose: bool = False):
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v9")
+    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v10")
     ap.add_argument("ports", nargs="*", help="port path or unique package name")
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("-n", action="store_true", help="accepted for compatibility; update overrides are not used by v2")
-    ap.add_argument("-u", "--update", action="store_true", help="disabled: v9 never edits Pkgfiles automatically")
+    ap.add_argument("-u", "--update", action="store_true", help="disabled: v10 keeps auditing separate from updater writes")
     ap.add_argument("--jobs", type=int, default=10)
     ap.add_argument("--timeout", type=int, default=10)
     ap.add_argument("--tsv", help="write complete machine-readable results to this path")
     ns = ap.parse_args()
     if ns.update:
-        print("ERROR: -u is intentionally disabled in checker v9. Review verified UPDATE results before editing Pkgfiles.", file=sys.stderr)
+        print("ERROR: -u is intentionally disabled in checker v10. Use bfs-maintained-port-updater.py on reviewed UPDATE rows.", file=sys.stderr)
         return 2
 
     root = Path(__file__).resolve().parents[1]
@@ -848,7 +929,7 @@ def main() -> int:
             fake = Port(p.parent, str(p.parent), p.parent.name, "?", [])
             early.append(Result(fake, "ERROR", reason=str(exc)))
 
-    print(f"BFSOS verified upstream version checker v9")
+    print(f"BFSOS verified upstream version checker v10")
     print(f"Ports: {len(pkgfiles)}   Jobs: {max(1, ns.jobs)}   Timeout: {ns.timeout}s")
     print("Policy: UPDATE is emitted only when the provider can map the current version back to the same release set.")
     print()

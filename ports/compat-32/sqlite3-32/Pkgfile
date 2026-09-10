@@ -1,7 +1,7 @@
 # Description: SQL database engine
 # URL: https://www.sqlite.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: readline-32 sqlite3
+# Depends on: readline-32 sqlite
 
 name=sqlite3-32
 version=3.53.4

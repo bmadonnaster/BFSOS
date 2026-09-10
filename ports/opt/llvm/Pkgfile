@@ -5,7 +5,7 @@
 # Optional: doxygen git graphviz libunwind libxml2 python3-psutil python3-pygments python3-pyyaml rsync sphinx texlive valgrind zip z3
 
 name=llvm
-version=23.1.0
+version=23.1.1
 release=1
 keep_static=1
 source=(

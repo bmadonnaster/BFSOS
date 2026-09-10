@@ -5,7 +5,7 @@
 
 name=xfce4-panel
 version=4.20.8
-release=3
+release=4
 source=(
     https://archive.xfce.org/src/xfce/${name}/${version%.*}/${name}-${version}.tar.bz2
     default.xml
@@ -14,6 +14,8 @@ source=(
     bfs-image-viewer.desktop
     bfs-media-player.desktop
     bfs-disc-burner.desktop
+    bfs-xfce-first-login
+    bfs-xfce-first-login.desktop
 )
 
 post_build() {
@@ -38,4 +40,9 @@ post_build() {
         install -Dm644 "$SRC/$file" \
             "$PKG/etc/xdg/xfce4/panel/launcher-$id/$file" || return 1
     done
+
+    install -Dm755 "$SRC/bfs-xfce-first-login" \
+        "$PKG/usr/libexec/bfs-xfce-first-login" || return 1
+    install -Dm644 "$SRC/bfs-xfce-first-login.desktop" \
+        "$PKG/etc/xdg/autostart/bfs-xfce-first-login.desktop" || return 1
 }

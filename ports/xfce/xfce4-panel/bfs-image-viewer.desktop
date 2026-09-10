@@ -2,6 +2,6 @@
 Type=Application
 Name=Image Viewer
 Exec=ristretto
-Icon=ristretto
+Icon=org.xfce.ristretto
 Terminal=false
 StartupNotify=true

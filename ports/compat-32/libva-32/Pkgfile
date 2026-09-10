@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Video Acceleration API to enable hardware accelerated video decode/encode.
 # URL: https://github.com/intel/libva
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libdrm-32 libglvnd-32 libva xorg-libxfixes-32
+# Depends on: libdrm-32 libglvnd-32 libva libXfixes-32
 
 name=libva-32
 version=2.24.1

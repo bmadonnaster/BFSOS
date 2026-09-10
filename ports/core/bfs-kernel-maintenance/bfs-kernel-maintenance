@@ -136,6 +136,76 @@ set_selected_aliases() (
     esac
 )
 
+md_compat_state_file() (
+    printf '%s/bfsos/md-compat.conf' "$ETC_ROOT"
+)
+
+kernel_has_md_compat_parameter() (
+    kver=$1
+    info="$MODULE_ROOT/$kver/modules.builtin.modinfo"
+    [ -r "$info" ] || return 1
+    grep -Eq '(^|[.=:])check_new_feature([=:]|$)' "$info"
+)
+
+apply_md_compat_policy() (
+    cfg=$1
+    state=$(md_compat_state_file)
+    [ -s "$state" ] || return 0
+    grep -q '^uuid=' "$state" || return 0
+
+    kvers=$(sed -nE 's@^[[:space:]]*linux[[:space:]]+[^[:space:]]*vmlinuz-(6\.18\.[^[:space:]]*-BFS-LTS)([[:space:]].*)?$@\1@p' "$cfg" | sort -u)
+    [ -n "$kvers" ] || {
+        echo "BFSOS kernel maintenance: MD compatibility state exists but no Linux 6.18 LTS GRUB entry was generated." >&2
+        return 1
+    }
+
+    for kver in $kvers; do
+        kernel_has_md_compat_parameter "$kver" || {
+            echo "BFSOS kernel maintenance: refusing MD compatibility token for $kver; modules.builtin.modinfo does not expose check_new_feature." >&2
+            return 1
+        }
+    done
+
+    # Every affected 6.18 LTS entry must already carry the required MD UUIDs
+    # from the installer-managed global storage command line before the safety
+    # bypass is appended.
+    while IFS= read -r uuid; do
+        [ -n "$uuid" ] || continue
+        awk -v uuid="$uuid" '
+            /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ {
+                found=1
+                if (index($0, "rd.md.uuid=" uuid) == 0) bad=1
+            }
+            END { exit (!found || bad) }
+        ' "$cfg" || {
+            echo "BFSOS kernel maintenance: refusing MD compatibility token; a 6.18 LTS entry is missing rd.md.uuid=$uuid." >&2
+            return 1
+        }
+    done <<EOF_UUIDS
+$(sed -n 's/^uuid=//p' "$state")
+EOF_UUIDS
+
+    tmp="$cfg.mdcompat.$$"
+    awk '
+        /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ {
+            if ($0 !~ /(^|[[:space:]])md_mod\.check_new_feature=/)
+                $0=$0 " md_mod.check_new_feature=0"
+        }
+        { print }
+    ' "$cfg" > "$tmp" || { rm -f "$tmp"; return 1; }
+    mv -f "$tmp" "$cfg"
+
+    # The bypass is deliberately kernel-specific.  A leak into mainline or a
+    # future LTS series is a hard error, not something to silently tolerate.
+    if awk '
+        /^[[:space:]]*linux[[:space:]]/ && $0 !~ /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ && /md_mod\.check_new_feature=0/ { bad=1 }
+        END { exit bad ? 0 : 1 }
+    ' "$cfg"; then
+        echo "BFSOS kernel maintenance: MD compatibility token leaked into a non-6.18-LTS GRUB entry." >&2
+        return 1
+    fi
+)
+
 set_grub_top_level() (
     selected=$(cat "$ETC_ROOT/bfsos/kernel-flavor" 2>/dev/null || true)
     case "$selected" in
@@ -195,6 +265,11 @@ regenerate_grub() (
 
     grub-mkconfig -o "$tmp" || {
         echo "BFSOS kernel maintenance: grub-mkconfig failed; existing grub.cfg was preserved." >&2
+        return 1
+    }
+
+    apply_md_compat_policy "$tmp" || {
+        echo "BFSOS kernel maintenance: per-kernel MD compatibility policy failed; existing grub.cfg was preserved." >&2
         return 1
     }
 

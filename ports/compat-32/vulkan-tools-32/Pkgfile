@@ -1,14 +1,12 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Vulkan tools
 # URL: https://www.khronos.org/vulkan/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: volk-32 vulkan-tools
+# Depends on: glslang volk-32 vulkan-headers vulkan-loader-32
 # Optional: wayland-32
 
 name=vulkan-tools-32
 _name=Vulkan-Tools
-version=1.4.304
+version=1.4.357.0
 _version=vulkan-sdk-$version
 release=1
 source=(https://github.com/KhronosGroup/Vulkan-Tools/archive/$_version/$_name-$version.tar.gz)

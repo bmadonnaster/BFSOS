@@ -1,6 +1,6 @@
 # Description: Secure communications library implementing TLS, DTLS, and related protocols
 # URL: https://gnutls.org/
-# Maintainer: Brian Madonna email [bmadonnaster@gmail.com](mailto:bmadonnaster@gmail.com)
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libunistring nettle p11-kit libtasn1
 # Optional: brotli libidn2
 

@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Allow applications to extend a menu via Ayatana indicators in Unity, KDE or Systray
 # URL: https://launchpad.net/libappindicator
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libappindicator-gtk2-32 libappindicator-sharp
+# Depends on: libappindicator-gtk2-32
 
 name=libappindicator-sharp-32
 version=12.10

@@ -20,13 +20,16 @@ ALIASES = {
     "libpcre2": "pcre2",
     "libsdl2": "sdl2",
     "sqlite3": "sqlite",
+    "libnm": "networkmanager",
+    "vulkan-tools": "vulkan-headers",
+    "nvidia-fb": "nvidia",
 }
 # Compatibility-only ABI/history packages with no maintained native counterpart.
 SPECIAL = {
     "db", "libappindicator-sharp", "libcaca", "libidn133",
-    "libindicator-gtk2", "libjpeg6-turbo", "libnm", "libpcre",
-    "libpng12", "libsdl", "libtiff4", "libudev0-shim", "nvidia-fb",
-    "openssl11", "python", "rtmpdump", "speexdsp", "vkd3d", "vulkan-tools",
+    "libindicator-gtk2", "libjpeg6-turbo", "libpcre",
+    "libpng12", "libsdl", "libtiff4", "libudev0-shim",
+    "openssl11", "python", "rtmpdump", "speexdsp", "vkd3d",
 }
 
 ASSIGN_RE = re.compile(r"^(name|version)=(.+)$", re.M)

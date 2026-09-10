@@ -1,11 +1,9 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Compression utility using the lzma algorithm, successor of lzma-utils
 # URL: https://tukaani.org/xz/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=xz-32
-version=5.8.3
+version=5.8.4
 release=1
 source=(https://github.com/tukaani-project/xz/releases/download/v$version/xz-$version.tar.gz)
 

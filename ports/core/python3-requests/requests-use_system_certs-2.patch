@@ -1,42 +1,18 @@
 Submitted By: Ken Moffat <ken at linuxfromscratch dot org>
 Date: 2022-12-01
 Initial Package Version: 2.28.1
-Changelog: rediff'ed for 2.28.2 (Pierre Labastie)
-Changelog: rediff'ed for 2.30.0 (Bruce Dubbs)
-Changelog: rediff'ed for 2.32.1 (Bruce Dubbs)
-Changelog: rediff'ed for 2.33.0 (Douglas Reno). Also needed to adapt the patch
-           to the new Python Packaging standard that was adopted by 2.33.0.
-Upstream Status: N/A
-Origin: Self, fedora and Arch
-Description: Prefer system certificates.
+BFSOS refresh: 2026-09-10 for Requests 2.34.2
+Upstream Status: downstream distribution policy
+Origin: Linux From Scratch / Fedora / Arch-derived policy, refreshed for BFSOS
+Description: Prefer the BFSOS system CA bundle and drop the certifi runtime dependency.
 
-1. Based on what pip does to its vendored requests, use the
- same environment variable to point to the certificates
- instead of the certs from vendored certifi.
+Requests explicitly permits distribution packagers to replace certs.where().
+BFSOS uses /etc/pki/tls/certs/ca-bundle.crt, maintained by ca-certificates + make-ca.
+The _PIP_STANDALONE_CERT override is retained for pip's standalone bootstrap path.
 
-2. If that variable is not present, use the system certs.
-
-Note that the variable can be set to point to
-/usr/lib/python3.11/site-packages/pip/_vendor/certifi/cacert.pem
-if there is a need to use the shipped certificates.
-
-3. Remove the requirement to install system Certifi.
-
-
-diff -Naurp requests-2.33.0.orig/PKG-INFO requests-2.33.0/PKG-INFO
---- requests-2.33.0.orig/PKG-INFO	2026-03-25 10:09:55.191899000 -0500
-+++ requests-2.33.0/PKG-INFO	2026-03-26 12:09:02.134749090 -0500
-@@ -32,7 +32,6 @@ License-File: NOTICE
- Requires-Dist: charset_normalizer<4,>=2
- Requires-Dist: idna<4,>=2.5
- Requires-Dist: urllib3<3,>=1.26
--Requires-Dist: certifi>=2023.5.7
- Provides-Extra: security
- Provides-Extra: socks
- Requires-Dist: PySocks!=1.5.7,>=1.5.6; extra == "socks"
-diff -Naurp requests-2.33.0.orig/pyproject.toml requests-2.33.0/pyproject.toml
---- requests-2.33.0.orig/pyproject.toml	2026-03-25 10:09:51.000000000 -0500
-+++ requests-2.33.0/pyproject.toml	2026-03-26 12:08:32.296638286 -0500
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
 @@ -18,8 +18,7 @@ requires-python = ">=3.10"
  dependencies = [
      "charset_normalizer>=2,<4",
@@ -47,10 +23,10 @@ diff -Naurp requests-2.33.0.orig/pyproject.toml requests-2.33.0/pyproject.toml
  ]
  dynamic = ["version"]
  
-diff -Naurp requests-2.33.0.orig/src/requests/certs.py requests-2.33.0/src/requests/certs.py
---- requests-2.33.0.orig/src/requests/certs.py	2026-03-25 10:09:51.000000000 -0500
-+++ requests-2.33.0/src/requests/certs.py	2026-03-26 12:07:55.179500625 -0500
-@@ -12,7 +12,14 @@ environment, you can change the definiti
+diff --git a/src/requests/certs.py b/src/requests/certs.py
+--- a/src/requests/certs.py
++++ b/src/requests/certs.py
+@@ -12,7 +12,14 @@ environment, you can change the definition of where() to return a separately
  packaged CA bundle.
  """
  

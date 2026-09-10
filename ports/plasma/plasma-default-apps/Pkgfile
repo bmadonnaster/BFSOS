@@ -5,8 +5,8 @@
 
 
 name=plasma-default-apps
-version=26.08.0
-release=2
+version=26.08.1
+release=1
 source=()
 
 pkg_build() {

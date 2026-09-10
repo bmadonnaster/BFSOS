@@ -34,7 +34,7 @@ vals, reason = mod.git_tag_versions(["foo-9.9", "foo-10.0"], "2.4.0")
 assert reason and not vals
 
 
-# v9 must reject known false-positive classes seen in the full maintained-tree audit.
+# v10 must reject known false-positive classes seen in the full maintained-tree audit.
 def fake(rel, version):
     return mod.Port(Path('/tmp') / rel, rel, rel.rsplit('/', 1)[-1], version, [])
 
@@ -104,8 +104,8 @@ assert all("/2025/" not in s for s in p.sources), p.sources
 assert not any("upstream_fixes" in s for s in p.sources), p.sources
 
 p = port("opt/libclc")
-assert p.version == "23.1.0", p.version
-assert any("llvm-project-23.1.0.src.tar.xz" in s for s in p.sources), p.sources
+assert p.version == "23.1.1", p.version
+assert any("llvm-project-23.1.1.src.tar.xz" in s for s in p.sources), p.sources
 
 for rel in (
     "plasma/kactivities", "plasma/kactivities-stats", "plasma/kemoticons", "plasma/kinit",
@@ -150,9 +150,9 @@ assert any("/Public/17.0.0/ucd/Unihan.zip" in x for x in p.sources), p.sources
 p = port("opt/texlive")
 assert p.version == "20260301" and all("texlive.info/historic/" in x for x in p.sources), p.sources
 
-print(f"checkupdate v9 regression: PASS ({count} maintained Pkgfiles evaluated)")
+print(f"checkupdate v10 regression: PASS ({count} maintained Pkgfiles evaluated)")
 
-# v9 provider regressions: source-hosting oddities must map through authoritative providers.
+# provider regressions: source-hosting oddities must map through authoritative providers.
 assert mod.PYPI_PROJECT_OVERRIDES["core/python3-docutils"] == "docutils"
 assert mod.PYPI_PROJECT_OVERRIDES["opt/scons"] == "SCons"
 assert mod.GIT_REPO_OVERRIDES["core/procps-ng"].endswith("procps.git")
@@ -167,3 +167,23 @@ p = port("opt/swig")
 assert p.version == "4.5.1", p.version
 p = port("opt/taglib")
 assert p.version == "2.3.1", p.version
+
+# v10 provider regressions: release-directory and vendor redirect providers.
+class FakeHttp:
+    def get(self, url):
+        if url == "https://gcc.gnu.org/pub/gcc/releases/":
+            return '<a href="gcc-16.2.0/">gcc-16.2.0/</a> <a href="gcc-16.3.0/">gcc-16.3.0/</a>'
+        if url == "https://archive.mozilla.org/pub/security/nss/releases/":
+            return '<a href="NSS_3_127_RTM/">NSS_3_127_RTM/</a> <a href="NSS_3_128_RTM/">NSS_3_128_RTM/</a>'
+        raise AssertionError(url)
+    def resolve(self, url):
+        assert "discord.com/api/download/stable" in url
+        return "https://dl.discordapp.net/apps/linux/1.0.157/discord-1.0.157.tar.gz", ""
+
+latest, provider, reason = mod.gcc_release_directory(fake('opt/mingw-w64-gcc','16.2.0'), FakeHttp())
+assert provider == 'gcc-releases' and not reason and latest == '16.3.0', (latest, provider, reason)
+latest, provider, reason = mod.discord_stable(fake('opt/discord','0.0.97'), FakeHttp())
+assert provider == 'discord-stable' and not reason and latest == '1.0.157', (latest, provider, reason)
+latest, provider, reason = mod.nss_release_directory(fake('opt/nss','3.127'), FakeHttp())
+assert provider == 'nss-releases' and not reason and latest == '3.128', (latest, provider, reason)
+print("checkupdate v10 provider regression: PASS")

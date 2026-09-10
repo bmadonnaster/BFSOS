@@ -2,6 +2,6 @@
 Type=Application
 Name=Media Player
 Exec=parole
-Icon=parole
+Icon=org.xfce.parole
 Terminal=false
 StartupNotify=true

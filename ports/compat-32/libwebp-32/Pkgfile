@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: A library for a new image format comparable to JPEG.
 # URL: https://developers.google.com/speed/webp/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: giflib-32 libpng-32 libtiff-32 zstd-32 libwebp
+# Depends on: libpng-32 libtiff-32 zstd-32 libwebp
 # Optional: freeglut-32 libsdl-32 ninja
 
 name=libwebp-32
@@ -31,6 +29,7 @@ exit 1
 		-D CMAKE_BUILD_TYPE=Release \
 		-D CMAKE_C_FLAGS_RELEASE="${CFLAGS}" \
 		-D WEBP_BUILD_VWEBP=OFF \
+		-D WEBP_BUILD_IMG2WEBP=OFF \
 		-Wno-dev
 
 	cmake --build build

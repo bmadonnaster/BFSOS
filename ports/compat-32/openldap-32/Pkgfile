@@ -1,12 +1,10 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Lightweight Directory Access Protocol (LDAP) Toolkit
 # URL: https://www.openldap.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: openldap openssl-32
 
 name=openldap-32
-version=2.7.0
+version=2.7.1
 release=1
 source=(https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-$version.tgz)
 

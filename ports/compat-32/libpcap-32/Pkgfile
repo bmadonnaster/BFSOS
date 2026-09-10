@@ -1,12 +1,10 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: Packet capture library
 # URL: https://www.tcpdump.org
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libpcap libusb-32
 
 name=libpcap-32
-version=1.10.6
+version=1.10.7
 release=1
 source=(https://www.tcpdump.org/release/${name%-*}-$version.tar.gz)
 

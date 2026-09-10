@@ -5,7 +5,7 @@
 
 name=bfs-kernel-maintenance
 version=1.0
-release=2
+release=3
 source=(bfs-kernel-maintenance bfs-kernel-finalize.service README)
 
 pkg_build() {

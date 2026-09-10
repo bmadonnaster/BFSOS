@@ -2,6 +2,6 @@
 Type=Application
 Name=Disc Burner
 Exec=xfburn
-Icon=media-optical
+Icon=stock_xfburn
 Terminal=false
 StartupNotify=true

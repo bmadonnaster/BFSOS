@@ -5,8 +5,8 @@
 
 
 name=kde-frameworks-6
-version=6.29.0
-release=3
+version=6.30.0
+release=1
 source=()
 
 pkg_build() {

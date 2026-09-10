@@ -24,5 +24,5 @@ assert 'export CFLAGS="-O2 -march=i686 -pipe -m32"' in conf
 
 cp=subprocess.run([str(ROOT/'scripts/multilibvercheck.sh')],capture_output=True,text=True)
 assert cp.returncode==0, cp.stdout+cp.stderr
-assert 'matched=151 special=19 drift=0 unexplained=0' in cp.stdout, cp.stdout
-print('compat-32 synchronization regression: PASS (170 ports; 151 paired; 19 special)')
+assert 'matched=154 special=16 drift=0 unexplained=0' in cp.stdout, cp.stdout
+print('compat-32 synchronization regression: PASS (170 ports; 154 paired; 16 special)')

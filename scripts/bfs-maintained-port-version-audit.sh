@@ -1,5 +1,5 @@
 #!/bin/bash
-# BFSOS maintained-tree upstream version audit v9.
+# BFSOS maintained-tree upstream version audit v10.
 # compat-32 is version-synchronized against native ports by multilibvercheck.sh.
 set -euo pipefail
 
@@ -10,10 +10,10 @@ TSV=${2:-"${LOG%.log}.tsv"}
 
 export REPO="$ROOT/ports/core $ROOT/ports/opt $ROOT/ports/xorg $ROOT/ports/plasma $ROOT/ports/gnome $ROOT/ports/lxqt $ROOT/ports/xfce $ROOT/ports/compiz $ROOT/ports/contrib"
 
-echo "BFSOS maintained-port online version audit v9"
+echo "BFSOS maintained-port online version audit v10"
 echo "Trees: core opt xorg plasma gnome lxqt xfce compiz contrib"
 echo "Excluded from online provider audit: compat-32 (checked against native counterparts separately)"
-echo "Safety: read-only; automatic Pkgfile updates are disabled"
+echo "Safety: read-only; checker is read-only; reviewed UPDATE rows can be applied with scripts/bfs-maintained-port-updater.py"
 echo "Log: $LOG"
 echo "TSV: $TSV"
 echo

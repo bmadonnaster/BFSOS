@@ -94,11 +94,18 @@ if command -v sddm >/dev/null 2>&1; then
 else
     bad "sddm executable missing"
 fi
-if systemctl is-enabled sddm.service >/dev/null 2>&1; then
-    ok "sddm.service enabled"
-else
-    warn "sddm.service not enabled"
-fi
+enabled_dms=0
+for dm_unit in sddm.service plasmalogin.service gdm.service lightdm.service; do
+    if systemctl is-enabled "$dm_unit" >/dev/null 2>&1; then
+        ok "$dm_unit explicitly enabled"
+        enabled_dms=$((enabled_dms + 1))
+    fi
+done
+case "$enabled_dms" in
+    0) warn "no display manager explicitly selected (valid BFSOS console/TTY state)" ;;
+    1) : ;;
+    *) bad "multiple display managers are enabled; BFSOS policy requires one explicit selection" ;;
+esac
 
 locker=""
 for candidate in /opt/kf6/libexec/kscreenlocker_greet /opt/kf6/bin/kscreenlocker_greet /usr/libexec/kscreenlocker_greet /usr/bin/kscreenlocker_greet; do

@@ -5,7 +5,7 @@
 # Optional: brotli c-ares icu libnghttp3 libngtcp2 simdjson simdutf
 
 name=nodejs
-version=24.20.0
+version=24.21.0
 release=1
 source=(https://nodejs.org/dist/v$version/node-v$version.tar.xz
   unbundle-uv.patch)
@@ -34,9 +34,7 @@ pkg_build() {
     --shared-libuv \
     --shared-nghttp2 \
     --shared-zlib \
-    --shared-openssl \
- \
-    --experimental-http-parser || return 1
+    --shared-openssl || return 1
 
   make || return 1
   make DESTDIR="$PKG" install || return 1

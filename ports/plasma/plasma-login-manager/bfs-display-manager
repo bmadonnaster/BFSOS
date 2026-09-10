@@ -18,7 +18,7 @@ unit_exists() {
 }
 
 status() {
-    selected=$(cat "$state_file" 2>/dev/null || printf '%s' 'sddm')
+    selected=$(cat "$state_file" 2>/dev/null || printf '%s' 'unselected')
     printf 'Selected BFSOS display manager: %s\n' "$selected"
     for unit in sddm.service plasmalogin.service; do
         if command -v systemctl >/dev/null 2>&1; then

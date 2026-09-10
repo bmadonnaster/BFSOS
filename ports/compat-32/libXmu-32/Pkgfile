@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: xorg lib libXmu
 # URL: https://xorg.freedesktop.org
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: xorg-libxext-32 xorg-libxmu xorg-libxt-32
+# Depends on: libXext-32 libXmu libXt-32
 
 name=xorg-libxmu-32
 version=1.3.1

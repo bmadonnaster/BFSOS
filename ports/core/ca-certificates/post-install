@@ -6,7 +6,12 @@ ln -sfn ../cert.pem /etc/ssl/certs/ca-certificates.crt
 ln -sfn /etc/ssl/cert.pem /etc/ssl/ca-bundle.crt
 
 # If the complete p11-kit/make-ca stack is already present, refresh all trust
-# representations after a ca-certificates package update replaces the seed PEM.
+# representations from the packaged Mozilla certdata input. Never use -g here:
+# normal package installation/update must not require network access.
 if [ -x /usr/sbin/make-ca ] && [ -x /usr/bin/trust ]; then
+    [ -s /etc/ssl/certdata.txt ] || {
+        echo "ca-certificates: packaged certdata.txt is missing" >&2
+        exit 1
+    }
     /usr/sbin/make-ca -r
 fi

@@ -6,9 +6,10 @@
 
 name=qt6
 version=6.11.2
-release=8
+release=9
 source=(https://download.qt.io/official_releases/qt/6.11/$version/single/qt-everywhere-src-$version.tar.xz)
 keep_static=1
+build_work=disk
 
 pkg_build() {
     export QT6PREFIX=/opt/qt6
@@ -46,17 +47,19 @@ pkg_build() {
         -name '*.prl' \
         -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
 
-    install -d \
-        "$PKG/etc/profile.d" \
-        "$PKG/etc/ld.so.conf.d"
-
-    cat > "$PKG/etc/profile.d/qt6.sh" <<'EOF_PROFILE'
-QT6DIR=/opt/qt6
-pathappend "$QT6DIR/bin" PATH
-pathappend "$QT6DIR/lib/pkgconfig" PKG_CONFIG_PATH
-export QT6DIR
-EOF_PROFILE
+    install -d "$PKG/etc/ld.so.conf.d"
 
     printf '%s\n' '/opt/qt6/lib' \
         > "$PKG/etc/ld.so.conf.d/qt6.conf"
+
+    # Mirror the BFSOS Qt5 compatibility naming policy without allowing Qt
+    # majors to compete for generic /usr/bin names.
+    install -d "$PKG/usr/bin" || return 1
+    for file in moc uic rcc qmake lconvert lrelease lupdate qtpaths; do
+        test -x "$PKG/opt/qt6/bin/$file" || {
+            echo "qt6: expected compatibility tool missing: $file" >&2
+            return 1
+        }
+        ln -sfn "/opt/qt6/bin/$file" "$PKG/usr/bin/$file-qt6" || return 1
+    done
 }

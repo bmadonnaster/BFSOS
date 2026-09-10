@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: DSP library derived from speex
 # URL: https://www.speex.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: speexdsp
+# Depends on:
 
 name=speexdsp-32
 version=1.2.1

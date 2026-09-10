@@ -130,10 +130,10 @@ check_version() {
     [ "$got" = "$expected" ] || report "$file version is $got; expected $expected"
 }
 
-check_version ports/core/linux/Pkgfile 7.2.3
-check_version ports/core/linux-headers/Pkgfile 7.2.3
-check_version ports/core/linux-api-headers/Pkgfile 7.2.3
-check_version ports/core/linux-lts/Pkgfile 6.18.49
+check_version ports/core/linux/Pkgfile 7.2.4
+check_version ports/core/linux-headers/Pkgfile 7.2.4
+check_version ports/core/linux-api-headers/Pkgfile 7.2.4
+check_version ports/core/linux-lts/Pkgfile 6.18.50
 if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
     report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
 fi
@@ -207,8 +207,8 @@ for fallback in \
 done
 
 # Firefox rapid/ESR channels are tracked independently; binary and source rapid ports must match.
-check_version ports/opt/firefox/Pkgfile 155.0
-check_version ports/opt/firefox-bin/Pkgfile 155.0
+check_version ports/opt/firefox/Pkgfile 155.0.1
+check_version ports/opt/firefox-bin/Pkgfile 155.0.1
 check_version ports/opt/firefox-esr/Pkgfile 153.2.0esr
 
 # Current LXQt stable baseline (2026-04 suite plus later point releases).

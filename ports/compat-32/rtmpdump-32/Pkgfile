@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: A tool to download rtmp streams.
 # URL: http://rtmpdump.mplayerhq.hu/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: gnutls-32 rtmpdump zlib-32
+# Depends on: gnutls-32 zlib-32
 
 name=rtmpdump-32
 version=2.6

@@ -6,7 +6,7 @@
 keep_static=1
 name=qt5
 version=5.15.19
-release=12
+release=13
 # Keep Debian's small quilt metadata archives as opaque build inputs.  BFSOS
 # uses the official complete Qt source archive, but Debian currently carries
 # compatibility fixes needed by modern OpenSSL/GCC/ICU/glibc.  QtWebEngine is
@@ -113,16 +113,18 @@ pkg_build() {
 
     find "$PKG$QT5PREFIX" -name '*.prl' -exec sed -i '/^QMAKE_PRL_BUILD_DIR/d' {} \;
 
-    install -d "$PKG/etc/profile.d" "$PKG/etc/ld.so.conf.d"
-    cat > "$PKG/etc/profile.d/qt5.sh" <<'EOF'
-QT5DIR=/opt/qt5
-pathappend "$QT5DIR/bin" PATH
-pathappend "$QT5DIR/lib/pkgconfig" PKG_CONFIG_PATH
-export QT5DIR
-EOF
+    install -d "$PKG/etc/ld.so.conf.d"
     printf '%s\n' '/opt/qt5/lib' > "$PKG/etc/ld.so.conf.d/qt5.conf"
+    # Public compatibility tools stay versioned so Qt5 and Qt6 can coexist.
+    # Libraries, headers, pkg-config and CMake metadata remain canonical under
+    # /opt and are discovered through the BFSOS prefix environment instead of
+    # ambiguous /usr mirrors.
     install -d "$PKG/usr/bin" || return 1
     for file in moc uic rcc qmake lconvert lrelease lupdate; do
+        test -x "$PKG/opt/qt5/bin/$file" || {
+            echo "qt5: expected compatibility tool missing: $file" >&2
+            return 1
+        }
         ln -sfn "/opt/qt5/bin/$file" "$PKG/usr/bin/$file-qt5" || return 1
     done
 }

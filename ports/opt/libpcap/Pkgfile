@@ -5,8 +5,8 @@
 # Optional:	bluezlibnl libusb dag septel
 
 name=libpcap
-version=1.10.6
-release=2
+version=1.10.7
+release=1
 source=(https://www.tcpdump.org/release/$name-$version.tar.gz)
 
 pkg_build() {

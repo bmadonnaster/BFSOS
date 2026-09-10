@@ -1,9 +1,7 @@
-# Add your top line text here
-# Your line to add at the top here
 # Description: libudev.so.0 compatibility library for systems with newer udev versions
 # URL: https://github.com/archlinux/libudev0-shim
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libgudev-32 libudev0-shim
+# Depends on: libgudev-32
 
 name=libudev0-shim-32
 version=2
