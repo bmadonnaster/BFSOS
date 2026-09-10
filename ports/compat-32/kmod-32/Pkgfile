@@ -28,8 +28,8 @@ pkg_build() {
 		-D fishcompletiondir=no \
 		-D zshcompletiondir=no
 
-	meson compile -C build -j ${JOBS:-1}
-	DESTDIR=$PKG meson install -C build
+	meson compile -C build -j "${JOBS:-1}" || return 1
+	DESTDIR="$PKG" meson install -C build || return 1
 
-	rm -r $PKG/{bin,etc,sbin} $PKG/usr/{include,share}
+	rm -rf $PKG/{bin,etc,sbin} $PKG/usr/{include,share}
 }
