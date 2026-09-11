@@ -63,5 +63,8 @@ printf "\n== Firefox coexistence regression ==\n"
 printf "\n== build-work backend regression ==\n"
 "$ROOT/scripts/tests/test-build-work-backend.sh"
 
+printf "\n== pkgutils dynamic NSS linkage policy regression ==\n"
+"$ROOT/scripts/tests/test-pkgutils-dynamic-nss.sh"
+
 printf "\n== pkgmk payload guard regression ==\n"
 "$ROOT/scripts/tests/test-pkgmk-payload-guard.sh"
