@@ -5,7 +5,7 @@
 
 name=pulseaudio-32
 version=17.0
-release=3
+release=4
 
 source=(https://freedesktop.org/software/pulseaudio/releases/pulseaudio-$version.tar.xz)
 
@@ -24,8 +24,8 @@ pkg_build() {
                 -D asyncns=disabled \
                 -D gtk=disabled \
                 -D oss-output=disabled \
-                -D tests=disabled \
-                -D doxygen=disabled \
+                -D tests=false \
+                -D doxygen=false \
                 -D man=false \
                 -D bashcompletiondir=no \
                 -D zshcompletiondir=no || return 1
