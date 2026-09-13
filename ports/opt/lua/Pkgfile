@@ -5,7 +5,7 @@
 
 name=lua
 version=5.4.9
-release=2
+release=3
 source=(https://www.lua.org/ftp/$name-$version.tar.gz)
 
 pkg_build() {
@@ -46,9 +46,9 @@ EOF_PC
     ) || return 1
 
     make DESTDIR="$PKG" \
-         INSTALL_TOP=/usr \
+         INSTALL_TOP=$PKG/usr \
          INSTALL_DATA="cp -d" \
-         INSTALL_MAN=/usr/share/man/man1 \
+         INSTALL_MAN=$PKG/usr/share/man/man1 \
          install || return 1
 
     rm -f "$PKG/usr/lib/liblua.a"
