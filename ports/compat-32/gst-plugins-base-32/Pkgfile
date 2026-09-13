@@ -6,7 +6,7 @@
 
 name=gst-plugins-base-32
 version=1.28.7
-release=2
+release=3
 source=(https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-$version.tar.xz)
 
 pkg_build() {
@@ -15,7 +15,7 @@ pkg_build() {
 		PKGMK_GST_PLATFORM+='egl' \
 		PKGMK_GST_GLAPI+='gles2' \
 		PKGMK_GST_WINDOW+='egl'
-	prt-get isinstlibXdamage-32 libXrandr-32 libxshmfence-32 libXvMC-32 libXxf86vm-32 && \
+	prt-get isinst libXdamage-32 libXrandr-32 libxshmfence-32 libXvMC-32 libXxf86vm-32 && \
 		PKGMK_GST_PLATFORM+=',glx' \
 		PKGMK_GST_GLAPI+=',opengl' \
 		PKGMK_GST_WINDOW+=',x11'
