@@ -5,29 +5,12 @@
 
 name=kmod-32
 version=34.2
-release=2
+release=3
 source=(https://www.kernel.org/pub/linux/utils/kernel/${name%-*}/${name%-*}-$version.tar.xz)
 
-pkg_build() {
-	meson setup build . --cross-file lib32 \
-		--prefix=/usr \
-		--bindir=/bin \
-		--sbindir=/sbin \
-		--sysconfdir=/etc \
-		--libdir=lib32 \
-		--buildtype=plain \
-		--wrap-mode=nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D dlopen=all \
-		-D docs=false \
-		-D manpages=false \
-		-D bashcompletiondir=no \
-		-D fishcompletiondir=no \
-		-D zshcompletiondir=no || return 1
+build_opt="--bindir=/bin --sbindir=/sbin -D dlopen=all -D docs=false -D manpages=false -D bashcompletiondir=no -D fishcompletiondir=no -D zshcompletiondir=no"
 
-	meson compile -C build -j "${JOBS:-1}" || return 1
-	DESTDIR="$PKG" meson install -C build || return 1
+post_build() {
 
 	rm -rf $PKG/{bin,etc,sbin} $PKG/usr/{include,share}
 }

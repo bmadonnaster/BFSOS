@@ -4,11 +4,14 @@
 
 name=openssl11-32
 version=1.1.1w
-release=2
+release=3
 source=(https://www.openssl.org/source/${name:0:7}-$version.tar.gz \
 	no-rpath.patch openssl-1.0-versioned-symbols.patch)
 
+# Custom build required: legacy OpenSSL uses an isolated ABI directory
 pkg_build() {
+  (
+    set -e
 	#export MAKEFLAGS="$MAKEFLAGS -j1"
 	export CC="${CC:-gcc}"
 
@@ -34,4 +37,5 @@ pkg_build() {
 
 	# Update includedir in .pc files
 	sed -e 's|/include$|/include/openssl-1.1|' -i $PKG/usr/lib32/openssl-1.1/pkgconfig/*.pc
+  )
 }

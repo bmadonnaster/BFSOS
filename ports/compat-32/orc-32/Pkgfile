@@ -5,24 +5,12 @@
 
 name=orc-32
 version=0.4.44
-release=1
+release=2
 source=(https://gstreamer.freedesktop.org/src/orc/orc-$version.tar.xz)
 
-pkg_build() {
-  meson setup build . --cross-file lib32 \
-    --prefix=/usr \
-    --libdir=/usr/lib32 \
-    --buildtype=plain \
-    --wrap-mode nodownload \
-    -D b_lto=true \
-    -D b_pie=true \
-    -D benchmarks=disabled \
-    -D examples=disabled \
-    -D hotdoc=disabled \
-    -D tests=disabled || return 1
+build_opt="-D benchmarks=disabled -D examples=disabled -D hotdoc=disabled -D tests=disabled"
 
-  meson compile -C build -j ${JOBS:-1} || return 1
-  DESTDIR=$PKG meson install -C build || return 1
+post_build() {
 
   rm -rf $PKG/usr/{bin,include}
 }

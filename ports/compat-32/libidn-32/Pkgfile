@@ -5,18 +5,12 @@
 
 name=libidn-32
 version=1.44
-release=1
+release=2
 source=(https://ftp.gnu.org/gnu/${name%-*}/${name%-*}-$version.tar.gz)
 
-pkg_build() {
+build_opt="--disable-nls"
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-nls
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r \
 		$PKG/usr/{bin,include,share/man} \

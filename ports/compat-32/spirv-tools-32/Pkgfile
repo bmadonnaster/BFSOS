@@ -5,10 +5,13 @@
 
 name=spirv-tools-32
 version=1.4.357.0
-release=2
+release=3
 source=(https://github.com/KhronosGroup/SPIRV-Tools/archive/vulkan-sdk-$version/SPIRV-Tools-v$version.tar.gz)
 
+# Custom build required: both static and shared configurations are built
 pkg_build() {
+  (
+    set -e
         PKGMK_SPIRV_TOOLS+=" -G Ninja"
         PKGMK_SPIRV_TOOLS+=" -S ."
         PKGMK_SPIRV_TOOLS+=" -D CMAKE_INSTALL_PREFIX=/usr"
@@ -42,5 +45,6 @@ pkg_build() {
         # Native spirv-tools owns the executables and headers.
         # This compat port supplies only the 32-bit libraries/pkg-config data.
         rm -rf "$PKG/usr/bin" "$PKG/usr/include"
+  )
 }
 

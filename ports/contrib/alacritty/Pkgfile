@@ -6,11 +6,14 @@
 
 name=alacritty
 version=0.17.0
-release=3
+release=4
 source=(https://github.com/alacritty/alacritty/archive/refs/tags/v$version.tar.gz)
 renames=($name-$version.tar.gz)
 
+# Custom build required: Cargo build plus optional completion/manpage staging
 pkg_build() {
+  (
+    set -e
   prt-get isinst sccache && export RUSTC_WRAPPER=/usr/bin/sccache
   mkdir $PKGMK_SOURCE_DIR/rust || true
   export CARGO_HOME=$PKGMK_SOURCE_DIR/rust
@@ -46,4 +49,5 @@ pkg_build() {
     "$PKG/usr/share/applications/Alacritty.desktop" || return 1
   install -D -m644 extra/logo/alacritty-term.svg \
     "$PKG/usr/share/pixmaps/Alacritty.svg" || return 1
+  )
 }

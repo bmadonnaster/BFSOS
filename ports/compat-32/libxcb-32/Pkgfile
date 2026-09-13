@@ -5,11 +5,13 @@
 
 name=libxcb-32
 version=1.17.0
-release=1
+release=2
 source=(https://xorg.freedesktop.org/archive/individual/lib/libxcb-$version.tar.xz)
 
+# Custom build required: Python protocol generation and library-only staging are required
 pkg_build() {
-
+  (
+    set -e
 	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
 	PYTHON=/usr/bin/python3 \
 	./configure \
@@ -21,4 +23,5 @@ pkg_build() {
 	make DESTDIR=$PKG install
 
 	rm -r $PKG/usr/{include,share}
+  )
 }

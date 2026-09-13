@@ -4,11 +4,14 @@
 
 name=db-32
 version=5.3.28
-release=3
+release=4
 source=(https://download.oracle.com/berkeley-db/db-$version.tar.gz
 	0001-atomic-Rename-local-__atomic_compare_exchange-to-avo.patch)
 
+# Custom build required: Berkeley DB configures from build_unix and dist
 pkg_build() {
+  (
+    set -e
     cd build_unix || return 1
 
     ../dist/configure --prefix=/usr \
@@ -22,4 +25,5 @@ pkg_build() {
     rm -r $PKG/usr/docs
     chmod -R +w $PKG
     rm -rf $PKG/usr/{bin,include}
+  )
 }

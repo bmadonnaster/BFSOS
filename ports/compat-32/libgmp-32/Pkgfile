@@ -4,11 +4,13 @@
 
 name=libgmp-32
 version=6.3.0
-release=2
+release=3
 source=(https://gmplib.org/download/gmp/gmp-$version.tar.xz)
 
+# Custom build required: package-specific ABI cleanup follows the Autotools build
 pkg_build() {
-
+  (
+    set -e
 	CC="gcc -std=gnu17" \
 	CXX="g++ -std=gnu++17" \
 	./configure \
@@ -24,4 +26,5 @@ pkg_build() {
 	rm $PKG/usr/include/gmpxx.h
 
 	rm -r $PKG/usr/share
+  )
 }

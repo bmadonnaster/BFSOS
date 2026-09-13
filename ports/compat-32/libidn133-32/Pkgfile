@@ -5,10 +5,13 @@
 
 name=libidn133-32
 version=1.33
-release=2
+release=3
 source=(https://ftp.gnu.org/gnu/libidn/libidn-$version.tar.gz)
 
+# Custom build required: legacy ABI package intentionally prunes development links
 pkg_build() {
+  (
+    set -e
 	./configure \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
@@ -18,4 +21,5 @@ pkg_build() {
 	make
 	make DESTDIR=$PKG install
 	rm -r $PKG/usr/{bin,include,lib32/{libidn.so,libidn.la,pkgconfig},share}
+  )
 }

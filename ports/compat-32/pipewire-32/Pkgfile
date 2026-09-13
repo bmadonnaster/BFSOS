@@ -6,10 +6,13 @@
 
 name=pipewire-32
 version=1.6.8
-release=2
+release=3
 source=(https://gitlab.freedesktop.org/pipewire/pipewire/-/archive/$version/pipewire-$version.tar.bz2)
 
+# Custom build required: plugin feature selection is conditional at build time
 pkg_build() {
+  (
+    set -e
 	prt-get isinst alsa-lib-32 && PKGMK_PW+=' -D alsa=enabled -D pipewire-alsa=enabled'
 	prt-get isinst avahi-32 && PKGMK_PW+=' -D avahi=enabled'
 	prt-get isinst dbus-32 && PKGMK_PW+=' -D dbus=enabled'
@@ -45,4 +48,5 @@ pkg_build() {
 		rm -f "$PKG/usr/lib/udev/rules.d/90-pipewire-alsa.rules"
 
 	find $PKG -type d -empty -delete
+  )
 }

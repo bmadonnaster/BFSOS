@@ -5,11 +5,13 @@
 
 name=speexdsp-32
 version=1.2.1
-release=1
+release=2
 source=(https://ftp.osuosl.org/pub/xiph/releases/speex/speexdsp-$version.tar.gz)
 
+# Custom build required: generated Makefile needs documentation pruning after configure
 pkg_build() {
-
+  (
+    set -e
 	./configure \
 		--prefix=/usr \
 		--libdir=/usr/lib32
@@ -20,4 +22,5 @@ pkg_build() {
 	make DESTDIR=$PKG install
 
 	rm -r $PKG/usr/include
+  )
 }

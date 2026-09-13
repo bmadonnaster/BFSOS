@@ -5,28 +5,16 @@
 
 name=eudev-32
 version=3.2.14
-release=1
+release=2
 source=(https://github.com/eudev-project/eudev/releases/download/v$version/eudev-$version.tar.gz)
 
-pkg_build() {
+build_opt="--sbindir=/sbin --bindir=/sbin --with-rootprefix= --with-rootlibdir=/usr/lib32 --disable-introspection --disable-manpages --enable-split-usr"
 
-	# needed for static linking, e.g. dmsetup.static
-	sed -i '/^Libs:/s/-ludev/-ludev -lrt/' src/libudev/libudev.pc.in
+pre_build() {
+  sed -i '/^Libs:/s/-ludev/-ludev -lrt/' src/libudev/libudev.pc.in || return 1
+  CFLAGS+=" -D_GNU_SOURCE"
+}
 
-	./configure --prefix=/usr \
-	    --host=i686-pc-linux-gnu \
-		--libdir=/usr/lib32 \
-		--sbindir=/sbin --bindir=/sbin \
-		--sysconfdir=/etc \
-		--with-rootprefix= \
-		--with-rootlibdir=/usr/lib32 \
-		--libexecdir=/usr/lib32 \
-		--disable-introspection \
-		--disable-manpages \
-		--enable-split-usr
-
-	make CFLAGS="$CFLAGS -D_GNU_SOURCE"
-	make install DESTDIR=$PKG
-
-	rm -r $PKG/{etc,sbin} $PKG/usr/{include,lib32/udev,share}
+post_build() {
+  rm -rf "$PKG/etc" "$PKG/sbin" "$PKG/usr/include" "$PKG/usr/lib32/udev" "$PKG/usr/share"
 }

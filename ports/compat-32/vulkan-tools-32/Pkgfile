@@ -8,10 +8,13 @@ name=vulkan-tools-32
 _name=Vulkan-Tools
 version=1.4.357.0
 _version=vulkan-sdk-$version
-release=2
+release=3
 source=(https://github.com/KhronosGroup/Vulkan-Tools/archive/$_version/$_name-$version.tar.gz)
 
+# Custom build required: 32-bit helper executables are retained with renamed commands
 pkg_build() {
+  (
+    set -e
 	prt-get isinst wayland-32 || PKGMK_VULKAN_TOOLS+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
 	prt-get isinst wayland-32 && export PKG_CONFIG_LIBDIR=/usr/lib32/pkgconfig:/usr/share/pkgconfig
 
@@ -38,4 +41,5 @@ pkg_build() {
 	for app in $PKG/usr/bin/* ; do
 		mv $app $app-32
 	done
+  )
 }

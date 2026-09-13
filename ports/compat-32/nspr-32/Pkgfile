@@ -5,25 +5,18 @@
 
 name=nspr-32
 version=4.40
-release=2
+release=3
 source=(https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v$version/src/${name%-*}-$version.tar.gz
 	nspr.pc.in)
 
-pkg_build() {
-	local NSPR_LIBS NSPR_CFLAGS NSPR_VERSION
+build_opt="--includedir=/usr/include/nspr --enable-optimize=$CFLAGS --disable-64bit --disable-debug"
 
+pre_build() {
 	cd nspr || return 1
+}
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--includedir=/usr/include/nspr \
-		--enable-optimize="$CFLAGS" \
-		--disable-64bit \
-		--disable-debug
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
+	local NSPR_LIBS NSPR_CFLAGS NSPR_VERSION
 
 	mv $PKG/usr/bin/nspr-config{,-32}
 	rm $PKG/usr/bin/{compile-et.pl,prerr.properties}

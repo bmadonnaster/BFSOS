@@ -5,11 +5,13 @@
 
 name=openldap-32
 version=2.7.1
-release=1
+release=2
 source=(https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-$version.tgz)
 
+# Custom build required: only headers and library subtrees are built and installed
 pkg_build() {
-
+  (
+    set -e
 	export CC="${CC:-gcc}"
 	export CXX="${CXX:-g++}"
 
@@ -41,4 +43,5 @@ pkg_build() {
 	make DESTDIR=$PKG install
 
 	rm -r $PKG/etc $PKG/usr/include $PKG/usr/lib32/*.la
+  )
 }

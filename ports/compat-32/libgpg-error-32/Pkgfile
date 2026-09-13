@@ -5,20 +5,12 @@
 
 name=libgpg-error-32
 version=1.61
-release=1
+release=2
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/${name%-*}-$version.tar.bz2)
 
-pkg_build() {
+build_opt="--disable-nls --enable-static"
 
-	./configure \
-	    --host=i686-pc-linux-gnu      \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-nls \
-		--enable-static
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{share,bin,include}
 }

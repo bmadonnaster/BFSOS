@@ -5,22 +5,12 @@
 
 name=mesa-demos-32
 version=9.0.0
-release=2
+release=3
 source=(https://archive.mesa3d.org/demos/${name%-*}-$version.tar.xz)
 
-pkg_build() {
-	meson setup build . \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D gles1=disabled \
-		-D with-system-data-files=true \
-		-D osmesa=disabled
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+build_opt="-D gles1=disabled -D with-system-data-files=true -D osmesa=disabled"
+
+post_build() {
 
 	local i
 	for i in $PKG/usr/bin/*; do mv "$i" "$i"-32; done

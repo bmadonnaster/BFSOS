@@ -5,20 +5,11 @@
 
 name=wayland-32
 version=1.26.0
-release=2
+release=3
 source=(https://gitlab.freedesktop.org/wayland/wayland/-/releases/$version/downloads/wayland-$version.tar.xz)
 
-pkg_build() {
-		PKG_CONFIG_PATH=/usr/lib32/pkgconfig \
-	meson setup build . \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D documentation=false
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+build_opt="-D documentation=false"
+
+post_build() {
 	rm -r $PKG/usr/{bin,include,share}
 }

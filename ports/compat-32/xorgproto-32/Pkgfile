@@ -5,22 +5,12 @@
 
 name=xorgproto-32
 version=2025.1
-release=2
-source=(https://xorg.freedesktop.org/archive/individual/proto/xorgproto-$version.tar.xz
-cross-file.txt)
+release=3
+source=(https://xorg.freedesktop.org/archive/individual/proto/xorgproto-$version.tar.xz)
 
-pkg_build() {
-	meson setup build . --cross-file "$SRC/cross-file.txt" \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--datadir=/usr/lib32 \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D legacy=false
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+build_opt="--datadir=/usr/lib32 -D legacy=false"
+
+post_build() {
 
 	rm -r $PKG/usr/include $PKG/usr/lib32/doc $PKG/usr/lib32/pkgconfig/applewmproto.pc
 }

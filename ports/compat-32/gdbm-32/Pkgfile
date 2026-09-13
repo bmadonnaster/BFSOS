@@ -4,20 +4,16 @@
 
 name=gdbm-32
 version=1.26
-release=1
+release=2
 source=(https://ftp.gnu.org/gnu/${name%-*}/${name%-*}-$version.tar.gz)
 
-pkg_build() {
-	export CC="${CC:-gcc} ${CFLAGS}"
+build_opt="--enable-libgdbm-compat"
+
+pre_build() {
 	export CFLAGS="$CFLAGS -fcommon"
+}
 
-
-	./configure --prefix=/usr \
-		--libdir=/usr/lib32 \
-		--enable-libgdbm-compat
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share}
 }

@@ -5,24 +5,17 @@
 
 name=glib-32
 version=2.90.0
-release=2
+release=3
 source=(https://download.gnome.org/sources/glib/${version:0:4}/${name%-*}-$version.tar.xz)
 
-pkg_build() {
+build_opt="--libexecdir=/usr/lib32/glib -D introspection=disabled -D tests=false"
+
+pre_build() {
         CFLAGS+=' -Wno-error=missing-include-dirs -mstackrealign'
         CXXFLAGS+=" -Wno-error=missing-include-dirs -mstackrealign"
+}
 
-        meson setup build . \
-                --prefix=/usr \
-                --libdir=/usr/lib32 \
-                --libexecdir=/usr/lib32/glib \
-                --buildtype=plain \
-                --wrap-mode nodownload \
-                -D introspection=disabled \
-                -D tests=false
-
-        meson compile -C build -j ${JOBS:-1}
-        DESTDIR=$PKG meson install -C build
+post_build() {
 
         rm -r $PKG/usr/{share,include}
         find $PKG/usr/bin -type f -not -name gio-querymodules \
@@ -31,4 +24,3 @@ pkg_build() {
 
         install -d $PKG/usr/lib32/gio/modules
 }
-

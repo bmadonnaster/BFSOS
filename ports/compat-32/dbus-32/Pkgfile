@@ -5,30 +5,16 @@
 
 name=dbus-32
 version=1.16.2
-release=4
+release=5
 source=(https://dbus.freedesktop.org/releases/dbus/dbus-$version.tar.xz)
 
-pkg_build() {
+build_opt="--libexecdir=lib32/dbus -D dbus_daemondir=/usr/sbin -D dbus_user=messagebus -D runtime_dir=/run -D system_pid_file=/run/dbus/pid -D system_socket=/run/dbus/system_bus_socket"
+
+pre_build() {
 	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
+}
 
-	meson setup build . \
-		--prefix=/usr \
-		--localstatedir=/var \
-		--sysconfdir=/etc \
-		--libdir=/usr/lib32 \
-		--libexecdir=lib32/dbus \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D dbus_daemondir=/usr/sbin \
-		-D dbus_user=messagebus \
-		-D runtime_dir=/run \
-		-D system_pid_file=/run/dbus/pid \
-		-D system_socket=/run/dbus/system_bus_socket
-
-	meson compile -C build || return 1
-	DESTDIR="$PKG" meson install -C build || return 1
+post_build() {
 
 	rm -rf "$PKG/var" "$PKG/run" "$PKG/usr/bin" "$PKG/usr/include" "$PKG/usr/share" "$PKG/etc"
 }

@@ -8,10 +8,13 @@ name=vulkan-validation-layers-32
 _name=Vulkan-ValidationLayers
 version=1.4.357.0
 _version=vulkan-sdk-$version
-release=2
+release=3
 source=(https://github.com/KhronosGroup/Vulkan-ValidationLayers/archive/$_version/$_name-$version.tar.gz)
 
+# Custom build required: WSI selection is conditional
 pkg_build() {
+  (
+    set -e
 	prt-get isinst wayland-32 || PKGMK_VULKAN_VALIDATION_LAYERS+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
 
 	cmake -S . -B build -G Ninja $PKGMK_VULKAN_VALIDATION_LAYERS \
@@ -29,4 +32,5 @@ pkg_build() {
 	DESTDIR=$PKG cmake --install build
 
 	rm -r $PKG/usr/share
+  )
 }

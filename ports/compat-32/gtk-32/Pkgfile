@@ -5,24 +5,20 @@
 
 name=gtk-32
 version=2.24.33
-release=2
+release=3
 source=(https://download.gnome.org/sources/gtk+/${version%.*}/gtk+-$version.tar.xz)
 
-pkg_build() {
+build_opt="--disable-cups"
 
-	export PKG_CONFIG_PATH+=":/usr/share/pkgconfig"
- CFLAGS+=" -Wno-error=implicit-int -Wno-error=incompatible-pointer-types"
-        sed -e 's#l \(gtk-.*\).sgml#& -o \1#' \
-    -i docs/{faq,tutorial}/Makefile.in      &&
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-cups
+pre_build() {
+  export PKG_CONFIG_PATH="/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+  CFLAGS+=" -Wno-error=implicit-int -Wno-error=incompatible-pointer-types"
+  sed -e 's#l \(gtk-.*\).sgml#& -o \1#' \
+    -i docs/{faq,tutorial}/Makefile.in || return 1
+}
 
-	make
-	make DESTDIR=$PKG install
-
-	mv $PKG/usr/bin/gtk-query-immodules-2.0 $PKG/usr/bin/gtk-query-immodules-2.0-32
-	rm $PKG/usr/bin/{gtk-builder-convert,gtk-demo,gtk-update-icon-cache}
-	rm -r $PKG/usr/etc $PKG/usr/{include,share}
+post_build() {
+  mv "$PKG/usr/bin/gtk-query-immodules-2.0" "$PKG/usr/bin/gtk-query-immodules-2.0-32"
+  rm -f "$PKG/usr/bin/gtk-builder-convert" "$PKG/usr/bin/gtk-demo" "$PKG/usr/bin/gtk-update-icon-cache"
+  rm -rf "$PKG/usr/etc" "$PKG/usr/include" "$PKG/usr/share"
 }

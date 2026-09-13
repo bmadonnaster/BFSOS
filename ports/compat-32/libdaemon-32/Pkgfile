@@ -5,18 +5,12 @@
 
 name=libdaemon-32
 version=0.14
-release=1
+release=2
 source=(http://0pointer.de/lennart/projects/${name%-*}/${name%-*}-$version.tar.gz)
 
-pkg_build() {
+build_opt="--disable-lynx"
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-lynx
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{include,share}
 }

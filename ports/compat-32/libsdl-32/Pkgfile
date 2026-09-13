@@ -5,20 +5,16 @@
 
 name=libsdl-32
 version=1.2.15
-release=3
+release=4
 source=(http://www.libsdl.org/release/SDL-$version.tar.gz)
 
-pkg_build() {
+build_opt="--mandir=/usr/man --program-suffix=-32 --enable-alsa"
 
+pre_build() {
   export PKG_CONFIG_PATH='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
-  ./configure --prefix=/usr \
-              --mandir=/usr/man \
-              --libdir=/usr/lib32 \
-              --program-suffix=-32 \
-              --enable-alsa
+}
 
-  make
-  make DESTDIR=$PKG install
+post_build() {
   rm -r $PKG/usr/{include,man,share}
 
   # --program-suffix=-32 is being ignored

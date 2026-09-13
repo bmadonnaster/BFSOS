@@ -5,10 +5,13 @@
 
 name=openssl-32
 version=4.0.2
-release=1
+release=2
 source=(https://github.com/openssl/openssl/releases/download/openssl-$version/openssl-$version.tar.gz)
 
+# Custom build required: OpenSSL uses its Configure target and install_sw
 pkg_build() {
+  (
+    set -e
 	./Configure --prefix=/usr \
 		--libdir=/usr/lib32 \
 		--openssldir=/etc/ssl \
@@ -26,4 +29,5 @@ pkg_build() {
 
 	find $PKG -name "*fips*" -delete
 	rm -r $PKG/usr/{include,bin}
+  )
 }

@@ -5,10 +5,13 @@
 
 name=libindicator-gtk2-32
 version=16.10.0
-release=1
+release=2
 source=(http://archive.ubuntu.com/ubuntu/pool/universe/libi/libindicator/libindicator_${version}+18.04.20180321.1.orig.tar.gz)
 
+# Custom build required: legacy GTK2 autogen and service-directory layout are required
 pkg_build() {
+  (
+    set -e
   sed -e 's/-Werror -Wno-error=deprecated-declarations//g' -i libindicator/Makefile.am
   sed -e 's/--enable-gtk-doc//g' -i autogen.sh
 
@@ -29,4 +32,5 @@ pkg_build() {
 
   rm -fr $PKG/usr/include
   rm -fr $PKG/usr/share/libindicator
+  )
 }

@@ -5,19 +5,12 @@
 
 name=libsamplerate-32
 version=0.2.2
-release=2
+release=3
 source=(https://github.com/libsndfile/libsamplerate/releases/download/$version/libsamplerate-$version.tar.xz)
 
-pkg_build() {
-	cmake -S . -B build -G Ninja \
-		-D CMAKE_INSTALL_PREFIX=/usr \
-		-D CMAKE_INSTALL_LIBDIR=lib32 \
-		-D CMAKE_BUILD_TYPE=Release \
-		-D CMAKE_C_FLAGS_RELEASE="$CFLAGS" \
-		-D BUILD_SHARED_LIBS=ON \
-		-Wno-dev
-	cmake --build build
-	DESTDIR=$PKG cmake --install build
+build_opt="-D BUILD_SHARED_LIBS=ON -Wno-dev"
+
+post_build() {
 
 	rm -r $PKG/usr/share/doc $PKG/usr/include
 	rmdir $PKG/usr/share

@@ -5,11 +5,13 @@
 
 name=glew-32
 version=2.3.1
-release=2
+release=3
 source=(https://downloads.sourceforge.net/project/glew/glew/$version/glew-$version.tgz)
 
+# Custom build required: upstream Make variables differ between build and staged install
 pkg_build() {
-
+  (
+    set -e
 	make \
 		CC="${CC:-gcc}" \
 		LD="${CC:-gcc}" \
@@ -23,4 +25,5 @@ pkg_build() {
 		install
 
 	rm -r $PKG/usr/include
+  )
 }

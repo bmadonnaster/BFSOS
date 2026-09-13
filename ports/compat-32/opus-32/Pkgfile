@@ -5,22 +5,12 @@
 
 name=opus-32
 version=1.6.1
-release=2
+release=3
 source=(https://downloads.xiph.org/releases/opus/opus-$version.tar.gz)
 
-pkg_build() {
-	meson setup build . \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D custom-modes=true \
-		-D tests=disabled
+build_opt="-D custom-modes=true -D tests=disabled"
 
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+post_build() {
 
 	rm -r $PKG/usr/include
 }

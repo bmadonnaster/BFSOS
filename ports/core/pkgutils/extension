@@ -9,8 +9,12 @@ if [ "${PKGMK_ARCH:-}" = 32 ]; then
         export PKG_CONFIG_PATH=""
         export CC="${CC:-gcc}"
         export CXX="${CXX:-g++}"
+        export BFS_PKG_LIBDIR=/usr/lib32
+        export BFS_PKG_LIBDIR_NAME=lib32
 else
         unset PKGMK_ARCH
+        export BFS_PKG_LIBDIR=/usr/lib
+        export BFS_PKG_LIBDIR_NAME=lib
 fi
 
 # Make BFSOS non-/usr Qt6/KF6 prefixes visible to all package builds.
@@ -193,8 +197,9 @@ if [ ! "$(command -v build)" ]; then
 			sysconfdir=/etc \
 			MANDIR=/usr/share/man \
 			mandir=/usr/share/man \
-			LIBDIR=/usr/lib \
-			PKGCONFIGDIR=/usr/lib/pkgconfig \
+			LIBDIR="$BFS_PKG_LIBDIR" \
+			libdir="$BFS_PKG_LIBDIR" \
+			PKGCONFIGDIR="$BFS_PKG_LIBDIR/pkgconfig" \
 			"${_bfs_build_opts[@]}" \
 			DESTDIR="$PKG" install || return $?
 	}
@@ -213,8 +218,8 @@ if [ ! "$(command -v build)" ]; then
 		_bfs_cmake_test_defaults
 		cmake -DCMAKE_INSTALL_PREFIX=/usr \
 			-DCMAKE_INSTALL_SYSCONFDIR=/etc \
-			-DCMAKE_INSTALL_LIBDIR=lib \
-			-DCMAKE_INSTALL_LIBEXECDIR=lib \
+			-DCMAKE_INSTALL_LIBDIR="$BFS_PKG_LIBDIR_NAME" \
+			-DCMAKE_INSTALL_LIBEXECDIR="$BFS_PKG_LIBDIR_NAME" \
 			-DCMAKE_BUILD_TYPE=Release \
 			-DFETCHCONTENT_FULLY_DISCONNECTED=ON \
 			-DCMAKE_C_FLAGS_RELEASE="$CFLAGS" \
@@ -235,13 +240,18 @@ if [ ! "$(command -v build)" ]; then
 	_configure_build() {
 		_bfs_collect_build_opts
 		_bfs_configure_test_defaults
+		_bfs_configure_host_args=()
+		if [ "${PKGMK_ARCH:-}" = 32 ]; then
+			_bfs_configure_host_args=("--host=${BFS_MULTILIB_HOST:-i686-pc-linux-gnu}")
+		fi
 		./configure \
 			--prefix=/usr \
 			--sysconfdir=/etc \
 			--libexecdir=/usr/lib \
 			--localstatedir=/var \
 			--mandir=/usr/share/man \
-			--libdir=/usr/lib \
+			--libdir="$BFS_PKG_LIBDIR" \
+			"${_bfs_configure_host_args[@]}" \
 			"${_bfs_configure_test_args[@]}" \
 			"${_bfs_build_opts[@]}" || return $?
 		make -j"${JOBS:-1}" || return $?
@@ -250,10 +260,35 @@ if [ ! "$(command -v build)" ]; then
 
 	_meson_build() {
 		_bfs_collect_build_opts
+		_bfs_meson_arch_args=()
+		if [ "${PKGMK_ARCH:-}" = 32 ]; then
+			# Meson determines host_machine from the compiler triplet, not from
+			# -m32. Supply one centralized cross description so every ordinary
+			# compat port gets i686 feature/assembly selection without carrying
+			# its own stale cross file.
+			cat > .bfsos-compat32.cross <<-EOF || return $?
+			[binaries]
+			c = '${CC:-gcc}'
+			cpp = '${CXX:-g++}'
+			ar = 'ar'
+			strip = 'strip'
+			pkgconfig = 'pkg-config'
+
+			[properties]
+			needs_exe_wrapper = false
+
+			[host_machine]
+			system = 'linux'
+			cpu_family = 'x86'
+			cpu = 'i686'
+			endian = 'little'
+			EOF
+			_bfs_meson_arch_args=(--cross-file .bfsos-compat32.cross)
+		fi
 		meson setup _meson_build \
 			--prefix=/usr \
-			--libdir=/usr/lib \
-			--libexecdir=/usr/lib \
+			--libdir="$BFS_PKG_LIBDIR" \
+			--libexecdir="$BFS_PKG_LIBDIR" \
 			--includedir=/usr/include \
 			--datadir=/usr/share \
 			--mandir=/usr/share/man \
@@ -268,6 +303,7 @@ if [ ! "$(command -v build)" ]; then
 			-Db_lto=true \
 			-Db_pie=true \
 			-Db_thinlto_cache=true \
+			"${_bfs_meson_arch_args[@]}" \
 			"${_bfs_build_opts[@]}" || return $?
 		_bfs_meson_disable_supported_tests || return $?
 		meson compile -C _meson_build -j "${JOBS:-1}" || return $?

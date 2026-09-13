@@ -5,19 +5,12 @@
 
 name=libnl-32
 version=3.12.0
-release=1
+release=2
 source=(https://github.com/thom311/libnl/releases/download/libnl${version//./_}/${name%-*}-$version.tar.gz)
 
-pkg_build() {
+build_opt="--disable-cli"
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--sysconfdir=/etc \
-		--disable-cli
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{share,include}
 	rm -r $PKG/etc

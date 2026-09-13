@@ -6,10 +6,13 @@
 
 name=steam-native-runtime
 version=1.0.0.87
-release=4
+release=5
 source=(steam-native.sh)
 
+# Custom build required: meta/runtime wrapper package with no upstream build system
 pkg_build() {
+  (
+    set -e
   cp /usr/share/applications/steam.desktop steam-native.desktop || return 1
   sed '/^Icon=.*/i StartupWMClass=Steam' -i steam-native.desktop || return 1
   sed -r 's|(Name=Steam) \(Runtime\)|\1 (Native)|' -i steam-native.desktop || return 1
@@ -27,4 +30,5 @@ pkg_build() {
   ln -s /usr/lib32/libcurl.so.4 "$PKG/usr/lib32/steam/libcurl.so.3" || return 1
   ln -s /usr/lib32/libcurl.so.4 "$PKG/usr/lib32/steam/libcurl.so.4" || return 1
   ln -s /usr/lib32/libcurl.so.4 "$PKG/usr/lib32/steam/libcurl.so.4.8.0" || return 1
+  )
 }

@@ -5,16 +5,11 @@
 
 name=brotli-32
 version=1.2.0
-release=2
+release=3
 source=(https://github.com/google/${name%-*}/archive/v$version/${name%-*}-v$version.tar.gz)
 
-pkg_build() {
-	cmake -S . -B build -G Ninja \
-		-DCMAKE_INSTALL_PREFIX="/usr" \
-		-DCMAKE_INSTALL_LIBDIR="/usr/lib32"
 
-	cmake --build build
-	DESTDIR=$PKG cmake --install build
+post_build() {
 
 	rm -r $PKG/usr/{bin,include}
 }

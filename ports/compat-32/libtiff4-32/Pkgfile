@@ -5,15 +5,20 @@
 
 name=libtiff4-32
 version=3.9.7
-release=2
+release=3
 source=(http://download.osgeo.org/libtiff/tiff-$version.tar.gz
 	libtiff4-soname.patch)
 
+build_opt="--prefix=/usr --libdir=/usr/lib32"
+
+# Custom build required: only the legacy libtiff subdirectory is installed
 pkg_build() {
+  (
+    set -e
 	./autogen.sh
-	./configure --prefix=/usr \
-		--libdir=/usr/lib32
+	./configure $build_opt
 	make
 	make DESTDIR=$PKG -C libtiff install
 	rm -rf $PKG/usr/{bin,include,lib32/libtiff{,xx}.{la,a,so},share}
+  )
 }

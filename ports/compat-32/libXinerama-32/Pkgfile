@@ -5,15 +5,11 @@
 
 name=libXinerama-32
 version=1.1.6
-release=1
+release=2
 source=(https://www.x.org/releases/individual/lib/libXinerama-$version.tar.xz)
 
-pkg_build() {
 
-	./configure --prefix=/usr --libdir=/usr/lib32
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{include,share/man,share}
 }

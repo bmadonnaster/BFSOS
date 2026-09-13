@@ -5,23 +5,12 @@
 
 name=libevdev-32
 version=1.13.7
-release=2
-source=(https://www.freedesktop.org/software/libevdev/libevdev-$version.tar.xz
-cross-file.txt)
+release=3
+source=(https://www.freedesktop.org/software/libevdev/libevdev-$version.tar.xz)
 
-pkg_build() {
-	meson setup build . --cross-file "$SRC/cross-file.txt" \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--buildtype=plain \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D tests=disabled \
-		-D documentation=disabled
+build_opt="-D tests=disabled -D documentation=disabled"
 
-	meson compile -C build -j ${JOBS:-1}
-	DESTDIR=$PKG meson install -C build
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share}
 }

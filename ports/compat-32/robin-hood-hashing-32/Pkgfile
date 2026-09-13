@@ -5,17 +5,12 @@
 
 name=robin-hood-hashing-32
 version=3.11.5
-release=2
+release=3
 source=(https://github.com/martinus/robin-hood-hashing/archive/$version/robin-hood-hashing-$version.tar.gz)
 
-pkg_build() {
-	cmake -S . -B build -G Ninja \
-		-D CMAKE_INSTALL_PREFIX=/usr \
-		-D CMAKE_INSTALL_LIBDIR=lib32 \
-		-D RH_STANDALONE_PROJECT=OFF \
+build_opt="-D RH_STANDALONE_PROJECT=OFF"
 
-	cmake --build build
-	DESTDIR=$PKG cmake --install build
+post_build() {
 
 	rm -r $PKG/usr/include
 }

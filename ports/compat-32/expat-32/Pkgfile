@@ -5,18 +5,11 @@
 
 name=expat-32
 version=2.8.4
-release=1
+release=2
 source=(https://downloads.sourceforge.net/project/${name%-*}/${name%-*}/$version/${name%-*}-$version.tar.bz2)
 
-pkg_build() {
 
-	./configure \
-	--host=i686-pc-linux-gnu      \
-		--prefix=/usr \
-		--libdir=/usr/lib32
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share/doc,share/man}
 	rmdir $PKG/usr/share

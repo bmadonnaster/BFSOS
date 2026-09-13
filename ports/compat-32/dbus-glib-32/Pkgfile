@@ -5,18 +5,12 @@
 
 name=dbus-glib-32
 version=0.114
-release=1
+release=2
 source=(https://dbus.freedesktop.org/releases/${name%-*}/${name%-*}-$version.tar.gz)
 
-pkg_build() {
+build_opt="--enable-bash-completion=no"
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--enable-bash-completion=no
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,share,include}
 }

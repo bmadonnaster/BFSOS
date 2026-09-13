@@ -5,18 +5,11 @@
 
 name=freeglut-32
 version=3.8.0
-release=2
+release=3
 source=(https://downloads.sourceforge.net/project/freeglut/freeglut/$version/freeglut-$version.tar.gz)
 
-pkg_build() {
 
-	cmake -S . -B build -G Ninja \
-		-DCMAKE_INSTALL_PREFIX=/usr \
-		-DCMAKE_INSTALL_LIBDIR=lib32 \
-		-DCMAKE_BUILD_TYPE=Release
-
-	cmake --build build
-	DESTDIR=$PKG cmake --install build
+post_build() {
 
 	ln -s glut.pc $PKG/usr/lib32/pkgconfig/freeglut.pc
 

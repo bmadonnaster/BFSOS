@@ -6,10 +6,13 @@
 
 name=libwebp-32
 version=1.6.0
-release=2
+release=3
 source=(https://storage.googleapis.com/downloads.webmproject.org/releases/webp/${name%-*}-$version.tar.gz)
 
+# Custom build required: optional codec feature selection is evaluated at build time
 pkg_build() {
+  (
+    set -e
 	prt-get isinst ninja && PKGMK_LIBWEBP_32+=' -G Ninja'
 
 prt-get isinst freeglut && ! prt-get isinst freeglut-32 && printf "\e[031mfreeglut is detected on your system, please run:
@@ -37,4 +40,5 @@ exit 1
 
 
 	rm -r $PKG/usr/{bin,share,include}
+  )
 }

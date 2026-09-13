@@ -4914,3 +4914,18 @@ Also verify:
   - Keep normal global pkgmk static-library cleanup policy unchanged; this is a package-level opt-in.
   - Next verification: install `mingw-w64-crt#14.0.0-2`, confirm the same files exist live under `/usr/{i686,x86_64}-w64-mingw32/lib`, then rebuild `mingw-w64-gcc 16.2.0-1` from a clean work tree. If GCC succeeds, inspect the archive before install and test PE output for both C and C++ targets.
   - Before the GCC rebuild, add `keep_static=1` to `mingw-w64-gcc` as well. Its MinGW runtime support includes required `.a` archives (`libgcc.a`, libstdc++ static/support archives, etc.); `.nostrip` does not preserve them from BFSOS pkgmk static-library cleanup. Preserve normal global cleanup and opt this port in explicitly.
+
+## SOURCE IMPLEMENTED / LIVE BUILD VERIFY — contrib and compat-32 `build_opt` correction (2026-09-13)
+
+The blanket conversion of all 170 compat-32 recipes to custom `pkg_build()`
+was removed. Ordinary Autotools, CMake, Meson, and Make recipes now use the
+BFSOS generic builder and package-specific `build_opt`; preparation and payload
+selection live in `pre_build()` and `post_build()` only where required.
+
+The pkgutils extension now owns `/usr/lib32`, the i686 Autotools host argument,
+and a generated Meson i686 cross description. Remaining custom recipes are
+explicitly documented and fail-fast in an isolated subshell. Contrib received
+the same normalization, including corrected GStreamer/BFSOS metadata.
+
+**SOURCE COMPLETE — LIVE BFSOS BUILD/ELF/FOOTPRINT/WINE/STEAM VERIFICATION OPEN.**
+

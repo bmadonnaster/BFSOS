@@ -5,15 +5,15 @@
 
 name=libglvnd-32
 version=1.7.0
-release=2
+release=3
 source=(https://github.com/NVIDIA/${name%-32}/archive/v$version/${name%-32}-$version.tar.gz)
 
-pkg_build() {
-	./autogen.sh
-	./configure --prefix=/usr \
-		--disable-headers \
-		--libdir=/usr/lib32
-	make
-	make DESTDIR=$PKG install
+build_opt="--disable-headers"
+
+pre_build() {
+	NOCONFIGURE=1 ./autogen.sh || return 1
+}
+
+post_build() {
 	rm -r $PKG/usr/include
 }

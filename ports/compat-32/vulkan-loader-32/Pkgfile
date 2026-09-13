@@ -6,11 +6,14 @@
 
 name=vulkan-loader-32
 version=1.4.357.0
-release=2
+release=3
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/v${version}/Vulkan-Loader-${version}.tar.gz)
 
 
+# Custom build required: WSI selection is conditional
 pkg_build() {
+  (
+    set -e
 	prt-get isinst wayland-32 || PKGMK_VULKAN_LOADER+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
 
 	export ASFLAGS='--32'
@@ -26,4 +29,5 @@ pkg_build() {
 
 	cmake --build build
 	DESTDIR=$PKG cmake --build build --target install
+  )
 }

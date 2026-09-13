@@ -6,11 +6,14 @@
 
 name=mesa-32
 version=26.2.2
-release=2
+release=3
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz
 	x86-linux-gnu x86-linux-gnu-ccache)
 
+# Custom build required: driver and platform feature selection is conditional
 pkg_build() {
+  (
+    set -e
 	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
 
 	prt-get isinst ccache && local _cross_file='x86-linux-gnu-ccache' || local _cross_file='x86-linux-gnu'
@@ -70,4 +73,5 @@ pkg_build() {
 	ln -s libGLX_mesa.so.0 $PKG/usr/lib32/libGLX_indirect.so.0
 	rm -r $PKG/usr/{include,share/{drirc.d,glvnd}}
 	rm -rf $PKG/usr/{bin,share/vulkan/{explicit_layer.d,implicit_layer.d}}
+  )
 }

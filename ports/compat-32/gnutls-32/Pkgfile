@@ -5,11 +5,13 @@
 
 name=gnutls-32
 version=3.8.13
-release=2
+release=3
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/v${version:0:3}/${name%-*}-$version.tar.xz)
 
+# Custom build required: generated libtool must be adjusted after configure
 pkg_build() {
-
+  (
+    set -e
 	./configure \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
@@ -26,4 +28,5 @@ pkg_build() {
 	rm -r \
 		$PKG/usr/share/{doc,info,locale,man} \
 		$PKG/usr/{bin,include,share}
+  )
 }

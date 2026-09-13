@@ -5,11 +5,13 @@
 
 name=libxslt-32
 version=1.1.45
-release=1
+release=2
 source=(https://download.gnome.org/sources/libxslt/${version:0:3}/libxslt-$version.tar.xz)
 
+# Custom build required: library-only compatibility payload requires targeted staging
 pkg_build() {
-
+  (
+    set -e
 	sed -i -e 's/libgcrypt-config/&-32/g' configure
 
 	./configure \
@@ -27,4 +29,5 @@ pkg_build() {
 		$PKG/usr/share/doc \
 		$PKG/usr/share/gtk-doc \
 		$PKG/usr/{bin,include,share/man}
+  )
 }

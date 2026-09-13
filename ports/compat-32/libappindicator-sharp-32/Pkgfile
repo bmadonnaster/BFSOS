@@ -5,7 +5,7 @@
 
 name=libappindicator-sharp-32
 version=12.10
-release=2
+release=3
 source=(http://archive.ubuntu.com/ubuntu/pool/universe/liba/libappindicator/libappindicator_12.10.1+20.10.20200706.1.orig.tar.gz
   0001-Glib.Timeout-fix.patch
   0002-Fix-mono-nunit-pkgconfig-name.patch
@@ -13,8 +13,10 @@ source=(http://archive.ubuntu.com/ubuntu/pool/universe/liba/libappindicator/liba
   badfunction.patch
   improved-plasma-support.patch)
 
+# Custom build required: only the Mono binding subtree is installed
 pkg_build() {
-
+  (
+    set -e
   sed -i -e 's/ -Werror//' src/Makefile.am
   export CSC='/usr/bin/mcs'
   export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig'
@@ -34,4 +36,5 @@ pkg_build() {
   make
   make DESTDIR=$PKG -C bindings/mono -j1 install
   mv $PKG/usr/lib/mono $PKG/usr/lib32/mono
+  )
 }

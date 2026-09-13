@@ -6,10 +6,13 @@
 
 name=libsdl2-32
 version=2.32.10
-release=2
+release=3
 source=(https://www.libsdl.org/release/SDL2-$version.tar.gz)
 
+# Custom build required: optional feature selection is evaluated at build time
 pkg_build() {
+  (
+    set -e
 	prt-get isinst alsa-lib-32 && PKGMK_SDL2+=' -D SDL_ALSA_SHARED=ON'
 	prt-get isinst ibus-32 && PKGMK_SDL2+=' -D SDL_USE_IME=ON'
 	prt-get isinst jack-32 && PKGMK_SDL2+=' -D SDL_JACK_SHARED=ON'
@@ -33,4 +36,5 @@ pkg_build() {
 	DESTDIR=$PKG cmake --install build
 
 	rm -r $PKG/usr/{bin,include,share}
+  )
 }

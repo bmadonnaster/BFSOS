@@ -6,11 +6,13 @@
 
 name=cups-32
 version=2.4.19
-release=2
+release=3
 source=(https://github.com/OpenPrinting/cups/releases/download/v$version/${name%-*}-$version-source.tar.gz)
 
+# Custom build required: only the install-libs target belongs in the compat package
 pkg_build() {
-
+  (
+    set -e
 	PKGMK_CUPS=' --with-tls=openssl'
 	prt-get isinst gnutls-32 && PKGMK_CUPS=' --with-tls=gnutls'
 
@@ -37,4 +39,5 @@ pkg_build() {
 
 	make
 	make BUILDROOT=$PKG install-libs
+  )
 }

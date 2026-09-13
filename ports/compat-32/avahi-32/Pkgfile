@@ -5,39 +5,19 @@
 
 name=avahi-32
 version=0.9-rc5
-release=5
+release=6
 source=(
   https://github.com/avahi/avahi/archive/v$version/avahi-$version.tar.gz
   https://www.linuxfromscratch.org/patches/blfs/svn/avahi-$version-ipv6_race_condition_fix-1.patch
 )
 
-pkg_build() {
+build_opt="--with-distro=none --disable-static --disable-gtk --disable-gtk3 --disable-qt3 --disable-qt4 --disable-qt5 --disable-python --disable-pygobject --disable-python-dbus --disable-mono --disable-monodoc --disable-nls --disable-manpages --enable-compat-libdns_sd"
+
+pre_build() {
   autoreconf -fiv || return 1
+}
 
-  ./configure \
-    --host="${BFS_MULTILIB_HOST:-i686-pc-linux-gnu}" \
-    --prefix=/usr \
-    --libdir=/usr/lib32 \
-    --sysconfdir=/etc \
-    --localstatedir=/var \
-    --with-distro=none \
-    --disable-static \
-    --disable-gtk \
-    --disable-gtk3 \
-    --disable-qt3 \
-    --disable-qt4 \
-    --disable-qt5 \
-    --disable-python \
-    --disable-pygobject \
-    --disable-python-dbus \
-    --disable-mono \
-    --disable-monodoc \
-    --disable-nls \
-    --disable-manpages \
-    --enable-compat-libdns_sd || return 1
-
-  make -j"${JOBS:-1}" || return 1
-  make DESTDIR="$PKG" install || return 1
+post_build() {
 
   # compat-32 owns only the 32-bit ABI. Native Avahi owns executables,
   # configuration, service units, headers and architecture-independent data.

@@ -5,34 +5,13 @@
 
 name=pulseaudio-32
 version=17.0
-release=4
+release=5
 
 source=(https://freedesktop.org/software/pulseaudio/releases/pulseaudio-$version.tar.xz)
 
-pkg_build() {
-        meson setup build . \
-                --prefix=/usr \
-                --libdir=/usr/lib32 \
-                --buildtype=plain \
-                -D daemon=false \
-                -D client=true \
-                -D dbus=enabled \
-                -D glib=enabled \
-                -D systemd=disabled \
-                -D x11=disabled \
-                -D fftw=disabled \
-                -D asyncns=disabled \
-                -D gtk=disabled \
-                -D oss-output=disabled \
-                -D tests=false \
-                -D doxygen=false \
-                -D man=false \
-                -D bashcompletiondir=no \
-                -D zshcompletiondir=no || return 1
+build_opt="-D daemon=false -D client=true -D dbus=enabled -D glib=enabled -D systemd=disabled -D x11=disabled -D fftw=disabled -D asyncns=disabled -D gtk=disabled -D oss-output=disabled -D tests=false -D doxygen=false -D man=false -D bashcompletiondir=no -D zshcompletiondir=no"
 
-        meson compile -C build || return 1
-
-        DESTDIR="$PKG" meson install -C build || return 1
+post_build() {
 
         # Native pulseaudio owns commands, headers and architecture-neutral
         # data.  This package supplies only the 32-bit runtime libraries.

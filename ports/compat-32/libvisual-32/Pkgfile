@@ -5,24 +5,18 @@
 
 name=libvisual-32
 version=0.4.2
-release=1
+release=2
 source=(https://github.com/Libvisual/libvisual/releases/download/libvisual-$version/libvisual-$version.tar.bz2)
 
-pkg_build() {
+build_opt="--enable-extra-optimization --disable-examples --disable-nls"
 
+pre_build() {
 	export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
 	sed -i 's/sdl-config/sdl-config-32/g' configure.ac
 	autoreconf -vfi
+}
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--enable-extra-optimization \
-		--disable-examples \
-		--disable-nls
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 	rm -r $PKG/usr/share
 
 	rm -rf $PKG/{etc,var} $PKG/usr/{bin,etc,include,man,sbin,share}

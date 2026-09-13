@@ -6,26 +6,21 @@
 
 name=libnewt-32
 version=0.52.25
-release=2
+release=3
 source=(https://releases.pagure.org/newt/newt-$version.tar.gz)
 
-pkg_build() {
+build_opt="--without-python --disable-nls"
 
+pre_build() {
 	if prt-get isinst tcl-32; then
 		sed -i "s:tcl8.4:tcl8.6:" Makefile.in
 		echo '#define USE_INTERP_RESULT 1' >> config.h
 	fi
 
-	./autogen.sh
-	./configure \
-		--host=i686-pc-linux-gnu      \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--without-python \
-		--disable-nls
+	NOCONFIGURE=1 ./autogen.sh || return 1
+}
 
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share}
 }

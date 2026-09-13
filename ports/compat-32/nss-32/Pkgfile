@@ -5,11 +5,14 @@
 
 name=nss-32
 version=3.128
-release=1
+release=2
 source=(https://archive.mozilla.org/pub/security/nss/releases/NSS_${version//./_}_RTM/src/nss-$version.tar.gz
         nss-config.in nss.pc.in)
 
+# Custom build required: Mozilla build system and manual library staging are required
 pkg_build() {
+  (
+    set -e
     sed -i nss/coreconf/Linux.mk \
         -e 's|^CC.*=.*gcc$|#&|' \
         -e 's|^CCC.*=.*g++$|#&|'
@@ -53,4 +56,5 @@ pkg_build() {
     # Native p11-kit owns the trust module; never ship a second 32-bit ckbi
     # database that can diverge from the system CA policy.
     rm -f "$PKG/usr/lib32/libnssckbi.so"
+  )
 }

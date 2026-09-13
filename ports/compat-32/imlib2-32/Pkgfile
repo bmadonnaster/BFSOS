@@ -6,18 +6,12 @@
 
 name=imlib2-32
 version=1.12.7
-release=2
+release=3
 source=(https://downloads.sourceforge.net/project/enlightenment/imlib2-src/$version/imlib2-$version.tar.xz)
 
-pkg_build() {
+build_opt="--x-libraries=/usr/lib32 --enable-mmx --disable-amd64"
 
-	./configure --prefix=/usr \
-		--libdir=/usr/lib32 \
-		--x-libraries=/usr/lib32 \
-		--enable-mmx \
-		--disable-amd64
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share}
 }

@@ -5,20 +5,11 @@
 
 name=openal-32
 version=1.25.2
-release=2
+release=3
 source=(https://github.com/kcat/openal-soft/archive/$version/openal-soft-$version.tar.gz)
 
-pkg_build() {
-	cmake -S . -B build ${PKGMK_OPENAL_32} -G Ninja \
-		-D CMAKE_INSTALL_PREFIX=/usr \
-		-D CMAKE_INSTALL_LIBDIR=lib32 \
-		-D ALSOFT_UTILS=OFF \
-		-D ALSOFT_EXAMPLES=OFF \
-		-D QT_QMAKE_EXECUTABLE=qmake-disabled \
-		-D CMAKE_BUILD_TYPE=Release || return 1
+build_opt="-D ALSOFT_UTILS=OFF -D ALSOFT_EXAMPLES=OFF -D QT_QMAKE_EXECUTABLE=qmake-disabled"
 
-	cmake --build build --parallel "${JOBS:-1}" || return 1
-	DESTDIR="$PKG" cmake --install build || return 1
-
-	rm -rf "$PKG/usr/include" "$PKG/usr/share"
+post_build() {
+  rm -rf "$PKG/usr/include" "$PKG/usr/share"
 }

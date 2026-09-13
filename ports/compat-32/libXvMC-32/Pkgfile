@@ -5,18 +5,16 @@
 
 name=libXvMC-32
 version=1.0.15
-release=1
+release=2
 source=(https://www.x.org/releases/individual/lib/libXvMC-$version.tar.xz)
 
-pkg_build() {
 
+pre_build() {
 	# prevent linking against libxv
 	export XVMC_LIBS="-lX11 -lXext"
+}
 
-	./configure --prefix=/usr --libdir=/usr/lib32
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{include,share/doc}
 }

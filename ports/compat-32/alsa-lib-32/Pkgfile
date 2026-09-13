@@ -5,15 +5,12 @@
 
 name=alsa-lib-32
 version=1.2.16.1
-release=1
+release=2
 source=(https://www.alsa-project.org/files/pub/lib/alsa-lib-$version.tar.bz2)
 
-pkg_build() {
+build_opt="--disable-python"
 
-    ./configure      --prefix=/usr --libdir=/usr/lib32 --disable-python --host=i686-pc-linux-gnu
-
-    make
-    make DESTDIR=$PKG install
+post_build() {
 
     rm -r $PKG/usr/{bin,include,share}
 }

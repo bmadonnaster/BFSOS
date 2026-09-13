@@ -5,11 +5,14 @@
 
 name=llvm-32
 version=23.1.1
-release=3
+release=4
 
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz)
 
+# Custom build required: LLVM needs a constrained target set and custom staging
 pkg_build() {
+  (
+    set -e
         mkdir -p "$SRC/keep" || return 1
 
         # pkgmk enters llvm-project-$version.src automatically because this
@@ -68,4 +71,5 @@ pkg_build() {
         install -Dm0644 \
                 "$SRC/keep/llvm-config.h" \
                 "$PKG/usr/include/llvm/Config/llvm-config-32.h" || return 1
+  )
 }

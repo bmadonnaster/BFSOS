@@ -5,18 +5,11 @@
 
 name=libndp-32
 version=1.9
-release=1
+release=2
 source=(http://libndp.org/files/${name%-*}-$version.tar.gz)
 
-pkg_build() {
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--libexecdir=/usr/lib32
-
-	make
-	make DESTDIR=$PKG install
+post_build() {
 
 	rm -r $PKG/usr/{bin,include,share}
 }

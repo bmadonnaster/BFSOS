@@ -5,18 +5,12 @@
 
 name=popt-32
 version=1.19
-release=1
+release=2
 source=(http://ftp.rpm.org/popt/releases/popt-1.x/popt-$version.tar.gz)
 
-pkg_build() {
+build_opt="--disable-nls"
 
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-nls
-
-	make
-	make DESTDIR=$PKG pkgconfigdir='/usr/lib32/pkgconfig' install
+post_build() {
 
 	rm -r $PKG/usr/{share,include}
 }

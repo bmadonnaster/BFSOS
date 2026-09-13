@@ -5,21 +5,12 @@
 
 name=cairo-32
 version=1.18.4
-release=2
+release=3
 source=(https://gitlab.freedesktop.org/cairo/cairo/-/archive/$version/cairo-$version.tar.bz2)
 
-pkg_build() {
-	meson setup build . \
-		--prefix=/usr \
-		--libdir=lib32 \
-		--buildtype=plain \
-		-D dwrite=disabled \
-		-D spectre=disabled \
-		-D symbol-lookup=disabled \
-		-D tests=disabled
+build_opt="-D dwrite=disabled -D spectre=disabled -D symbol-lookup=disabled -D tests=disabled"
 
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+post_build() {
 
 	rm -r $PKG/usr/{bin,include}
 }

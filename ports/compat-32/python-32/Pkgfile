@@ -5,11 +5,13 @@
 
 name=python-32
 version=2.7.18
-release=3
+release=4
 source=(https://www.python.org/ftp/python/$version/Python-$version.tar.xz)
 
+# Custom build required: legacy Python requires target-specific header relocation
 pkg_build() {
-
+  (
+    set -e
     # set OPT to the python default without -O3
     # our CFLAGS are used as well
     OPT="-Wall -Wstrict-prototypes -fwrapv" \
@@ -33,4 +35,5 @@ pkg_build() {
     mv $PKG/pyconfig.h $PKG/usr/include/python2.7/pyconfig-32.h
 
     install -d $PKG/usr/lib32/python2.7/site-packages
+  )
 }

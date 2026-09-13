@@ -5,22 +5,12 @@
 
 name=flac-32
 version=1.5.0
-release=2
+release=3
 source=(https://downloads.xiph.org/releases/flac/flac-$version.tar.xz)
 
-pkg_build() {
-	cmake -S . -B build -G Ninja \
-		-D CMAKE_INSTALL_PREFIX=/usr \
-		-D CMAKE_INSTALL_LIBDIR=lib32 \
-		-D CMAKE_BUILD_TYPE=Release \
-		-D CMAKE_C_FLAGS_RELEASE="$CFLAGS" \
-		-D CMAKE_CXX_FLAGS_RELEASE="$CXXFLAGS" \
-		-D BUILD_SHARED_LIBS=ON \
-		-D BUILD_EXAMPLES=OFF \
-		-D BUILD_TESTING=OFF \
-		-Wno-dev
-	cmake --build build
-	DESTDIR=$PKG cmake --install build
+build_opt="-D BUILD_SHARED_LIBS=ON -D BUILD_EXAMPLES=OFF -D BUILD_TESTING=OFF -Wno-dev"
+
+post_build() {
 
 	rm -rf $PKG/usr/{bin,include,share/man}
 	rm -rf $PKG/usr/share

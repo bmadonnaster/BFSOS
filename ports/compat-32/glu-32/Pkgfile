@@ -5,20 +5,12 @@
 
 name=glu-32
 version=9.0.3
-release=2
+release=3
 source=(https://mesa.freedesktop.org/archive/glu/glu-$version.tar.xz)
 
-pkg_build() {
-	meson setup build . \
-		--prefix /usr \
-		--libdir lib32 \
-		--wrap-mode nodownload \
-		-D b_lto=true \
-		-D b_pie=true \
-		-D default_library=shared
+build_opt="-D default_library=shared"
 
-	meson compile -C build
-	DESTDIR=$PKG meson install -C build
+post_build() {
 
 	rm -rf $PKG/usr/include
 }

@@ -5,11 +5,13 @@
 
 name=libunwind-32
 version=1.8.3
-release=2
+release=3
 source=(https://github.com/libunwind/libunwind/releases/download/v$version/libunwind-$version.tar.gz)
 
+# Custom build required: upstream architecture configuration is package-specific
 pkg_build() {
-
+  (
+    set -e
   autoreconf -fvi || return 1
 
   ./configure \
@@ -30,4 +32,5 @@ pkg_build() {
   fi
 
   rm -rf "$PKG/usr/libexec"
+  )
 }

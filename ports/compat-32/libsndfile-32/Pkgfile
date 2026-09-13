@@ -5,11 +5,13 @@
 
 name=libsndfile-32
 version=1.2.2
-release=3
+release=4
 source=(https://github.com/libsndfile/libsndfile/releases/download/$version/libsndfile-$version.tar.xz)
 
+# Custom build required: generated configuration requires package-local handling
 pkg_build() {
-
+  (
+    set -e
 	CFLAGS="$CFLAGS -std=gnu17" \
 	./configure \
 		--prefix=/usr \
@@ -18,4 +20,5 @@ pkg_build() {
 	make || return 1
 	make DESTDIR=$PKG install || return 1
 	rm -r $PKG/usr/{bin,include,share/man,share}
+  )
 }
