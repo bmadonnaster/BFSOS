@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=33
+release=32
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -77,14 +77,6 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
         make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
         harden_pkgmk_work_cleanup "$TOOLS/bin/pkgmk"
-}
-
-# r284: pkgadd/pkginfo must be dynamically linked in the final BFSOS package.
-# Static glibc binaries still enter the dynamic NSS stack for passwd/group
-# lookups and reproducibly crash in libnss_systemd.so.2 with nss-systemd active.
-pre_build() {
-        sed -i -e 's/ --static//' \
-               -e 's/ -static//' Makefile
 }
 
 post_build() {
