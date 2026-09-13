@@ -3,9 +3,9 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=publicsuffix-list
-version=20260910
+version=20260913
 release=1
-source=(public_suffix_list-$version.dat::https://publicsuffix.org/list/public_suffix_list.dat)
+source=(public_suffix_list-$version.dat)
 
 
 pkg_build() {
