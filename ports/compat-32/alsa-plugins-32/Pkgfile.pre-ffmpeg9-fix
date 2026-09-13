@@ -5,7 +5,7 @@
 
 name=alsa-plugins-32
 version=1.2.12
-release=2
+release=1
 source=(ftp://ftp.alsa-project.org/pub/plugins/alsa-plugins-${version}.tar.bz2)
 
 pkg_build() {
@@ -18,5 +18,5 @@ pkg_build() {
 	make
 	make DESTDIR=$PKG install
 
-	rm -rf $PKG/{etc,usr/share}
+	rm -r $PKG/{etc,usr/share}
 }
