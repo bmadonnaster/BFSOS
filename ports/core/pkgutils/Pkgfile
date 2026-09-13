@@ -5,13 +5,14 @@
 
 name=pkgutils
 version=5.40.12
-release=33
+release=34
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
         extension
         bfs-pkgmk
-        pkgutils_source-fallbacks.patch)
+        pkgutils_source-fallbacks.patch
+        pkgutils_numeric-owner-extract.patch)
 
 # CRUX pkgmk normally removes PKGMK_WORK_DIR itself.  BFSOS can place that
 # path directly on tmpfs, so preserve an active mountpoint and clean only its
