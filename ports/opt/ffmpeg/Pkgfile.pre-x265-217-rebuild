@@ -6,7 +6,7 @@
 
 name=ffmpeg
 version=9.0.1
-release=4
+release=3
 
 source=(
   https://ffmpeg.org/releases/ffmpeg-$version.tar.xz
