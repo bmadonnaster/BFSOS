@@ -1,15 +1,14 @@
 # Description: The GL Vendor-Neutral Dispatch library
 # URL: https://github.com/NVIDIA/libglvnd
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libglvnd libXext-32
+# Depends on: libglvnd libX11-32 libXext-32
 
 name=libglvnd-32
 version=1.7.0
-release=1
+release=2
 source=(https://github.com/NVIDIA/${name%-32}/archive/v$version/${name%-32}-$version.tar.gz)
 
 pkg_build() {
-	cd ${name%-32}-$version
 	./autogen.sh
 	./configure --prefix=/usr \
 		--disable-headers \

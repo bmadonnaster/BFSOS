@@ -5,11 +5,11 @@
 
 name=libdrm-32
 version=2.4.134
-release=1
+release=2
 source=(https://dri.freedesktop.org/${name%-*}/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-	meson setup build ${name%-*}-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--libdir=lib32 \
 		--buildtype=plain \

@@ -5,14 +5,13 @@
 
 name=avahi-32
 version=0.9-rc5
-release=4
+release=5
 source=(
   https://github.com/avahi/avahi/archive/v$version/avahi-$version.tar.gz
   https://www.linuxfromscratch.org/patches/blfs/svn/avahi-$version-ipv6_race_condition_fix-1.patch
 )
 
 pkg_build() {
-  patch -Np1 -i "$SRC/avahi-$version-ipv6_race_condition_fix-1.patch" || return 1
   autoreconf -fiv || return 1
 
   ./configure \

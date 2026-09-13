@@ -5,7 +5,7 @@
 
 name=libdbusmenu-gtk2
 version=18.10
-release=4
+release=5
 source=(
   https://deb.debian.org/debian/pool/main/libd/libdbusmenu/libdbusmenu_18.10.20180917~bzr492+repack1.orig.tar.xz
   0001_no-deprecated-gnome-common-macros.patch
@@ -16,10 +16,6 @@ source=(
 pkg_build() {
   export HAVE_VALGRIND_TRUE='#'
   export HAVE_VALGRIND_FALSE=''
-
-  patch -Np1 -i "$SRC/0001_no-deprecated-gnome-common-macros.patch" || return 1
-  patch -Np1 -i "$SRC/0003_port-tools-dbusmenu-bench-to-py3.patch" || return 1
-  patch -Np1 -i "$SRC/0004_prevent-test-json-from-failing.patch" || return 1
 
   sed -i 's/-Werror -Wno-error=deprecated-declarations//g' libdbusmenu-{glib,gtk}/Makefile.am || return 1
   sed -i 's/gtkdocize || exit 1//g' autogen.sh || return 1

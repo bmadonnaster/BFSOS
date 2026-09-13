@@ -1,12 +1,12 @@
 # Description: CUPS - Common UNIX Printing System
 # URL: https://www.cups.org
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: avahi-32 cups
+# Depends on: avahi-32 cups libusb-32 zlib-32
 # Optional: dbus-32 gnutls-32
 
 name=cups-32
 version=2.4.19
-release=1
+release=2
 source=(https://github.com/OpenPrinting/cups/releases/download/v$version/${name%-*}-$version-source.tar.gz)
 
 pkg_build() {

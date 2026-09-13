@@ -1,12 +1,12 @@
 # Description: An essential exemplary set of plugins for gstreamer.
 # URL: https://gstreamer.freedesktop.org/modules/gst-plugins-base.html
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: graphene-32 gst-plugins-base gstreamer-32 libjpeg-turbo-32 libtheora-32 libvisual-32 orc-32 pango-32
+# Depends on: graphene-32 gst-plugins-base gstreamer-32 libjpeg-turbo-32 libtheora-32 libvisual-32 libvorbis-32 mesa-32 opus-32 orc-32 pango-32
 # Optional: cdparanoia-32
 
 name=gst-plugins-base-32
 version=1.28.7
-release=1
+release=2
 source=(https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-$version.tar.xz)
 
 pkg_build() {
@@ -22,7 +22,7 @@ pkg_build() {
 
 	export PKG_CONFIG_PATH='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
 
-	meson setup build gst-plugins-base-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--libexecdir=/usr/lib32 \

@@ -6,7 +6,7 @@
 
 name=libwebp-32
 version=1.6.0
-release=1
+release=2
 source=(https://storage.googleapis.com/downloads.webmproject.org/releases/webp/${name%-*}-$version.tar.gz)
 
 pkg_build() {
@@ -22,7 +22,7 @@ prt-get depinst libsdl-32
 before continuing with libwebp-32.\033[0m\n" &&
 exit 1
 
-	cmake -S ${name%-*}-$version -B build $PKGMK_LIBWEBP_32 \
+	cmake -S . -B build $PKGMK_LIBWEBP_32 \
 		-D CMAKE_INSTALL_PREFIX="/usr" \
 		-D CMAKE_INSTALL_LIBDIR="/usr/lib32" \
 		-D BUILD_SHARED_LIBS=ON \

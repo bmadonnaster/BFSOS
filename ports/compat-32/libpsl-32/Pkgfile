@@ -5,11 +5,11 @@
 
 name=libpsl-32
 version=0.23.3
-release=2
+release=3
 source=(https://github.com/rockdaboot/${name%-*}/releases/download/$version/${name%-*}-$version.tar.lz)
 
 pkg_build() {
-	meson setup build ${name%-*}-$version --prefix=/usr --libdir=/usr/lib32 \
+	meson setup build . --prefix=/usr --libdir=/usr/lib32 \
 		-D runtime=libidn2 \
 		-D builtin=true \
 		-D psl_file=/usr/share/publicsuffix/effective_tld_names.dat \

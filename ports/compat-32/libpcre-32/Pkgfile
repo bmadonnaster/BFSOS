@@ -4,11 +4,10 @@
 
 name=libpcre-32
 version=8.45
-release=1
+release=2
 source=(https://downloads.sourceforge.net/project/pcre/pcre/$version/pcre-$version.tar.bz2)
 
 pkg_build() {
-    cd pcre-$version
   export CC="${CC:-gcc}"
   export CXX="${CXX:-g++}"
   export PKG_CONFIG="i686-pc-linux-gnu-pkg-config"

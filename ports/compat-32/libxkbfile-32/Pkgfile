@@ -5,11 +5,10 @@
 
 name=xorg-libxkbfile-32
 version=1.2.0
-release=1
+release=2
 source=(https://www.x.org/releases/individual/lib/libxkbfile-$version.tar.xz)
 
 pkg_build() {
-	cd libxkbfile-$version
 
 	./configure --prefix=/usr --libdir=/usr/lib32
 

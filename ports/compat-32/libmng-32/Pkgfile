@@ -1,11 +1,11 @@
 # Description: libmng - Mutliple Image Network Graphics 
 # URL: http://www.libmng.com
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: lcms2-32
+# Depends on: lcms2-32 libjpeg-turbo-32
 
 name=libmng-32
 version=2.0.3
-release=1
+release=2
 source=(https://downloads.sourceforge.net/project/libmng//libmng-devel/$version/libmng-$version.tar.gz)
 
 pkg_build() {

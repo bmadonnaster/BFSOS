@@ -6,7 +6,7 @@
 
 name=vulkan-loader-32
 version=1.4.357.0
-release=1
+release=2
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/v${version}/Vulkan-Loader-${version}.tar.gz)
 
 
@@ -15,7 +15,7 @@ pkg_build() {
 
 	export ASFLAGS='--32'
 
-	cmake -S Vulkan-Loader-$version -B build -G Ninja $PKGMK_VULKAN_LOADER \
+	cmake -S . -B build -G Ninja $PKGMK_VULKAN_LOADER \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \
 		-D CMAKE_BUILD_TYPE=Release \

@@ -5,7 +5,7 @@
 
 name=gcc-fortran
 version=16.2.0
-release=2
+release=3
 source=(https://ftp.gnu.org/gnu/gcc/gcc-$version/gcc-$version.tar.xz)
 
 keep_static=1
@@ -19,7 +19,7 @@ pkg_build() {
   install -d build || return 1
   cd build || return 1
 
-  SED=sed ../gcc-$version/configure \
+  SED=sed ../configure \
     --prefix=/usr \
     --libexecdir=/usr/lib \
     --enable-languages=fortran \

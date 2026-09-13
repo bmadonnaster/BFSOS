@@ -1,11 +1,11 @@
 # Description: Library for manipulating sound files.
 # URL: http://www.mega-nerd.com/libsndfile
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib-32 flac-32 libsndfile libvorbis-32
+# Depends on: alsa-lib-32 flac-32 libogg-32 libsndfile libvorbis-32 opus-32
 
 name=libsndfile-32
 version=1.2.2
-release=1
+release=2
 source=(https://github.com/libsndfile/libsndfile/releases/download/$version/libsndfile-$version.tar.xz)
 
 pkg_build() {

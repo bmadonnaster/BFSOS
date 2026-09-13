@@ -5,14 +5,14 @@
 
 name=gstreamer-32
 version=1.28.7
-release=1
+release=2
 source=(https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-$version.tar.xz
 	x86-linux-gnu x86-linux-gnu-ccache)
 
 pkg_build() {
 	prt-get isinst ccache && local _cross_file='x86-linux-gnu-ccache' || local _cross_file='x86-linux-gnu'
 
-	meson setup build gstreamer-$version \
+	meson setup build . \
 		--cross-file=$SRC/$_cross_file \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \

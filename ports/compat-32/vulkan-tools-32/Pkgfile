@@ -8,7 +8,7 @@ name=vulkan-tools-32
 _name=Vulkan-Tools
 version=1.4.357.0
 _version=vulkan-sdk-$version
-release=1
+release=2
 source=(https://github.com/KhronosGroup/Vulkan-Tools/archive/$_version/$_name-$version.tar.gz)
 
 pkg_build() {
@@ -17,7 +17,7 @@ pkg_build() {
 
 	export ASFLAGS='--32'
 
-	cmake -S $_name-$_version -B build -G Ninja $PKGMK_VULKAN_TOOLS \
+	cmake -S . -B build -G Ninja $PKGMK_VULKAN_TOOLS \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \
 		-D CMAKE_BUILD_TYPE=Release \

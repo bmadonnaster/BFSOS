@@ -5,7 +5,7 @@
 
 name=dbus-32
 version=1.16.2
-release=1
+release=2
 source=(https://dbus.freedesktop.org/releases/dbus/dbus-$version.tar.xz)
 
 pkg_build() {
@@ -14,7 +14,7 @@ pkg_build() {
 	before continuing with dbus-32.\033[0m\n" &&
 	exit 1
 
-	meson setup dbus-$version build \
+	meson setup build . \
 		--prefix=/usr \
 		--localstatedir=/var \
 		--sysconfdir=/etc \

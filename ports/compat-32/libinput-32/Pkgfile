@@ -6,11 +6,11 @@
 
 name=libinput-32
 version=1.31.3
-release=1
+release=2
 source=(https://gitlab.freedesktop.org/libinput/libinput/-/archive/$version/libinput-$version.tar.bz2)
 
 pkg_build() {
-	meson setup build ${name%-*}-$version --cross-file lib32 \
+	meson setup build . --cross-file lib32 \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--libexecdir=/usr/lib32 \

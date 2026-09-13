@@ -5,11 +5,11 @@
 
 name=brotli-32
 version=1.2.0
-release=1
+release=2
 source=(https://github.com/google/${name%-*}/archive/v$version/${name%-*}-v$version.tar.gz)
 
 pkg_build() {
-	cmake -S${name%-*}-$version -Bbuild -GNinja \
+	cmake -S . -B build -G Ninja \
 		-DCMAKE_INSTALL_PREFIX="/usr" \
 		-DCMAKE_INSTALL_LIBDIR="/usr/lib32"
 

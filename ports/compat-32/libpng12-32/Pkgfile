@@ -5,14 +5,11 @@
 
 name=libpng12-32
 version=1.2.59
-release=1
+release=2
 source=(https://sourceforge.net/projects/libpng/files/libpng-$version.tar.xz
 	https://sourceforge.net/projects/libpng-apng/files/libpng12/$version/libpng-$version-apng.patch.gz)
 
 pkg_build() {
-	cd libpng-$version
-	gunzip $SRC/libpng-$version-apng.patch.gz
-	patch -Np1 -i $SRC/libpng-$version-apng.patch
 	libtoolize --force --copy
 	aclocal
 	autoconf

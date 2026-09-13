@@ -6,11 +6,10 @@
 
 name=libnewt-32
 version=0.52.25
-release=1
+release=2
 source=(https://releases.pagure.org/newt/newt-$version.tar.gz)
 
 pkg_build() {
-	cd newt-$version
 
 	if prt-get isinst tcl-32; then
 		sed -i "s:tcl8.4:tcl8.6:" Makefile.in

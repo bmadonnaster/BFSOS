@@ -5,13 +5,11 @@
 
 name=libtiff4-32
 version=3.9.7
-release=1
+release=2
 source=(http://download.osgeo.org/libtiff/tiff-$version.tar.gz
 	libtiff4-soname.patch)
 
 pkg_build() {
-	cd tiff-$version
-	patch -Np1 -i $SRC/libtiff4-soname.patch
 	./autogen.sh
 	./configure --prefix=/usr \
 		--libdir=/usr/lib32

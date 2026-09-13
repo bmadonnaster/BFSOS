@@ -5,7 +5,7 @@
 
 name=libappindicator-gtk2-32
 version=12.10
-release=1
+release=2
 source=(http://archive.ubuntu.com/ubuntu/pool/universe/liba/libappindicator/libappindicator_12.10.1+20.10.20200706.1.orig.tar.gz
   0001-Glib.Timeout-fix.patch
   0002-Fix-mono-nunit-pkgconfig-name.patch
@@ -14,16 +14,6 @@ source=(http://archive.ubuntu.com/ubuntu/pool/universe/liba/libappindicator/liba
   improved-plasma-support.patch)
 
 pkg_build() {
-  # The next 3 patches shamelessly pinched from Arch
-  patch -p1 -i $SRC/0001-Glib.Timeout-fix.patch
-  patch -p1 -i $SRC/0002-Fix-mono-nunit-pkgconfig-name.patch
-  patch -p1 -i $SRC/0003-Fix-Mono-assemblies-directory.patch
-
-  # This one is also from Arch(ish), but had to be recreated best it could
-  patch -p1 -i $SRC/improved-plasma-support.patch
-
-  # Removed a function which had no declaration
-  patch -p1 -i $SRC/badfunction.patch
 
   sed -i -e 's/ -Werror//' src/Makefile.am
   export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'

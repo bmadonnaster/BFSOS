@@ -6,7 +6,7 @@
 
 name=pulseaudio-32
 version=17.0
-release=1
+release=2
 source=(http://freedesktop.org/software/pulseaudio/releases/pulseaudio-$version.tar.xz)
 
 pkg_build() {
@@ -14,7 +14,7 @@ pkg_build() {
   prt-get isinst gst-plugins-base-32 || PKGMK_PULSEAUDIO+=' -D gstreamer=disabled'
   prt-get isinst xorg-libice-32 xorg-libsm-32 xorg-libxtst-32 || PKGMK_PULSEAUDIO+=' -D x11=disabled'
 
-  meson setup pulseaudio-$version build $PKGMK_PULSEAUDIO \
+  meson setup build . $PKGMK_PULSEAUDIO \
     --prefix=/usr \
     --libdir=/usr/lib32 \
     --libexecdir=/usr/lib32/$name \

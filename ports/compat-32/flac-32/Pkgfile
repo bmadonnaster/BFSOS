@@ -5,11 +5,11 @@
 
 name=flac-32
 version=1.5.0
-release=1
+release=2
 source=(https://downloads.xiph.org/releases/flac/flac-$version.tar.xz)
 
 pkg_build() {
-	cmake -S flac-$version -B build -G Ninja \
+	cmake -S . -B build -G Ninja \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \
 		-D CMAKE_BUILD_TYPE=Release \

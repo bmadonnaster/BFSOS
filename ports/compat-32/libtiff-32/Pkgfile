@@ -5,11 +5,10 @@
 
 name=libtiff-32
 version=4.7.2
-release=1
+release=2
 source=(https://download.osgeo.org/libtiff/tiff-$version.tar.gz)
 
 pkg_build() {
-	cd tiff-$version
 
 	./configure \
 		--host=i686-pc-linux-gnu      \

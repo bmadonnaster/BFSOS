@@ -5,14 +5,14 @@
 
 name=asciidoc
 version=10.2.1
-release=2
+release=3
 source=(https://github.com/$name-py/$name-py/archive/$version/$name-py-$version.tar.gz)
 
 pkg_build() {
   PYTHON='/usr/bin/python3'
-  autoconf
-  ./configure --prefix=/usr --sysconfdir=/usr/etc
+  autoconf || return 1
+  ./configure --prefix=/usr --sysconfdir=/etc || return 1
 
-  make
-  make DESTDIR=$PKG install
+  make -j"${JOBS:-1}" || return 1
+  make DESTDIR="$PKG" install || return 1
 }

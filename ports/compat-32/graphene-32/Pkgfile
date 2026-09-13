@@ -5,11 +5,11 @@
 
 name=graphene-32
 version=1.10.8
-release=1
+release=2
 source=(https://github.com/ebassi/graphene/archive/$version/graphene-$version.tar.gz)
 
 pkg_build() {
-	meson setup build graphene-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--buildtype=plain \

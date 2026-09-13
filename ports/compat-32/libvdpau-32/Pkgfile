@@ -5,11 +5,11 @@
 
 name=libvdpau-32
 version=1.5
-release=1
+release=2
 source=(https://gitlab.freedesktop.org/vdpau/${name%-*}/-/archive/$version//${name%-*}-$version.tar.bz2)
 
 pkg_build() {
-	meson build libvdpau-$version --prefix /usr --libdir=/usr/lib32 -Ddocumentation=false
+	meson setup build . --prefix=/usr --libdir=/usr/lib32 -Ddocumentation=false
 	ninja -C build -j ${JOBS:-1}
 	DESTDIR=$PKG meson install -C build
 

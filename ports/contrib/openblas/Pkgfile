@@ -5,7 +5,7 @@
 
 name=openblas
 version=0.3.34
-release=2
+release=3
 source=(https://github.com/OpenMathLib/OpenBLAS/archive/v$version/OpenBLAS-$version.tar.gz)
 
 pkg_build() {
@@ -33,7 +33,7 @@ pkg_build() {
   make "${flags[@]}" install || return 1
 
   # Symlink to provide blas & cblas
-  cd $PKG/usr/lib/
+  cd "$PKG/usr/lib" || return 1
   local _lapackver='3.11.0'
   # BLAS
   ln -sf libopenblasp-r$version.so libblas.so
@@ -50,8 +50,8 @@ pkg_build() {
   #rm -r $PKG/usr/include/lapack*
 
   # fix paths
-  sed -i 's|'$PKG'||g' $PKG/usr/lib/cmake/$name/*.cmake
-  sed -i 's|'$PKG'||g' $PKG/usr/lib/pkgconfig/openblas.pc
+  sed -i 's|'$PKG'||g' "$PKG"/usr/lib/cmake/$name/*.cmake || return 1
+  sed -i 's|'$PKG'||g' "$PKG/usr/lib/pkgconfig/openblas.pc" || return 1
 
   # remove host CPU info if built with DYNAMIC_ARCH=1
   sed -i '/#define OPENBLAS_NEEDBUNDERSCORE/,/#define OPENBLAS_VERSION/{//!d}' \

@@ -5,11 +5,11 @@
 
 name=fontconfig-32
 version=2.18.3
-release=1
+release=2
 source=(https://fontconfig.org/release/fontconfig-$version.tar.xz)
 
 pkg_build() {
-	meson setup fontconfig-$version build \
+	meson setup build . \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--buildtype=plain \

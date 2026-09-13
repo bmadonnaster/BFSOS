@@ -1,15 +1,14 @@
 # Description: A library that provides a secure layer over a reliable transport layer
 # URL: https://gnutls.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: gnutls libidn2-32 nettle-32 p11-kit-32
+# Depends on: gnutls libidn2-32 libtasn1-32 nettle-32 p11-kit-32
 
 name=gnutls-32
 version=3.8.13
-release=1
+release=2
 source=(https://mirrors.dotsrc.org/gcrypt/${name%-*}/v${version:0:3}/${name%-*}-$version.tar.xz)
 
 pkg_build() {
-	cd ${name%-*}-${version:0:5}
 
 	./configure \
 		--prefix=/usr \

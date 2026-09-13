@@ -5,12 +5,12 @@
 
 name=xorgproto-32
 version=2025.1
-release=1
+release=2
 source=(https://xorg.freedesktop.org/archive/individual/proto/xorgproto-$version.tar.xz
 cross-file.txt)
 
 pkg_build() {
-	meson setup xorgproto-$version build --cross-file cross-file.txt \
+	meson setup build . --cross-file "$SRC/cross-file.txt" \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
 		--datadir=/usr/lib32 \

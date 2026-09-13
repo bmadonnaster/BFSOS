@@ -1,15 +1,15 @@
 # Description: Protocol definitions and daemon for D-Bus at-spi
 # URL: https://gitlab.gnome.org/GNOME/at-spi2-core
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: at-spi2-core dbus-32 glib-32 libXtst-32 libXi-32
+# Depends on: at-spi2-core dbus-32 glib-32 libXi-32 libXtst-32 libxml2-32
 
 name=at-spi2-core-32
 version=2.60.6
-release=1
+release=2
 source=(https://download.gnome.org/sources/at-spi2-core/${version:0:4}/at-spi2-core-$version.tar.xz)
 
 pkg_build() {
-	meson setup build at-spi2-core-$version \
+	meson setup build . \
 		--prefix /usr \
 		--sysconfdir=/usr/etc \
 		--libdir=/usr/lib32 \

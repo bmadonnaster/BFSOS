@@ -5,11 +5,10 @@
 
 name=libevent-32
 version=2.1.13
-release=1
+release=2
 source=(https://github.com/libevent/libevent/releases/download/release-$version-stable/libevent-$version-stable.tar.gz)
 
 pkg_build() {
-	cd libevent-$version-stable
 
 	./configure --prefix=/usr --libdir=/usr/lib32
 	make

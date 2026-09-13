@@ -5,11 +5,11 @@
 
 name=libsamplerate-32
 version=0.2.2
-release=1
+release=2
 source=(https://github.com/libsndfile/libsamplerate/releases/download/$version/libsamplerate-$version.tar.xz)
 
 pkg_build() {
-	cmake -S libsamplerate-$version -B build -G Ninja \
+	cmake -S . -B build -G Ninja \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \
 		-D CMAKE_BUILD_TYPE=Release \

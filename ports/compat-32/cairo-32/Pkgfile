@@ -1,15 +1,15 @@
 # Description: A 2D graphics library with support for multiple output devices
 # URL: https://www.cairographics.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cairo fontconfig-32 glib-32 pixman-32 libXext-32 libXrender-32 xcb-util-32
+# Depends on: cairo fontconfig-32 glib-32 libXext-32 libXrender-32 libpng-32 pixman-32 xcb-util-32
 
 name=cairo-32
 version=1.18.4
-release=1
+release=2
 source=(https://gitlab.freedesktop.org/cairo/cairo/-/archive/$version/cairo-$version.tar.bz2)
 
 pkg_build() {
-	meson setup build ${name%-*}-$version \
+	meson setup build . \
 		--prefix=/usr \
 		--libdir=lib32 \
 		--buildtype=plain \

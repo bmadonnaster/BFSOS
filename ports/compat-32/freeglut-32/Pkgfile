@@ -1,16 +1,16 @@
 # Description: a free alternative to the OpenGL Utility Toolkit (GLUT) library
 # URL: https://freeglut.sourceforge.net/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: freeglut glu-32 libXi-32
+# Depends on: freeglut glu-32 libXi-32 mesa-32
 
 name=freeglut-32
 version=3.8.0
-release=1
+release=2
 source=(https://downloads.sourceforge.net/project/freeglut/freeglut/$version/freeglut-$version.tar.gz)
 
 pkg_build() {
 
-	cmake -Sfreeglut-$version -Bbuild -GNinja \
+	cmake -S . -B build -G Ninja \
 		-DCMAKE_INSTALL_PREFIX=/usr \
 		-DCMAKE_INSTALL_LIBDIR=lib32 \
 		-DCMAKE_BUILD_TYPE=Release

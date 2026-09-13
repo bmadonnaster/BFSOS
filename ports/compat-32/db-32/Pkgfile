@@ -4,14 +4,12 @@
 
 name=db-32
 version=5.3.28
-release=2
+release=3
 source=(https://download.oracle.com/berkeley-db/db-$version.tar.gz
 	0001-atomic-Rename-local-__atomic_compare_exchange-to-avo.patch)
 
 pkg_build() {
-    cd db-$version/build_unix
-
-    patch -p1 -d .. -i $SRC/0001-atomic-Rename-local-__atomic_compare_exchange-to-avo.patch
+    cd build_unix || return 1
 
     ../dist/configure --prefix=/usr \
 		--libdir=/usr/lib32 \

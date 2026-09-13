@@ -6,7 +6,7 @@
 
 name=libsdl2-32
 version=2.32.10
-release=1
+release=2
 source=(https://www.libsdl.org/release/SDL2-$version.tar.gz)
 
 pkg_build() {
@@ -19,7 +19,7 @@ pkg_build() {
 
 	[ -e '/usr/bin/ccache' ] && PATH="$(echo ${PATH} | awk -v RS=: -v ORS=: '/ccache/ {next} {print}' | sed 's/:*$//')"
 
-	cmake -S SDL2-$version -B build -G Ninja $PKGMK_SDL2 \
+	cmake -S . -B build -G Ninja $PKGMK_SDL2 \
 		-D CMAKE_INSTALL_PREFIX=/usr \
 		-D CMAKE_INSTALL_LIBDIR=lib32 \
 		-D CMAKE_BUILD_TYPE=Release \

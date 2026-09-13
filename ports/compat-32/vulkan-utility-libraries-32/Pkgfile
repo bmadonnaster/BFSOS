@@ -7,11 +7,11 @@
 name=vulkan-utility-libraries-32
 version=1.4.357.0
 _commit=5a88b6042edb8f03eefc8de73bd73a899989373f
-release=1
+release=2
 source=(https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/$_commit/vulkan-utility-libraries-$version.tar.gz)
 
 pkg_build() {
-  cmake -S Vulkan-Utility-Libraries-$_commit -B build -G Ninja \
+  cmake -S . -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib32 \
     -D CMAKE_BUILD_TYPE=Release \

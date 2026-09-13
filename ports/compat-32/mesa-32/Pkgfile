@@ -6,7 +6,7 @@
 
 name=mesa-32
 version=26.2.2
-release=1
+release=2
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz
 	x86-linux-gnu x86-linux-gnu-ccache)
 
@@ -38,7 +38,7 @@ pkg_build() {
 	#prt-get isinst xorg-libxdamage-32 xorg-libxrandr-32 xorg-libxshmfence-32 xorg-libxvmc-32 xorg-libxxf86vm-32 && PKGMK_MESA_PLATFORMS+=',x11'
 	PKGMK_MESA_PLATFORMS+=',x11'
 
-	meson setup mesa-$version build $PKGMK_MESA \
+	meson setup build . $PKGMK_MESA \
 		--cross-file=$SRC/$_cross_file \
 		--prefix=/usr \
 		--libdir=/usr/lib32 \
