@@ -6,8 +6,9 @@
 
 name=gst-plugins-good
 version=1.28.7
-release=1
-source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz)
+release=2
+source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz
+        gst-plugins-good-1.28.7-qt611-qquickwindow.patch)
 
 pkg_build() {
   mkdir build &&
@@ -17,7 +18,7 @@ meson setup ..            \
       --prefix=/usr       \
       --buildtype=release \
       -Dpackage-origin=https://www.linuxfromscratch.org/blfs/view/systemd/ \
-      -Dpackage-name="GStreamer 1.22.6 BLFS" &&
+      -Dpackage-name="GStreamer 1.28.7 BFSOS" &&
 ninja
   DESTDIR=$PKG ninja install
 }
