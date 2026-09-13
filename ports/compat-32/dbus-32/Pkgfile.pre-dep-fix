@@ -1,15 +1,18 @@
 # Description: A message bus system
 # URL: https://freedesktop.org/wiki/Software/dbus
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: dbus expat-32 libX11-32
+# Depends on: dbus expat-32
 
 name=dbus-32
 version=1.16.2
-release=4
+release=2
 source=(https://dbus.freedesktop.org/releases/dbus/dbus-$version.tar.xz)
 
 pkg_build() {
-	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
+	[ -e '/usr/lib/pkgconfig/x11.pc' ] && [ ! -e '/usr/lib32/pkgconfig/x11.pc' ] && printf "\e[031mxorg-libx11 is detected on your system, please run:
+	prt-get depinst xorg-libx11-32
+	before continuing with dbus-32.\033[0m\n" &&
+	exit 1
 
 	meson setup build . \
 		--prefix=/usr \
@@ -27,8 +30,8 @@ pkg_build() {
 		-D system_pid_file=/run/dbus/pid \
 		-D system_socket=/run/dbus/system_bus_socket
 
-	meson compile -C build || return 1
-	DESTDIR="$PKG" meson install -C build || return 1
+	meson compile -C build
+	DESTDIR=$PKG meson install -C build
 
-	rm -rf "$PKG/var" "$PKG/run" "$PKG/usr/bin" "$PKG/usr/include" "$PKG/usr/share" "$PKG/etc"
+	rm -r $PKG/var $PKG/run $PKG/usr/{bin,include,share} $PKG/etc
 }
