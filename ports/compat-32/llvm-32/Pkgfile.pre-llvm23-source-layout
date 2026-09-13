@@ -4,15 +4,19 @@
 # Depends on: libffi-32 libxml2-32 llvm ncurses-32 zstd-32
 name=llvm-32
 version=23.1.1
-release=3
-source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz)
+release=2
+source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz
+	https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/cmake-$version.src.tar.xz
+	https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/third-party-$version.src.tar.xz)
 pkg_build() {
         mkdir -p $SRC/keep
 
         #prt-get isinst ccache && PKGMK_LLVM+=' -D LLVM_CCACHE_BUILD=ON'
 
+        mv cmake-$version.src cmake
+        mv $SRC/third-party-$version.src/ $SRC/third-party
 
-        cmake -S llvm-project-$version.src/llvm -B build -G Ninja $PKGMK_LLVM \
+        cmake -S llvm-$version.src -B build -G Ninja $PKGMK_LLVM \
                 -D CMAKE_INSTALL_PREFIX=/usr \
                 -D LLVM_LIBDIR_SUFFIX=32 \
                 -D CMAKE_BUILD_TYPE=Release \
