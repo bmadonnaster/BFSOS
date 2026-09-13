@@ -5,17 +5,17 @@
 
 name=libsndfile-32
 version=1.2.2
-release=2
+release=3
 source=(https://github.com/libsndfile/libsndfile/releases/download/$version/libsndfile-$version.tar.xz)
 
 pkg_build() {
 
+	CFLAGS="$CFLAGS -std=gnu17" \
 	./configure \
 		--prefix=/usr \
 		--libdir=/usr/lib32
 
-	make
-	make DESTDIR=$PKG install
-
+	make || return 1
+	make DESTDIR=$PKG install || return 1
 	rm -r $PKG/usr/{bin,include,share/man,share}
 }
