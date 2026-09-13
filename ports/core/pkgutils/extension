@@ -311,6 +311,8 @@ if [ ! "$(command -v build)" ]; then
 		export INSTALL_ROOT=$PKG # qt5
 		export CARGO_HOME=/tmp
 
+		# Prepare/extract source content when present.  Source-less ports may still
+		# provide pkg_build(), so source=() must not imply a dummy package.
 		if [ "${#source[@]}" -gt 0 ]; then
 			s=""
 			n=0
@@ -320,7 +322,7 @@ if [ ! "$(command -v build)" ]; then
 						s="$candidate"
 						break
 						;;
-					esac
+				esac
 				n=$((n + 1))
 			done
 			[ -n "$s" ] || { s="${source[0]}"; n=0; }
@@ -330,58 +332,60 @@ if [ ! "$(command -v build)" ]; then
 					*) s=${renames[$n]};;
 				esac
 			fi
+
 			# Detect the extracted source directory.
 			srcdir="$name-$version"
-			
+
 			if [ ! -d "$srcdir" ]; then
-			        srcdir=""
-			        for candidate in */; do
-			                [ -d "$candidate" ] || continue
-			                candidate="${candidate%/}"
-			
-			                if [ -n "$srcdir" ]; then
-			                        # More than one directory: do not guess.
-			                        srcdir=""
-			                        break
-			                fi
-			
-			                srcdir="$candidate"
-			        done
+				srcdir=""
+				for candidate in */; do
+					[ -d "$candidate" ] || continue
+					candidate="${candidate%/}"
+
+					if [ -n "$srcdir" ]; then
+						# More than one directory: do not guess.
+						srcdir=""
+						break
+					fi
+
+					srcdir="$candidate"
+				done
 			fi
-			
+
 			if [ -n "$srcdir" ] && [ -d "$srcdir" ]; then
-			        cd "$srcdir" || return 1
+				cd "$srcdir" || return 1
 			fi
 			_patch || return $?
-			if [ "$(command -v pkg_build)" ]; then
-				# Custom recipes still participate in the standard extension hooks.
-				# This is important for ports migrated from legacy build(), where
-				# pre_build/post_build remain part of the package recipe.
-				if [ "$(command -v pre_build)" ]; then
-					pre_build || return $?
-				fi
-				pkg_build || return $?
-				if [ "$(command -v post_build)" ]; then
-					post_build || return $?
-				fi
-			else
-				if [ "$(command -v pre_build)" ]; then
-					pre_build
-				fi
-				if [ ! "$build_type" ]; then
-					detect_buildtype
-				fi
-				# run build
-				_$build_type $@
-				if [ "$(command -v post_build)" ]; then
-					post_build
-				fi
+		fi
+
+		if command -v pkg_build >/dev/null 2>&1; then
+			# Custom recipes participate in the standard hooks whether or not
+			# they have downloadable/extracted source files.
+			if command -v pre_build >/dev/null 2>&1; then
+				pre_build || return $?
+			fi
+			pkg_build || return $?
+			if command -v post_build >/dev/null 2>&1; then
+				post_build || return $?
+			fi
+		elif [ "${#source[@]}" -gt 0 ]; then
+			if command -v pre_build >/dev/null 2>&1; then
+				pre_build || return $?
+			fi
+			if [ ! "$build_type" ]; then
+				detect_buildtype
+			fi
+			# Run the detected standard build.
+			_$build_type "$@" || return $?
+			if command -v post_build >/dev/null 2>&1; then
+				post_build || return $?
 			fi
 		else
-			# dummy pkg
-			mkdir -p $PKG/usr
+			# Legacy source-less dummy package.  bfs-pkgmk will reject this if it
+			# remains directory-only, so real meta packages should use pkg_build().
+			mkdir -p "$PKG/usr" || return $?
 		fi
-		
+
 		# KDE/KF6 is intentionally installed under /opt/kf6, but systemd
 		# user/system units are host integration files and must live in the
 		# standard /usr/lib/systemd hierarchy so systemd can discover them.

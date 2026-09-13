@@ -5,6 +5,19 @@ start_epoch="$(date +%s)"
 start_stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 status=0
 
+# pkgutils upgrades are self-hosting.  If a previous interrupted pkgadd -u
+# removed the installed extension before replacement, restore it from the
+# synced core port before invoking pkgmk.
+if [ ! -r /var/lib/pkgmk/extension ] \
+   && [ "$(id -u)" -eq 0 ] \
+   && [ -r /usr/ports/core/pkgutils/extension ]; then
+    install -d -m755 -o 0 -g 0 /var/lib/pkgmk
+    install -m644 -o 0 -g 0 \
+        /usr/ports/core/pkgutils/extension /var/lib/pkgmk/extension
+    printf '%s\n' \
+        'BFSOS pkgmk: restored missing /var/lib/pkgmk/extension from the core port' >&2
+fi
+
 # Select the build-work backend before pkgmk creates or extracts any work.
 # An administrator-provided BFS_PKG_BUILD_WORK wins; otherwise read only the
 # simple top-level build_work= metadata rather than sourcing arbitrary Pkgfile

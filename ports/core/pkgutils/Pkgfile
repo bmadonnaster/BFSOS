@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=32
+release=33
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -134,12 +134,19 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
         # callers may explicitly opt out through their configuration.
         sed -i 's,^PKGMK_IGNORE_SIGNATURE=.*,PKGMK_IGNORE_SIGNATURE="no",' "$PKG/usr/bin/pkgmk"
 
-        # BFSOS pkgmk extension.
-        install -Dm644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
+        # BFSOS pkgmk extension.  Code sourced by root must live in a
+        # root-owned directory; only the runtime timing log is pkgmk-writable.
+        install -dm755 -o 0 -g 0 "$PKG/var/lib/pkgmk"
+        install -m644 -o 0 -g 0 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
         install -Dm755 "$SRC/bfs-pkgmk" "$PKG/usr/bin/bfs-pkgmk"
-        install -dm755 -o 82 -g 82 "$PKG/var/lib/pkgmk"
-        install -Dm664 /dev/null "$PKG/var/lib/pkgmk/build-times.log"
-        chown 82:82 "$PKG/var/lib/pkgmk/build-times.log"
+        install -m664 -o 82 -g 82 /dev/null "$PKG/var/lib/pkgmk/build-times.log"
+
+        # A pkgutils archive without its dispatcher would make every migrated
+        # pkg_build() port unusable after upgrade.  Fail the build instead.
+        [ -s "$PKG/var/lib/pkgmk/extension" ] || {
+                echo "pkgutils: staged pkgmk extension is missing or empty" >&2
+                return 1
+        }
 
         # Configuration.
         install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"
