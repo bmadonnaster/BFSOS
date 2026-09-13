@@ -56,20 +56,10 @@ pkg_build() {
     # majors to compete for generic /usr/bin names.
     install -d "$PKG/usr/bin" || return 1
     for file in moc uic rcc qmake lconvert lrelease lupdate qtpaths; do
-        case "$file" in
-            moc|uic|rcc)
-                toolpath="/opt/qt6/libexec/$file"
-                ;;
-            *)
-                toolpath="/opt/qt6/bin/$file"
-                ;;
-        esac
-
-        test -x "$PKG$toolpath" || {
-            echo "qt6: expected compatibility tool missing: $toolpath" >&2
+        test -x "$PKG/opt/qt6/bin/$file" || {
+            echo "qt6: expected compatibility tool missing: $file" >&2
             return 1
         }
-
-        ln -sfn "$toolpath" "$PKG/usr/bin/$file-qt6" || return 1
+        ln -sfn "/opt/qt6/bin/$file" "$PKG/usr/bin/$file-qt6" || return 1
     done
 }
