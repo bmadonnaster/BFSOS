@@ -6,13 +6,14 @@
 
 name=plasma-meta
 version=6.7.5
-release=2
+release=1
 source=()
 
 pkg_build() {
-    install -d "$PKG/usr/share/bfsos/meta-packages" || return 1
-
-    printf '%s\n'         'BFSOS Plasma meta-package. Desktop audio activation is owned by the WirePlumber systemd user preset.'         > "$PKG/usr/share/bfsos/meta-packages/plasma-meta" || return 1
+    install -d "$PKG/usr/share/doc/$name" || return 1
+    printf '%s\n' \
+        'BFSOS Plasma meta-package. Desktop audio activation is owned by the WirePlumber systemd user preset.' \
+        > "$PKG/usr/share/doc/$name/README" || return 1
 }
 
 # vim: set ts=4 et:
