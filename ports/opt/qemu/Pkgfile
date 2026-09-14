@@ -1,0 +1,33 @@
+# Description: QEMU machine emulator and KVM virtualizer
+# URL: https://www.qemu.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: alsa-lib glib gtk3 libaio libcap-ng libepoxy libseccomp libslirp liburing libusb usbredir libxml2 ncurses pixman sdl2 virglrenderer zlib zstd
+# Optional: pipewire pulseaudio
+
+name=qemu
+version=11.1.1
+release=1
+build_work=disk
+source=(https://download.qemu.org/qemu-$version.tar.xz)
+
+# QEMU's normal configure -> Ninja -> install flow is extension-owned.
+# Keep package policy in build_opt instead of duplicating pkg_build().
+build_opt=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --localstatedir=/var
+    --libexecdir=/usr/lib/qemu
+    --target-list=x86_64-softmmu,i386-softmmu
+    --enable-kvm
+    --enable-linux-aio
+    --enable-linux-io-uring
+    --enable-slirp=system
+    --enable-gtk
+    --enable-sdl
+    --enable-opengl
+    --enable-virglrenderer
+    --enable-vnc
+    --enable-seccomp
+    --enable-usb-redir
+    --disable-werror
+)

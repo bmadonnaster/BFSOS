@@ -36,7 +36,7 @@ expected = {
     'opt/libedit':'20260512_3.1', 'opt/libksba':'1.8.1',
     'opt/hyphen':'2.8.9', 'opt/gavl':'2.0.1', 'opt/ftjam':'2.5.3rc2',
     'opt/x265':'4.3', 'opt/unrar':'7.2.7', 'opt/nodejs':'24.21.0', 'core/ca-certificates':'20260813',
-    'opt/publicsuffix-list':'20260910', 'opt/rapidjson':'20250205.24b5e7a',
+    'opt/publicsuffix-list':'20260913', 'opt/rapidjson':'20250205.24b5e7a',
     'opt/lua':'5.4.9', 'compat-32/vkd3d-32':'2.1',
     'compat-32/vulkan-tools-32':'1.4.357.0', 'compat-32/libnm-32':'1.58.1',
     'compat-32/nvidia-fb-32':'595.99.02',
@@ -99,15 +99,20 @@ for token in ('/etc/pki/tls/certs/ca-bundle.crt', '_PIP_STANDALONE_CERT'):
         raise AssertionError(f'Requests system-cert patch missing {token}')
 
 psl=pkg('opt/publicsuffix-list')
-if 'https://publicsuffix.org/list/public_suffix_list.dat' not in psl:
-    raise AssertionError('publicsuffix-list is not using canonical upstream data endpoint')
+if 'source=(public_suffix_list-$version.dat)' not in psl:
+    raise AssertionError('publicsuffix-list is not using the versioned vendored data companion')
+psl_data = ROOT / 'ports/opt/publicsuffix-list' / f"public_suffix_list-{value('opt/publicsuffix-list','version')}.dat"
+if not psl_data.is_file() or psl_data.stat().st_size < 100000:
+    raise AssertionError('publicsuffix-list vendored data companion is missing or implausibly small')
+if 'https://publicsuffix.org/list/public_suffix_list.dat' not in psl_data.read_text(errors='replace')[:4096]:
+    raise AssertionError('publicsuffix-list vendored data lacks canonical upstream provenance')
 rapid=pkg('opt/rapidjson')
 if '_commit=' not in rapid or re.search(r'/archive/(?:refs/heads/)?master',rapid):
     raise AssertionError('rapidjson is not pinned to an immutable commit')
 
 # Compat synchronization must be exact after the native sweep.
 out=subprocess.check_output([str(ROOT/'scripts/multilibvercheck.sh')], cwd=ROOT, text=True)
-needle='compat-32 summary: matched=154 special=16 drift=0 unexplained=0'
+needle='compat-32 summary: matched=157 special=15 drift=0 unexplained=0'
 if needle not in out:
     raise AssertionError(f'compat summary changed:\n{out}')
 

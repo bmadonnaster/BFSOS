@@ -1,7 +1,7 @@
 # Description: Direct3D 12 to Vulkan translation library by WineHQ
 # URL: https://wiki.winehq.org/Vkd3d
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: p5-json p5-json spirv-tools vulkan-loader xcb-util-keysyms
+# Depends on: p5-json spirv-tools vulkan-loader xcb-util-keysyms
 
 name=vkd3d
 version=2.1

@@ -29,7 +29,7 @@ SPECIAL = {
     "db", "libappindicator-sharp", "libcaca", "libidn133",
     "libindicator-gtk2", "libjpeg6-turbo", "libpcre",
     "libpng12", "libsdl", "libtiff4", "libudev0-shim",
-    "openssl11", "python", "rtmpdump", "speexdsp", "vkd3d",
+    "openssl11", "python", "rtmpdump", "speexdsp",
 }
 
 ASSIGN_RE = re.compile(r"^(name|version)=(.+)$", re.M)

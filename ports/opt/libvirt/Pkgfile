@@ -1,0 +1,30 @@
+# Description: Toolkit for managing virtualization hosts
+# URL: https://libvirt.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: dbus dnsmasq glib gnutls libcap-ng libnl libpcap libseccomp libssh2 libxml2 libxslt nftables parted polkit qemu readline systemd yajl
+
+name=libvirt
+version=12.7.0
+release=1
+source=(https://download.libvirt.org/libvirt-$version.tar.xz)
+
+# Upstream recommends -Dsystem=true for distro/vendor layouts. Explicitly
+# require the drivers BFSOS needs so missing dependencies fail at configure.
+build_opt=(
+    -Dsystem=true
+    -Ddriver_qemu=enabled
+    -Ddriver_network=enabled
+    -Ddriver_nodedev=enabled
+    -Ddriver_nwfilter=enabled
+    -Ddriver_secret=enabled
+    -Ddriver_storage=enabled
+    -Ddocs=disabled
+    -Dtests=disabled
+)
+
+post_build() {
+    install -d "$PKG/etc/libvirt/qemu/networks/autostart"
+    if [ -f "$PKG/etc/libvirt/qemu/networks/default.xml" ]; then
+        ln -sf ../default.xml "$PKG/etc/libvirt/qemu/networks/autostart/default.xml"
+    fi
+}

@@ -23,32 +23,35 @@ build_opt="-Dglycin-loaders=true \
 -Dintrospection=false \
 -Dcapi_docs=false"
 
+# Custom build required: glycin-32 selects optional loader components at build
+# time and uses its package-local i686 Meson cross file/lib32 staging layout.
 pkg_build() {
-    prt-get isinst sccache && export RUSTC_WRAPPER=/usr/bin/sccache
+    (
+        set -e
 
-    export PKG_CONFIG_ALLOW_CROSS=1
+        prt-get isinst sccache && export RUSTC_WRAPPER=/usr/bin/sccache
+        export PKG_CONFIG_ALLOW_CROSS=1
 
-    local loaders="glycin-image-rs"
+        local loaders="glycin-image-rs"
+        prt-get isinst libheif-32 && loaders+=",glycin-heif"
+        prt-get isinst libjxl-32  && loaders+=",glycin-jxl"
+        prt-get isinst librsvg-32 && loaders+=",glycin-svg"
 
-    prt-get isinst libheif-32 && loaders+=",glycin-heif"
-    prt-get isinst libjxl-32  && loaders+=",glycin-jxl"
-    prt-get isinst librsvg-32 && loaders+=",glycin-svg"
+        meson setup build . \
+            --cross-file="$SRC/i686" \
+            --prefix=/usr \
+            --libdir=lib32 \
+            --libexecdir=lib32/$name \
+            --buildtype=plain \
+            --wrap-mode=nodownload \
+            -Db_lto=true \
+            -Db_pie=true \
+            $build_opt \
+            -Dloaders="$loaders"
 
-    meson setup build . \
-        --cross-file="$SRC/i686" \
-        --prefix=/usr \
-        --libdir=lib32 \
-        --libexecdir=lib32/$name \
-        --buildtype=plain \
-        --wrap-mode=nodownload \
-        -Db_lto=true \
-        -Db_pie=true \
-        $build_opt \
-        -Dloaders="$loaders" \
-        || return 1
-
-    meson compile -C build -j "${JOBS:-1}" || return 1
-    DESTDIR="$PKG" meson install -C build || return 1
+        meson compile -C build -j "${JOBS:-1}"
+        DESTDIR="$PKG" meson install -C build
+    )
 }
 
 post_build() {

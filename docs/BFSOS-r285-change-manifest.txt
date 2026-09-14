@@ -1,0 +1,27 @@
+# BFSOS r285 change manifest
+Generated: 2026-09-14 18:31 UTC
+
+ M ports/core/linux-api-headers/Pkgfile
+ M ports/core/linux-headers/Pkgfile
+ M ports/core/linux-lts/Pkgfile
+ M ports/core/linux/Pkgfile
+ M scripts/bfs-ports-static-audit.sh
+?? docs/BFSOS-fix-tracker-r285.md
+?? docs/BFSOS-r285-change-manifest.txt
+?? ports/opt/chromium/
+?? ports/opt/dnsmasq/
+?? ports/opt/gn/
+?? ports/opt/libcap-ng/
+?? ports/opt/libosinfo/
+?? ports/opt/libslirp/
+?? ports/opt/liburing/
+?? ports/opt/libvirt-python/
+?? ports/opt/libvirt/
+?? ports/opt/minizip/
+?? ports/opt/openh264/
+?? ports/opt/qemu/
+?? ports/opt/usbredir/
+?? ports/opt/virglrenderer/
+?? ports/opt/virt-manager/
+?? ports/opt/yajl/
+?? scripts/tests/test-r285-browser-virt-kernel.py

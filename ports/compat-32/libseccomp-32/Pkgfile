@@ -9,6 +9,10 @@ release=1
 
 source=(https://github.com/seccomp/libseccomp/releases/download/v${version}/libseccomp-${version}.tar.gz)
 
+pre_build() {
+    _bfs_require_compat32_extension 2 || return $?
+}
+
 post_build() {
     rm -rf "$PKG/usr/bin" \
            "$PKG/usr/include" \
