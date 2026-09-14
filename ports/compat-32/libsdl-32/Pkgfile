@@ -5,7 +5,7 @@
 
 name=libsdl-32
 version=1.2.15
-release=5
+release=6
 source=(http://www.libsdl.org/release/SDL-$version.tar.gz
         gcc15-xext-prototypes.patch)
 
