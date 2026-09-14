@@ -7,7 +7,7 @@
 name=vulkan-loader-32
 version=1.4.357.0
 release=4
-source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/v${version}/Vulkan-Loader-${version}.tar.gz)
+source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/vulkan-sdk-$version.tar.gz)
 
 
 # Custom build required: WSI selection is conditional
