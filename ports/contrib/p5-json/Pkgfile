@@ -1,0 +1,19 @@
+# Description: JSON encoder/decoder for Perl
+# URL: https://metacpan.org/pod/JSON
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: perl
+
+name=p5-json
+version=4.10
+release=1
+source=(https://cpan.metacpan.org/authors/id/I/IS/ISHIGAKI/JSON-$version.tar.gz)
+
+pkg_build() {
+    perl Makefile.PL \
+        INSTALLDIRS=vendor \
+        INSTALLVENDORLIB=/usr/lib/perl5/vendor_perl \
+        INSTALLVENDORARCH=/usr/lib/perl5/vendor_perl
+
+    make
+    make DESTDIR="$PKG" install
+}
