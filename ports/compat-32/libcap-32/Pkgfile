@@ -5,22 +5,24 @@
 
 name=libcap-32
 version=2.78
-release=2
+release=3
 source=(https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/${name%-*}-$version.tar.xz)
 
-# Custom build required: upstream stages through a private DESTDIR tree
 pkg_build() {
-  (
-    set -e
-	sed -i '/install -m.*STA/d' libcap/Makefile
-#	make CC="gcc -march=i686"
-	make CC="${CC:-gcc}" lib=lib32 prefix=$PWD/DESTDIR/usr -C libcap install
-	mkdir -p $PKG/usr/lib32/
-cp -Rv DESTDIR/usr/lib32/* $PKG/usr/lib32
-sed -e "s|^libdir=.*|libdir=/usr/lib32|" -i $PKG/usr/lib32/pkgconfig/lib{cap,psx}.pc
-chmod -v 755 $PKG/usr/lib32/libcap.so.2.76
-rm -rf DESTDIR
+    sed -i "/^CFLAGS/s/-O2/$CFLAGS/" Make.Rules
 
-	rm -rf $PKG/usr/include
-  )
+    make -C libcap \
+        GOLANG=no \
+        RAISE_SETFCAP=no \
+        PKGCONFIGDIR=/usr/lib32/pkgconfig
+
+    make -C libcap \
+        GOLANG=no \
+        RAISE_SETFCAP=no \
+        DESTDIR="$PKG" \
+        prefix=/usr \
+        lib=lib32 \
+        install
+
+    rm -rf "$PKG/usr/include"
 }
