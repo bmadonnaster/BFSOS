@@ -5,7 +5,7 @@
 
 name=gtk
 version=2.24.33
-release=1
+release=2
 source=(https://download.gnome.org/sources/gtk%2B/2.24/gtk%2B-2.24.33.tar.xz
 0001-Lower-severity-of-XID-collision-warnings.patch)
 
@@ -26,4 +26,8 @@ cat > $PKG/etc/gtk-2.0/gtkrc << "EOF"
 include "/usr/share/themes/Clearlooks/gtk-2.0/gtkrc"
 gtk-icon-theme-name = "elementary"
 EOF
+}
+
+post_build() {
+    rm -f "$PKG/usr/bin/gtk-update-icon-cache"
 }
