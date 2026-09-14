@@ -5,8 +5,8 @@
 
 name=libnm-32
 version=1.58.1
-release=4
-source=(https://download.gnome.org/sources/NetworkManager/${version::4}/NetworkManager-$version.tar.xz)
+release=5
+source=(https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/releases/$version/downloads/NetworkManager-$version.tar.xz)
 
 # Custom build required: NetworkManager library-only feature selection is conditional
 pkg_build() {
