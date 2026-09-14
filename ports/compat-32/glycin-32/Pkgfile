@@ -6,12 +6,12 @@
 
 name=glycin-32
 version=2.2.0
-release=2
+release=3
 
 source=(
     https://gitlab.gnome.org/GNOME/glycin/-/archive/$version/glycin-$version.tar.bz2
     i686
-    cross.patch
+
 )
 
 build_opt="-Dglycin-loaders=true \
