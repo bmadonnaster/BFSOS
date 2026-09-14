@@ -5,7 +5,7 @@
 
 name=libnm-32
 version=1.58.1
-release=6
+release=7
 source=(https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/releases/$version/downloads/NetworkManager-$version.tar.xz)
 
 # Custom build required: NetworkManager library-only feature selection is conditional
@@ -19,6 +19,7 @@ build_opt="--libexecdir=/usr/lib/networkmanager \
 -Dbluez5_dun=false \
 -Dconcheck=false \
 -Dclat=false \
+-Dnbft=false \
 -Debpf=false \
 -Diwd=false \
 -Dmodem_manager=false \
