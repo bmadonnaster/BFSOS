@@ -1,22 +1,132 @@
-# Description: An OpenType text shaping engine
-# URL: https://github.com/harfbuzz/harfbuzz
+# Description: Mesa 3D Graphics Library
+# URL: https://www.mesa3d.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cairo gobject-introspection graphite2 icu
-# Optional: chafa
+# Depends on: elfutils-32 expat-32 libdrm-32 libglvnd-32 llvm-32 mesa libXdamage-32 libXrandr-32 libxshmfence-32 libXvMC-32 libXxf86vm-32 wayland-32
+# Optional: clang-32 glslang libclc libva-32 spirv-llvm-translator-32 vulkan-loader-32 wayland-protocols
 
-name=harfbuzz
-version=14.4.0
-release=2
-source=(https://github.com/harfbuzz/harfbuzz/releases/download/$version/$name-$version.tar.xz)
+name=mesa-32
+version=26.2.2
+release=4
+source=(https://archive.mesa3d.org/mesa-$version.tar.xz
+        x86-linux-gnu
+        x86-linux-gnu-ccache)
 
+# Custom build required: 32-bit cross build plus conditional Mesa drivers/features
 pkg_build() {
-    meson setup build . \
-        --prefix=/usr \
-        --buildtype=release \
-        -Dgraphite2=enabled \
-        -Dicu=enabled \
-        -Dtests=disabled || return 1
+  (
+    set -e
 
-    meson compile -C build -j "${JOBS:-1}" || return 1
-    DESTDIR="$PKG" meson install -C build || return 1
+    export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
+
+    PKGMK_MESA=""
+    PKGMK_MESA_GALLIUM=""
+    PKGMK_MESA_VULKAN_DRIVERS=""
+    PKGMK_MESA_VULKAN_LAYERS=""
+    PKGMK_MESA_PLATFORMS=""
+
+    if prt-get isinst ccache; then
+        _cross_file='x86-linux-gnu-ccache'
+    else
+        _cross_file='x86-linux-gnu'
+    fi
+
+    if prt-get isinst directx-headers-32; then
+        PKGMK_MESA_GALLIUM+='d3d12,'
+    fi
+
+    if prt-get isinst clang-32 libclc rust-bindgen spirv-llvm-translator-32; then
+        PKGMK_MESA+=' -D gallium-rusticl=true'
+    fi
+
+    if prt-get isinst libunwind-32; then
+        PKGMK_MESA+=' -D libunwind=enabled'
+    else
+        PKGMK_MESA+=' -D libunwind=disabled'
+    fi
+
+    if prt-get isinst libva-32; then
+        PKGMK_MESA+=' -D gallium-va=enabled'
+    else
+        PKGMK_MESA+=' -D gallium-va=disabled'
+    fi
+
+    if prt-get isinst lm_sensors-32; then
+        PKGMK_MESA+=' -D lmsensors=enabled'
+    else
+        PKGMK_MESA+=' -D lmsensors=disabled'
+    fi
+
+    if prt-get isinst vulkan-loader-32; then
+
+        if prt-get isinst cbindgen rust-bindgen; then
+            PKGMK_MESA_VULKAN_DRIVERS+='nouveau,'
+        fi
+
+        if prt-get isinst directx-headers-32; then
+            PKGMK_MESA_VULKAN_DRIVERS+='microsoft-experimental,'
+        fi
+
+        if prt-get isinst glslang; then
+            PKGMK_MESA_VULKAN_DRIVERS+='amd,'
+            PKGMK_MESA_VULKAN_LAYERS+='overlay,'
+        fi
+
+        if prt-get isinst clang-32 glslang libclc lua python3-ply spirv-llvm-translator-32; then
+            PKGMK_MESA_VULKAN_DRIVERS+='intel,'
+            PKGMK_MESA_VULKAN_LAYERS+='intel-nullhw,'
+        fi
+
+        VULKAN_DRIVERS="${PKGMK_MESA_VULKAN_DRIVERS}intel_hasvk,virtio,swrast"
+        VULKAN_LAYERS="${PKGMK_MESA_VULKAN_LAYERS%,}"
+
+        PKGMK_MESA_GALLIUM+='zink,'
+    else
+        VULKAN_DRIVERS=""
+        VULKAN_LAYERS=""
+    fi
+
+    if prt-get isinst wayland-protocols; then
+        PKGMK_MESA_PLATFORMS+='wayland,'
+    fi
+
+    PKGMK_MESA_PLATFORMS+='x11'
+
+    meson setup build . \
+        $PKGMK_MESA \
+        --cross-file="$SRC/$_cross_file" \
+        --prefix=/usr \
+        --libdir=/usr/lib32 \
+        --sysconfdir=/etc \
+        --buildtype=plain \
+        -D b_lto=false \
+        -D b_pie=true \
+        -D egl=enabled \
+        -D llvm=enabled \
+        -D shared-llvm=enabled \
+        -D gbm=enabled \
+        -D gles1=disabled \
+        -D gles2=enabled \
+        -D glx=dri \
+        -D gallium-drivers="${PKGMK_MESA_GALLIUM}iris,crocus,nouveau,r300,r600,radeonsi,svga,virgl,i915,llvmpipe,softpipe" \
+        -D platforms="${PKGMK_MESA_PLATFORMS%,}" \
+        -D video-codecs=all \
+        -D glvnd=enabled \
+        -D vulkan-drivers="$VULKAN_DRIVERS" \
+        -D vulkan-layers="$VULKAN_LAYERS"
+
+    meson compile -C build -j "${JOBS:-1}"
+    DESTDIR="$PKG" meson install -C build
+
+    # indirect rendering symlink
+    ln -sf libGLX_mesa.so.0 \
+        "$PKG/usr/lib32/libGLX_indirect.so.0"
+
+    rm -rf \
+        "$PKG/usr/include" \
+        "$PKG/usr/share/drirc.d" \
+        "$PKG/usr/share/glvnd" \
+        "$PKG/usr/bin" \
+        "$PKG/usr/share/vulkan/explicit_layer.d" \
+        "$PKG/usr/share/vulkan/implicit_layer.d"
+  )
 }
