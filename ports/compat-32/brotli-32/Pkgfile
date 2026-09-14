@@ -5,7 +5,7 @@
 
 name=brotli-32
 version=1.2.0
-release=3
+release=4
 source=(https://github.com/google/${name%-*}/archive/v$version/${name%-*}-v$version.tar.gz)
 
 
