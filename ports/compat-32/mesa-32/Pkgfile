@@ -6,7 +6,7 @@
 
 name=mesa-32
 version=26.2.2
-release=7
+release=8
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz
         x86-linux-gnu
         x86-linux-gnu-ccache)
@@ -29,7 +29,7 @@ pkg_build() {
 
     local _cross_file="x86-linux-gnu"
     local _mesa_opt=""
-    local _gallium_drivers="iris,crocus,nouveau,r300,r600,radeonsi,svga,virgl,i915,llvmpipe,softpipe"
+    local _gallium_drivers="nouveau,r300,r600,radeonsi,svga,virgl,i915,llvmpipe,softpipe"
     local _platforms="x11"
     local _vulkan_drivers=""
     local _vulkan_layers=""
@@ -43,6 +43,14 @@ pkg_build() {
     #
     if prt-get isinst directx-headers-32 >/dev/null 2>&1; then
         _gallium_drivers="d3d12,${_gallium_drivers}"
+    fi
+
+    #
+    # Iris and Crocus require Mesa's CLC compiler support.
+    # Do not enable them unless the complete 32-bit compiler stack exists.
+    #
+    if prt-get isinst clang-32 libclc spirv-llvm-translator-32 >/dev/null 2>&1; then
+        _gallium_drivers="iris,crocus,${_gallium_drivers}"
     fi
 
     #
