@@ -6,7 +6,7 @@
 
 name=vulkan-loader-32
 version=1.4.357.0
-release=3
+release=4
 source=(https://github.com/KhronosGroup/Vulkan-Loader/archive/v${version}/Vulkan-Loader-${version}.tar.gz)
 
 
