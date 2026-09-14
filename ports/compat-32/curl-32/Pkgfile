@@ -6,7 +6,7 @@
 
 name=curl-32
 version=8.22.0
-release=2
+release=3
 source=(https://curl.se/download/${name%-*}-$version.tar.xz)
 
 build_opt="--enable-ipv6 --without-libidn2 --with-openssl --enable-threaded-resolver --without-libpsl --with-ca-bundle=/etc/ssl/cert.pem"
@@ -17,6 +17,8 @@ pre_build() {
   prt-get depinst brotli-32
   before continuing with curl-32.\033[0m\n" &&
   exit 1
+
+  return 0
 }
 
 post_build() {
