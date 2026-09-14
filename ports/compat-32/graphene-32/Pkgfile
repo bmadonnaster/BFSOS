@@ -1,20 +1,15 @@
-# Description: A thin layer of graphic data types
+# Description: A thin layer of graphic data types - 32-bit
 # URL: https://ebassi.github.io/graphene/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib-32 graphene
 
 name=graphene-32
 version=1.10.8
-release=3
+release=4
 source=(https://github.com/ebassi/graphene/archive/$version/graphene-$version.tar.gz)
 
-build_opt="-D introspection=disabled -D installed_tests=false"
+build_opt="-Dgobject_types=true -Dintrospection=disabled -Dtests=false -Dinstalled_tests=false"
 
 post_build() {
-
-	rm -r $PKG/usr/include
-}
-
-pre_build() {
-        _bfs_require_compat32_extension 2 || return $?
+    rm -rf "$PKG/usr/include"
 }
