@@ -11,7 +11,7 @@ source=(https://github.com/google/${name%-*}/archive/v$version/${name%-*}-v$vers
 
 post_build() {
 
-	rm -r $PKG/usr/{bin,include}
+	rm -rf $PKG/usr/{bin,include,share}
 }
 
 pre_build() {
