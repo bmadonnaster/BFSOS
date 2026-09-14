@@ -18,6 +18,18 @@ if [ ! -r /var/lib/pkgmk/extension ] \
         'BFSOS pkgmk: restored missing /var/lib/pkgmk/extension from the core port' >&2
 fi
 
+# Determine ABI from the active ports collection.
+# A compat-32 build must use PKGMK_ARCH=32, while native collections must
+# never inherit that setting from an earlier dependency build.
+case "$PWD/" in
+    */compat-32/*)
+        export PKGMK_ARCH=32
+        ;;
+    *)
+        unset PKGMK_ARCH
+        ;;
+esac
+
 # Select the build-work backend before pkgmk creates or extracts any work.
 # An administrator-provided BFS_PKG_BUILD_WORK wins; otherwise read only the
 # simple top-level build_work= metadata rather than sourcing arbitrary Pkgfile
