@@ -10,6 +10,7 @@ source=(https://downloads.sourceforge.net/project/pcre/pcre/$version/pcre-$versi
 build_opt="--enable-unicode-properties --enable-pcre16 --enable-pcre32 --enable-jit --disable-pcregrep-libz --disable-pcregrep-libbz2 --disable-pcretest-libreadline"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
   export CC="${CC:-gcc}"
   export CXX="${CXX:-g++}"
 autoreconf -fi

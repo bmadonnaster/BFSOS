@@ -14,3 +14,7 @@ post_build() {
 
 	rm -rf $PKG/{sbin,usr/{bin,include,share}}
 }
+
+pre_build() {
+        _bfs_require_compat32_extension 2 || return $?
+}

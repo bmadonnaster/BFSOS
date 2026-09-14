@@ -1,4 +1,16 @@
 # extra function for pkgmk
+export BFS_PKG_EXTENSION_API=2
+
+_bfs_require_compat32_extension() {
+	local required="${1:-2}"
+
+	if [ "${BFS_PKG_EXTENSION_API:-0}" -lt "$required" ]; then
+		echo "pkgmk: compat-32 recipe requires BFSOS pkgutils extension API $required or newer" >&2
+		echo "pkgmk: update and install the core/pkgutils package before rebuilding compat-32" >&2
+		return 1
+	fi
+}
+
 if [ "${PKGMK_ARCH:-}" = 32 ]; then
         # pkgmk.conf owns the multilib flags and host policy.  Keep compiler
         # command names plain here so recipes can safely pass CC/CXX through
@@ -272,7 +284,7 @@ if [ ! "$(command -v build)" ]; then
 			cpp = '${CXX:-g++}'
 			ar = 'ar'
 			strip = 'strip'
-			pkgconfig = 'pkg-config'
+			pkg-config = 'pkg-config'
 
 			[properties]
 			needs_exe_wrapper = false
@@ -337,6 +349,25 @@ if [ ! "$(command -v build)" ]; then
 			esac
 			n=$(( n + 1 ))
 		done
+	}
+
+	_bfs_validate_compat32_payload() {
+		[ "${PKGMK_ARCH:-}" = 32 ] || return 0
+
+		local bad_path
+		bad_path=$(
+			for native_dir in "$PKG/usr/lib" "$PKG/lib"; do
+				[ -d "$native_dir" ] || continue
+				find "$native_dir" -mindepth 1 ! -type d -print
+			done
+		)
+
+		if [ -n "$bad_path" ]; then
+			echo "pkgmk: ERROR: compat-32 payload contains files in native library directories:" >&2
+			printf '%s\n' "$bad_path" >&2
+			echo "pkgmk: expected compat libraries under /usr/lib32 (or /lib32 where explicitly required)" >&2
+			return 1
+		fi
 	}
 
 	build() {
@@ -421,6 +452,8 @@ if [ ! "$(command -v build)" ]; then
 			# remains directory-only, so real meta packages should use pkg_build().
 			mkdir -p "$PKG/usr" || return $?
 		fi
+
+		_bfs_validate_compat32_payload || return $?
 
 		# KDE/KF6 is intentionally installed under /opt/kf6, but systemd
 		# user/system units are host integration files and must live in the

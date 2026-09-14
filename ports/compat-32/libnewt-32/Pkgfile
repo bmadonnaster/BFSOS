@@ -12,6 +12,7 @@ source=(https://releases.pagure.org/newt/newt-$version.tar.gz)
 build_opt="--without-python --disable-nls"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	if prt-get isinst tcl-32; then
 		sed -i "s:tcl8.4:tcl8.6:" Makefile.in
 		echo '#define USE_INTERP_RESULT 1' >> config.h

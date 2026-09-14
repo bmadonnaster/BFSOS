@@ -25,3 +25,19 @@ Static syntax, version synchronization, dependency-name, source-policy, and
 contract tests are run in this source workspace. Real package compilation,
 ELFCLASS32 inspection, native/compat footprint-coexistence checks, Wine launch,
 and Steam launch still require the BFSOS VM/chroot.
+
+## 2026-09-14 live-build correction
+
+The first live system upgrade proved that changing the source-tree extension
+without incrementing and installing `pkgutils` left the older runtime extension
+active. Generic compat packages received `-m32` compiler flags but used native
+`/usr/lib` installation paths. Conflicting packages were rejected by pkgadd;
+the sole successful native-path payload, `xtrans-32`, was subsequently rebuilt
+and verified under `/usr/lib32`.
+
+The corrected source bumps pkgutils to release 35, exports extension API 2,
+requires that API from all 125 generic compat recipes, and rejects compat
+payload files under native `/usr/lib` or `/lib`. It also selects Autotools
+explicitly for libxml2-32, CMake explicitly for flac-32, makes lcms2-32 cleanup
+idempotent, and bumps libffi-32 so its missing 32-bit pkg-config metadata is
+rebuilt before GLib and its dependents.

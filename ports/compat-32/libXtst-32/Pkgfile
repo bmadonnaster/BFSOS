@@ -13,3 +13,7 @@ post_build() {
 
 	rm -r $PKG/usr/{include,share/man,share/doc,share}
 }
+
+pre_build() {
+        _bfs_require_compat32_extension 2 || return $?
+}

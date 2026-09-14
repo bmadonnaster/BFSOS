@@ -21,6 +21,7 @@ build_opt=(
 )
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
   if [ ! -e /usr/lib32/pkgconfig/egl.pc ] && prt-get isinst wayland-protocols; then
     PKGMK_GST_PLATFORM=egl
     PKGMK_GST_GLAPI=gles2

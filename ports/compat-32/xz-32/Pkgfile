@@ -10,6 +10,7 @@ source=(https://github.com/tukaani-project/xz/releases/download/v$version/xz-$ve
 build_opt="--enable-threads --enable-werror --disable-doc --disable-nls"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	autoreconf -vfi
 }
 

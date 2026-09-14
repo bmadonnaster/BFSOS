@@ -11,6 +11,7 @@ source=(https://github.com/eudev-project/eudev/releases/download/v$version/eudev
 build_opt="--sbindir=/sbin --bindir=/sbin --with-rootprefix= --with-rootlibdir=/usr/lib32 --disable-introspection --disable-manpages --enable-split-usr"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
   sed -i '/^Libs:/s/-ludev/-ludev -lrt/' src/libudev/libudev.pc.in || return 1
   CFLAGS+=" -D_GNU_SOURCE"
 }

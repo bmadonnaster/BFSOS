@@ -11,6 +11,7 @@ source=(https://dbus.freedesktop.org/releases/dbus/dbus-$version.tar.xz)
 build_opt="--libexecdir=lib32/dbus -D dbus_daemondir=/usr/sbin -D dbus_user=messagebus -D runtime_dir=/run -D system_pid_file=/run/dbus/pid -D system_socket=/run/dbus/system_bus_socket"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	export PKG_CONFIG_LIBDIR='/usr/lib32/pkgconfig:/usr/share/pkgconfig'
 }
 

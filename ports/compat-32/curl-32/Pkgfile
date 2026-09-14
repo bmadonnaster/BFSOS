@@ -12,6 +12,7 @@ source=(https://curl.se/download/${name%-*}-$version.tar.xz)
 build_opt="--enable-ipv6 --without-libidn2 --with-openssl --enable-threaded-resolver --without-libpsl --with-ca-bundle=/etc/ssl/cert.pem"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
   prt-get isinst brotli && ! prt-get isinst brotli-32 && printf "\e[031mbrotli is detected on your system, please run:
   prt-get depinst brotli-32
   before continuing with curl-32.\033[0m\n" &&

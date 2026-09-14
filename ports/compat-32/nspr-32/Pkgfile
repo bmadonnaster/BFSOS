@@ -12,6 +12,7 @@ source=(https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v$version/src/${na
 build_opt="--includedir=/usr/include/nspr --enable-optimize=$CFLAGS --disable-64bit --disable-debug"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	cd nspr || return 1
 }
 

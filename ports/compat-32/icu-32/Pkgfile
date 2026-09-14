@@ -11,6 +11,7 @@ source=(https://github.com/unicode-org/icu/releases/download/release-${version//
 build_opt="--disable-samples --disable-tests"
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	cd source || return 1
 
 	touch ../LICENSE

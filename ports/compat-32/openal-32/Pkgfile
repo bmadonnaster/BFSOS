@@ -13,3 +13,7 @@ build_opt="-D ALSOFT_UTILS=OFF -D ALSOFT_EXAMPLES=OFF -D QT_QMAKE_EXECUTABLE=qma
 post_build() {
   rm -rf "$PKG/usr/include" "$PKG/usr/share"
 }
+
+pre_build() {
+        _bfs_require_compat32_extension 2 || return $?
+}

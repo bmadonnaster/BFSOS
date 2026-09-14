@@ -10,6 +10,7 @@ source=(https://www.x.org/releases/individual/lib/libXvMC-$version.tar.xz)
 
 
 pre_build() {
+        _bfs_require_compat32_extension 2 || return 0
 	# prevent linking against libxv
 	export XVMC_LIBS="-lX11 -lXext"
 }
