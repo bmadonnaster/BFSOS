@@ -5,8 +5,8 @@
 # Optional: libheif-32 libjxl-32 librsvg-32
 
 name=glycin-32
-version=2.1.5
-release=1
+version=2.2.0
+release=2
 
 source=(
     https://gitlab.gnome.org/GNOME/glycin/-/archive/$version/glycin-$version.tar.bz2
