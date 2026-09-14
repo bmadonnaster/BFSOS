@@ -5,7 +5,7 @@
 
 name=avahi-32
 version=0.9-rc5
-release=7
+release=8
 source=(
   https://github.com/avahi/avahi/archive/v$version/avahi-$version.tar.gz
   https://www.linuxfromscratch.org/patches/blfs/svn/avahi-$version-ipv6_race_condition_fix-1.patch
