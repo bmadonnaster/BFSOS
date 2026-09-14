@@ -6,7 +6,7 @@
 
 name=steam
 version=1.0.0.87
-release=4
+release=5
 source=(https://repo.steampowered.com/steam/archive/stable/steam_$version.tar.gz
   steam-runtime.sh)
 
