@@ -5,7 +5,7 @@
 
 name=freeglut-32
 version=3.8.0
-release=3
+release=4
 source=(https://downloads.sourceforge.net/project/freeglut/freeglut/$version/freeglut-$version.tar.gz)
 
 
@@ -13,7 +13,7 @@ post_build() {
 
 	ln -s glut.pc $PKG/usr/lib32/pkgconfig/freeglut.pc
 
-	rm -r $PKG/usr/include
+	rm -rf "$PKG/usr/include" "$PKG/usr/share"
 }
 
 pre_build() {
