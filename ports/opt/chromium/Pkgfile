@@ -26,6 +26,7 @@ build_opt=(
     'chrome_pgo_phase=0'
     'use_sysroot=false'
     'use_kerberos=false'
+    'use_system_libffi=false'
     'proprietary_codecs=true'
     'ffmpeg_branding="Chrome"'
     'use_pulseaudio=true'
@@ -52,39 +53,82 @@ pkg_build() {
         }
     done
 
+    # Chromium 153 carries -Wno-stringop-overread, which Clang 23 does not
+    # recognize. Remove the unsupported warning-suppression flag rather than
+    # emitting tens of thousands of -Wunknown-warning-option diagnostics.
+    sed -i '/"-Wno-stringop-overread",/d' \
+        build/config/compiler/BUILD.gn || return 1
+
     printf -v gn_args '%s ' "${build_opt[@]}"
+
     mkdir -p out/Release || return 1
     gn gen out/Release --args="$gn_args" || return 1
     ninja -C out/Release chrome chrome_sandbox chromedriver || return 1
 
-    install -d "$PKG/usr/lib/chromium" "$PKG/usr/bin"         "$PKG/usr/share/applications" || return 1
-    install -m755 out/Release/chrome "$PKG/usr/lib/chromium/chromium" || return 1
-    install -m4755 out/Release/chrome_sandbox         "$PKG/usr/lib/chromium/chrome-sandbox" || return 1
-    install -m755 out/Release/chromedriver "$PKG/usr/bin/chromedriver" || return 1
+    install -d \
+        "$PKG/usr/lib/chromium" \
+        "$PKG/usr/bin" \
+        "$PKG/usr/share/applications" || return 1
+
+    install -m755 \
+        out/Release/chrome \
+        "$PKG/usr/lib/chromium/chromium" || return 1
+
+    install -m4755 \
+        out/Release/chrome_sandbox \
+        "$PKG/usr/lib/chromium/chrome-sandbox" || return 1
+
+    install -m755 \
+        out/Release/chromedriver \
+        "$PKG/usr/bin/chromedriver" || return 1
 
     # Runtime artifacts vary slightly by Chromium release/configuration. Stage
     # every known artifact that this build produced, but never hide a missing
     # core data file.
-    for f in icudtl.dat resources.pak chrome_100_percent.pak              chrome_200_percent.pak v8_context_snapshot.bin; do
+    for f in \
+        icudtl.dat \
+        resources.pak \
+        chrome_100_percent.pak \
+        chrome_200_percent.pak \
+        v8_context_snapshot.bin
+    do
         [ -e "out/Release/$f" ] || {
             echo "chromium: required runtime artifact missing: $f" >&2
             return 1
         }
-        cp -a "out/Release/$f" "$PKG/usr/lib/chromium/" || return 1
+
+        cp -a \
+            "out/Release/$f" \
+            "$PKG/usr/lib/chromium/" || return 1
     done
 
-    for f in chrome_crashpad_handler libEGL.so libGLESv2.so              libvk_swiftshader.so libvulkan.so.1 vk_swiftshader_icd.json              snapshot_blob.bin; do
-        [ ! -e "out/Release/$f" ] ||             cp -a "out/Release/$f" "$PKG/usr/lib/chromium/" || return 1
+    for f in \
+        chrome_crashpad_handler \
+        libEGL.so \
+        libGLESv2.so \
+        libvk_swiftshader.so \
+        libvulkan.so.1 \
+        vk_swiftshader_icd.json \
+        snapshot_blob.bin
+    do
+        [ ! -e "out/Release/$f" ] || \
+            cp -a \
+                "out/Release/$f" \
+                "$PKG/usr/lib/chromium/" || return 1
     done
 
     for d in locales resources; do
-        [ ! -e "out/Release/$d" ] ||             cp -a "out/Release/$d" "$PKG/usr/lib/chromium/" || return 1
+        [ ! -e "out/Release/$d" ] || \
+            cp -a \
+                "out/Release/$d" \
+                "$PKG/usr/lib/chromium/" || return 1
     done
 
     cat > "$PKG/usr/bin/chromium" <<'WRAP'
 #!/bin/sh
 exec /usr/lib/chromium/chromium "$@"
 WRAP
+
     chmod 755 "$PKG/usr/bin/chromium" || return 1
 
     cat > "$PKG/usr/share/applications/chromium.desktop" <<'DESKTOP'
@@ -103,6 +147,9 @@ DESKTOP
     for size in 16 24 32 48 64 128 256; do
         f="out/Release/product_logo_${size}.png"
         [ -f "$f" ] || continue
-        install -Dm644 "$f"             "$PKG/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png" || return 1
+
+        install -Dm644 \
+            "$f" \
+            "$PKG/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png" || return 1
     done
 }
