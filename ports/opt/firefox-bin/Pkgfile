@@ -29,7 +29,7 @@ pkg_build() {
     install -Dm644 "$PKG/usr/lib/firefox-bin/application.ini" \
         "$PKG/usr/lib/firefox-bin/browser/application.ini" || return 1
     sed -i \
-        -e 's/^RemotingName=.*/RemotingName=firefox-bin/' \
+        -e 's/^RemotingName=.*/RemotingName=firefox BIN/' \
         "$PKG/usr/lib/firefox-bin/browser/application.ini" || return 1
     if grep -q '^Profile=' "$PKG/usr/lib/firefox-bin/browser/application.ini"; then
         sed -i 's/^Profile=.*/Profile=firefox-bin/' \
