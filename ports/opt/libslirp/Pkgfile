@@ -10,5 +10,4 @@ source=(https://gitlab.freedesktop.org/slirp/libslirp/-/archive/v$version/libsli
 
 build_opt=(
     -Ddefault_library=shared
-    -Dtests=false
 )
