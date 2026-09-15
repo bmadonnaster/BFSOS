@@ -86,7 +86,6 @@ unset MOZ_TELEMETRY_REPORTING
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/firefox-build-dir
 
 MOZ_APP_REMOTINGNAME=firefox-esr
-MOZ_APP_PROFILE=firefox-esr
 EOF_MOZ
 
     # Keep one recipe usable for Xorg-only, Wayland-only, and combined desktop
