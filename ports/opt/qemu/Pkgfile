@@ -6,7 +6,7 @@
 
 name=qemu
 version=11.1.1
-release=3
+release=4
 build_work=disk
 source=(https://download.qemu.org/qemu-$version.tar.xz)
 
@@ -16,7 +16,6 @@ build_opt=(
     --libexecdir=/usr/lib/qemu
     --sysconfdir=/etc
     --localstatedir=/var
-    --target-list=x86_64-softmmu,i386-softmmu
     --disable-download
     --enable-tools
     --enable-guest-agent
