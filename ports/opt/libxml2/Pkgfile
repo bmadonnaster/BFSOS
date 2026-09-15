@@ -15,25 +15,13 @@ build_opt=(
     --prefix=/usr
     --sysconfdir=/etc
     --with-history
+    --with-python=yes
     --disable-static
 )
 
 pkg_build() {
     ./configure "${build_opt[@]}" || return 1
-
     make || return 1
-
-    doxygen doc/doxygen.cfg || return 1
-
-    (
-        cd python || exit 1
-        python3 setup.py build || exit 1
-        python3 setup.py install \
-            --root="$PKG" \
-            --prefix=/usr \
-            --skip-build || exit 1
-    ) || return 1
-
     make DESTDIR="$PKG" install || return 1
 }
 
