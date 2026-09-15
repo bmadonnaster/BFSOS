@@ -1,0 +1,6 @@
+#!/bin/sh
+
+getent group kvm >/dev/null 2>&1 || groupadd -r kvm
+getent group libvirt >/dev/null 2>&1 || groupadd -r libvirt
+
+exit 0
