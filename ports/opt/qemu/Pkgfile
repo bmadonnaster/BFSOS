@@ -6,18 +6,19 @@
 
 name=qemu
 version=11.1.1
-release=1
+release=2
 build_work=disk
 source=(https://download.qemu.org/qemu-$version.tar.xz)
 
 # QEMU's normal configure -> Ninja -> install flow is extension-owned.
-# Keep package policy in build_opt instead of duplicating pkg_build().
+# Only QEMU-specific policy belongs here; standard prefix/sysconf/localstate
+# directories are supplied by the BFSOS pkgutils extension.
 build_opt=(
-    --prefix=/usr
-    --sysconfdir=/etc
-    --localstatedir=/var
     --libexecdir=/usr/lib/qemu
     --target-list=x86_64-softmmu,i386-softmmu
+    --disable-download
+    --enable-tools
+    --enable-guest-agent
     --enable-kvm
     --enable-linux-aio
     --enable-linux-io-uring
@@ -28,6 +29,8 @@ build_opt=(
     --enable-virglrenderer
     --enable-vnc
     --enable-seccomp
+    --enable-cap-ng
+    --enable-libusb
     --enable-usb-redir
     --disable-werror
 )

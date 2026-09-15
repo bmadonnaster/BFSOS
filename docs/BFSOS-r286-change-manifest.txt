@@ -1,0 +1,22 @@
+BFSOS r286 — QEMU/virtualization + Chromium hardening
+Date: 2026-09-14
+
+Changed:
+  ports/opt/qemu/Pkgfile
+  ports/opt/libvirt/Pkgfile
+  ports/opt/libvirt/default-network.xml
+  ports/opt/virt-manager/Pkgfile
+  ports/opt/liburing/Pkgfile
+  ports/opt/chromium/Pkgfile
+  ports/opt/gn/Pkgfile
+
+Added verification/documentation:
+  scripts/tests/test-r286-browser-virt-hardening.py
+  docs/BFSOS-fix-tracker-r286.md
+  docs/BFSOS-r286-change-manifest.txt
+
+Static status: verified in source tree.
+Live status: QEMU/libvirt/virt-manager and Chromium still require clean BFSOS builds
+and runtime validation. Chromium's first live build must specifically verify whether the official 153
+source tar requires host Go and/or Java tooling not currently represented by
+maintained BFSOS ports. GN has been updated to 0.20260907 for public_inputs support.
