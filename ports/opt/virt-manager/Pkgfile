@@ -16,4 +16,5 @@ build_opt=(
     -Dupdate-icon-cache=false
     -Dcompile-schemas=false
     -Ddefault-graphics=vnc
+    -Ddefault-hvs="['qemu']"
 )
