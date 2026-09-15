@@ -34,7 +34,6 @@ build_opt=(
     'ozone_platform_x11=true'
     'is_clang=true'
     'clang_base_path="/usr"'
-    'clang_version="23"'
     'clang_use_chrome_plugins=false'
     'use_lld=true'
 )
