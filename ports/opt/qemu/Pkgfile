@@ -22,7 +22,7 @@ build_opt=(
     --enable-kvm
     --enable-linux-aio
     --enable-linux-io-uring
-    --enable-slirp=system
+    --enable-slirp
     --enable-gtk
     --enable-sdl
     --enable-opengl
@@ -52,7 +52,7 @@ pkg_build() {
         --enable-kvm \
         --enable-linux-aio \
         --enable-linux-io-uring \
-        --enable-slirp=system \
+        --enable-slirp \
         --enable-gtk \
         --enable-sdl \
         --enable-opengl \
