@@ -12,3 +12,9 @@ build_opt=(
     -Denable-gtk-doc=false
     -Denable-tests=false
 )
+
+pre_build() {
+    sed -i \
+        's/const char \*msg ATTRIBUTE_UNUSED/const char *msg/' \
+        osinfo/osinfo_loader.c || return 1
+}
