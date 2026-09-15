@@ -20,3 +20,15 @@ pkg_build() {
     DESTDIR="$PKG" cmake --install build || return 1
 }
 
+
+pre_build() {
+    sed -i \
+        -e '/GET_TARGET_PROPERTY(binPath json_reformat LOCATION)/d' \
+        -e 's|${binPath}|$<TARGET_FILE:json_reformat>|g' \
+        reformatter/CMakeLists.txt || return 1
+
+    sed -i \
+        -e '/GET_TARGET_PROPERTY(binPath json_verify LOCATION)/d' \
+        -e 's|${binPath}|$<TARGET_FILE:json_verify>|g' \
+        verify/CMakeLists.txt || return 1
+}
