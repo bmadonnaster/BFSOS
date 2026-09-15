@@ -1220,6 +1220,12 @@ _finish_full_bootstrap() {
     local archive="" status=0 answer=""
     archive="$(_latest_rootfs_archive 2>/dev/null || true)"
 
+    if [ "${BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT:-no}" = yes ]; then
+        printf '\nFull Bootstrap completed successfully.\n'
+        printf 'Base archive: %s\n' "${archive:-<unknown>}"
+        return 0
+    fi
+
     if _installer_available; then
         if command -v dialog >/dev/null 2>&1 &&
            [ -r /dev/tty ] && [ -w /dev/tty ]; then
@@ -1738,8 +1744,10 @@ _show_bootstrap_menu() {
         'Launch BFSOS installer' "$(_installer_available && printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET")"
     printf '  %s10)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
         'Run Full Bootstrap (Stages 1 -> 2 -> 3 -> 4 -> 5)' "$(printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET")"
-    printf '  %s11)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings'
-    printf '  %s12)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
+    printf '  %s11)%s %-54s [%s]\n' "$COLOR_CYAN" "$COLOR_RESET" \
+        'Build BFSOS bootable ISO' "$(printf '%sAVAILABLE%s' "$COLOR_YELLOW" "$COLOR_RESET")"
+    printf '  %s12)%s %s\n' "$COLOR_CYAN" "$COLOR_RESET" 'Settings'
+    printf '  %s13)%s %s\n\n' "$COLOR_CYAN" "$COLOR_RESET" 'Quit'
 }
 
 
@@ -1792,7 +1800,8 @@ _select_bootstrap_menu_choice() {
                 8 "$(_dialog_menu_description 'Chroot into BFS rootfs' "$(_dialog_chroot_status)")" \
                 9 "$(_dialog_menu_description 'Launch BFSOS installer' "$(_dialog_action_status _installer_available)")" \
                 10 "$(_dialog_menu_description 'Run Full Bootstrap (Stages 1 -> 2 -> 3 -> 4 -> 5)' '\Zb\Z3AVAILABLE\Zn')" \
-                12 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
+                11 "$(_dialog_menu_description 'Build BFSOS bootable ISO' '\Zb\Z3AVAILABLE\Zn')" \
+                13 "$(_dialog_menu_description 'Quit' '\Z3EXIT\Zn')" \
                 --stdout </dev/tty 2>/dev/tty
         )"
         dialog_status=$?
@@ -1800,15 +1809,15 @@ _select_bootstrap_menu_choice() {
         clear </dev/tty >/dev/tty 2>/dev/null || true
         case "$dialog_status" in
             0) printf '%s\n' "$choice" ;;
-            3) printf '%s\n' 11 ;;
-            *) printf '%s\n' 12 ;;
+            3) printf '%s\n' 12 ;;
+            *) printf '%s\n' 13 ;;
         esac
         return 0
     fi
     _show_bootstrap_menu >&2
-    printf '%sChoose [1-12]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
+    printf '%sChoose [1-13]: %s' "$COLOR_YELLOW" "$COLOR_RESET" >&2
     read -r choice </dev/tty 2>/dev/null || read -r choice
-    case "$choice" in q|Q|quit|Quit|QUIT) choice=12 ;; esac
+    case "$choice" in q|Q|quit|Quit|QUIT) choice=13 ;; esac
     printf '%s\n' "$choice"
 }
 
@@ -1870,8 +1879,15 @@ _bootstrap_menu() {
                 _reset_terminal_ui
                 continue
                 ;;
-            11) bootstrap_settings_menu; continue ;;
-            12|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
+            11)
+                set +e
+                "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
+                status=$?
+                set -e
+                _reset_terminal_ui
+                ;;
+            12) bootstrap_settings_menu; continue ;;
+            13|q|Q|quit|Quit|QUIT) echo "BFS bootstrap exited."; return 0 ;;
             *) echo "Invalid selection."; sleep 1; continue ;;
         esac
         # Stages 2, 3, and 5 already report their successful result.  Return
@@ -4112,6 +4128,9 @@ case "${1:-menu}" in
     settings|build-settings)
         compiler_build_settings_menu
         ;;
+    iso|build-iso|create-iso)
+        "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
+        ;;
     8|chroot)
         _enter_bfs_chroot
         ;;
@@ -4140,6 +4159,8 @@ Usage:
   $0 archive|archive-base
   $0 restore-base|restore-toolchain
   $0 settings|build-settings
+  $0 iso|build-iso|create-iso
+                  Rebuild the BFSOS base and create bootable ISO media
   $0 8|chroot    Enter the BFS chroot
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 full|full-bootstrap|all

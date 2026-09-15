@@ -6,7 +6,7 @@
 
 name=chromium
 version=153.0.8010.36
-release=2
+release=3
 build_work=disk
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$version.tar.xz)
 
@@ -26,6 +26,7 @@ build_opt=(
     'chrome_pgo_phase=0'
     'use_sysroot=false'
     'use_kerberos=false'
+    'use_official_google_api_keys=false'
     'use_system_libffi=true'
     'proprietary_codecs=true'
     'ffmpeg_branding="Chrome"'

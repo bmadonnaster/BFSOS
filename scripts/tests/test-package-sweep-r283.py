@@ -25,7 +25,7 @@ expected = {
     'core/xz':'5.8.4', 'core/fuse':'3.18.3',
     'contrib/librsvg':'2.63.0', 'opt/ghostscript':'10.08.0',
     'opt/llvm':'23.1.1', 'compat-32/llvm-32':'23.1.1',
-    'opt/libclc':'23.1.1', 'opt/lld':'23.1.1', 'opt/rust-bindgen':'0.73.2',
+    'opt/libclc':'23.1.1', 'opt/rust-bindgen':'0.73.2',
     'opt/poppler':'26.09.0', 'opt/libpcap':'1.10.7', 'compat-32/libpcap-32':'1.10.7',
     'opt/imlib2':'1.12.7', 'compat-32/imlib2-32':'1.12.7',
     'opt/libgcrypt':'1.12.3', 'compat-32/libgcrypt-32':'1.12.3',
@@ -69,7 +69,7 @@ if (ROOT/'ports/opt/nss/nss-3.54-standalone-2.patch').exists():
     raise AssertionError('obsolete NSS 3.54 patch still present')
 
 # Replaced duplicate/stale ports must stay gone.
-for rel in ('opt/freetype2','opt/cracklib-words'):
+for rel in ('opt/freetype2','opt/cracklib-words','opt/lld'):
     if (ROOT/'ports'/rel/'Pkgfile').exists():
         raise AssertionError(f'obsolete duplicate port returned: {rel}')
 

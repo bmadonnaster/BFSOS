@@ -65,3 +65,7 @@ printf "\n== build-work backend regression ==\n"
 
 printf "\n== pkgmk payload guard regression ==\n"
 "$ROOT/scripts/tests/test-pkgmk-payload-guard.sh"
+
+echo
+echo '== ISO builder source regression =='
+"$ROOT/scripts/tests/test-iso-builder-source.sh"
