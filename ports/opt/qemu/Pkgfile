@@ -1,7 +1,7 @@
 # Description: QEMU machine emulator and KVM virtualizer
 # URL: https://www.qemu.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib glib gtk3 libaio libcap-ng libepoxy libseccomp libslirp liburing libusb usbredir libxml2 ncurses pixman sdl2 virglrenderer zlib zstd
+# Depends on: dtc alsa-lib glib gtk3 libaio libcap-ng libepoxy libseccomp libslirp liburing libusb usbredir libxml2 ncurses pixman sdl2 virglrenderer zlib zstd
 # Optional: pipewire pulseaudio
 
 name=qemu
