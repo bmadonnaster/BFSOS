@@ -24,7 +24,6 @@ build_opt=(
     -Dstorage_disk=enabled
     -Dstorage_lvm=enabled
     -Dstorage_scsi=enabled
-    -Ddocs=disabled
     -Dtests=disabled
 )
 
