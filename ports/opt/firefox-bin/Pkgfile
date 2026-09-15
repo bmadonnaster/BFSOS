@@ -5,7 +5,7 @@
 
 name=firefox-bin
 version=155.0.1
-release=1
+release=2
 source=(https://archive.mozilla.org/pub/firefox/releases/$version/linux-x86_64/en-US/firefox-$version.tar.xz \
 	policies.json firefox.desktop firefox-bin)
 
@@ -35,7 +35,7 @@ pkg_build() {
         sed -i 's/^Profile=.*/Profile=firefox-bin/' \
             "$PKG/usr/lib/firefox-bin/browser/application.ini" || return 1
     else
-        sed -i '/^RemotingName=/a Profile=firefox-bin' \
+        sed -i '/^RemotingName=/a Profile=firefox BIN' \
             "$PKG/usr/lib/firefox-bin/browser/application.ini" || return 1
     fi
 
