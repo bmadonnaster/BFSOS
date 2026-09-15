@@ -18,6 +18,7 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
 # switches, and stale GN arguments can make generation fail before compilation.
 build_opt=(
     'is_official_build=true'
+    'treat_warnings_as_errors=false'
     'is_debug=false'
     'symbol_level=0'
     'blink_symbol_level=0'
