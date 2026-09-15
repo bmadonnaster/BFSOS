@@ -130,3 +130,10 @@ pkg_build() {
         "$PKG/usr/share/vulkan/implicit_layer.d"
   )
 }
+
+pre_build() {
+    sed -i \
+        's/const char \*msg ATTRIBUTE_UNUSED/const char *msg/' \
+        osinfo/osinfo_loader.c || return 1
+}
+
