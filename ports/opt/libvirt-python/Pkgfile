@@ -6,6 +6,6 @@
 name=libvirt-python
 version=12.7.0
 release=1
-source=(https://download.libvirt.org/python/libvirt-python-$version.tar.gz)
+source=(https://download.libvirt.org/python/libvirt_python-$version.tar.gz)
 
 build_type=python3_build
