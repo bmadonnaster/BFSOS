@@ -1,7 +1,7 @@
 # Description: Open-source Chromium web browser
 # URL: https://www.chromium.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: alsa-lib at-spi2-core brotli cairo cups dav1d dbus desktop-file-utils expat flac fontconfig freetype git glib gperf gtk3 harfbuzz hicolor-icon-theme icu libdrm libevent libffi libgcrypt libjpeg-turbo libpng libva libwebp libX11 libxcb libXcomposite libXdamage libXext libXfixes libxkbcommon libXrandr libXScrnSaver libxml2 libxslt llvm mesa minizip nspr nss openh264 opus pango pciutils pipewire pulseaudio systemd xdg-utils zlib zstd gn lld ninja nodejs python3 rust-bindgen rustc typescript
+# Depends on: alsa-lib at-spi2-core brotli cairo cups dav1d dbus desktop-file-utils expat flac fontconfig freetype git glib gperf gtk3 harfbuzz hicolor-icon-theme icu libdrm libevent libffi libgcrypt libjpeg-turbo libpng libva libwebp libX11 libxcb libXcomposite libXdamage libXext libXfixes libxkbcommon libXrandr libXScrnSaver libxml2 libxslt llvm mesa minizip nspr nss openh264 opus pango pciutils pipewire pulseaudio systemd xdg-utils zlib zstd gn ninja nodejs python3 rust-bindgen rustc typescript
 # Optional: qt6 gnome-keyring kdialog
 
 name=chromium
