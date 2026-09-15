@@ -5,4 +5,18 @@ name=yajl
 version=2.1.0
 release=1
 source=(https://github.com/lloyd/yajl/archive/refs/tags/$version.tar.gz)
-build_opt=(-DBUILD_SHARED_LIBS=ON)
+
+build_opt=(
+    -DCMAKE_INSTALL_PREFIX=/usr
+    -DCMAKE_INSTALL_LIBDIR=lib
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    -DBUILD_SHARED_LIBS=ON
+)
+
+pkg_build() {
+    cmake -S . -B build "${build_opt[@]}" || return 1
+    cmake --build build || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
+}
+
