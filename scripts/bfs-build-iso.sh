@@ -307,7 +307,7 @@ EOS
 Description=BFSOS live-session initialization
 After=NetworkManager.service
 Before=getty@tty1.service sshd.service ssh.service
-ConditionPathExists=/run/bfsos-live
+ConditionKernelCommandLine=bfs.live=1
 
 [Service]
 Type=oneshot
@@ -403,8 +403,6 @@ mount -t squashfs -o loop,ro "/run/bfs-media$squash" /run/bfs-root || return 1
 mount -t tmpfs -o mode=0755 tmpfs /run/bfs-overlay || return 1
 mkdir -p /run/bfs-overlay/upper /run/bfs-overlay/work
 mount -t overlay overlay -o lowerdir=/run/bfs-root,upperdir=/run/bfs-overlay/upper,workdir=/run/bfs-overlay/work /sysroot || return 1
-mkdir -p /sysroot/run
-touch /sysroot/run/bfsos-live
 rootok=1
 EOS
     chmod 0755 \
@@ -455,14 +453,15 @@ stage_iso() {
         sudo cp -a "$root/var/cache/pkg/packages/." "$pkgdir/"
     fi
 
-    # Do not ship downloaded sources, duplicate package archives, build trees,
-    # or anything under /usr/src inside the compressed live root.
-    log "Cleaning build/source artifacts from live root before squashfs creation"
+    # Do not ship downloaded package sources, duplicate package archives,
+    # or temporary package build trees inside the compressed live root.
+    # Keep /usr/src intact; removing it saved little space and can be useful
+    # for development/debugging on the live media.
+    log "Cleaning package/build caches from live root before squashfs creation"
     sudo rm -rf "$root/var/cache/pkg/sources/"*
     sudo rm -rf "$root/var/cache/pkg/packages/"*
     sudo rm -rf "$root/var/cache/pkg/build-work/"*
     sudo rm -rf "$root/var/cache/pkg/build-work-disk/"*
-    sudo rm -rf "$root/usr/src/"*
 
     sudo cp "$root/boot/$kernel" "$stage/bfsos/vmlinuz"
     sudo cp "$root/boot/$initrd" "$stage/bfsos/initramfs.img"
