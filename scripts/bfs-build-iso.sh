@@ -81,7 +81,11 @@ preflight() {
         done
         exit 2
     fi
-    ((${#optional_missing[@]})) && printf '\nOptional VM boot-test tools are missing; ISO creation can still continue.\n'
+    if ((${#optional_missing[@]})); then
+        printf '\nOptional VM boot-test tools are missing; ISO creation can still continue.\n'
+    fi
+
+    return 0
 }
 
 confirm_rebuild() {
