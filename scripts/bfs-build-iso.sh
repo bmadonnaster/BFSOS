@@ -18,12 +18,12 @@ ISO_PATH="$OUTPUT_DIR/$ISO_NAME"
 ASSUME_YES="${BFS_ISO_ASSUME_YES:-no}"
 SKIP_BOOTSTRAP="${BFS_ISO_SKIP_BOOTSTRAP:-no}"
 
-required_tools=(bash git sudo tar xz zstd rsync sha256sum find awk sed grep mount umount chroot mksquashfs xorriso grub-mkrescue)
+required_tools=(bash git sudo tar xz zstd rsync sha256sum find awk sed grep mount umount chroot mksquashfs xorriso grub-mkrescue mformat)
 optional_tools=(qemu-system-x86_64)
 
 declare -A tool_packages=(
     [git]=git [zstd]=zstd [rsync]=rsync [mksquashfs]=squashfs-tools
-    [xorriso]=libisoburn [grub-mkrescue]=grub [qemu-system-x86_64]=qemu
+    [xorriso]=libisoburn [grub-mkrescue]=grub [mformat]=mtools [qemu-system-x86_64]=qemu
 )
 
 # Everything the current installer can select or require dynamically, plus
@@ -434,14 +434,32 @@ stage_iso() {
     rm -rf "$stage"
     mkdir -p "$stage/boot/grub" "$stage/bfsos" "$pkgdir"
 
+    # Preserve one copy of package archives outside the squashfs for offline installs.
+    if [ -d "$root/var/cache/pkg/packages" ]; then
+        sudo cp -a "$root/var/cache/pkg/packages/." "$pkgdir/"
+    fi
+
+    # Do not ship downloaded sources, duplicate package archives, build trees,
+    # or anything under /usr/src inside the compressed live root.
+    log "Cleaning build/source artifacts from live root before squashfs creation"
+    sudo rm -rf "$root/var/cache/pkg/sources/"*
+    sudo rm -rf "$root/var/cache/pkg/packages/"*
+    sudo rm -rf "$root/var/cache/pkg/build-work/"*
+    sudo rm -rf "$root/var/cache/pkg/build-work-disk/"*
+    sudo rm -rf "$root/usr/src/"*
+
     sudo cp "$root/boot/$kernel" "$stage/bfsos/vmlinuz"
     sudo cp "$root/boot/$initrd" "$stage/bfsos/initramfs.img"
     sudo mksquashfs "$root" "$stage/bfsos/rootfs.squashfs" -comp xz -noappend -wildcards \
-        -e 'var/cache/pkg/build-work/*' 'var/cache/pkg/build-work-disk/*' 'tmp/*'
+        -e 'tmp/*'
     cp "$base_archive" "$stage/bfsos/$(basename "$base_archive")"
-    sudo cp -a "$root/var/cache/pkg/packages/." "$pkgdir/"
     sudo chown -R "$(id -u):$(id -g)" "$stage"
-    (cd "$pkgdir" && sha256sum *.pkg.tar.* > packages.sha256)
+
+    if compgen -G "$pkgdir/*.pkg.tar.*" >/dev/null; then
+        (cd "$pkgdir" && sha256sum *.pkg.tar.* > packages.sha256)
+    else
+        : > "$pkgdir/packages.sha256"
+    fi
 
     cat > "$stage/bfsos/build-info" <<EOF_INFO
 BFSOS_VERSION=$VERSION
@@ -464,7 +482,11 @@ EOF_GRUB
     mkdir -p "$OUTPUT_DIR"
     rm -f "$ISO_PATH" "$ISO_PATH.sha256"
     log "Mastering hybrid GRUB ISO: $ISO_PATH"
-    grub-mkrescue -o "$ISO_PATH" "$stage" -- -volid "$ISO_LABEL"
+    grub-mkrescue \
+        -o "$ISO_PATH" \
+        -iso-level 3 \
+        -volid "$ISO_LABEL" \
+        "$stage"
     sha256sum "$ISO_PATH" > "$ISO_PATH.sha256"
     log "ISO complete: $ISO_PATH"
     log "Checksum: $ISO_PATH.sha256"
