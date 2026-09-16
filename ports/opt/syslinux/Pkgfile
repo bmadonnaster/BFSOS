@@ -7,16 +7,18 @@ name=syslinux
 version=6.03
 release=1
 source=(http://www.kernel.org/pub/linux/utils/boot/$name/$name-$version.tar.xz
-        $name-$version-sysmacros.patch)
+        $name-$version-sysmacros.patch
+        $name-$version-stdio.patch)
 
 skip_patch=1
 
 pkg_build() {
 
-	export CFLAGS="$CFLAGS -fcommon"
+        export CFLAGS="$CFLAGS -fcommon"
 
-	patch -p1 -i $SRC/$name-$version-sysmacros.patch
+        patch -p1 -i $SRC/$name-$version-sysmacros.patch
+        patch -p1 -i $SRC/$name-$version-stdio.patch
 
-	make OPTFLAGS="$CFLAGS" installer
-	make OPTFLAGS="$CFLAGS" INSTALLROOT=$PKG MANDIR=/usr/share/man install
+        make OPTFLAGS="$CFLAGS" installer
+        make OPTFLAGS="$CFLAGS" INSTALLROOT=$PKG MANDIR=/usr/share/man install
 }
