@@ -169,17 +169,7 @@ install_live_runtime() {
 
     chroot "$root" /bin/bash -lc '
         getent group bfs >/dev/null 2>&1 || groupadd bfs
-
-        live_groups=()
-        for g in wheel audio video input storage; do
-            getent group "$g" >/dev/null 2>&1 || groupadd -r "$g"
-            live_groups+=("$g")
-        done
-
-        if ! id bfs >/dev/null 2>&1; then
-            useradd -m -g bfs -G "$(IFS=,; echo "${live_groups[*]}")" -s /bin/bash bfs
-        fi
-
+        id bfs >/dev/null 2>&1 || useradd -m -g bfs -G wheel,audio,video,input,storage -s /bin/bash bfs
         passwd -l bfs >/dev/null 2>&1 || true
         chown -R bfs:bfs /home/bfs
     '
@@ -311,23 +301,8 @@ EOS
 
 create_live_initramfs() {
     local root="$1" kernel image initrd
-    local kernel_flavor="${BFS_ISO_KERNEL:-lts}"
-
-    case "$kernel_flavor" in
-        lts)
-            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f\n' | sort -V | tail -n1)"
-            [ -n "$kernel" ] || die "No BFSOS LTS kernel found in live root"
-            ;;
-        mainline)
-            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f\n' | sort -V | tail -n1)"
-            [ -n "$kernel" ] || die "No BFSOS mainline kernel found in live root"
-            ;;
-        *)
-            die "Unknown BFS_ISO_KERNEL='$kernel_flavor' (expected: lts or mainline)"
-            ;;
-    esac
-
-    log "Selected ISO kernel: $kernel_flavor ($kernel)"
+    kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f\n' | sort -V | tail -n1)"
+    [ -n "$kernel" ] || die "No BFSOS mainline kernel found in live root"
     image="${kernel#vmlinuz-}"
     initrd="initramfs-${image}-live.img"
     log "Generating live initramfs for $image"
