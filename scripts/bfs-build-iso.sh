@@ -169,10 +169,54 @@ build_iso_package_set() {
     mount_chroot_fs "$root"
     trap 'umount_chroot_fs "$root"' RETURN
 
+    log "Refreshing ports metadata in isolated root"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc "ports -u" ||
+        die "Failed to refresh ports in ISO root"
+
+    log "Updating pkgutils before system upgrade"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc "prt-get update pkgutils" ||
+        die "Failed to update pkgutils in ISO root"
+
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc 'grep -Fq "# BFSOS: command-line options override Pkgfile/pkgmk.conf." /usr/bin/pkgmk' ||
+        die "Updated pkgutils does not contain CLI precedence fix"
+
+    log "Running full system upgrade in isolated root"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc "prt-get sysup" ||
+        die "Failed to complete ISO root system upgrade"
+
+    log "Ensuring GLib introspection support required by ISO dependencies"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc '
+            if prt-get isinst gobject-introspection >/dev/null 2>&1 && \
+               [ ! -r /usr/share/gir-1.0/Gio-2.0.gir ]; then
+                rm -f /var/cache/pkg/packages/glib#*.pkg.tar.zst
+                rm -rf /var/cache/pkg/build-work/pkgmk-glib
+                cd /usr/ports/opt/glib || exit 1
+                pkgmk -d -if || exit 1
+                glib_pkg="$(ls -1t /var/cache/pkg/packages/glib#*.pkg.tar.zst 2>/dev/null | head -n1)"
+                [ -n "$glib_pkg" ] || exit 1
+                pkgadd -u "$glib_pkg" || exit 1
+            fi
+            [ -r /usr/share/gir-1.0/Gio-2.0.gir ]
+            [ -r /usr/lib/girepository-1.0/Gio-2.0.typelib ]
+        ' || die "Failed to prepare GLib introspection support"
+
+    log "GLib introspection support verified"
+
     log "Building/installing selected ISO kernel: $kernel_pkg"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get depinst $kernel_pkg"
+        /bin/bash -lc "prt-get depinst $kernel_pkg" ||
+        die "Failed to build/install selected ISO kernel package set: $kernel_pkg"
 
     if ! find "$root/boot" -maxdepth 1 -type f -name "$kernel_pattern" -print -quit | grep -q .; then
         die "Selected kernel package '$kernel_pkg' completed without installing $kernel_pattern"
@@ -187,7 +231,8 @@ build_iso_package_set() {
     log "Building/installing remaining ISO live + installer packages"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get depinst ${iso_packages[*]}"
+        /bin/bash -lc "prt-get depinst ${iso_packages[*]}" ||
+        die "Failed to build/install remaining ISO package set"
 
     umount_chroot_fs "$root"
     trap - RETURN

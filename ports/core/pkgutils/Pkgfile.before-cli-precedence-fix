@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=37
+release=36
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -35,43 +35,6 @@ harden_pkgmk_work_cleanup() {
         skip && /^}/ { skip=0; next }
         !skip { print }
         ' "$target" > "$tmp" || return 1
-        cat "$tmp" > "$target" || return 1
-        rm -f "$tmp"
-}
-
-
-# Command-line pkgmk options must override Pkgfile/pkgmk.conf defaults.
-# pkgmk must parse once early for options such as -cf, then re-parse after
-# configuration files have been sourced.
-fix_pkgmk_cli_precedence() {
-        local target="$1" tmp="${1}.bfsos-cli-precedence"
-
-        grep -Fq '# BFSOS: command-line options override Pkgfile/pkgmk.conf.' "$target" &&
-                return 0
-
-        awk '
-        /^[[:space:]]*for FILE in \$PKGMK_PKGFILE \$PKGMK_CONFFILE; do[[:space:]]*$/ {
-                in_config=1
-        }
-
-        {
-                print
-        }
-
-        in_config && /^[[:space:]]*done[[:space:]]*$/ {
-                print ""
-                print "        # BFSOS: command-line options override Pkgfile/pkgmk.conf."
-                print "        parse_options \"$@\""
-                in_config=0
-        }
-        ' "$target" > "$tmp" || return 1
-
-        grep -Fq '# BFSOS: command-line options override Pkgfile/pkgmk.conf.' "$tmp" || {
-                echo "pkgutils: failed to locate pkgmk configuration-loading block" >&2
-                rm -f "$tmp"
-                return 1
-        }
-
         cat "$tmp" > "$target" || return 1
         rm -f "$tmp"
 }
@@ -110,8 +73,6 @@ else\
 fi\
 unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
-        fix_pkgmk_cli_precedence pkgmk.in
-
         sed -i -e 's/ --static//' \
                -e 's/ -static//' Makefile
 
@@ -121,7 +82,6 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
 post_build() {
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
-        fix_pkgmk_cli_precedence "$PKG/usr/bin/pkgmk"
 
         # Final/installed pkgmk needs a UTF-8-capable C locale for archives
         # containing non-ASCII pathnames (notably GCC). Support both common
