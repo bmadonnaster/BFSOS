@@ -369,8 +369,21 @@ depends() { echo "rootfs-block"; }
 installkernel() { instmods squashfs overlay loop iso9660; }
 install() {
     inst_multiple mount umount mkdir blkid losetup
+    inst_hook cmdline 95 "$moddir/bfs-live-cmdline.sh"
     inst_hook pre-mount 90 "$moddir/bfs-live-root.sh"
 }
+EOS
+    cat > "$module/bfs-live-cmdline.sh" <<'EOS'
+#!/bin/sh
+
+getargbool 0 bfs.live || return 0
+
+case "$(getarg root=)" in
+    bfs-live|"")
+        root="bfs-live"
+        rootok=1
+        ;;
+esac
 EOS
     cat > "$module/bfs-live-root.sh" <<'EOS'
 #!/bin/sh
@@ -394,7 +407,10 @@ mkdir -p /sysroot/run
 touch /sysroot/run/bfsos-live
 rootok=1
 EOS
-    chmod 0755 "$module/module-setup.sh" "$module/bfs-live-root.sh"
+    chmod 0755 \
+        "$module/module-setup.sh" \
+        "$module/bfs-live-cmdline.sh" \
+        "$module/bfs-live-root.sh"
 }
 
 create_live_initramfs() {
@@ -474,7 +490,7 @@ EOF_INFO
 set default=0
 set timeout=5
 menuentry "BFSOS $VERSION Live / Installer" {
-    linux /bfsos/vmlinuz bfs.live=1 bfs.live.label=$ISO_LABEL bfs.live.squash=/bfsos/rootfs.squashfs rw
+    linux /bfsos/vmlinuz root=bfs-live bfs.live=1 bfs.live.label=$ISO_LABEL bfs.live.squash=/bfsos/rootfs.squashfs rw
     initrd /bfsos/initramfs.img
 }
 EOF_GRUB
