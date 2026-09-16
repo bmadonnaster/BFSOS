@@ -359,7 +359,8 @@ EOS
 }
 
 install_dracut_live_module() {
-    local root="$1" module="$root/usr/lib/dracut/modules.d/95bfs-live"
+    local root="$1"
+    local module="$root/usr/lib/dracut/modules.d/95bfs-live"
     mkdir -p "$module"
     cat > "$module/module-setup.sh" <<'EOS'
 #!/bin/bash
@@ -428,7 +429,8 @@ create_live_initramfs() {
 
 stage_iso() {
     local root="$1" base_archive="$2" kernel="$3" initrd="$4"
-    local stage="$WORK_DIR/iso-tree" pkgdir="$stage/bfsos/packages/$ARCH"
+    local stage="$WORK_DIR/iso-tree"
+    local pkgdir="$stage/bfsos/packages/$ARCH"
     rm -rf "$stage"
     mkdir -p "$stage/boot/grub" "$stage/bfsos" "$pkgdir"
 
