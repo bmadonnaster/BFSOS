@@ -389,7 +389,19 @@ main() {
     base_archive="$(latest_base_archive)"
     [ -n "$base_archive" ] && [ -s "$base_archive" ] || die "No base archive was produced"
 
-    rm -rf "$WORK_DIR"
+    case "$WORK_DIR" in
+        /var/tmp/bfsos-iso-*)
+            ;;
+        *)
+            die "Refusing to remove unsafe ISO work directory: $WORK_DIR"
+            ;;
+    esac
+
+    if [ -d "$WORK_DIR/live-root" ]; then
+        sudo bash -c "$(declare -f umount_chroot_fs); umount_chroot_fs '$WORK_DIR/live-root'" || true
+    fi
+
+    sudo rm -rf -- "$WORK_DIR"
     mkdir -p "$WORK_DIR"
     sudo mkdir -p "$WORK_DIR/live-root"
     sudo chown root:root "$WORK_DIR/live-root"
