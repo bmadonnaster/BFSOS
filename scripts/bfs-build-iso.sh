@@ -192,12 +192,18 @@ build_iso_package_set() {
         /bin/bash -lc "prt-get sysup" ||
         die "Failed to complete ISO root system upgrade"
 
+    log "Ensuring gobject-introspection is installed"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc "prt-get depinst gobject-introspection" ||
+        die "Failed to install gobject-introspection in ISO root"
+
     log "Ensuring GLib introspection support required by ISO dependencies"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
         /bin/bash -lc '
-            if prt-get isinst gobject-introspection >/dev/null 2>&1 && \
-               [ ! -r /usr/share/gir-1.0/Gio-2.0.gir ]; then
+            if [ ! -r /usr/share/gir-1.0/Gio-2.0.gir ] || \
+               [ ! -r /usr/lib/girepository-1.0/Gio-2.0.typelib ]; then
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.zst
                 rm -rf /var/cache/pkg/build-work/pkgmk-glib
                 cd /usr/ports/opt/glib || exit 1
@@ -206,8 +212,8 @@ build_iso_package_set() {
                 [ -n "$glib_pkg" ] || exit 1
                 pkgadd -u "$glib_pkg" || exit 1
             fi
-            [ -r /usr/share/gir-1.0/Gio-2.0.gir ]
-            [ -r /usr/lib/girepository-1.0/Gio-2.0.typelib ]
+            [ -r /usr/share/gir-1.0/Gio-2.0.gir ] || exit 1
+            [ -r /usr/lib/girepository-1.0/Gio-2.0.typelib ] || exit 1
         ' || die "Failed to prepare GLib introspection support"
 
     log "GLib introspection support verified"
