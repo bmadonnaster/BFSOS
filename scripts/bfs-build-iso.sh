@@ -29,7 +29,7 @@ declare -A tool_packages=(
 # Everything the current installer can select or require dynamically, plus
 # the live-media services/tools. Dependencies are resolved by prt-get.
 iso_packages=(
-    linux linux-lts linux-firmware dracut
+    linux-firmware dracut
     networkmanager openssh git sudo wget wpa_supplicant wireless_tools gpm lynx links
     cryptsetup lvm2 mdadm snapper pciutils
     dialog squashfs-tools grub grub-efi dosfstools mtools efibootmgr libisoburn syslinux
@@ -143,16 +143,52 @@ umount_chroot_fs() {
 
 build_iso_package_set() {
     local root="$1"
+    local kernel_flavor="${BFS_ISO_KERNEL:-lts}"
+    local kernel_pkg kernel_pattern
+
+    case "$kernel_flavor" in
+        lts)
+            kernel_pkg="linux-lts"
+            kernel_pattern="vmlinuz-*-BFS-LTS"
+            ;;
+        mainline)
+            kernel_pkg="linux"
+            kernel_pattern="vmlinuz-*-BFS-Linux"
+            ;;
+        *)
+            die "Unknown BFS_ISO_KERNEL='$kernel_flavor' (expected: lts or mainline)"
+            ;;
+    esac
+
     log "Building/installing complete ISO live + installer package set in isolated root"
     rm -rf "$root/usr/ports"
     mkdir -p "$root/usr/ports"
     cp -a "$PROJECT_DIR/ports/." "$root/usr/ports/"
     cp -a /etc/resolv.conf "$root/etc/resolv.conf" 2>/dev/null || true
+
     mount_chroot_fs "$root"
     trap 'umount_chroot_fs "$root"' RETURN
+
+    log "Building/installing selected ISO kernel: $kernel_pkg"
+    chroot "$root" /usr/bin/env -i \
+        HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
+        /bin/bash -lc "prt-get depinst $kernel_pkg"
+
+    if ! find "$root/boot" -maxdepth 1 -type f -name "$kernel_pattern" -print -quit | grep -q .; then
+        die "Selected kernel package '$kernel_pkg' completed without installing $kernel_pattern"
+    fi
+
+    if [ ! -d "$root/lib/modules" ] || ! find "$root/lib/modules" -mindepth 1 -maxdepth 1 -type d -print -quit | grep -q .; then
+        die "Selected kernel package '$kernel_pkg' installed no kernel modules"
+    fi
+
+    log "Selected ISO kernel installed successfully: $kernel_pkg"
+
+    log "Building/installing remaining ISO live + installer packages"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
         /bin/bash -lc "prt-get depinst ${iso_packages[*]}"
+
     umount_chroot_fs "$root"
     trap - RETURN
 }
@@ -411,9 +447,9 @@ main() {
 
     # Remaining rootfs operations are deliberately performed as root while the
     # top-level builder itself remains a regular-user bootstrap operation.
-    sudo env PROJECT_DIR="$PROJECT_DIR" WORK_DIR="$WORK_DIR" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs build_iso_package_set install_live_runtime install_dracut_live_module); $(declare -p iso_packages); build_iso_package_set '$WORK_DIR/live-root'; install_live_runtime '$WORK_DIR/live-root'; install_dracut_live_module '$WORK_DIR/live-root'"
+    sudo env PROJECT_DIR="$PROJECT_DIR" WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs build_iso_package_set install_live_runtime install_dracut_live_module); $(declare -p iso_packages); build_iso_package_set '$WORK_DIR/live-root'; install_live_runtime '$WORK_DIR/live-root'; install_dracut_live_module '$WORK_DIR/live-root'"
 
-    mapfile -t boot_files < <(sudo env WORK_DIR="$WORK_DIR" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs create_live_initramfs); create_live_initramfs '$WORK_DIR/live-root'" | tail -n2)
+    mapfile -t boot_files < <(sudo env WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs create_live_initramfs); create_live_initramfs '$WORK_DIR/live-root'" | tail -n2)
     ((${#boot_files[@]} == 2)) || die "Could not determine generated live kernel/initramfs"
     stage_iso "$WORK_DIR/live-root" "$base_archive" "${boot_files[0]}" "${boot_files[1]}"
 }
