@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
+# BFSOS ISO builder - initial local-package/repository implementation.
 # Source-complete implementation; boot/install acceptance still requires live VM testing.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -88,109 +88,25 @@ preflight() {
     return 0
 }
 
+confirm_rebuild() {
+    [ "$ASSUME_YES" = yes ] && return 0
+    printf '\nThe ISO builder will rebuild the complete BFSOS base before assembling media.\n'
+    printf 'Continue? [y/N]: '
+    read -r answer
+    case "$answer" in y|Y|yes|YES|Yes) ;; *) exit 0 ;; esac
+}
+
 latest_base_archive() {
     find "$PROJECT_DIR/archives/base" -maxdepth 1 -type f \
         \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
         -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-
 }
 
-archive_list() {
-    local archive="$1"
-    case "$archive" in
-        *.tar.xz) tar -tJf "$archive" ;;
-        *.tar.zst) tar --zstd -tf "$archive" ;;
-        *.tar.gz) tar -tzf "$archive" ;;
-        *) return 1 ;;
-    esac
-}
-
-validate_base_archive() {
-    local archive="$1" listing=""
-    [ -n "$archive" ] && [ -s "$archive" ] || return 1
-
-    listing="$(archive_list "$archive" 2>/dev/null)" || return 1
-    for required in \
-        ./usr/bin/bash \
-        ./usr/bin/pkgmk \
-        ./etc/os-release \
-        ./etc/passwd \
-        ./etc/group \
-        ./etc/shadow \
-        ./etc/gshadow
-    do
-        printf '%s\n' "$listing" | grep -Fxq "$required" || return 1
-    done
-    return 0
-}
-
-latest_usable_base_archive() {
-    local candidate=""
-    while IFS= read -r candidate; do
-        [ -n "$candidate" ] || continue
-        if validate_base_archive "$candidate"; then
-            printf '%s\n' "$candidate"
-            return 0
-        fi
-    done < <(
-        find "$PROJECT_DIR/archives/base" -maxdepth 1 -type f \
-            \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
-            -printf '%T@ %p\n' 2>/dev/null | sort -nr | cut -d' ' -f2-
-    )
-    return 1
-}
-
-choose_base_action() {
-    local existing="" newest="" answer=""
-    newest="$(latest_base_archive 2>/dev/null || true)"
-    existing="$(latest_usable_base_archive 2>/dev/null || true)"
-
-    if [ "$SKIP_BOOTSTRAP" = yes ]; then
-        validate_base_archive "$existing" || \
-            die "BFS_ISO_SKIP_BOOTSTRAP=yes was requested, but no usable verified base archive exists"
-        log "BFS_ISO_SKIP_BOOTSTRAP=yes: using existing verified base archive: $existing" >&2
-        printf '%s\n' use-existing
-        return 0
-    fi
-
-    if validate_base_archive "$existing"; then
-        if [ "$ASSUME_YES" = yes ]; then
-            log "Using existing verified base archive: $existing" >&2
-            printf '%s\n' use-existing
-            return 0
-        fi
-
-        printf '\nA usable BFSOS base archive already exists:\n  %s\n' "$existing" >&2
-        printf 'Use existing base, rebuild it, or cancel? [U/r/c]: ' >&2
-        read -r answer
-        case "$answer" in
-            r|R|rebuild|REBUILD|Rebuild) printf '%s\n' rebuild ;;
-            c|C|cancel|CANCEL|Cancel) printf '%s\n' cancel ;;
-            *) printf '%s\n' use-existing ;;
-        esac
-        return 0
-    fi
-
-    if [ -n "$newest" ]; then
-        log "No usable verified base archive was found; newest candidate failed validation: $newest" >&2
-    else
-        log "No existing base archive was found" >&2
-    fi
-
-    if [ "$ASSUME_YES" = yes ]; then
-        printf '%s\n' rebuild
-        return 0
-    fi
-
-    printf '\nNo usable verified BFSOS base archive is available.\n' >&2
-    printf 'Rebuild the complete base now? [y/N]: ' >&2
-    read -r answer
-    case "$answer" in
-        y|Y|yes|YES|Yes) printf '%s\n' rebuild ;;
-        *) printf '%s\n' cancel ;;
-    esac
-}
-
 run_full_bootstrap() {
+    if [ "$SKIP_BOOTSTRAP" = yes ]; then
+        log "BFS_ISO_SKIP_BOOTSTRAP=yes: using newest existing verified base archive"
+        return 0
+    fi
     log "Rebuilding complete BFSOS base (bootstrap stages 1 -> 5)"
     BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
     BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
@@ -599,30 +515,12 @@ EOF_GRUB
 }
 
 main() {
-    local base_action=""
-
     [ "$(id -u)" -ne 0 ] || die "Run the ISO creator as a regular user; it uses sudo when root access is required."
     preflight
-
-    base_action="$(choose_base_action)"
-    case "$base_action" in
-        use-existing)
-            ;;
-        rebuild)
-            run_full_bootstrap
-            ;;
-        cancel)
-            log "ISO build cancelled"
-            exit 0
-            ;;
-        *)
-            die "Internal error: unknown base action '$base_action'"
-            ;;
-    esac
-
-    base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
-    validate_base_archive "$base_archive" || die "No usable verified base archive is available after bootstrap selection"
-    log "Using base archive: $base_archive"
+    confirm_rebuild
+    run_full_bootstrap
+    base_archive="$(latest_base_archive)"
+    [ -n "$base_archive" ] && [ -s "$base_archive" ] || die "No base archive was produced"
 
     case "$WORK_DIR" in
         /var/tmp/bfsos-iso-*)

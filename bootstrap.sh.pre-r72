@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r72 - Shadow finalization, ISO handoff, and Stage-1 host-tool preflight fix
+# BFSOS bootstrap r70 - Shadow account-database finalization before verification/archive
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -2691,11 +2691,6 @@ _buildtoolchain() {
         return 1
     fi
 
-    # Full-bootstrap clean-start can remove a previously populated /tmp/lfs-tools
-    # while Bash still has commands from that directory cached in its hash table.
-    # Flush those stale command paths before Stage 1 recreates the toolchain.
-    hash -r
-
     export PATCH="$SCRIPT_DIR/sources/"
     export BOOTSTRAP=1
     export LFS_TGT=x86_64-lfs-linux-gnu
@@ -2730,21 +2725,21 @@ _buildtoolchain() {
     # by root.  Stage 1 itself must still build as the regular user, but removing
     # the stale link/directory may require sudo.
     if [ -e "$TOOLS" ] || [ -L "$TOOLS" ]; then
-        if ! /usr/bin/rm -rf -- "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
+        if ! rm -rf -- "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
             _stage_preflight_note "Stage 1: regular-user removal of $TOOLS failed; retrying cleanup with sudo."
-            if ! sudo /usr/bin/rm -rf -- "$TOOLS" >>"$STAGE_PREFLIGHT_LOG" 2>&1; then
+            if ! sudo rm -rf -- "$TOOLS" >>"$STAGE_PREFLIGHT_LOG" 2>&1; then
                 _stage_preflight_note "ERROR: Could not remove stale toolchain path: $TOOLS"
                 return 1
             fi
         fi
     fi
 
-    if ! /usr/bin/mkdir -p "${LFS}${TOOLS}" "$sourcedir" 2>>"$STAGE_PREFLIGHT_LOG"; then
+    if ! mkdir -p "${LFS}${TOOLS}" "$sourcedir" 2>>"$STAGE_PREFLIGHT_LOG"; then
         _stage_preflight_note "ERROR: Could not create Stage-1 toolchain directories."
         _stage_preflight_note "       If $LFS survived an older root build, use Full Bootstrap clean-start or remove that stale tree with sudo."
         return 1
     fi
-    if ! /usr/bin/ln -s "${LFS}${TOOLS}" "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
+    if ! ln -s "${LFS}${TOOLS}" "$TOOLS" 2>>"$STAGE_PREFLIGHT_LOG"; then
         _stage_preflight_note "ERROR: Could not create $TOOLS -> ${LFS}${TOOLS}."
         return 1
     fi
@@ -2754,17 +2749,12 @@ _buildtoolchain() {
         return 1
     fi
 
-    if [ "$(/usr/bin/readlink -f "$TOOLS")" != "${LFS}${TOOLS}" ]; then
+    if [ "$(readlink -f "$TOOLS")" != "${LFS}${TOOLS}" ]; then
         _stage_preflight_note "ERROR: $TOOLS points to the wrong location."
         _stage_preflight_note "  Expected: ${LFS}${TOOLS}"
-        _stage_preflight_note "  Actual:   $(/usr/bin/readlink -f "$TOOLS" 2>/dev/null || echo '<unresolved>')"
+        _stage_preflight_note "  Actual:   $(readlink -f "$TOOLS" 2>/dev/null || echo '<unresolved>')"
         return 1
     fi
-
-    # The toolchain directory now exists again. Flush command hashing once more
-    # so early Stage-1 orchestration falls back to host tools until each target
-    # utility is actually built into $TOOLS/bin.
-    hash -r
 
     echo "Temporary toolchain path verified:"
     echo "  $TOOLS -> ${LFS}${TOOLS}"
