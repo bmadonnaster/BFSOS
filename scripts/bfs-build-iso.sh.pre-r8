@@ -248,7 +248,6 @@ install_live_runtime() {
     local root="$1"
     log "Installing BFSOS live-session policy"
     mkdir -p "$root/home/bfs" "$root/usr/local/sbin" "$root/etc/systemd/system" "$root/etc/sudoers.d"
-    mkdir -p "$root/etc/systemd/system/getty@tty1.service.d"
     mkdir -p "$root/home/bfs/BFSOS"
     rsync -a --delete \
         --exclude '/iso-work/' \
@@ -272,29 +271,21 @@ install_live_runtime() {
         chown -R bfs:bfs /home/bfs
     '
     cat > "$root/etc/sudoers.d/90-bfs-live" <<'EOS'
-# Disposable live-media account. Local console auto-login is enabled.
-# Passwordless sudo applies only to the live image and must never be copied to an installed system.
-bfs ALL=(ALL:ALL) NOPASSWD: ALL
+# Live-media account. Password is set interactively at each boot.
+bfs ALL=(ALL:ALL) ALL
 EOS
     chmod 0440 "$root/etc/sudoers.d/90-bfs-live"
-
-    cat > "$root/etc/systemd/system/getty@tty1.service.d/10-bfs-live-autologin.conf" <<'EOS'
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin bfs --noclear %I $TERM
-EOS
 
     cat > "$root/usr/local/sbin/bfs-live-init" <<'EOS'
 #!/usr/bin/env bash
 set -u
 exec </dev/tty1 >/dev/tty1 2>&1
 printf '\nBFSOS live environment\n======================\n'
-printf 'Local console: automatic login as bfs with passwordless sudo.\n'
-printf 'SSH is disabled by default. To enable password-based SSH for this boot:\n'
-printf '  sudo passwd bfs\n'
-printf '  sudo ssh-keygen -A\n'
-printf '  sudo systemctl start sshd.service\n'
-printf 'If this system uses ssh.service instead, start that unit instead.\n\n'
+printf 'Set the temporary password for the bfs live account.\n'
+printf 'This password applies only to this live session.\n\n'
+until passwd bfs; do
+    printf '\nPassword setup failed; please try again.\n'
+done
 
 if command -v nm-online >/dev/null 2>&1 && nm-online -q --timeout=12; then
     printf '\nNetwork is available. Refreshing the bundled BFSOS project tree...\n'
@@ -305,7 +296,9 @@ else
     printf '\nNo network detected; using the BFSOS project tree shipped on the ISO.\n'
 fi
 
-printf '\nLive initialization complete. Starting bfs console session.\n'
+ssh-keygen -A
+systemctl start sshd.service 2>/dev/null || systemctl start ssh.service 2>/dev/null || true
+printf '\nLive initialization complete. Log in as bfs.\n'
 EOS
     chmod 0755 "$root/usr/local/sbin/bfs-live-init"
 
