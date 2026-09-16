@@ -105,7 +105,7 @@ archive_list() {
 }
 
 validate_base_archive() {
-    local archive="$1" listing="" required="" alternate=""
+    local archive="$1" listing=""
     [ -n "$archive" ] && [ -s "$archive" ] || return 1
 
     listing="$(archive_list "$archive" 2>/dev/null)" || return 1
@@ -118,17 +118,7 @@ validate_base_archive() {
         ./etc/shadow \
         ./etc/gshadow
     do
-        # Do not pipe the full archive listing into `grep -q` while pipefail is
-        # enabled.  Once grep finds a match it exits early; printf can then take
-        # SIGPIPE, making a valid archive look invalid.  A here-string avoids
-        # that false failure.  Accept tar listings with or without the leading
-        # "./" as both are equivalent archive member spellings.
-        alternate="${required#./}"
-        if ! grep -Fxq -- "$required" <<<"$listing" && \
-           ! grep -Fxq -- "$alternate" <<<"$listing"; then
-            log "Base archive validation failed: missing $required in $archive" >&2
-            return 1
-        fi
+        printf '%s\n' "$listing" | grep -Fxq "$required" || return 1
     done
     return 0
 }

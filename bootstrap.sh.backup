@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r73 - Shadow finalization, ISO handoff, Stage-1 host-tool preflight fix, and verified-base ISO reuse wording
+# BFSOS bootstrap r72 - Shadow finalization, ISO handoff, and Stage-1 host-tool preflight fix
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -4335,7 +4335,7 @@ Usage:
   $0 restore-base|restore-toolchain
   $0 settings|build-settings
   $0 iso|build-iso|create-iso
-                  Reuse a verified base (or build one if needed) and create bootable ISO media
+                  Rebuild the BFSOS base and create bootable ISO media
   $0 8|chroot    Enter the BFS chroot
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 full|full-bootstrap|all
