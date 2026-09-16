@@ -1185,54 +1185,6 @@ _launch_bfs_installer() {
     return "$status"
 }
 
-_launch_iso_builder() {
-    local builder="$SCRIPT_DIR/scripts/bfs-build-iso.sh"
-    local target_user="" target_home=""
-
-    if [ ! -f "$builder" ] || [ ! -r "$builder" ]; then
-        echo "ERROR: BFSOS ISO builder is missing or unreadable:" >&2
-        echo "  $builder" >&2
-        return 1
-    fi
-
-    # The ISO builder deliberately runs as a regular user and elevates only the
-    # rootfs operations that need sudo.  If bootstrap itself was started with
-    # sudo, hand the builder back to the original invoking user instead of
-    # launching it as root (which the builder correctly refuses to do).
-    if [ "$(id -u)" -eq 0 ]; then
-        target_user="${SUDO_USER:-}"
-        if [ -z "$target_user" ] || [ "$target_user" = root ]; then
-            echo "ERROR: The ISO builder must run as a regular user." >&2
-            echo "Run bootstrap as your normal user, or invoke it through sudo from that user." >&2
-            return 1
-        fi
-
-        target_home="$(getent passwd "$target_user" 2>/dev/null | awk -F: 'NR == 1 { print $6 }')"
-        if [ -z "$target_home" ] || [ ! -d "$target_home" ]; then
-            echo "ERROR: Could not determine a valid home directory for ISO builder user: $target_user" >&2
-            return 1
-        fi
-
-        sudo -u "$target_user" -- \
-            env \
-                HOME="$target_home" \
-                USER="$target_user" \
-                LOGNAME="$target_user" \
-                BFS_ISO_ASSUME_YES="${BFS_ISO_ASSUME_YES:-}" \
-                BFS_ISO_SKIP_BOOTSTRAP="${BFS_ISO_SKIP_BOOTSTRAP:-}" \
-                BFS_ISO_WORK_DIR="${BFS_ISO_WORK_DIR:-}" \
-                BFS_ISO_OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-}" \
-                BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-}" \
-                BFS_KEEP_SOURCE_ARCHIVES="${BFS_KEEP_SOURCE_ARCHIVES:-}" \
-                bash "$builder" "$@"
-        return $?
-    fi
-
-    # Invoke through bash so the bootstrap handoff does not depend on the
-    # executable bit surviving an archive extraction or source-tree copy.
-    bash "$builder" "$@"
-}
-
 _confirm_full_bootstrap() {
     local status=0 answer=""
     local message="Full Bootstrap will run every build stage in order:\n\n  1. Temporary toolchain\n  2. Base system\n  3. Final-toolchain rebuild\n  4. Base verification\n  5. Base archive compression\n\nFull Bootstrap starts Stage 1 from a CLEAN build state. It removes old /tmp/lfs build trees, package/build-work contents, and previous BFS bootstrap archives. Downloaded source archives are retained.\n\nStage 3 is intentionally included even though it remains optional when stages are run manually.\n\nThe workflow stops immediately if any stage fails.\n\nStart Full Bootstrap now?"
@@ -1929,7 +1881,7 @@ _bootstrap_menu() {
                 ;;
             11)
                 set +e
-                _launch_iso_builder
+                "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
                 status=$?
                 set -e
                 _reset_terminal_ui
@@ -4294,7 +4246,7 @@ case "${1:-menu}" in
         compiler_build_settings_menu
         ;;
     iso|build-iso|create-iso)
-        _launch_iso_builder "${@:2}"
+        "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
         ;;
     8|chroot)
         _enter_bfs_chroot

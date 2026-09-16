@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r70 - Shadow account-database finalization before verification/archive
+# BFSOS bootstrap r69 - Stage-3 exact-package rebuild; no dependency expansion
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -1185,54 +1185,6 @@ _launch_bfs_installer() {
     return "$status"
 }
 
-_launch_iso_builder() {
-    local builder="$SCRIPT_DIR/scripts/bfs-build-iso.sh"
-    local target_user="" target_home=""
-
-    if [ ! -f "$builder" ] || [ ! -r "$builder" ]; then
-        echo "ERROR: BFSOS ISO builder is missing or unreadable:" >&2
-        echo "  $builder" >&2
-        return 1
-    fi
-
-    # The ISO builder deliberately runs as a regular user and elevates only the
-    # rootfs operations that need sudo.  If bootstrap itself was started with
-    # sudo, hand the builder back to the original invoking user instead of
-    # launching it as root (which the builder correctly refuses to do).
-    if [ "$(id -u)" -eq 0 ]; then
-        target_user="${SUDO_USER:-}"
-        if [ -z "$target_user" ] || [ "$target_user" = root ]; then
-            echo "ERROR: The ISO builder must run as a regular user." >&2
-            echo "Run bootstrap as your normal user, or invoke it through sudo from that user." >&2
-            return 1
-        fi
-
-        target_home="$(getent passwd "$target_user" 2>/dev/null | awk -F: 'NR == 1 { print $6 }')"
-        if [ -z "$target_home" ] || [ ! -d "$target_home" ]; then
-            echo "ERROR: Could not determine a valid home directory for ISO builder user: $target_user" >&2
-            return 1
-        fi
-
-        sudo -u "$target_user" -- \
-            env \
-                HOME="$target_home" \
-                USER="$target_user" \
-                LOGNAME="$target_user" \
-                BFS_ISO_ASSUME_YES="${BFS_ISO_ASSUME_YES:-}" \
-                BFS_ISO_SKIP_BOOTSTRAP="${BFS_ISO_SKIP_BOOTSTRAP:-}" \
-                BFS_ISO_WORK_DIR="${BFS_ISO_WORK_DIR:-}" \
-                BFS_ISO_OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-}" \
-                BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-}" \
-                BFS_KEEP_SOURCE_ARCHIVES="${BFS_KEEP_SOURCE_ARCHIVES:-}" \
-                bash "$builder" "$@"
-        return $?
-    fi
-
-    # Invoke through bash so the bootstrap handoff does not depend on the
-    # executable bit surviving an archive extraction or source-tree copy.
-    bash "$builder" "$@"
-}
-
 _confirm_full_bootstrap() {
     local status=0 answer=""
     local message="Full Bootstrap will run every build stage in order:\n\n  1. Temporary toolchain\n  2. Base system\n  3. Final-toolchain rebuild\n  4. Base verification\n  5. Base archive compression\n\nFull Bootstrap starts Stage 1 from a CLEAN build state. It removes old /tmp/lfs build trees, package/build-work contents, and previous BFS bootstrap archives. Downloaded source archives are retained.\n\nStage 3 is intentionally included even though it remains optional when stages are run manually.\n\nThe workflow stops immediately if any stage fails.\n\nStart Full Bootstrap now?"
@@ -1929,7 +1881,7 @@ _bootstrap_menu() {
                 ;;
             11)
                 set +e
-                _launch_iso_builder
+                "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
                 status=$?
                 set -e
                 _reset_terminal_ui
@@ -2962,79 +2914,6 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
     # Return directly to the main menu after the archive passes validation.
 }
 
-_finalize_account_database() {
-    if [ "$(id -u)" -ne 0 ]; then
-        echo "ERROR: Account-database finalization must be run as root." >&2
-        return 1
-    fi
-
-    for account_file in "$LFS/etc/passwd" "$LFS/etc/group"; do
-        if [ ! -f "$account_file" ]; then
-            echo "ERROR: Cannot finalize account database; missing: $account_file" >&2
-            return 1
-        fi
-    done
-
-    if [ ! -x "$LFS/usr/sbin/pwconv" ] || [ ! -x "$LFS/usr/sbin/grpconv" ]; then
-        echo "ERROR: Shadow account-conversion tools are missing from the target root." >&2
-        echo "Expected:" >&2
-        echo "  $LFS/usr/sbin/pwconv" >&2
-        echo "  $LFS/usr/sbin/grpconv" >&2
-        return 1
-    fi
-
-    echo "Finalizing shadow password/group databases..."
-
-    # Shadow's pwconv/grpconv expect the destination files to exist.  The base
-    # bootstrap seeds /etc/passwd and /etc/group before shadow is installed, so
-    # create the protected databases explicitly before converting the completed
-    # target account database.  Never run these target-finalization commands from
-    # the shadow package build itself.
-    touch "$LFS/etc/shadow" "$LFS/etc/gshadow"
-    chown 0:0 "$LFS/etc/shadow" "$LFS/etc/gshadow"
-    chmod 0600 "$LFS/etc/shadow" "$LFS/etc/gshadow"
-
-    chroot "$LFS" \
-        /usr/bin/env -i \
-        HOME=/root \
-        TERM="${TERM:-dumb}" \
-        LANG=C \
-        LC_ALL=C \
-        LANGUAGE=C \
-        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /usr/sbin/pwconv || {
-            echo "ERROR: pwconv failed while finalizing the BFSOS target root." >&2
-            return 1
-        }
-
-    chroot "$LFS" \
-        /usr/bin/env -i \
-        HOME=/root \
-        TERM="${TERM:-dumb}" \
-        LANG=C \
-        LC_ALL=C \
-        LANGUAGE=C \
-        PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /usr/sbin/grpconv || {
-            echo "ERROR: grpconv failed while finalizing the BFSOS target root." >&2
-            return 1
-        }
-
-    chown 0:0 "$LFS/etc/shadow" "$LFS/etc/gshadow"
-    chmod 0600 "$LFS/etc/shadow" "$LFS/etc/gshadow"
-
-    if ! grep -q '^root:' "$LFS/etc/shadow"; then
-        echo "ERROR: /etc/shadow was created without a root entry." >&2
-        return 1
-    fi
-    if ! grep -q '^root:' "$LFS/etc/gshadow"; then
-        echo "ERROR: /etc/gshadow was created without a root entry." >&2
-        return 1
-    fi
-
-    echo "Shadow account databases finalized successfully."
-}
-
 _verifybase() {
     local marker="$LFS/.bfs-verified"
     local failed=0
@@ -3053,14 +2932,6 @@ _verifybase() {
     # Never leave a stale success marker behind after a failed verification.
     rm -f "$marker"
 
-    # Finalize the completed target account database before validating or
-    # archiving it.  A base with passwd/group but no shadow/gshadow cannot
-    # authenticate users and must never receive a verification marker.
-    if ! _finalize_account_database; then
-        echo "ERROR: Base account-database finalization failed." >&2
-        return 1
-    fi
-
     _verify_path() {
         if [ -e "$1" ] || [ -L "$1" ]; then
             printf '  [PASS] %s\n' "$1"
@@ -3078,10 +2949,6 @@ _verifybase() {
     _verify_path "$LFS/usr/bin/make"
     _verify_path "$LFS/usr/bin/pkgmk"
     _verify_path "$LFS/var/lib/pkg/db"
-    _verify_path "$LFS/etc/passwd"
-    _verify_path "$LFS/etc/group"
-    _verify_path "$LFS/etc/shadow"
-    _verify_path "$LFS/etc/gshadow"
     _verify_path "$LFS/etc"
     _verify_path "$LFS/var"
     _verify_path "$LFS/usr"
@@ -3152,22 +3019,6 @@ _verifybase() {
             echo "Checking package database..."
             pkginfo -i >/dev/null 2>&1 || fail "package database is not readable"
             pass "package database"
-
-            echo
-            echo "Checking account databases..."
-            for file in /etc/passwd /etc/group /etc/shadow /etc/gshadow; do
-                [ -f "$file" ] || fail "$file is missing"
-                pass "$file"
-            done
-            grep -q "^root:" /etc/passwd || fail "/etc/passwd has no root entry"
-            grep -q "^root:" /etc/group || fail "/etc/group has no root entry"
-            grep -q "^root:" /etc/shadow || fail "/etc/shadow has no root entry"
-            grep -q "^root:" /etc/gshadow || fail "/etc/gshadow has no root entry"
-            [ "$(stat -c %a /etc/shadow)" = 600 ] || fail "/etc/shadow mode is not 0600"
-            [ "$(stat -c %a /etc/gshadow)" = 600 ] || fail "/etc/gshadow mode is not 0600"
-            [ "$(grep "^root:" /etc/passwd | cut -d: -f2)" = x ] ||
-                fail "/etc/passwd root password field is not shadowed"
-            pass "shadow account database"
 
             echo
             echo "Compiling and running a C test..."
@@ -3245,22 +3096,6 @@ _compressrootfs() {
         echo "ERROR: Base system has not passed stage 4 verification." >&2
         echo "Run:" >&2
         echo "  sudo $0 4" >&2
-        return 1
-    fi
-
-    # Defense in depth: never archive a base whose account databases became
-    # incomplete after Stage 4.  Stage 4 performs the conversion; Stage 5 only
-    # verifies the invariant before creating the release artifact.
-    for account_file in passwd group shadow gshadow; do
-        if [ ! -f "$LFS/etc/$account_file" ]; then
-            echo "ERROR: Refusing to archive base with missing /etc/$account_file." >&2
-            rm -f "$LFS/.bfs-verified"
-            return 1
-        fi
-    done
-    if ! grep -q '^root:' "$LFS/etc/shadow" || ! grep -q '^root:' "$LFS/etc/gshadow"; then
-        echo "ERROR: Refusing to archive incomplete shadow account databases." >&2
-        rm -f "$LFS/.bfs-verified"
         return 1
     fi
 
@@ -4294,7 +4129,7 @@ case "${1:-menu}" in
         compiler_build_settings_menu
         ;;
     iso|build-iso|create-iso)
-        _launch_iso_builder "${@:2}"
+        "$SCRIPT_DIR/scripts/bfs-build-iso.sh"
         ;;
     8|chroot)
         _enter_bfs_chroot
