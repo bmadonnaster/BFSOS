@@ -5,7 +5,7 @@
 
 name=plasma-login-manager
 version=6.7.5
-release=2
+release=1
 source=(
     https://download.kde.org/stable/plasma/$version/$name-$version.tar.xz
     bfs-display-manager
@@ -51,17 +51,6 @@ pkg_build() {
         [ -e "$f" ] || continue
         mv "$f" "$PKG/usr/share/dbus-1/system.d/" || return 1
     done
-
-    # plasmalogin is started by systemd, whose default PATH does not contain
-    # /opt/kf6/bin. Tell the daemon exactly where its Wayland greeter launcher is.
-    sed -i '/^ExecStart=\/opt\/kf6\/bin\/plasmalogin$/a Environment="PLASMALOGIN_GREETER_EXEC=/opt/kf6/bin/startplasma-login-wayland"' \
-        "$PKG/usr/lib/systemd/system/plasmalogin.service" || return 1
-
-    grep -qF 'Environment="PLASMALOGIN_GREETER_EXEC=/opt/kf6/bin/startplasma-login-wayland"' \
-        "$PKG/usr/lib/systemd/system/plasmalogin.service" || {
-        echo "plasma-login-manager packaging error: greeter environment was not added" >&2
-        return 1
-    }
 
     # Use the BFSOS PAM policy regardless of any distro-specific upstream sample.
     install -m0644 "$SRC/plasmalogin.pam" "$PKG/etc/pam.d/plasmalogin" || return 1
