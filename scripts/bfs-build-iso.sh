@@ -2,7 +2,9 @@
 set -Eeuo pipefail
 
 # BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
-# Source-complete implementation; boot/install acceptance still requires live VM testing.
+# Includes USB live-media discovery retry, live console accessibility, and
+# current pre-RC live-session policy. Boot/install acceptance still requires
+# fresh VM + USB-emulation + bare-metal validation.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -17,6 +19,7 @@ ISO_NAME="BFSOS-${VERSION}-${ARCH}-${BUILD_DATE}-${GIT_COMMIT}.iso"
 ISO_PATH="$OUTPUT_DIR/$ISO_NAME"
 ASSUME_YES="${BFS_ISO_ASSUME_YES:-no}"
 SKIP_BOOTSTRAP="${BFS_ISO_SKIP_BOOTSTRAP:-no}"
+LIVE_MEDIA_WAIT="${BFS_ISO_LIVE_MEDIA_WAIT:-15}"
 
 required_tools=(bash git sudo tar xz zstd rsync sha256sum find awk sed grep mount umount chroot mksquashfs xorriso grub-mkrescue mformat)
 optional_tools=(qemu-system-x86_64)
@@ -30,7 +33,7 @@ declare -A tool_packages=(
 # the live-media services/tools. Dependencies are resolved by prt-get.
 iso_packages=(
     linux-firmware dracut
-    networkmanager openssh git sudo wget wpa_supplicant wireless_tools gpm lynx links
+    networkmanager openssh git sudo wget wpa_supplicant wireless_tools gpm lynx links chrony
     cryptsetup lvm2 mdadm snapper pciutils
     dialog squashfs-tools grub grub-efi dosfstools mtools efibootmgr libisoburn syslinux
 )
@@ -378,6 +381,67 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin bfs --noclear %I $TERM
 EOS
 
+    cat > "$root/usr/local/sbin/bfs-live-console-font" <<'EOS'
+#!/usr/bin/env bash
+set -u
+
+FONT_DIR=/usr/share/kbd/consolefonts
+STATE_FILE=/run/bfsos-live-console-font
+
+find_font() {
+    local candidate path
+    for candidate in "$@"; do
+        for path in \
+            "$FONT_DIR/$candidate" \
+            "$FONT_DIR/$candidate.psf" \
+            "$FONT_DIR/$candidate.psfu" \
+            "$FONT_DIR/$candidate.psf.gz" \
+            "$FONT_DIR/$candidate.psfu.gz"; do
+            [ -r "$path" ] && { printf '%s\n' "$path"; return 0; }
+        done
+    done
+    return 1
+}
+
+apply_font() {
+    local path="$1"
+    if setfont "$path" 2>/dev/null; then
+        basename "$path" | sed -E 's/\.(psfu?|psfu?\.gz)$//' > "$STATE_FILE"
+        printf 'Applied console font: %s\n' "$(cat "$STATE_FILE")"
+        return 0
+    fi
+    printf 'WARNING: Unable to apply console font %s; keeping current font.\n' "$path" >&2
+    return 1
+}
+
+choose_font() {
+    local large="" medium="" choice=""
+    command -v setfont >/dev/null 2>&1 || {
+        printf 'setfont is unavailable; keeping the current console font.\n'
+        return 0
+    }
+    [ -t 0 ] && [ -t 1 ] || return 0
+
+    large="$(find_font latarcyrheb-sun32 ter-v32n ter-132n 2>/dev/null || true)"
+    medium="$(find_font latarcyrheb-sun16 ter-v24n ter-v20n 2>/dev/null || true)"
+
+    printf '\nBFSOS console font\n==================\n'
+    printf '  1) Keep current/default\n'
+    [ -n "$large" ] && printf '  2) Large / high visibility (%s)\n' "$(basename "$large")"
+    [ -n "$medium" ] && printf '  3) Medium (%s)\n' "$(basename "$medium")"
+    printf '\nChoice [1]: '
+    read -r choice || choice=1
+    case "$choice" in
+        2) [ -n "$large" ] && apply_font "$large" || true ;;
+        3) [ -n "$medium" ] && apply_font "$medium" || true ;;
+        *) printf 'Keeping current console font.\n' ;;
+    esac
+}
+
+choose_font
+EOS
+    chmod 0755 "$root/usr/local/sbin/bfs-live-console-font"
+
     cat > "$root/usr/local/sbin/bfs-live-init" <<'EOS'
 #!/usr/bin/env bash
 set -u
@@ -390,8 +454,22 @@ printf '  sudo ssh-keygen -A\n'
 printf '  sudo systemctl start sshd.service\n'
 printf 'If this system uses ssh.service instead, start that unit instead.\n\n'
 
-if command -v nm-online >/dev/null 2>&1 && nm-online -q --timeout=12; then
-    printf '\nNetwork is available. Refreshing the bundled BFSOS project tree...\n'
+# Accessibility choice must happen before the normal live menu appears.
+/usr/local/sbin/bfs-live-console-font || true
+
+if command -v nm-online >/dev/null 2>&1 && nm-online -q --timeout=20; then
+    printf '\nNetwork is available. Starting live time synchronization...\n'
+    systemctl stop systemd-timesyncd.service 2>/dev/null || true
+    if command -v chronyd >/dev/null 2>&1; then
+        systemctl start chronyd.service 2>/dev/null || \
+            systemctl start chrony.service 2>/dev/null || \
+            chronyd >/dev/null 2>&1 || true
+        if command -v chronyc >/dev/null 2>&1; then
+            chronyc waitsync 10 0.5 >/dev/null 2>&1 || true
+        fi
+    fi
+
+    printf '\nRefreshing the bundled BFSOS project tree...\n'
     if [ -d /home/bfs/BFSOS/.git ]; then
         su - bfs -c 'cd ~/BFSOS && if git diff --quiet && git diff --cached --quiet; then git pull --ff-only || true; else echo "Local BFSOS tree has changes; automatic pull skipped."; fi'
     fi
@@ -429,13 +507,14 @@ set -u
 PROJECT=/home/bfs/BFSOS
 while true; do
     printf '\nBFSOS Live Menu\n===============\n'
-    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Quit menu\n\nChoice: '
+    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Quit menu\n\nChoice: '
     read -r choice
     case "$choice" in
         1) cd "$PROJECT" && ./bootstrap.sh ;;
         2) cd "$PROJECT" && sudo ./scripts/install-bfs-menu-current.sh ;;
-        3) printf 'Type exit to return to the BFSOS live menu.\n'; bash ;;
-        4) exit 0 ;;
+        3) printf 'Type exit to return to the BFSOS live menu.\n'; bash -l ;;
+        4) /usr/local/sbin/bfs-live-console-font ;;
+        5) exit 0 ;;
         *) printf 'Invalid choice.\n' ;;
     esac
 done
@@ -455,6 +534,10 @@ EOS
         if [ -e /usr/lib/systemd/system/NetworkManager.service ]; then
             ln -sfn /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
         fi
+        # Chrony is the live ISO time-sync policy. Do not run a competing
+        # systemd-timesyncd instance on live media. bfs-live-init starts chrony
+        # only after NetworkManager reports usable connectivity.
+        systemctl disable systemd-timesyncd.service 2>/dev/null || true
         systemctl disable sshd.service ssh.service 2>/dev/null || true
     ' || true
 }
@@ -469,7 +552,10 @@ check() { return 0; }
 depends() { echo "rootfs-block"; }
 installkernel() { instmods squashfs overlay loop iso9660; }
 install() {
-    inst_multiple mount umount mkdir blkid losetup
+    # udevadm + sleep are required by the USB-media discovery retry loop.
+    # A hybrid ISO presented as USB may not enumerate until after pre-mount
+    # begins, even though the same image is immediately available as /dev/sr0.
+    inst_multiple mount umount mkdir blkid losetup udevadm sleep
     inst_hook cmdline 95 "$moddir/bfs-live-cmdline.sh"
     inst_hook pre-mount 90 "$moddir/bfs-live-root.sh"
 }
@@ -494,12 +580,56 @@ label="$(getarg bfs.live.label=)"
 squash="$(getarg bfs.live.squash=)"
 [ -n "$label" ] || label="BFSOS_LIVE"
 [ -n "$squash" ] || squash="/bfsos/rootfs.squashfs"
+wait_seconds="$(getarg bfs.live.wait=)"
+[ -n "$wait_seconds" ] || wait_seconds=15
+case "$wait_seconds" in
+    *[!0-9]*|'') wait_seconds=15 ;;
+esac
+[ "$wait_seconds" -lt 1 ] && wait_seconds=1
+[ "$wait_seconds" -gt 60 ] && wait_seconds=60
 mkdir -p /run/bfs-media /run/bfs-root /run/bfs-overlay /sysroot
-for dev in /dev/disk/by-label/$label /dev/sr0 /dev/sr1; do
-    [ -e "$dev" ] || continue
-    mount -o ro "$dev" /run/bfs-media 2>/dev/null && break
+
+# USB mass-storage media can enumerate after this pre-mount hook starts.
+# The failure reproduced in QEMU USB mode showed the old one-shot probe
+# failing at ~2.30s while /dev/sda and its partitions appeared at ~3.19s.
+# Wait/retry rather than treating an early missing /dev/disk/by-label link as
+# a permanent failure.  Mount by label regardless of whether the hybrid image
+# is exposed as ISO9660, HFS+, or another mountable hybrid-ISO view.
+media=""
+tries=0
+max_tries=$((wait_seconds * 4))
+while [ "$tries" -lt "$max_tries" ]; do
+    udevadm settle --timeout=1 2>/dev/null || true
+    media="$(blkid -L "$label" 2>/dev/null || true)"
+    [ -n "$media" ] && [ -b "$media" ] || media=""
+
+    if [ -z "$media" ]; then
+        for dev in "/dev/disk/by-label/$label" /dev/sr0 /dev/sr1; do
+            if [ -e "$dev" ]; then
+                media="$dev"
+                break
+            fi
+        done
+    fi
+
+    if [ -n "$media" ]; then
+        umount /run/bfs-media 2>/dev/null || true
+        if mount -o ro "$media" /run/bfs-media 2>/dev/null &&
+           [ -r "/run/bfs-media$squash" ]; then
+            break
+        fi
+        umount /run/bfs-media 2>/dev/null || true
+        media=""
+    fi
+
+    tries=$((tries + 1))
+    sleep 0.25
 done
-[ -r "/run/bfs-media$squash" ] || { warn "BFSOS live root not found: $squash"; return 1; }
+
+[ -r "/run/bfs-media$squash" ] || {
+    warn "BFSOS live root not found after USB/media wait: label=$label squash=$squash"
+    return 1
+}
 mount -t squashfs -o loop,ro "/run/bfs-media$squash" /run/bfs-root || return 1
 mount -t tmpfs -o mode=0755 tmpfs /run/bfs-overlay || return 1
 mkdir -p /run/bfs-overlay/upper /run/bfs-overlay/work
@@ -589,8 +719,12 @@ EOF_INFO
     cat > "$stage/boot/grub/grub.cfg" <<EOF_GRUB
 set default=0
 set timeout=5
+# Prefer a readable graphics mode while retaining firmware fallback.
+set gfxmode=1024x768,800x600,auto
+set gfxpayload=keep
+terminal_output gfxterm
 menuentry "BFSOS $VERSION Live / Installer" {
-    linux /bfsos/vmlinuz root=bfs-live bfs.live=1 bfs.live.label=$ISO_LABEL bfs.live.squash=/bfsos/rootfs.squashfs rw
+    linux /bfsos/vmlinuz root=bfs-live bfs.live=1 bfs.live.label=$ISO_LABEL bfs.live.squash=/bfsos/rootfs.squashfs bfs.live.wait=$LIVE_MEDIA_WAIT rw consoleblank=1800
     initrd /bfsos/initramfs.img
 }
 EOF_GRUB
@@ -612,6 +746,11 @@ main() {
     local base_action=""
 
     [ "$(id -u)" -ne 0 ] || die "Run the ISO creator as a regular user; it uses sudo when root access is required."
+    case "$LIVE_MEDIA_WAIT" in
+        ''|*[!0-9]*) die "BFS_ISO_LIVE_MEDIA_WAIT must be an integer number of seconds" ;;
+    esac
+    [ "$LIVE_MEDIA_WAIT" -ge 1 ] && [ "$LIVE_MEDIA_WAIT" -le 60 ] || \
+        die "BFS_ISO_LIVE_MEDIA_WAIT must be between 1 and 60 seconds"
     preflight
 
     base_action="$(choose_base_action)"
