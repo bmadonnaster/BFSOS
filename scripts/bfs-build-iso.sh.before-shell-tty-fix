@@ -547,14 +547,7 @@ while true; do
     case "$choice" in
         1) cd "$PROJECT" && ./bootstrap.sh ;;
         2) cd "$PROJECT" && sudo ./scripts/install-bfs-menu-current.sh ;;
-        3)
-            printf 'Type exit to return to the BFSOS live menu.\n'
-            if command -v script >/dev/null 2>&1; then
-                script -qec 'bash -il' /dev/null
-            else
-                bash -il
-            fi
-            ;;
+        3) printf 'Type exit to return to the BFSOS live menu.\n'; bash -l ;;
         4) /usr/local/sbin/bfs-live-console-font ;;
         5) exit 0 ;;
         *) printf 'Invalid choice.\n' ;;
