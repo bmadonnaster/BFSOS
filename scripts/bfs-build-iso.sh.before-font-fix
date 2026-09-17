@@ -33,7 +33,7 @@ declare -A tool_packages=(
 # the live-media services/tools. Dependencies are resolved by prt-get.
 iso_packages=(
     linux-firmware dracut
-    networkmanager openssh git sudo wget wpa_supplicant wireless_tools gpm lynx links chrony kbd
+    networkmanager openssh git sudo wget wpa_supplicant wireless_tools gpm lynx links chrony
     cryptsetup lvm2 mdadm snapper pciutils
     dialog squashfs-tools grub grub-efi dosfstools mtools efibootmgr libisoburn syslinux
 )
@@ -385,50 +385,21 @@ EOS
 #!/usr/bin/env bash
 set -u
 
-FONT_DIRS="/usr/share/kbd/consolefonts /usr/share/consolefonts"
+FONT_DIR=/usr/share/kbd/consolefonts
 STATE_FILE=/run/bfsos-live-console-font
 
 find_font() {
-    local candidate dir path
-
+    local candidate path
     for candidate in "$@"; do
-        for dir in $FONT_DIRS; do
-            for path in \
-                "$dir/$candidate" \
-                "$dir/$candidate.psf" \
-                "$dir/$candidate.psfu" \
-                "$dir/$candidate.psf.gz" \
-                "$dir/$candidate.psfu.gz"; do
-                [ -r "$path" ] && {
-                    printf '%s\n' "$path"
-                    return 0
-                }
-            done
+        for path in \
+            "$FONT_DIR/$candidate" \
+            "$FONT_DIR/$candidate.psf" \
+            "$FONT_DIR/$candidate.psfu" \
+            "$FONT_DIR/$candidate.psf.gz" \
+            "$FONT_DIR/$candidate.psfu.gz"; do
+            [ -r "$path" ] && { printf '%s\n' "$path"; return 0; }
         done
     done
-
-    return 1
-}
-
-find_any_font() {
-    local dir pattern path
-
-    for pattern in "$@"; do
-        for dir in $FONT_DIRS; do
-            [ -d "$dir" ] || continue
-            path="$(find "$dir" -maxdepth 1 -type f \
-                \( -name "$pattern.psf" \
-                   -o -name "$pattern.psfu" \
-                   -o -name "$pattern.psf.gz" \
-                   -o -name "$pattern.psfu.gz" \) \
-                2>/dev/null | sort | head -n1)"
-            [ -n "$path" ] && {
-                printf '%s\n' "$path"
-                return 0
-            }
-        done
-    done
-
     return 1
 }
 
@@ -453,12 +424,6 @@ choose_font() {
 
     large="$(find_font latarcyrheb-sun32 ter-v32n ter-132n 2>/dev/null || true)"
     medium="$(find_font latarcyrheb-sun16 ter-v24n ter-v20n 2>/dev/null || true)"
-
-    # Do not make the accessibility menu useless merely because the preferred
-    # fonts are unavailable. Fall back to installed 32/28/24 and 20/18/16
-    # pixel console fonts.
-    [ -n "$large" ] || large="$(find_any_font '*32*' '*28*' '*24*' 2>/dev/null || true)"
-    [ -n "$medium" ] || medium="$(find_any_font '*20*' '*18*' '*16*' 2>/dev/null || true)"
 
     printf '\nBFSOS console font\n==================\n'
     printf '  1) Keep current/default\n'
