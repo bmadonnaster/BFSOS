@@ -6,11 +6,12 @@
 
 name=xorg-fonts
 version=7x
-release=1
+release=2
 source=()
 
 pkg_build() {
-
-
-	mkdir $PKG/usr
+    mkdir -p "$PKG/usr/share/bfsos/meta-packages"
+    printf '%s
+' 'BFSOS xorg-fonts meta package' \
+        > "$PKG/usr/share/bfsos/meta-packages/xorg-fonts"
 }

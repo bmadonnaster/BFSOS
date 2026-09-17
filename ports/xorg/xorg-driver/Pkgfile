@@ -5,9 +5,12 @@
 
 name=xorg-driver
 version=7x
-release=4
+release=5
 source=()
 
 pkg_build() {
-    mkdir -p "$PKG/usr"
+    mkdir -p "$PKG/usr/share/bfsos/meta-packages"
+    printf '%s
+' 'BFSOS xorg-driver meta package' \
+        > "$PKG/usr/share/bfsos/meta-packages/xorg-driver"
 }

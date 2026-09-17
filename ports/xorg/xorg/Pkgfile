@@ -5,9 +5,12 @@
 
 name=xorg
 version=7x
-release=2
+release=3
 source=()
 
 pkg_build() {
-    mkdir -p "$PKG/usr"
+    mkdir -p "$PKG/usr/share/bfsos/meta-packages"
+    printf '%s
+' 'BFSOS xorg meta package' \
+        > "$PKG/usr/share/bfsos/meta-packages/xorg"
 }
