@@ -19,7 +19,7 @@ pkg_build() {
         -DCMAKE_INSTALL_PREFIX=/opt/kf6 \
         -DCMAKE_PREFIX_PATH=/opt/qt6\;/opt/kf6 \
         -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_TESTING=OFF -DINSTALL_PAM_CONFIGURATION=OFF \
+        -DBUILD_TESTING=OFF \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 || return 1
 
     cmake --build build -j "${JOBS:-1}" || return 1
