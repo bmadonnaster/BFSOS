@@ -5,25 +5,28 @@
 
 name=discord
 version=1.0.158
-release=2
+release=3
 source=(https://dl.discordapp.net/apps/linux/$version/$name-$version.tar.gz)
 
 pkg_build() {
     install -d "$PKG/opt/discord"
     cp -a . "$PKG/opt/discord/"
 
-    chmod 755 "$PKG/opt/discord/Discord"
-
     install -d "$PKG/usr/bin"
-    ln -s /opt/discord/Discord "$PKG/usr/bin/discord"
+
+    cat > "$PKG/usr/bin/discord" <<'SCRIPT'
+#!/bin/sh
+exec /opt/discord/Discord "$@"
+SCRIPT
+
+    chmod 755 "$PKG/usr/bin/discord"
 
     install -d "$PKG/usr/share/applications"
     install -m 644 discord.desktop \
         "$PKG/usr/share/applications/discord.desktop"
 
     sed -i \
-        -e 's|^Exec=.*|Exec=/usr/bin/discord %U|' \
-        -e 's|^Icon=.*|Icon=discord|' \
+        's|^Exec=.*|Exec=/usr/bin/discord %U|' \
         "$PKG/usr/share/applications/discord.desktop"
 
     install -d "$PKG/usr/share/pixmaps"
