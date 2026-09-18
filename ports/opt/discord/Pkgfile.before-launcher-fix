@@ -5,7 +5,7 @@
 
 name=discord
 version=1.0.158
-release=4
+release=3
 source=(https://dl.discordapp.net/apps/linux/$version/$name-$version.tar.gz)
 
 pkg_build() {
@@ -16,7 +16,7 @@ pkg_build() {
 
     cat > "$PKG/usr/bin/discord" <<'SCRIPT'
 #!/bin/sh
-exec /opt/discord/discord "$@"
+exec /opt/discord/Discord "$@"
 SCRIPT
 
     chmod 755 "$PKG/usr/bin/discord"
