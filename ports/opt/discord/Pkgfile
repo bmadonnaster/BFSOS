@@ -5,12 +5,12 @@
 
 name=discord
 version=1.0.158
-release=1
+release=2
 source=(https://dl.discordapp.net/apps/linux/$version/$name-$version.tar.gz)
 
 pkg_build() {
     install -d "$PKG/opt/discord"
-    cp -a Discord/. "$PKG/opt/discord/"
+    cp -a . "$PKG/opt/discord/"
 
     chmod 755 "$PKG/opt/discord/Discord"
 
@@ -18,7 +18,7 @@ pkg_build() {
     ln -s /opt/discord/Discord "$PKG/usr/bin/discord"
 
     install -d "$PKG/usr/share/applications"
-    install -m 644 Discord/discord.desktop \
+    install -m 644 discord.desktop \
         "$PKG/usr/share/applications/discord.desktop"
 
     sed -i \
