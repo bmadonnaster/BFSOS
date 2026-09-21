@@ -7552,13 +7552,13 @@ URL=https://codeberg.org/bmadonnaster/BFSOS.git
 NAME=bfsos
 BRANCH=main
 LOCAL_REPOSITORY=/var/cache/ports-git/bfsos
-COLLECTIONS="compat-32:ports/compat-32 compiz:ports/compiz contrib:ports/contrib core:ports/core gnome:ports/gnome lxqt:ports/lxqt opt:ports/opt plasma:ports/plasma xfce:ports/xfce xorg:ports/xorg"
+COLLECTIONS="compat-32:ports/compat-32 compiz:ports/compiz contrib:ports/contrib core:ports/core gnome:ports/gnome iso:ports/iso lxqt:ports/lxqt opt:ports/opt plasma:ports/plasma xfce:ports/xfce xorg:ports/xorg"
 EOF_BFSOS_GIT
 
         # Retire only BFSOS-owned legacy HttpUp definitions. Third-party *.httpup
         # files remain untouched and continue to use the generic HttpUp driver.
         local collection
-        for collection in compat-32 compiz contrib core gnome lxqt opt plasma xfce xorg; do
+        for collection in compat-32 compiz contrib core gnome iso lxqt opt plasma xfce xorg; do
                 rm -f "/etc/ports/$collection.httpup"
         done
 }
