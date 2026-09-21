@@ -4529,10 +4529,7 @@ newest_base_archive() {
                 find "$directory" -maxdepth 1 -type f \
                         \( -name 'bfs-rootfs-*.tar.xz' -o \
                            -name 'bfs-rootfs-*.tar.zst' -o \
-                           -name 'bfs-rootfs-*.tar.gz' -o \
-                           -name 'BFSOS-base-*.tar.xz' -o \
-                           -name 'BFSOS-base-*.tar.zst' -o \
-                           -name 'BFSOS-base-*.tar.gz' \) \
+                           -name 'bfs-rootfs-*.tar.gz' \) \
                         -print0 2>/dev/null
         )
         [[ -n "$best" ]] || return 1
@@ -4676,137 +4673,6 @@ configure_zram_menu() {
         done
 }
 
-
-fetch_sourceforge_base() {
-        local result_var="$1" archive_dir="$2"
-        local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-x86_64.tar.zst}"
-        local url="${BFS_INSTALL_BASE_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}/download}"
-        local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}.sha256/download}"
-        local ca_file="${BFS_INSTALL_CA_FILE:-/etc/pki/tls/certs/ca-bundle.crt}"
-        local archive="$archive_dir/$filename"
-        local sha_file="$archive.sha256"
-        local expected="" actual="" status=0
-        local -a wget_args=()
-
-        command -v wget >/dev/null 2>&1 || {
-                dialog_message "Base download failed" \
-                        "wget is required to download the BFSOS base archive."
-                return 1
-        }
-        command -v sha256sum >/dev/null 2>&1 || {
-                dialog_message "Base verification failed" \
-                        "sha256sum is required to verify the BFSOS base archive."
-                return 1
-        }
-
-        mkdir -p "$archive_dir" || return 1
-
-        # BFSOS ships a canonical CA bundle here.  Keep this explicit until
-        # every supported wget build has been verified to discover it by
-        # default; never weaken TLS verification to work around trust lookup.
-        if [[ -r "$ca_file" ]]; then
-                wget_args+=(--ca-certificate="$ca_file")
-        fi
-
-        rm -f "$archive" "$sha_file"
-
-        if [[ -r /dev/tty && -w /dev/tty ]]; then
-                clear_screen >/dev/tty 2>/dev/null || true
-                printf '\nBFSOS base download\n===================\n\nDownloading: %s\nSource: SourceForge\n\n' \
-                        "$filename" >/dev/tty
-                set +e
-                wget "${wget_args[@]}" -O "$archive" "$url" </dev/tty >/dev/tty 2>/dev/tty
-                status=$?
-                set -e
-        else
-                printf '\nDownloading BFSOS base: %s\n' "$filename" >&2
-                set +e
-                wget "${wget_args[@]}" -O "$archive" "$url" >&2
-                status=$?
-                set -e
-        fi
-        if ((status != 0)); then
-                rm -f "$archive" "$sha_file"
-                dialog_message "Base download failed" \
-                        "The BFSOS base archive download failed.\n\nSource: $url\n\nYou may retry, browse for a local archive, or go back."
-                return 1
-        fi
-
-        if [[ -r /dev/tty && -w /dev/tty ]]; then
-                printf '\nArchive download complete.\n\nDownloading SHA256 verification file...\n\n' >/dev/tty
-                set +e
-                wget "${wget_args[@]}" -O "$sha_file" "$sha_url" </dev/tty >/dev/tty 2>/dev/tty
-                status=$?
-                set -e
-        else
-                printf 'Downloading SHA256 verification file...\n' >&2
-                set +e
-                wget "${wget_args[@]}" -O "$sha_file" "$sha_url" >&2
-                status=$?
-                set -e
-        fi
-        if ((status != 0)); then
-                rm -f "$archive" "$sha_file"
-                dialog_message "Base verification failed" \
-                        "The BFSOS SHA256 file could not be downloaded.\n\nSource: $sha_url"
-                return 1
-        fi
-
-        expected="$(awk 'NR == 1 { print $1 }' "$sha_file")"
-        actual="$(sha256sum "$archive" | awk '{ print $1 }')"
-
-        if [[ ! "$expected" =~ ^[[:xdigit:]]{64}$ ]]; then
-                rm -f "$archive" "$sha_file"
-                dialog_message "Base verification failed" \
-                        "The downloaded SHA256 file did not contain a valid checksum."
-                return 1
-        fi
-
-        if [[ "$actual" != "$expected" ]]; then
-                rm -f "$archive" "$sha_file"
-                dialog_message "Base verification failed" \
-                        "SHA256 verification FAILED for:\n\n$filename\n\nThe downloaded archive was removed."
-                return 1
-        fi
-
-        dialog_message "Base archive verified" \
-                "Download complete and SHA256 verification passed.\n\n$archive"
-        printf -v "$result_var" '%s' "$archive"
-        return 0
-}
-
-choose_missing_base_archive() {
-        local result_var="$1" archive_dir="$2" choice="" selected=""
-
-        while true; do
-                themed_menu choice \
-                        "Base archive" \
-                        "No local BFSOS base archive was detected.\n\nChoose how to provide the base filesystem." \
-                        16 94 5 \
-                        1 "Download current BFSOS base from SourceForge" \
-                        2 "Browse for local base archive" \
-                        3 "Back"
-
-                case "$choice" in
-                        1)
-                                selected=""
-                                if fetch_sourceforge_base selected "$archive_dir"; then
-                                        printf -v "$result_var" '%s' "$selected"
-                                        return 0
-                                fi
-                                ;;
-                        2)
-                                selected=""
-                                if browse_base_archive selected "$archive_dir"; then
-                                        printf -v "$result_var" '%s' "$selected"
-                                        return 0
-                                fi
-                                ;;
-                        3|"") return 1 ;;
-                esac
-        done
-}
-
 configure_archive() {
         local installer_dir="" project_dir="" archive_dir=""
         local default_archive="" selected="" action_status=0
@@ -4846,9 +4712,9 @@ configure_archive() {
                                 2) return 0 ;;
                         esac
                 else
-                        if ! choose_missing_base_archive selected "$archive_dir"; then
-                                return 0
-                        fi
+                        dialog_message "Base rootfs archive" \
+                                "No usable BFSOS base archive was found in:\n$archive_dir\n\nBrowse to the archive you want to install."
+                        browse_base_archive selected "$archive_dir" || return 0
                 fi
 
                 if ! supported_base_archive "$selected"; then

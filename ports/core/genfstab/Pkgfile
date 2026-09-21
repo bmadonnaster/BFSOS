@@ -4,8 +4,8 @@
 # Depends on: bash coreutils gawk grep util-linux
 
 name=genfstab
-version=28
-release=3
+version=31
+release=2
 source=(https://github.com/archlinux/arch-install-scripts/archive/refs/tags/v$version.tar.gz)
 
 # Custom build required: BFSOS intentionally packages only genfstab from the

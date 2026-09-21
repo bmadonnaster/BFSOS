@@ -5,7 +5,7 @@
 
 name=chrony
 version=4.9
-release=1
+release=2
 source=(https://chrony-project.org/releases/chrony-$version.tar.gz)
 
 build_opt="--with-user=chrony"
@@ -42,7 +42,7 @@ Wants=network-online.target
 
 [Service]
 Type=notify
-ExecStart=/usr/bin/chronyd -F 2
+ExecStart=/usr/sbin/chronyd -n
 ExecReload=/usr/bin/chronyc reload sources
 
 [Install]
