@@ -3,16 +3,17 @@ set -Eeuo pipefail
 
 # BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
 # Includes USB live-media discovery retry, live console accessibility, and
-# current pre-RC live-session policy. Boot/install acceptance still requires
+# current RC1 live-session policy. Boot/install acceptance still requires
 # fresh VM + USB-emulation + bare-metal validation.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VERSION="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION" 2>/dev/null || printf '0.9.0')"
+VERSION="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION" 2>/dev/null || printf '0.9.0-rc1')"
 ARCH="x86_64"
 BUILD_DATE="$(date +%Y%m%d)"
 GIT_COMMIT="$(git -C "$PROJECT_DIR" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
-ISO_LABEL="BFSOS_${VERSION//./_}_${ARCH}"
+ISO_LABEL_VERSION="${VERSION//[.-]/_}"
+ISO_LABEL="BFSOS_${ISO_LABEL_VERSION}_${ARCH}"
 WORK_DIR="${BFS_ISO_WORK_DIR:-/var/tmp/bfsos-iso-${USER:-builder}}"
 OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-$HOME/BFSOS-ISO}"
 ISO_NAME="BFSOS-${VERSION}-${ARCH}-${BUILD_DATE}-${GIT_COMMIT}.iso"
@@ -433,8 +434,21 @@ find_any_font() {
 }
 
 apply_font() {
-    local path="$1"
-    if setfont "$path" 2>/dev/null; then
+    local path="$1" current_tty="" rc=0
+    current_tty="$(tty 2>/dev/null || true)"
+
+    if [[ "$current_tty" != /dev/tty[0-9]* ]]; then
+        printf 'Console font changes only apply to a local Linux virtual console.\n'
+        return 0
+    fi
+
+    if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+        setfont -C "$current_tty" "$path" 2>/dev/null || rc=$?
+    else
+        sudo setfont -C "$current_tty" "$path" 2>/dev/null || rc=$?
+    fi
+
+    if [ "$rc" -eq 0 ]; then
         basename "$path" | sed -E 's/\.(psfu?|psfu?\.gz)$//' > "$STATE_FILE"
         printf 'Applied console font: %s\n' "$(cat "$STATE_FILE")"
         return 0
