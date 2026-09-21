@@ -854,6 +854,11 @@ create_live_initramfs() {
 
 audit_live_root() {
     local root="$1" bad=""
+    # gettext ships this compressed development archive as package data.
+    # It is not needed by the BFSOS live environment and would trip the
+    # no-source-archives ISO audit.
+    rm -f "$root/usr/share/gettext/archive.dir.tar.xz"
+
     log "Auditing live root for forbidden source/package archives"
     bad="$(find "$root" -xdev -type f \( \
         -name '*.tar' -o -name '*.tar.gz' -o -name '*.tar.bz2' -o -name '*.tar.xz' -o -name '*.tar.zst' -o \
