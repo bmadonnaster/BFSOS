@@ -5,7 +5,7 @@
 
 name=leptonica
 version=1.87.0
-release=1
+release=2
 source=(https://github.com/DanBloomberg/leptonica/releases/download/$version/leptonica-$version.tar.gz)
 
-build_opt="-DBUILD_PROG=OFF"
+build_opt="--disable-programs"
