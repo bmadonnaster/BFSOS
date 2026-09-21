@@ -684,14 +684,7 @@ while true; do
     read -r choice
     case "$choice" in
         1) cd "$PROJECT" && ./bootstrap.sh ;;
-        2)
-            cd "$PROJECT" || continue
-            if command -v script >/dev/null 2>&1; then
-                script -qec 'sudo ./scripts/install-bfs-menu-current.sh' /dev/null
-            else
-                sudo ./scripts/install-bfs-menu-current.sh
-            fi
-            ;;
+        2) cd "$PROJECT" && sudo ./scripts/install-bfs-menu-current.sh ;;
         3)
             printf 'Type exit to return to the BFSOS live menu.\n'
             if command -v script >/dev/null 2>&1; then

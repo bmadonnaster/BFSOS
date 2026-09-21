@@ -493,11 +493,10 @@ reset_terminal_ui() {
         # dialog can leave its full-screen background/colors painted on the
         # controlling terminal. Restore attributes, make the cursor visible,
         # and clear/redraw the terminal before returning to the shell.
-        if { : </dev/tty; } 2>/dev/null; then
+        if [[ -e /dev/tty && -w /dev/tty ]]; then
                 printf '\033[0m\033[?25h\033[2J\033[H' >/dev/tty 2>/dev/null || true
-                if command -v clear >/dev/null 2>&1; then
+                command -v clear >/dev/null 2>&1 &&
                         TERM="${TERM:-linux}" clear </dev/tty >/dev/tty 2>/dev/null || true
-                fi
         else
                 printf '\033[0m\033[?25h\033[2J\033[H' 2>/dev/null || true
         fi
