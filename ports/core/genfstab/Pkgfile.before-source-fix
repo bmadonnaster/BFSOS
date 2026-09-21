@@ -6,7 +6,7 @@
 name=genfstab
 version=31
 release=2
-source=(https://gitlab.archlinux.org/archlinux/arch-install-scripts/-/archive/v$version/arch-install-scripts-v$version.tar.gz)
+source=(https://github.com/archlinux/arch-install-scripts/archive/refs/tags/v$version.tar.gz)
 
 # Custom build required: BFSOS intentionally packages only genfstab from the
 # upstream arch-install-scripts suite; pacstrap/arch-chroot require Arch pacman.
