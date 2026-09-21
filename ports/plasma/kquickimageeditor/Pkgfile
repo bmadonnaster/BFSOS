@@ -9,7 +9,7 @@ release=2
 source=(https://download.kde.org/stable/$name/$name-$version.tar.xz)
 
 pre_build() {
-    sed -i 's/find_package(OpenCV 4\\.7/find_package(OpenCV 4.7...<6/' CMakeLists.txt
+    sed -Ei 's@find_package\(OpenCV[[:space:]]+4\.7[^)]*\)@find_package(OpenCV 4.7...<6 REQUIRED)@' CMakeLists.txt
 }
 
 build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6
