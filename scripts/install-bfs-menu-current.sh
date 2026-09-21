@@ -4529,7 +4529,10 @@ newest_base_archive() {
                 find "$directory" -maxdepth 1 -type f \
                         \( -name 'bfs-rootfs-*.tar.xz' -o \
                            -name 'bfs-rootfs-*.tar.zst' -o \
-                           -name 'bfs-rootfs-*.tar.gz' \) \
+                           -name 'bfs-rootfs-*.tar.gz' -o \
+                           -name 'BFSOS-base-*.tar.xz' -o \
+                           -name 'BFSOS-base-*.tar.zst' -o \
+                           -name 'BFSOS-base-*.tar.gz' \) \
                         -print0 2>/dev/null
         )
         [[ -n "$best" ]] || return 1
@@ -4673,6 +4676,71 @@ configure_zram_menu() {
         done
 }
 
+
+fetch_sourceforge_base() {
+        local archive_dir="$1"
+        local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-x86_64.tar.zst}"
+        local url="${BFS_INSTALL_BASE_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}/download}"
+        local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}.sha256/download}"
+        local ca_file="${BFS_INSTALL_CA_FILE:-/etc/pki/tls/certs/ca-bundle.crt}"
+        local archive="$archive_dir/$filename"
+        local sha_file="$archive.sha256"
+        local expected="" actual=""
+        local -a wget_args=()
+
+        command -v wget >/dev/null 2>&1 || {
+                dialog_message "Base download failed" \
+                        "wget is required to download the BFSOS base archive."
+                return 1
+        }
+
+        mkdir -p "$archive_dir" || return 1
+
+        if [[ -r "$ca_file" ]]; then
+                wget_args+=(--ca-certificate="$ca_file")
+        fi
+
+        dialog_message "Download BFSOS base" \
+                "No local BFSOS base archive was found.
+
+The current base archive will now be downloaded from SourceForge:
+
+$filename"
+
+        rm -f "$archive" "$sha_file"
+
+        if ! wget "${wget_args[@]}" -O "$archive" "$url"; then
+                rm -f "$archive"
+                return 1
+        fi
+
+        if ! wget "${wget_args[@]}" -O "$sha_file" "$sha_url"; then
+                rm -f "$archive" "$sha_file"
+                return 1
+        fi
+
+        expected="$(awk 'NR == 1 { print $1 }' "$sha_file")"
+        actual="$(sha256sum "$archive" | awk '{ print $1 }')"
+
+        if [[ ! "$expected" =~ ^[[:xdigit:]]{64}$ ]]; then
+                rm -f "$archive" "$sha_file"
+                dialog_message "Base verification failed" \
+                        "The downloaded SHA256 file did not contain a valid checksum."
+                return 1
+        fi
+
+        if [[ "$actual" != "$expected" ]]; then
+                rm -f "$archive" "$sha_file"
+                dialog_message "Base verification failed" \
+                        "SHA256 verification failed for:
+
+$filename"
+                return 1
+        fi
+
+        printf '%s\n' "$archive"
+}
+
 configure_archive() {
         local installer_dir="" project_dir="" archive_dir=""
         local default_archive="" selected="" action_status=0
@@ -4712,9 +4780,13 @@ configure_archive() {
                                 2) return 0 ;;
                         esac
                 else
-                        dialog_message "Base rootfs archive" \
-                                "No usable BFSOS base archive was found in:\n$archive_dir\n\nBrowse to the archive you want to install."
-                        browse_base_archive selected "$archive_dir" || return 0
+                        if selected="$(fetch_sourceforge_base "$archive_dir")"; then
+                                default_archive="$selected"
+                        else
+                                dialog_message "Base rootfs archive" \
+                                        "Automatic BFSOS base download failed.\n\nYou may browse for a local base archive instead."
+                                browse_base_archive selected "$archive_dir" || return 0
+                        fi
                 fi
 
                 if ! supported_base_archive "$selected"; then
