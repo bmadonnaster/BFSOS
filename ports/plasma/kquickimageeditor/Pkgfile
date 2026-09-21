@@ -5,8 +5,12 @@
 
 name=kquickimageeditor
 version=0.6.2.1
-release=1
+release=2
 source=(https://download.kde.org/stable/$name/$name-$version.tar.xz)
+
+pre_build() {
+    sed -i 's/find_package(OpenCV 4\\.7/find_package(OpenCV 4.7...<6/' CMakeLists.txt
+}
 
 build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6
 -DCMAKE_PREFIX_PATH=/opt/kf6;/opt/qt6
