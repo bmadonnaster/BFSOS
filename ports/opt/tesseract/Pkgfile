@@ -6,8 +6,9 @@
 
 name=tesseract
 version=5.5.3
-release=1
+release=2
 source=(https://github.com/tesseract-ocr/tesseract/archive/refs/tags/$version.tar.gz)
 
-build_opt="-DBUILD_TRAINING_TOOLS=OFF
+build_opt="-DBUILD_SHARED_LIBS=ON
+-DBUILD_TRAINING_TOOLS=OFF
 -DBUILD_TESTS=OFF"
