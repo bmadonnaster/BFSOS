@@ -234,9 +234,9 @@ latest_base_archive() {
 archive_list() {
     local archive="$1"
     case "$archive" in
-        *.tar.xz|*.tar.xz.tmp) tar -tJf "$archive" ;;
-        *.tar.zst|*.tar.zst.tmp) tar --zstd -tf "$archive" ;;
-        *.tar.gz|*.tar.gz.tmp) tar -tzf "$archive" ;;
+        *.tar.xz) tar -tJf "$archive" ;;
+        *.tar.zst) tar --zstd -tf "$archive" ;;
+        *.tar.gz) tar -tzf "$archive" ;;
         *) return 1 ;;
     esac
 }
