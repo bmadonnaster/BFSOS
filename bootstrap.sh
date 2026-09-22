@@ -1986,13 +1986,17 @@ esac
 CURRENT_PGID="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"
 
 if [ "$$" != "$CURRENT_PGID" ]; then
-    exec setsid "$0" "$@"
+    if { : </dev/tty; } 2>/dev/null; then
+        exec setsid --ctty "$0" "$@"
+    else
+        exec setsid "$0" "$@"
+    fi
 fi
 
 printf '%s %s\n' "$$" "$CURRENT_PGID" > "$PID_FILE"
 
 _reset_terminal_ui() {
-    if [ -e /dev/tty ] && [ -w /dev/tty ]; then
+    if { : </dev/tty; } 2>/dev/null; then
         printf '\033[0m\033[?25h\033[2J\033[H' >/dev/tty 2>/dev/null || true
         if command -v clear >/dev/null 2>&1; then
             TERM="${TERM:-linux}" clear </dev/tty >/dev/tty 2>/dev/null || true
