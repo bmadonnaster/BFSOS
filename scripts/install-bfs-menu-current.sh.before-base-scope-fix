@@ -4541,14 +4541,13 @@ newest_base_archive() {
 }
 
 browse_base_archive() {
-        local -n result_ref="$1"
-        local start_path="$2" picked="" status=0
+        local result_var="$1" start_path="$2" selected="" status=0
         if command -v dialog >/dev/null 2>&1 &&
            [[ -r /dev/tty && -w /dev/tty ]]; then
                 [[ -d "$start_path" ]] || start_path="$(dirname "$start_path")"
                 [[ -d "$start_path" ]] || start_path="/"
                 set +e
-                picked="$(
+                selected="$(
                         dialog --stdout --clear \
                                 --backtitle "BFS Linux Installer" \
                                 --title "Select BFSOS base rootfs archive" \
@@ -4561,10 +4560,10 @@ browse_base_archive() {
                 set -e
                 ((status == 0)) || return 1
         else
-                read -r -p "Path to BFSOS base rootfs archive: " picked
-                [[ -n "$picked" ]] || return 1
+                read -r -p "Path to BFSOS base rootfs archive: " selected
+                [[ -n "$selected" ]] || return 1
         fi
-        result_ref="$picked"
+        printf -v "$result_var" '%s' "$selected"
 }
 
 confirm_detected_archive() {
@@ -4680,8 +4679,7 @@ configure_zram_menu() {
 
 
 fetch_sourceforge_base() {
-        local -n result_ref="$1"
-        local archive_dir="$2"
+        local result_var="$1" archive_dir="$2"
         local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-x86_64.tar.zst}"
         local url="${BFS_INSTALL_BASE_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}/download}"
         local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}.sha256/download}"
@@ -4774,13 +4772,12 @@ fetch_sourceforge_base() {
 
         dialog_message "Base archive verified" \
                 "Download complete and SHA256 verification passed.\n\n$archive"
-        result_ref="$archive"
+        printf -v "$result_var" '%s' "$archive"
         return 0
 }
 
 choose_missing_base_archive() {
-        local -n result_ref="$1"
-        local archive_dir="$2" choice="" chosen=""
+        local result_var="$1" archive_dir="$2" choice="" chosen=""
 
         while true; do
                 themed_menu choice \
@@ -4795,14 +4792,14 @@ choose_missing_base_archive() {
                         1)
                                 chosen=""
                                 if fetch_sourceforge_base chosen "$archive_dir"; then
-                                        result_ref="$chosen"
+                                        printf -v "$result_var" '%s' "$chosen"
                                         return 0
                                 fi
                                 ;;
                         2)
                                 chosen=""
                                 if browse_base_archive chosen "$archive_dir"; then
-                                        result_ref="$chosen"
+                                        printf -v "$result_var" '%s' "$chosen"
                                         return 0
                                 fi
                                 ;;
