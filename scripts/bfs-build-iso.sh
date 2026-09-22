@@ -644,7 +644,7 @@ if command -v nm-online >/dev/null 2>&1 && nm-online -q --timeout=20; then
 
     printf '\nRefreshing the bundled BFSOS project tree...\n'
     if [ -d /home/bfs/BFSOS/.git ]; then
-        su - bfs -c 'cd ~/BFSOS && if git diff --quiet && git diff --cached --quiet; then git pull --ff-only || true; else echo "Local BFSOS tree has changes; automatic pull skipped."; fi'
+        runuser -u bfs -- bash -c 'cd /home/bfs/BFSOS && if git diff --quiet && git diff --cached --quiet; then git pull --ff-only || true; else echo "Local BFSOS tree has changes; automatic pull skipped."; fi'
     fi
 else
     printf '\nNo network detected; using the BFSOS project tree shipped on the ISO.\n'
@@ -658,7 +658,7 @@ EOS
 [Unit]
 Description=BFSOS live-session initialization
 After=NetworkManager.service
-Before=getty@tty1.service sshd.service ssh.service
+Before=getty@tty1.service
 ConditionKernelCommandLine=bfs.live=1
 
 [Service]
