@@ -8,7 +8,7 @@ need_grep() { local pat="$1" f="$2"; grep -Eq -- "$pat" "$ROOT/$f" || fail "$f m
 
 need_file ports/core/genfstab/Pkgfile
 need_grep '^version=31$' ports/core/genfstab/Pkgfile
-need_grep 'arch-install-scripts/archive/refs/tags/v\$version\.tar\.gz' ports/core/genfstab/Pkgfile
+need_grep 'gitlab\.archlinux\.org/archlinux/arch-install-scripts/-/archive/v\$version/arch-install-scripts-v\$version\.tar\.gz' ports/core/genfstab/Pkgfile
 need_grep '(^|[[:space:]])genfstab([[:space:]]|$)' bootstrap.sh
 
 need_file ports/iso/networkmanager-iso/Pkgfile
@@ -40,7 +40,7 @@ need_grep '^version=51\.0$' ports/gnome/gdm/Pkgfile
 need_grep '^version=51\.0\.1$' ports/gnome/nautilus/Pkgfile
 
 need_grep 'BFSOS-base-\$\{ARCH\}\.tar\.zst' scripts/bfs-build-iso.sh
-need_grep 'sourceforge\.net/projects/bfsos/files/BFSOS/base/latest' scripts/bfs-build-iso.sh
+need_grep 'downloads\.sourceforge\.net/project/bfsos/BFSOS/base/latest' scripts/bfs-build-iso.sh
 need_grep 'codeberg\.org/bmadonnaster/BFSOS\.git' scripts/bfs-build-iso.sh
 need_grep 'Xbcj x86' scripts/bfs-build-iso.sh
 need_grep 'required_tools=.*wget' scripts/bfs-build-iso.sh

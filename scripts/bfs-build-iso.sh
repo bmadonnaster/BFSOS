@@ -15,8 +15,8 @@ WORK_DIR="${BFS_ISO_WORK_DIR:-/var/tmp/bfsos-iso-${USER:-builder}}"
 OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-$HOME/BFSOS-ISO}"
 BASE_CACHE_DIR="${BFS_ISO_BASE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/bfsos/iso}"
 BASE_FILENAME="${BFS_ISO_BASE_FILENAME:-BFSOS-base-${ARCH}.tar.zst}"
-BASE_URL="${BFS_ISO_BASE_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${BASE_FILENAME}/download}"
-BASE_SHA256_URL="${BFS_ISO_BASE_SHA256_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${BASE_FILENAME}.sha256/download}"
+BASE_URL="${BFS_ISO_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}}"
+BASE_SHA256_URL="${BFS_ISO_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}.sha256}"
 BASE_MODE="${BFS_ISO_BASE_MODE:-sourceforge}"
 REFRESH_BASE="${BFS_ISO_REFRESH_BASE:-no}"
 GIT_URL="${BFS_ISO_GIT_URL:-https://codeberg.org/bmadonnaster/BFSOS.git}"
@@ -104,17 +104,19 @@ verify_sha256_file() {
 }
 
 fetch_sourceforge_base() {
+    local -n result_ref="$1"
     local archive="$BASE_CACHE_DIR/$BASE_FILENAME"
     local sumfile="$archive.sha256"
     local tmp_sum="$sumfile.tmp" tmp_archive="$archive.tmp"
+    result_ref=""
     mkdir -p "$BASE_CACHE_DIR"
 
-    log "Checking SourceForge for current BFSOS base: $BASE_URL" >&2
+    log "Checking SourceForge for current BFSOS base: $BASE_URL"
     rm -f "$tmp_sum" "$tmp_archive"
-    if ! wget -q --max-redirect=20 -O "$tmp_sum" "$BASE_SHA256_URL"; then
+    if ! wget --max-redirect=20 -O "$tmp_sum" "$BASE_SHA256_URL" >&2; then
         if validate_base_archive "$archive" && verify_sha256_file "$archive" "$sumfile"; then
-            log "SourceForge checksum check unavailable; reusing verified cached base: $archive" >&2
-            printf '%s\n' "$archive"
+            log "SourceForge checksum check unavailable; reusing verified cached base: $archive"
+            result_ref="$archive"
             return 0
         fi
         die "Could not download SourceForge base checksum and no verified cached base is available"
@@ -124,21 +126,29 @@ fetch_sourceforge_base() {
 
     if [ "$REFRESH_BASE" != yes ] && verify_sha256_file "$archive" "$tmp_sum" && validate_base_archive "$archive"; then
         mv -f "$tmp_sum" "$sumfile"
-        log "Cached SourceForge base is current and verified: $archive" >&2
-        printf '%s\n' "$archive"
+        log "Cached SourceForge base is current and verified: $archive"
+        result_ref="$archive"
         return 0
     fi
 
-    log "Downloading current BFSOS base archive from SourceForge" >&2
-    wget -q --show-progress --max-redirect=20 -O "$tmp_archive" "$BASE_URL" || \
+    log "Downloading current BFSOS base archive from SourceForge"
+    log "Progress from wget follows; this can take a while on slower mirrors."
+    if ! wget --show-progress --max-redirect=20 -O "$tmp_archive" "$BASE_URL" >&2; then
+        rm -f "$tmp_archive" "$tmp_sum"
         die "Failed to download BFSOS base archive from SourceForge"
-    verify_sha256_file "$tmp_archive" "$tmp_sum" || \
+    fi
+    verify_sha256_file "$tmp_archive" "$tmp_sum" || {
+        rm -f "$tmp_archive" "$tmp_sum"
         die "SourceForge BFSOS base SHA256 verification failed"
-    validate_base_archive "$tmp_archive" || \
-        die "Downloaded SourceForge file is not a valid BFSOS base archive"
+    }
+    validate_base_archive "$tmp_archive" || {
+        log "Downloaded file size: $(du -h "$tmp_archive" 2>/dev/null | awk '{print $1}')"
+        log "Archive path retained for diagnosis: $tmp_archive"
+        die "Downloaded SourceForge file passed transfer but failed BFSOS base-content validation"
+    }
     mv -f "$tmp_archive" "$archive"
     mv -f "$tmp_sum" "$sumfile"
-    printf '%s\n' "$archive"
+    result_ref="$archive"
 }
 
 prepare_build_project() {
@@ -236,14 +246,15 @@ validate_base_archive() {
     [ -n "$archive" ] && [ -s "$archive" ] || return 1
 
     listing="$(archive_list "$archive" 2>/dev/null)" || return 1
+    # Match the canonical archive producer in bootstrap.sh.  Account shadow
+    # files are deliberately not used as archive-validity sentinels because
+    # older published bases may regenerate them during installation.
     for required in \
         ./usr/bin/bash \
         ./usr/bin/pkgmk \
         ./etc/os-release \
         ./etc/passwd \
-        ./etc/group \
-        ./etc/shadow \
-        ./etc/gshadow
+        ./etc/group
     do
         # Do not pipe the full archive listing into `grep -q` while pipefail is
         # enabled.  Once grep finds a match it exits early; printf can then take
@@ -687,7 +698,14 @@ while true; do
     printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Quit menu\n\nChoice: '
     read -r choice
     case "$choice" in
-        1) cd "$PROJECT" && ./bootstrap.sh ;;
+        1)
+            cd "$PROJECT" || continue
+            if command -v script >/dev/null 2>&1; then
+                script -qec './bootstrap.sh' /dev/null
+            else
+                ./bootstrap.sh
+            fi
+            ;;
         2)
             cd "$PROJECT" || continue
             if command -v script >/dev/null 2>&1; then
@@ -983,7 +1001,7 @@ main() {
     preflight
 
     if [ "$BASE_MODE" = sourceforge ]; then
-        base_archive="$(fetch_sourceforge_base)"
+        fetch_sourceforge_base base_archive
     else
         base_action="$(choose_base_action)"
         case "$base_action" in

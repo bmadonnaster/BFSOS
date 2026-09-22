@@ -4679,17 +4679,23 @@ configure_zram_menu() {
 }
 
 
+# Dedicated result channel for base-archive selection.  Do not use stdout or
+# nested namerefs here: wget progress and Bash dynamic scoping have both caused
+# the post-download pathname to be lost/contaminated in the live installer.
+BASE_ARCHIVE_RESULT=""
+
 fetch_sourceforge_base() {
-        local -n result_ref="$1"
-        local archive_dir="$2"
+        local archive_dir="$1"
         local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-x86_64.tar.zst}"
-        local url="${BFS_INSTALL_BASE_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}/download}"
-        local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://sourceforge.net/projects/bfsos/files/BFSOS/base/latest/${filename}.sha256/download}"
+        local url="${BFS_INSTALL_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${filename}}"
+        local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${filename}.sha256}"
         local ca_file="${BFS_INSTALL_CA_FILE:-/etc/pki/tls/certs/ca-bundle.crt}"
         local archive="$archive_dir/$filename"
         local sha_file="$archive.sha256"
         local expected="" actual="" status=0
         local -a wget_args=()
+
+        BASE_ARCHIVE_RESULT=""
 
         command -v wget >/dev/null 2>&1 || {
                 dialog_message "Base download failed" \
@@ -4713,7 +4719,7 @@ fetch_sourceforge_base() {
 
         rm -f "$archive" "$sha_file"
 
-        if [[ -r /dev/tty && -w /dev/tty ]]; then
+        if { : </dev/tty; } 2>/dev/null; then
                 clear_screen >/dev/tty 2>/dev/null || true
                 printf '\nBFSOS base download\n===================\n\nDownloading: %s\nSource: SourceForge\n\n' \
                         "$filename" >/dev/tty
@@ -4735,7 +4741,7 @@ fetch_sourceforge_base() {
                 return 1
         fi
 
-        if [[ -r /dev/tty && -w /dev/tty ]]; then
+        if { : </dev/tty; } 2>/dev/null; then
                 printf '\nArchive download complete.\n\nDownloading SHA256 verification file...\n\n' >/dev/tty
                 set +e
                 wget "${wget_args[@]}" -O "$sha_file" "$sha_url" </dev/tty >/dev/tty 2>/dev/tty
@@ -4772,15 +4778,21 @@ fetch_sourceforge_base() {
                 return 1
         fi
 
+        if ! supported_base_archive "$archive"; then
+                dialog_message "Base verification failed" \
+                        "The verified download exists but the installer cannot use its pathname:\n\n$archive"
+                return 1
+        fi
+
         dialog_message "Base archive verified" \
                 "Download complete and SHA256 verification passed.\n\n$archive"
-        result_ref="$archive"
+        BASE_ARCHIVE_RESULT="$archive"
         return 0
 }
 
 choose_missing_base_archive() {
-        local -n result_ref="$1"
-        local archive_dir="$2" choice="" chosen=""
+        local archive_dir="$1" choice="" chosen=""
+        BASE_ARCHIVE_RESULT=""
 
         while true; do
                 themed_menu choice \
@@ -4793,16 +4805,18 @@ choose_missing_base_archive() {
 
                 case "$choice" in
                         1)
-                                chosen=""
-                                if fetch_sourceforge_base chosen "$archive_dir"; then
-                                        result_ref="$chosen"
-                                        return 0
+                                if fetch_sourceforge_base "$archive_dir"; then
+                                        if [[ -n "$BASE_ARCHIVE_RESULT" ]] && supported_base_archive "$BASE_ARCHIVE_RESULT"; then
+                                                return 0
+                                        fi
+                                        dialog_message "Base archive handoff failed" \
+                                                "The SourceForge download verified, but its local pathname was not handed back correctly.\n\nValue: ${BASE_ARCHIVE_RESULT:-<empty>}"
                                 fi
                                 ;;
                         2)
                                 chosen=""
                                 if browse_base_archive chosen "$archive_dir"; then
-                                        result_ref="$chosen"
+                                        BASE_ARCHIVE_RESULT="$chosen"
                                         return 0
                                 fi
                                 ;;
@@ -4850,9 +4864,10 @@ configure_archive() {
                                 2) return 0 ;;
                         esac
                 else
-                        if ! choose_missing_base_archive selected "$archive_dir"; then
+                        if ! choose_missing_base_archive "$archive_dir"; then
                                 return 0
                         fi
+                        selected="$BASE_ARCHIVE_RESULT"
                 fi
 
                 if ! supported_base_archive "$selected"; then

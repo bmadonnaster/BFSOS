@@ -25,7 +25,7 @@ grep -q -- '-Dwifi=true' "$ROOT/ports/iso/networkmanager-iso/Pkgfile" || fail 'I
 grep -q -- '-Dnmcli=true' "$ROOT/ports/iso/networkmanager-iso/Pkgfile" || fail 'ISO NetworkManager lost nmcli'
 grep -q -- '-Dnmtui=true' "$ROOT/ports/iso/networkmanager-iso/Pkgfile" || fail 'ISO NetworkManager lost nmtui'
 
-grep -q 'sourceforge.net/projects/bfsos/files/BFSOS/base/latest' "$iso" || fail 'SourceForge base URL is missing'
+grep -q 'downloads.sourceforge.net/project/bfsos/BFSOS/base/latest' "$iso" || fail 'SourceForge base URL is missing'
 grep -q 'BASE_SHA256_URL' "$iso" || fail 'SourceForge base checksum verification is missing'
 grep -q 'verify_sha256_file' "$iso" || fail 'base SHA256 verifier is missing'
 grep -q 'codeberg.org/bmadonnaster/BFSOS.git' "$iso" || fail 'canonical Codeberg Git URL is missing'

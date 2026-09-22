@@ -7,12 +7,16 @@ installer=scripts/install-bfs-menu-current.sh
 chrony=ports/opt/chrony/Pkgfile
 wget_port=ports/opt/wget/Pkgfile
 
-# r310: fetch helper must return through a named variable, never command substitution.
+# r310/r313: fetch helper uses a dedicated result channel, never stdout or nested namerefs.
 grep -Fq 'fetch_sourceforge_base() {' "$installer"
-grep -Fq 'local result_var="$1" archive_dir="$2"' "$installer"
-grep -Fq 'printf -v "$result_var"' "$installer"
+grep -Fq 'BASE_ARCHIVE_RESULT="$archive"' "$installer"
+grep -Fq 'selected="$BASE_ARCHIVE_RESULT"' "$installer"
 if grep -Fq 'selected="$(fetch_sourceforge_base' "$installer"; then
-    echo 'r311: installer still captures fetch stdout into selected' >&2
+    echo 'r313: installer still captures fetch stdout into selected' >&2
+    exit 1
+fi
+if grep -Fq 'local -n result_ref="$1"' <(sed -n '/fetch_sourceforge_base()/,/^}/p' "$installer"); then
+    echo 'r313: installer fetch still relies on nested nameref handoff' >&2
     exit 1
 fi
 
@@ -39,4 +43,8 @@ fi
 grep -Fq '# Depends on: ca-certificates ' "$wget_port"
 grep -Fq 'ca_certificate = /etc/pki/tls/certs/ca-bundle.crt' "$wget_port"
 
-printf 'r311 installer/runtime policy regression: PASS\n'
+# r313: direct SourceForge mirror endpoint and verified handoff guard.
+grep -Fq 'downloads.sourceforge.net/project/bfsos/BFSOS/base/latest' "$installer"
+grep -Fq 'Base archive handoff failed' "$installer"
+
+printf 'r311/r313 installer/runtime policy regression: PASS\n'
