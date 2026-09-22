@@ -5,7 +5,7 @@
 
 name=tesseract
 version=5.5.3
-release=5
+release=4
 
 source=(
 https://github.com/tesseract-ocr/tesseract/archive/refs/tags/$version.tar.gz
@@ -21,8 +21,4 @@ post_build() {
         install -d "$PKG/usr/share/tessdata"
         install -m644 "$SRC/eng.traineddata" "$PKG/usr/share/tessdata/"
         install -m644 "$SRC/osd.traineddata" "$PKG/usr/share/tessdata/"
-
-        install -d "$PKG/etc/environment.d"
-        printf '%s\n' 'TESSDATA_PREFIX=/usr/share' \
-                > "$PKG/etc/environment.d/10-tesseract.conf"
 }
