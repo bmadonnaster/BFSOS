@@ -12,9 +12,6 @@ pkg_build() {
 
     cmake -D CMAKE_INSTALL_PREFIX=/usr \
           -D CMAKE_BUILD_TYPE=Release \
-          -D CMAKE_C_COMPILER=/usr/bin/clang \
-          -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
-          -D CMAKE_CLC_COMPILER=/usr/bin/clang \
           -G Ninja .. || return 1
 
     ninja -j "${JOBS:-1}" || return 1
