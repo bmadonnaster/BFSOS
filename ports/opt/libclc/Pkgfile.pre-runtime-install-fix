@@ -20,11 +20,8 @@ pkg_build() {
         || return 1
 
     ninja -C build -j "${JOBS:-1}" \
-        runtimes-spirv32-unknown-unknown \
-        runtimes-spirv64-unknown-unknown \
         || return 1
 
-    DESTDIR="$PKG" \
-        cmake -P build/runtimes/cmake_install.cmake \
+    DESTDIR="$PKG" ninja -C build install \
         || return 1
 }

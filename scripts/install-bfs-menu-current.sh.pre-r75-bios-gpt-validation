@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Revision: r75-bios-gpt-validation
-# r75: preflight BIOS+GPT GRUB validation - require a BIOS Boot partition before installation starts
+# Revision: r74-pre-rc-source-fixes
 # r73: tracker source fixes - root ownership postflight, serial/LUKS console order, safe GRUB alias handling
 # r71: deterministic equal /home + /var LVM split from one initial free-extent snapshot
 # r70: GLib two-pass footprint lifecycle + early integrity setting propagation + r69 fixes
@@ -6085,27 +6084,6 @@ generate_crypttab() {
         chmod 0600 "$crypttab"
 }
 
-bios_gpt_has_boot_partition() {
-        local disk="${1:-}"
-        local pttype=""
-        local bios_guid="21686148-6449-6e6f-744e-656564454649"
-
-        [[ -b "$disk" ]] || return 1
-
-        pttype="$(
-                lsblk -dn -o PTTYPE "$disk" 2>/dev/null |
-                        tr '[:upper:]' '[:lower:]' |
-                        head -n1
-        )"
-
-        # DOS/MBR BIOS installs do not require a dedicated BIOS Boot partition.
-        [[ "$pttype" == gpt ]] || return 0
-
-        lsblk -lnpo PARTTYPE "$disk" 2>/dev/null |
-                tr '[:upper:]' '[:lower:]' |
-                grep -Fxq "$bios_guid"
-}
-
 validate_settings() {
         detect_storage_requirements
         validate_zram_settings
@@ -6144,20 +6122,6 @@ validate_settings() {
         if [[ "$INSTALL_GRUB" == yes ]]; then
                 [[ "$BOOT_MODE" != uefi || -n "$EFI_DEV" ]] || die "UEFI GRUB requires an EFI partition."
                 [[ "$BOOT_MODE" != bios || -b "$BOOT_DISK" ]] || die "BIOS GRUB requires a whole-disk target."
-
-                if [[ "$BOOT_MODE" == bios ]]; then
-                        local boot_pttype=""
-                        boot_pttype="$(
-                                lsblk -dn -o PTTYPE "$BOOT_DISK" 2>/dev/null |
-                                        tr '[:upper:]' '[:lower:]' |
-                                        head -n1
-                        )"
-
-                        if [[ "$boot_pttype" == gpt ]] &&
-                           ! bios_gpt_has_boot_partition "$BOOT_DISK"; then
-                                die "BIOS GRUB on GPT requires a BIOS Boot partition on $BOOT_DISK. Return to disk setup, create a small (~2 MiB) unformatted partition in cfdisk, and set its type to 'BIOS boot'."
-                        fi
-                fi
         fi
 }
 
