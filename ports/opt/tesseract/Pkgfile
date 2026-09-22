@@ -17,7 +17,7 @@ build_opt="-DBUILD_SHARED_LIBS=ON
 -DBUILD_TRAINING_TOOLS=OFF
 -DBUILD_TESTS=OFF"
 
-post_install() {
+post_build() {
         install -d "$PKG/usr/share/tessdata"
         install -m644 "$SRC/eng.traineddata" "$PKG/usr/share/tessdata/"
         install -m644 "$SRC/osd.traineddata" "$PKG/usr/share/tessdata/"
