@@ -627,6 +627,10 @@ printf '  sudo ssh-keygen -A\n'
 printf '  sudo systemctl start sshd.service\n'
 printf 'If this system uses ssh.service instead, start that unit instead.\n\n'
 
+if command -v ssh-keygen >/dev/null 2>&1; then
+    ssh-keygen -A >/dev/null 2>&1 || true
+fi
+
 # Accessibility choice must happen before the normal live menu appears.
 /usr/local/sbin/bfs-live-console-font || true
 
