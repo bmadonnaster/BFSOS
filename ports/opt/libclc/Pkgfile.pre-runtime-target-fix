@@ -3,7 +3,7 @@
 
 name=libclc
 version=23.1.1
-release=2
+release=1
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz)
 
 pkg_build() {
@@ -15,7 +15,6 @@ pkg_build() {
           -D CMAKE_C_COMPILER=/usr/bin/clang \
           -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
           -D CMAKE_CLC_COMPILER=/usr/bin/clang \
-          -D LLVM_RUNTIMES_TARGET=spirv64-mesa3d- \
           -G Ninja .. || return 1
 
     ninja -j "${JOBS:-1}" || return 1
