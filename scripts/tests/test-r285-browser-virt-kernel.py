@@ -5,10 +5,10 @@ root = Path(__file__).resolve().parents[2]
 def text(rel): return (root / rel).read_text()
 
 expected = {
-    'ports/core/linux/Pkgfile': 'version=7.2.6',
-    'ports/core/linux-api-headers/Pkgfile': 'version=7.2.6',
-    'ports/core/linux-headers/Pkgfile': 'version=7.2.6',
-    'ports/core/linux-lts/Pkgfile': 'version=6.18.52',
+    'ports/core/linux/Pkgfile': 'version=7.2.7',
+    'ports/core/linux-api-headers/Pkgfile': 'version=6.18.53',
+    'ports/core/linux-headers/Pkgfile': 'version=6.18.53',
+    'ports/core/linux-lts/Pkgfile': 'version=6.18.53',
     'ports/opt/qemu/Pkgfile': 'version=11.1.1',
     'ports/opt/libvirt/Pkgfile': 'version=12.7.0',
     'ports/opt/libvirt-python/Pkgfile': 'version=12.7.0',

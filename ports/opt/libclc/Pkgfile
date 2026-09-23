@@ -3,7 +3,7 @@
 
 name=libclc
 version=23.1.1
-release=4
+release=5
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz)
 
 pkg_build() {

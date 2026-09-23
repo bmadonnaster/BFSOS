@@ -1,12 +1,11 @@
-# Description: Expose the kernel's API for use by Glibc
-# URL:         
+# Description: Linux userspace API headers aligned with the BFSOS default LTS kernel
+# URL: https://www.kernel.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on:  
 
 name=linux-api-headers
-version=7.2.6
+version=6.18.53
 release=1
-source=(https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz)
+source=(https://www.kernel.org/pub/linux/kernel/v6.x/linux-$version.tar.xz)
 
 pkg_build() {
         make mrproper || return 1

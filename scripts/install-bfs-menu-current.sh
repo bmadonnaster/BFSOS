@@ -144,7 +144,7 @@ EFI_FORMAT="keep"
 SWAP_FORMAT="keep"
 HOME_FORMAT="keep"
 
-KERNEL_PACKAGE="${BFS_KERNEL_PACKAGE:-linux}"
+KERNEL_PACKAGE="${BFS_KERNEL_PACKAGE:-linux-lts}"
 INSTALL_GRUB="${BFS_INSTALL_GRUB:-yes}"
 SAVE_BASE_ARCHIVE="${BFS_SAVE_BASE_ARCHIVE:-yes}"
 BASE_ARCHIVE_DIR="${BFS_BASE_ARCHIVE_DIR:-/var/cache/bfs/archives/base}"
@@ -2828,6 +2828,9 @@ select_network_interface() {
 get_whole_disks() {
         lsblk -dpno NAME,SIZE,MODEL,TYPE |
         awk '$NF == "disk" {
+                name=$1
+                if (name ~ /^\/dev\/(fd|sr|loop)[0-9]+$/)
+                        next
                 type=$NF
                 $NF=""
                 sub(/[[:space:]]+$/, "")
@@ -2856,7 +2859,7 @@ refresh_storage_state() {
                                 failed=1
                         }
                 fi
-        done < <(lsblk -dnpo NAME,TYPE 2>/dev/null | awk '$2=="disk" {print $1}')
+        done < <(lsblk -dnpo NAME,TYPE 2>/dev/null | awk '$2=="disk" && $1 !~ /^\/dev\/(fd|sr|loop)[0-9]+$/ {print $1}')
 
         command -v udevadm >/dev/null 2>&1 && udevadm settle || true
         command -v pvscan >/dev/null 2>&1 && pvscan --cache >/dev/null 2>&1 || true
@@ -5320,15 +5323,15 @@ configure_kernel() {
                 "Kernel selection" \
                 "Choose the kernel package for the installed system." \
                 16 72 7 \
-                1 "linux $linux_version" \
-                2 "linux-lts $lts_version — Linux 6.18 LTS compatibility kernel" \
+                1 "linux-lts $lts_version — BFSOS default LTS kernel" \
+                2 "linux $linux_version — optional current kernel" \
                 3 "Do not install a kernel"
 
         [[ -n "$choice" ]] || return 0
 
         case "$choice" in
-                1) KERNEL_PACKAGE=linux ;;
-                2) KERNEL_PACKAGE=linux-lts ;;
+                1) KERNEL_PACKAGE=linux-lts ;;
+                2) KERNEL_PACKAGE=linux ;;
                 3) KERNEL_PACKAGE=none ;;
                 *) return 0 ;;
         esac
@@ -5869,14 +5872,12 @@ installer_menu() {
                         8)
                                 show_summary
                                 if installer_ready; then
-                                        while true; do
-                                                if confirm_continue "Begin the BFS installation?"; then
-                                                        INSTALL_CONFIRMED=yes
-                                                        return 0
-                                                fi
-                                                # Back from Ready to install returns directly to Review.
-                                                show_summary
-                                        done
+                                        if confirm_continue "Begin the BFS installation?"; then
+                                                INSTALL_CONFIRMED=yes
+                                                return 0
+                                        fi
+                                        # Back from Ready to install returns to the main installer menu.
+                                        continue
                                 fi
                                 ;;
                         9)

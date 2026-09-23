@@ -9,6 +9,7 @@ release=1
 
 source=(https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v${version}/SPIRV-LLVM-Translator-${version}.tar.gz)
 
+# Custom build required: 32-bit LLVM/CMake cross build and payload pruning.
 pkg_build() {
     (
         set -e

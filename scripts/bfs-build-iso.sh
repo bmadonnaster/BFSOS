@@ -17,8 +17,10 @@ BASE_CACHE_DIR="${BFS_ISO_BASE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/bfsos/
 BASE_FILENAME="${BFS_ISO_BASE_FILENAME:-BFSOS-base-${ARCH}.tar.zst}"
 BASE_URL="${BFS_ISO_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}}"
 BASE_SHA256_URL="${BFS_ISO_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}.sha256}"
-BASE_MODE="${BFS_ISO_BASE_MODE:-sourceforge}"
+BASE_MODE="${BFS_ISO_BASE_MODE:-auto}"
 REFRESH_BASE="${BFS_ISO_REFRESH_BASE:-no}"
+LOCAL_BASE_PATH="${BFS_ISO_LOCAL_BASE:-}"
+BASE_SOURCE="unknown"
 GIT_URL="${BFS_ISO_GIT_URL:-https://codeberg.org/bmadonnaster/BFSOS.git}"
 GIT_REF="${BFS_ISO_GIT_REF:-main}"
 VERSION="0.9.0-rc1"
@@ -53,25 +55,39 @@ die() { printf '[BFSOS ISO] ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--refresh-base] [--git-ref REF] [--local-base]
+Usage: $(basename "$0") [--refresh-base] [--sourceforge-base] [--local-base PATH] [--git-ref REF]
 
-  --refresh-base  Force a fresh SourceForge base archive download.
-  --git-ref REF   Build from this Codeberg branch, tag, or commit (default: main).
-  --local-base    Use the legacy local base/rebuild selection instead of SourceForge.
+  (default)         Prefer a verified maintainer-generated base under archives/base.
+                    If none exists, offer rebuild/download/cancel instead of silently downloading.
+  --local-base PATH Use exactly the supplied verified local base archive.
+  --sourceforge-base
+                    Explicitly use the SourceForge release base/cache path.
+  --refresh-base    Force a fresh SourceForge base download (implies --sourceforge-base).
+  --git-ref REF     Build from this Codeberg branch, tag, or commit (default: main).
 EOF
 }
 
 parse_args() {
     while (($#)); do
         case "$1" in
-            --refresh-base) REFRESH_BASE=yes ;;
+            --refresh-base) REFRESH_BASE=yes; BASE_MODE=sourceforge ;;
+            --sourceforge-base) BASE_MODE=sourceforge ;;
+            --local-base)
+                shift
+                (($#)) || die "--local-base requires a path"
+                LOCAL_BASE_PATH="$1"
+                BASE_MODE=local-path
+                ;;
+            --local-base=*)
+                LOCAL_BASE_PATH="${1#*=}"
+                BASE_MODE=local-path
+                ;;
             --git-ref)
                 shift
                 (($#)) || die "--git-ref requires a value"
                 GIT_REF="$1"
                 ;;
             --git-ref=*) GIT_REF="${1#*=}" ;;
-            --local-base) BASE_MODE=local ;;
             -h|--help) usage; exit 0 ;;
             *) die "Unknown ISO builder argument: $1" ;;
         esac
@@ -109,6 +125,7 @@ fetch_sourceforge_base() {
     local sumfile="$archive.sha256"
     local tmp_sum="$sumfile.tmp" tmp_archive="$archive.tmp"
     result_ref=""
+    BASE_SOURCE="sourceforge:$BASE_URL"
     mkdir -p "$BASE_CACHE_DIR"
 
     log "Checking SourceForge for current BFSOS base: $BASE_URL"
@@ -225,10 +242,19 @@ preflight() {
     return 0
 }
 
+project_base_candidates() {
+    local dir=""
+    for dir in "$PROJECT_DIR/archives/base" "$PROJECT_DIR/archive/base"; do
+        [ -d "$dir" ] || continue
+        find "$dir" -maxdepth 1 -type f \
+            \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \
+               -o -name 'BFSOS-base-*.tar.xz' -o -name 'BFSOS-base-*.tar.zst' -o -name 'BFSOS-base-*.tar.gz' \) \
+            -printf '%T@ %p\n' 2>/dev/null
+    done | sort -nr
+}
+
 latest_base_archive() {
-    find "$PROJECT_DIR/archives/base" -maxdepth 1 -type f \
-        \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
-        -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-
+    project_base_candidates | head -n1 | cut -d' ' -f2-
 }
 
 archive_list() {
@@ -279,11 +305,7 @@ latest_usable_base_archive() {
             printf '%s\n' "$candidate"
             return 0
         fi
-    done < <(
-        find "$PROJECT_DIR/archives/base" -maxdepth 1 -type f \
-            \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \) \
-            -printf '%T@ %p\n' 2>/dev/null | sort -nr | cut -d' ' -f2-
-    )
+    done < <(project_base_candidates | cut -d' ' -f2-)
     return 1
 }
 
@@ -330,10 +352,11 @@ choose_base_action() {
     fi
 
     printf '\nNo usable verified BFSOS base archive is available.\n' >&2
-    printf 'Rebuild the complete base now? [y/N]: ' >&2
+    printf 'Choose: [R]ebuild local base, [S]ourceForge download, or [C]ancel: ' >&2
     read -r answer
     case "$answer" in
-        y|Y|yes|YES|Yes) printf '%s\n' rebuild ;;
+        r|R|rebuild|REBUILD|Rebuild) printf '%s\n' rebuild ;;
+        s|S|sourceforge|SOURCEFORGE|SourceForge) printf '%s\n' sourceforge ;;
         *) printf '%s\n' cancel ;;
     esac
 }
@@ -634,13 +657,11 @@ printf '\nBFSOS live environment\n======================\n'
 printf 'Local console: automatic login as bfs with passwordless sudo.\n'
 printf 'SSH is disabled by default. To enable password-based SSH for this boot:\n'
 printf '  sudo passwd bfs\n'
-printf '  sudo ssh-keygen -A\n'
-printf '  sudo systemctl start sshd.service\n'
+printf '  sudo bfs-live-enable-ssh\n'
 printf 'If this system uses ssh.service instead, start that unit instead.\n\n'
 
-if command -v ssh-keygen >/dev/null 2>&1; then
-    ssh-keygen -A >/dev/null 2>&1 || true
-fi
+# SSH host keys are intentionally not generated during normal live boot.
+# The explicit bfs-live-enable-ssh action creates per-boot keys on demand.
 
 # Accessibility choice must happen before the normal live menu appears.
 /usr/local/sbin/bfs-live-console-font || true
@@ -669,6 +690,21 @@ printf '\nLive initialization complete. Starting bfs console session.\n'
 EOS
     chmod 0755 "$root/usr/local/sbin/bfs-live-init"
 
+    cat > "$root/usr/local/sbin/bfs-live-enable-ssh" <<'EOS'
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "$(id -u)" -ne 0 ]; then
+    exec sudo "$0" "$@"
+fi
+if ! compgen -G '/etc/ssh/ssh_host_*_key' >/dev/null; then
+    ssh-keygen -A
+fi
+systemctl start sshd.service 2>/dev/null || systemctl start ssh.service
+printf 'BFSOS live SSH enabled for this boot.\n'
+printf 'Set a password for the bfs account with: sudo passwd bfs\n'
+EOS
+    chmod 0755 "$root/usr/local/sbin/bfs-live-enable-ssh"
+
     cat > "$root/etc/systemd/system/bfs-live-init.service" <<'EOS'
 [Unit]
 Description=BFSOS live-session initialization
@@ -695,7 +731,7 @@ set -u
 PROJECT=/home/bfs/BFSOS
 while true; do
     printf '\nBFSOS Live Menu\n===============\n'
-    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Quit menu\n\nChoice: '
+    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Enable SSH for this boot\n  6) Quit menu\n\nChoice: '
     read -r choice
     case "$choice" in
         1)
@@ -723,7 +759,8 @@ while true; do
             fi
             ;;
         4) /usr/local/sbin/bfs-live-console-font ;;
-        5) exit 0 ;;
+        5) sudo /usr/local/sbin/bfs-live-enable-ssh ;;
+        6) exit 0 ;;
         *) printf 'Invalid choice.\n' ;;
     esac
 done
@@ -737,6 +774,7 @@ if [ -z "${BFS_LIVE_MENU_STARTED:-}" ] && [ -t 0 ]; then
 fi
 EOS
     chown 0:0 "$root/etc/systemd/system/bfs-live-init.service"
+    rm -f "$root"/etc/ssh/ssh_host_*
     chroot "$root" /bin/bash -lc '
         mkdir -p /etc/systemd/system/multi-user.target.wants
         ln -sfn /etc/systemd/system/bfs-live-init.service /etc/systemd/system/multi-user.target.wants/bfs-live-init.service
@@ -913,6 +951,7 @@ GIT_COMMIT=$GIT_COMMIT_FULL
 BASE_ARCHIVE=$(basename "$base_archive")
 BASE_SHA256=$base_sha
 BASE_URL=$BASE_URL
+BASE_SOURCE=$BASE_SOURCE
 SQUASHFS_COMPRESSION=xz
 SQUASHFS_BLOCK_SIZE=1M
 SQUASHFS_X86_BCJ=yes
@@ -931,7 +970,7 @@ stage_iso() {
         "$root/var/cache/pkg/build-work" "$root/var/cache/pkg/build-work-disk"
     sudo mkdir -p "$root/var/cache/pkg/sources" "$root/var/cache/pkg/packages" "$root/var/cache/pkg/build-work"
     sudo bash -c "$(declare -f audit_live_root die log); audit_live_root '$root'"
-    sudo bash -c "$(declare -f write_build_info); VERSION='$VERSION'; ARCH='$ARCH'; BUILD_DATE='$BUILD_DATE'; ISO_LABEL='$ISO_LABEL'; GIT_URL='$GIT_URL'; GIT_REF='$GIT_REF'; GIT_COMMIT_FULL='$GIT_COMMIT_FULL'; BASE_URL='$BASE_URL'; write_build_info '$root' '$base_archive'"
+    sudo bash -c "$(declare -f write_build_info); VERSION='$VERSION'; ARCH='$ARCH'; BUILD_DATE='$BUILD_DATE'; ISO_LABEL='$ISO_LABEL'; GIT_URL='$GIT_URL'; GIT_REF='$GIT_REF'; GIT_COMMIT_FULL='$GIT_COMMIT_FULL'; BASE_URL='$BASE_URL'; BASE_SOURCE='$BASE_SOURCE'; write_build_info '$root' '$base_archive'"
 
     root_bytes="$(sudo du -sb "$root" | awk '{print $1}')"
     sudo cp "$root/boot/$kernel" "$stage/bfsos/vmlinuz"
@@ -954,6 +993,7 @@ GIT_COMMIT=$GIT_COMMIT_FULL
 BASE_ARCHIVE=$(basename "$base_archive")
 BASE_SHA256=$base_sha
 BASE_URL=$BASE_URL
+BASE_SOURCE=$BASE_SOURCE
 SQUASHFS_COMPRESSION=xz
 SQUASHFS_BLOCK_SIZE=1M
 SQUASHFS_X86_BCJ=yes
@@ -1000,19 +1040,44 @@ main() {
         die "BFS_ISO_LIVE_MEDIA_WAIT must be between 1 and 60 seconds"
     preflight
 
-    if [ "$BASE_MODE" = sourceforge ]; then
-        fetch_sourceforge_base base_archive
-    else
-        base_action="$(choose_base_action)"
-        case "$base_action" in
-            use-existing) ;;
-            rebuild) run_full_bootstrap ;;
-            cancel) log "ISO build cancelled"; exit 0 ;;
-            *) die "Internal error: unknown base action '$base_action'" ;;
-        esac
-        base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
-    fi
+    case "$BASE_MODE" in
+        local-path)
+            base_archive="$LOCAL_BASE_PATH"
+            validate_base_archive "$base_archive" || die "Explicit --local-base archive is missing or invalid: $base_archive"
+            BASE_SOURCE="local-explicit:$base_archive"
+            ;;
+        sourceforge)
+            fetch_sourceforge_base base_archive
+            ;;
+        auto|local)
+            base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
+            if validate_base_archive "$base_archive"; then
+                BASE_SOURCE="local-project:$base_archive"
+                log "Using maintainer-generated local base: $base_archive"
+            else
+                base_action="$(choose_base_action)"
+                case "$base_action" in
+                    use-existing)
+                        base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
+                        BASE_SOURCE="local-project:$base_archive"
+                        ;;
+                    rebuild)
+                        run_full_bootstrap
+                        base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
+                        BASE_SOURCE="local-rebuilt:$base_archive"
+                        ;;
+                    sourceforge)
+                        fetch_sourceforge_base base_archive
+                        ;;
+                    cancel) log "ISO build cancelled"; exit 0 ;;
+                    *) die "Internal error: unknown base action '$base_action'" ;;
+                esac
+            fi
+            ;;
+        *) die "Unknown BFS_ISO_BASE_MODE='$BASE_MODE' (expected auto, local, local-path, or sourceforge)" ;;
+    esac
     validate_base_archive "$base_archive" || die "No usable verified base archive is available"
+    log "Base source: $BASE_SOURCE"
     log "Using verified base archive: $base_archive"
 
     case "$WORK_DIR" in
