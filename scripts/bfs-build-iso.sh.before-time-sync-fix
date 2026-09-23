@@ -192,45 +192,6 @@ prepare_build_project() {
     fi
 }
 
-
-sync_host_time() {
-    log "Synchronizing host clock before BFSOS base/ISO build"
-
-    # The ISO builder intentionally runs as a regular user, so time correction
-    # must be requested through sudo. Prefer chrony when available because it
-    # can step a badly skewed clock immediately; otherwise fall back to
-    # timedatectl/systemd-timesyncd where available.
-    if command -v chronyc >/dev/null 2>&1; then
-        sudo systemctl start chronyd.service 2>/dev/null || \
-            sudo systemctl start chrony.service 2>/dev/null || true
-
-        if sudo chronyc -a makestep >/dev/null 2>&1; then
-            sudo chronyc -a waitsync 10 0.5 >/dev/null 2>&1 || true
-            log "Host clock synchronized with chrony"
-            return 0
-        fi
-    fi
-
-    if command -v timedatectl >/dev/null 2>&1; then
-        sudo timedatectl set-ntp true >/dev/null 2>&1 || true
-        sudo systemctl start systemd-timesyncd.service >/dev/null 2>&1 || true
-
-        # Give the service a short opportunity to acquire time. Do not block a
-        # release build forever if the configured NTP service is unavailable.
-        local i synced=""
-        for i in {1..20}; do
-            synced="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || true)"
-            [ "$synced" = yes ] && {
-                log "Host clock synchronized with systemd time service"
-                return 0
-            }
-            sleep 0.5
-        done
-    fi
-
-    die "Unable to synchronize host clock. Check network/time service before building the BFSOS base/ISO."
-}
-
 preflight() {
     local t pkg
     local -a missing=() optional_missing=()
@@ -1078,7 +1039,6 @@ main() {
     [ "$LIVE_MEDIA_WAIT" -ge 1 ] && [ "$LIVE_MEDIA_WAIT" -le 60 ] || \
         die "BFS_ISO_LIVE_MEDIA_WAIT must be between 1 and 60 seconds"
     preflight
-    sync_host_time
 
     case "$BASE_MODE" in
         local-path)
