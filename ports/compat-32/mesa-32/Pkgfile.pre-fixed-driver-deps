@@ -2,11 +2,11 @@
 # URL: https://www.mesa3d.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: elfutils-32 expat-32 libdrm-32 libglvnd-32 llvm-32 mesa libXdamage-32 libXrandr-32 libxshmfence-32 libXxf86vm-32 wayland-32
-# Optional: cbindgen directx-headers-32 glslang libclc libunwind-32 libva-32 lm_sensors-32 lua python3-ply rust-bindgen rustc spirv-llvm-translator-32 vulkan-loader-32 wayland-protocols
+# Optional: cbindgen llvm directx-headers-32 glslang libclc libunwind-32 libva-32 lm_sensors-32 lua python3-ply rust-bindgen rustc spirv-llvm-translator vulkan-loader-32 wayland-protocols
 
 name=mesa-32
 version=26.2.2
-release=9
+release=8
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz
         x86-linux-gnu
         x86-linux-gnu-ccache)
@@ -23,15 +23,10 @@ build_opt="-Db_lto=false \
 -Dvideo-codecs=all \
 -Dglvnd=enabled"
 
-# Custom build required: Mesa-32 conditionally composes Gallium/Vulkan/Rusticl
+# Custom build required: Mesa-32 conditionally composes Gallium/Vulkan/Rusticl\n
 # feature sets from the installed 32-bit toolchain and uses package-local cross files.
 pkg_is_installed() {
     prt-get isinst "$1" >/dev/null 2>&1
-}
-
-pc32_has() {
-    PKG_CONFIG_LIBDIR="/usr/lib32/pkgconfig:/usr/share/pkgconfig" \
-        i686-pc-linux-gnu-pkg-config --exists "$1" >/dev/null 2>&1
 }
 
 pkg_build() {
@@ -62,8 +57,9 @@ pkg_build() {
         # Iris and Crocus require Mesa's CLC compiler support.
         # Do not enable them unless the complete 32-bit compiler stack exists.
         #
-        if pc32_has libclc &&
-           pc32_has LLVMSPIRVLib; then
+        if pkg_is_installed llvm &&
+       pkg_is_installed libclc &&
+       pkg_is_installed spirv-llvm-translator; then
             _gallium_drivers="iris,crocus,${_gallium_drivers}"
         fi
 
@@ -72,9 +68,10 @@ pkg_build() {
         #
         # Only enable it when the complete 32-bit toolchain is present.
         #
-        if pc32_has libclc &&
-           pc32_has LLVMSPIRVLib &&
-           pkg_is_installed rust-bindgen &&
+        if pkg_is_installed llvm &&
+       pkg_is_installed libclc &&
+       pkg_is_installed rust-bindgen &&
+       pkg_is_installed spirv-llvm-translator &&
            command -v rustc >/dev/null 2>&1 &&
            _rustlib="$(rustc --print target-libdir --target i686-unknown-linux-gnu 2>/dev/null)" &&
            ls "$_rustlib"/libstd-*.rlib >/dev/null 2>&1; then
@@ -135,11 +132,12 @@ pkg_build() {
             #
             # ANV.
             #
-            if pkg_is_installed glslang &&
-               pc32_has libclc &&
-               pc32_has LLVMSPIRVLib &&
-               pkg_is_installed lua &&
-               pkg_is_installed python3-ply; then
+            if pkg_is_installed llvm &&
+             pkg_is_installed glslang &&
+             pkg_is_installed libclc &&
+             pkg_is_installed lua &&
+             pkg_is_installed python3-ply &&
+             pkg_is_installed spirv-llvm-translator; then
                 _vulkan_drivers+="intel,"
                 _vulkan_layers+="intel-nullhw,"
             fi
@@ -151,9 +149,10 @@ pkg_build() {
             # BFSOS rustc release 3 provides the i686 Rust stdlib.
             #
             if pkg_is_installed cbindgen &&
-               pc32_has libclc &&
-               pc32_has LLVMSPIRVLib &&
-               pkg_is_installed rust-bindgen &&
+             pkg_is_installed llvm &&
+             pkg_is_installed libclc &&
+             pkg_is_installed rust-bindgen &&
+             pkg_is_installed spirv-llvm-translator &&
                command -v rustc >/dev/null 2>&1 &&
                _rustlib="$(rustc --print target-libdir --target i686-unknown-linux-gnu 2>/dev/null)" &&
                ls "$_rustlib"/libstd-*.rlib >/dev/null 2>&1; then
@@ -163,7 +162,8 @@ pkg_build() {
             #
             # HasVK, VirtIO and Lavapipe.
             #
-            if pc32_has LLVMSPIRVLib; then
+            if pkg_is_installed llvm &&
+             pkg_is_installed spirv-llvm-translator; then
                 _vulkan_drivers+="intel_hasvk,"
             fi
 

@@ -65,7 +65,6 @@ pkg_build() {
                 "$PKG/usr/bin" \
                 "$PKG/usr/include" \
                 "$PKG/usr/share/opt-viewer"
-                rm -rf     "$PKG/usr/lib/libear"     "$PKG/usr/lib/libscanbuild"     "$PKG/usr/libexec"     "$PKG/usr/share/clang"     "$PKG/usr/share/scan-build"     "$PKG/usr/share/scan-view"     "$PKG/usr/share/man/man1/scan-build.1"
 
         install -Dm0755 \
                 "$SRC/keep/llvm-config" \
