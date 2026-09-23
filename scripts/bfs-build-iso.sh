@@ -402,10 +402,25 @@ choose_base_action() {
 
 run_full_bootstrap() {
     log "Rebuilding complete BFSOS base (bootstrap stages 1 -> 5)"
-    BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
-    BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
-    BFS_ISO_BUILD=yes \
-        "$PROJECT_DIR/bootstrap.sh" full
+
+    # The full bootstrap uses terminal/session handling internally. When it is
+    # launched directly from the ISO builder, setsid can fail to acquire a
+    # controlling terminal. Allocate a pseudo-terminal with util-linux script
+    # when available, matching the live-menu bootstrap path.
+    if command -v script >/dev/null 2>&1; then
+        (
+            cd "$PROJECT_DIR"
+            export BFS_FULL_BOOTSTRAP_ASSUME_YES=yes
+            export BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes
+            export BFS_ISO_BUILD=yes
+            script -qec './bootstrap.sh full' /dev/null
+        )
+    else
+        BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
+        BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
+        BFS_ISO_BUILD=yes \
+            "$PROJECT_DIR/bootstrap.sh" full
+    fi
 }
 
 extract_archive() {
