@@ -132,7 +132,6 @@ check_version() {
 
 check_version ports/core/linux/Pkgfile 7.2.7
 check_version ports/core/linux-headers/Pkgfile 6.18.53
-check_version ports/core/linux-api-headers/Pkgfile 6.18.53
 check_version ports/core/linux-lts/Pkgfile 6.18.53
 if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
     report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
