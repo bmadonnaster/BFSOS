@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=18
+release=19
 # BFS Linux distribution release. Change this value when preparing a new
 # BFS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.0-rc2
@@ -31,6 +31,7 @@ source=(
     kf6.sh
     bfs-opt.sh
     60-bfsos-opt.conf
+    99-bfsos.preset
     kf6.sudoers
     xorg.sudoers
     xorg.sh
@@ -178,6 +179,7 @@ pkg_build() {
     install -d -m 0755 \
         "$PKG/etc/profile.d" \
         "$PKG/usr/lib/environment.d" \
+        "$PKG/usr/lib/systemd/system-preset" \
         "$PKG/etc/bash_completion.d" \
         "$PKG/etc/skel" \
         "$PKG/etc/sudoers.d"
@@ -210,6 +212,11 @@ pkg_build() {
     # Wayland units receive them deterministically.
     install -m 0644 60-bfsos-opt.conf \
         "$PKG/usr/lib/environment.d/60-bfsos-opt.conf"
+
+    # BFSOS service policy: explicit distro/vendor presets win first; any
+    # unit not explicitly covered remains disabled until deliberately enabled.
+    install -m 0644 99-bfsos.preset \
+        "$PKG/usr/lib/systemd/system-preset/99-bfsos.preset"
 
     #
     # Default user skeleton.

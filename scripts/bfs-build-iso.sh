@@ -870,51 +870,47 @@ EOS
         systemctl disable systemd-timesyncd.service 2>/dev/null || true
     ' || true
 
-    # Live-media policy: SSH and rsync daemons must not start automatically.
-    # Keep the unit files themselves intact so users can still start SSH
-    # manually from 3) Shell after generating host keys and setting a password.
+    # BFSOS preset policy must keep package-provided network daemons disabled
+    # unless explicitly enabled by the administrator/installer. This is the
+    # primary policy; the checks below are a live-media release invariant.
+    local preset_file="$root/usr/lib/systemd/system-preset/99-bfsos.preset"
     local unit state
+
+    [ -r "$preset_file" ] || \
+        die "BFSOS preset policy missing from live root: /usr/lib/systemd/system-preset/99-bfsos.preset"
+    grep -Eq '^[[:space:]]*disable[[:space:]]+\*[[:space:]]*$' "$preset_file" || \
+        die "BFSOS preset policy does not contain the required default-disable rule"
+
     for unit in \
         sshd.service ssh.service sshd.socket ssh.socket \
         rsyncd.service rsync.service rsyncd.socket rsync.socket
     do
+        # Remove stale enablement from reused bases/live roots, but only from
+        # wants/requires directories. Do not delete canonical unit aliases.
         systemctl --root="$root" disable "$unit" 2>/dev/null || true
+        find "$root/etc/systemd/system" "$root/usr/lib/systemd/system" \
+            -type l \
+            \( -path "*/system/*.wants/$unit" -o -path "*/system/*.requires/$unit" \) \
+            -delete 2>/dev/null || true
 
-        # Remove enablement links even if they were shipped by a package in a
-        # vendor wants directory rather than created under /etc/systemd/system.
-        find \
-            "$root/etc/systemd/system" \
-            "$root/usr/lib/systemd/system" \
-            -type l -name "$unit" -delete 2>/dev/null || true
-    done
-
-    # Hard release invariant: refuse to master an ISO if any of these network
-    # daemons are still enabled at boot. This prevents another silent regression.
-    for unit in \
-        sshd.service ssh.service sshd.socket ssh.socket \
-        rsyncd.service rsync.service rsyncd.socket rsync.socket
-    do
         state="$(systemctl --root="$root" is-enabled "$unit" 2>/dev/null || true)"
         case "$state" in
-            enabled|enabled-runtime|linked|linked-runtime|alias)
+            enabled|enabled-runtime|linked|linked-runtime)
                 die "Live ISO policy violation: $unit is enabled ($state)"
                 ;;
         esac
     done
 
-    if find \
-        "$root/etc/systemd/system" \
-        "$root/usr/lib/systemd/system" \
-        -type l \
-        \( -name 'sshd.service' -o -name 'ssh.service' \
-           -o -name 'sshd.socket' -o -name 'ssh.socket' \
-           -o -name 'rsyncd.service' -o -name 'rsync.service' \
-           -o -name 'rsyncd.socket' -o -name 'rsync.socket' \) \
-        -print -quit 2>/dev/null | grep -q .; then
-        die "Live ISO policy violation: SSH/rsync boot-enablement symlink remains"
-    fi
+    # Verify the preset decision that will be applied during live first boot.
+    for unit in sshd.service rsyncd.service; do
+        state="$(systemctl --root="$root" preset-status "$unit" 2>/dev/null || true)"
+        case "$state" in
+            disabled) ;;
+            *) die "Live ISO preset policy violation: $unit preset state is '${state:-unknown}', expected disabled" ;;
+        esac
+    done
 
-    log "Verified: SSH and rsync daemons are disabled for live boot"
+    log "Verified: BFSOS default-disable preset keeps SSH and rsync disabled for live boot"
 }
 
 install_dracut_live_module() {
