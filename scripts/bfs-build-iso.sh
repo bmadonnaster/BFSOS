@@ -868,8 +868,53 @@ EOS
         # systemd-timesyncd instance on live media. bfs-live-init starts chrony
         # only after NetworkManager reports usable connectivity.
         systemctl disable systemd-timesyncd.service 2>/dev/null || true
-        systemctl disable sshd.service ssh.service 2>/dev/null || true
     ' || true
+
+    # Live-media policy: SSH and rsync daemons must not start automatically.
+    # Keep the unit files themselves intact so users can still start SSH
+    # manually from 3) Shell after generating host keys and setting a password.
+    local unit state
+    for unit in \
+        sshd.service ssh.service sshd.socket ssh.socket \
+        rsyncd.service rsync.service rsyncd.socket rsync.socket
+    do
+        systemctl --root="$root" disable "$unit" 2>/dev/null || true
+
+        # Remove enablement links even if they were shipped by a package in a
+        # vendor wants directory rather than created under /etc/systemd/system.
+        find \
+            "$root/etc/systemd/system" \
+            "$root/usr/lib/systemd/system" \
+            -type l -name "$unit" -delete 2>/dev/null || true
+    done
+
+    # Hard release invariant: refuse to master an ISO if any of these network
+    # daemons are still enabled at boot. This prevents another silent regression.
+    for unit in \
+        sshd.service ssh.service sshd.socket ssh.socket \
+        rsyncd.service rsync.service rsyncd.socket rsync.socket
+    do
+        state="$(systemctl --root="$root" is-enabled "$unit" 2>/dev/null || true)"
+        case "$state" in
+            enabled|enabled-runtime|linked|linked-runtime|alias)
+                die "Live ISO policy violation: $unit is enabled ($state)"
+                ;;
+        esac
+    done
+
+    if find \
+        "$root/etc/systemd/system" \
+        "$root/usr/lib/systemd/system" \
+        -type l \
+        \( -name 'sshd.service' -o -name 'ssh.service' \
+           -o -name 'sshd.socket' -o -name 'ssh.socket' \
+           -o -name 'rsyncd.service' -o -name 'rsync.service' \
+           -o -name 'rsyncd.socket' -o -name 'rsync.socket' \) \
+        -print -quit 2>/dev/null | grep -q .; then
+        die "Live ISO policy violation: SSH/rsync boot-enablement symlink remains"
+    fi
+
+    log "Verified: SSH and rsync daemons are disabled for live boot"
 }
 
 install_dracut_live_module() {
