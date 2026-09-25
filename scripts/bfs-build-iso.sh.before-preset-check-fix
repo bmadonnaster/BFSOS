@@ -901,12 +901,16 @@ EOS
         esac
     done
 
-    # Verify the BFSOS default-disable preset policy itself.
-    # Explicit rules in earlier preset files still take precedence.
-    grep -Eq '^[[:space:]]*disable[[:space:]]+\*[[:space:]]*$' "$preset_file" || \
-        die "Live ISO preset policy violation: BFSOS default-disable rule is missing"
+    # Verify the preset decision that will be applied during live first boot.
+    for unit in sshd.service rsyncd.service; do
+        state="$(systemctl --root="$root" preset-status "$unit" 2>/dev/null || true)"
+        case "$state" in
+            disabled) ;;
+            *) die "Live ISO preset policy violation: $unit preset state is '${state:-unknown}', expected disabled" ;;
+        esac
+    done
 
-    log "Verified: BFSOS default-disable preset policy is installed and SSH/rsync have no boot enablement"
+    log "Verified: BFSOS default-disable preset keeps SSH and rsync disabled for live boot"
 }
 
 install_dracut_live_module() {
