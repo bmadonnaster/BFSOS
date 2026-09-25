@@ -10,7 +10,7 @@ release=5
 source=(https://github.com/virt-manager/virt-manager/archive/refs/tags/v$version.tar.gz)
 
 # BFSOS currently ships the VNC console path as the guaranteed baseline.
-# SPICE is packaged and available; keep VNC as the RC1 default until SPICE runtime acceptance is complete.
+# SPICE is packaged and available; keep VNC as the RC2 default until SPICE runtime acceptance is complete.
 build_opt=(
     -Dtests=disabled
     -Dupdate-icon-cache=false

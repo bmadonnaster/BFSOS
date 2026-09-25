@@ -6195,6 +6195,26 @@ mdraid_review_text() {
         [[ "$found" == yes ]] || printf 'none\n'
 }
 
+review_device_size() {
+        local device="${1:-}" size=""
+        [[ -n "$device" ]] || { printf '%s' "unknown"; return 0; }
+        size="$(lsblk -dn -o SIZE "$device" 2>/dev/null | head -n1 | xargs 2>/dev/null || true)"
+        [[ -n "$size" ]] || size="unknown"
+        printf '%s' "$size"
+}
+
+review_device_type() {
+        local device="${1:-}" requested="${2:-keep}" fstype=""
+        if [[ -n "$requested" && "$requested" != keep ]]; then
+                printf '%s' "$requested"
+                return 0
+        fi
+        [[ -n "$device" ]] || { printf '%s' "unknown"; return 0; }
+        fstype="$(lsblk -dn -o FSTYPE "$device" 2>/dev/null | head -n1 | xargs 2>/dev/null || true)"
+        [[ -n "$fstype" ]] || fstype="keep"
+        printf '%s' "$fstype"
+}
+
 show_additional_partitions() {
         local index
         if ((${#EXTRA_DEVICES[@]} == 0)); then
@@ -6255,35 +6275,37 @@ BFS Installation Review
 
 Filesystem Layout
 -----------------
-Mount Point      Device                          Action
------------      ------------------------------  ------------
+Mount/Use        Device                          Type     Size       Action
+---------        ------------------------------  -------  ---------  ------------
 SUMMARY_HEADER
 
-                printf '%-16s %-30s %s\n' \
-                        "/" "$ROOT_DEV" "$ROOT_FORMAT"
+                printf '%-16s %-30s %-7s %-9s %s\n' \
+                        "/" "$ROOT_DEV" "$(review_device_type "$ROOT_DEV" "$ROOT_FORMAT")" "$(review_device_size "$ROOT_DEV")" "$ROOT_FORMAT"
 
                 [[ -z "$BOOT_DEV" ]] || \
-                        printf '%-16s %-30s %s\n' \
-                                "/boot" "$BOOT_DEV" "$BOOT_FORMAT"
+                        printf '%-16s %-30s %-7s %-9s %s\n' \
+                                "/boot" "$BOOT_DEV" "$(review_device_type "$BOOT_DEV" "$BOOT_FORMAT")" "$(review_device_size "$BOOT_DEV")" "$BOOT_FORMAT"
 
                 [[ -z "$EFI_DEV" ]] || \
-                        printf '%-16s %-30s %s\n' \
-                                "/boot/efi" "$EFI_DEV" "$EFI_FORMAT"
+                        printf '%-16s %-30s %-7s %-9s %s\n' \
+                                "/boot/efi" "$EFI_DEV" "$(review_device_type "$EFI_DEV" "$EFI_FORMAT")" "$(review_device_size "$EFI_DEV")" "$EFI_FORMAT"
 
                 [[ -z "$HOME_DEV" ]] || \
-                        printf '%-16s %-30s %s\n' \
-                                "/home" "$HOME_DEV" "$HOME_FORMAT"
+                        printf '%-16s %-30s %-7s %-9s %s\n' \
+                                "/home" "$HOME_DEV" "$(review_device_type "$HOME_DEV" "$HOME_FORMAT")" "$(review_device_size "$HOME_DEV")" "$HOME_FORMAT"
 
                 for ((index=0; index<${#EXTRA_DEVICES[@]}; index++)); do
-                        printf '%-16s %-30s %s\n' \
+                        printf '%-16s %-30s %-7s %-9s %s\n' \
                                 "${EXTRA_MOUNTPOINTS[$index]}" \
                                 "${EXTRA_DEVICES[$index]}" \
+                                "$(review_device_type "${EXTRA_DEVICES[$index]}" "${EXTRA_FORMATS[$index]}")" \
+                                "$(review_device_size "${EXTRA_DEVICES[$index]}")" \
                                 "${EXTRA_FORMATS[$index]}"
                 done
 
                 [[ -z "$SWAP_DEV" ]] || \
-                        printf '%-16s %-30s %s\n' \
-                                "swap" "$SWAP_DEV" "$SWAP_FORMAT"
+                        printf '%-16s %-30s %-7s %-9s %s\n' \
+                                "swap" "$SWAP_DEV" "swap" "$(review_device_size "$SWAP_DEV")" "$SWAP_FORMAT"
 
                 cat <<SUMMARY
 

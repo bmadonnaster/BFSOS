@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
 # Includes USB live-media discovery retry, live console accessibility, and
-# current RC1 live-session policy. Boot/install acceptance still requires
+# current RC2 live-session policy. Boot/install acceptance still requires
 # fresh VM + USB-emulation + bare-metal validation.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +23,7 @@ LOCAL_BASE_PATH="${BFS_ISO_LOCAL_BASE:-}"
 BASE_SOURCE="unknown"
 GIT_URL="${BFS_ISO_GIT_URL:-https://codeberg.org/bmadonnaster/BFSOS.git}"
 GIT_REF="${BFS_ISO_GIT_REF:-main}"
-VERSION="0.9.0-rc1"
+VERSION="0.9.0-rc2"
 GIT_COMMIT="unknown"
 GIT_COMMIT_FULL="unknown"
 ISO_LABEL=""
@@ -46,7 +46,7 @@ declare -A tool_packages=(
 iso_packages=(
     linux-firmware dracut
     networkmanager-iso openssh git sudo wget wpa_supplicant wireless-regdb gpm lynx-iso chrony kbd
-    cryptsetup lvm2 mdadm snapper pciutils
+    cryptsetup lvm2 mdadm snapper pciutils parted
     dialog squashfs-tools grub grub-efi dosfstools mtools efibootmgr libisoburn syslinux
 )
 
@@ -97,7 +97,7 @@ parse_args() {
 
 load_project_metadata() {
     local project="$1" label_version=""
-    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0-rc1')"
+    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0-rc2')"
     GIT_COMMIT_FULL="$(git -C "$project" rev-parse HEAD 2>/dev/null || printf 'unknown')"
     GIT_COMMIT="${GIT_COMMIT_FULL:0:12}"
     label_version="${VERSION//[.-]/_}"
@@ -400,26 +400,70 @@ choose_base_action() {
     esac
 }
 
-run_full_bootstrap() {
-    log "Rebuilding complete BFSOS base (bootstrap stages 1 -> 5)"
+bootstrap_resume_stage_hint() {
+    local root=/tmp/lfs-rootfs
+    if [ -f "$root/.bfs-verification-passed" ]; then printf '%s\n' 5
+    elif [ -f "$root/.bfs-stage3-complete" ]; then printf '%s\n' 4
+    elif [ -f "$root/.bfs-stage2-complete" ]; then printf '%s\n' 3
+    elif [ -f "$PROJECT_DIR/archives/toolchain/toolchain.tar.zst" ] || \
+         [ -f "$PROJECT_DIR/toolchain.tar.zst" ]; then printf '%s\n' 2
+    else printf '%s\n' 1
+    fi
+}
 
-    # The full bootstrap uses terminal/session handling internally. When it is
-    # launched directly from the ISO builder, setsid can fail to acquire a
-    # controlling terminal. Allocate a pseudo-terminal with util-linux script
-    # when available, matching the live-menu bootstrap path.
+choose_bootstrap_recovery_action() {
+    local stage answer
+    stage="$(bootstrap_resume_stage_hint)"
+    [ "$stage" -gt 1 ] || { printf '%s\n' restart; return 0; }
+
+    if [ "$ASSUME_YES" = yes ]; then
+        printf '%s\n' resume
+        return 0
+    fi
+
+    printf '\nAn incomplete BFSOS bootstrap is present; Stage %s is the first incomplete stage.\n' "$stage" >&2
+    printf 'Choose: [R]esume existing work, re[S]tart clean, or [C]ancel: ' >&2
+    read -r answer
+    case "$answer" in
+        r|R|resume|RESUME|Resume) printf '%s\n' resume ;;
+        s|S|restart|RESTART|Restart) printf '%s\n' restart ;;
+        *) printf '%s\n' cancel ;;
+    esac
+}
+
+run_full_bootstrap() {
+    local recovery_action bootstrap_mode=full
+    recovery_action="$(choose_bootstrap_recovery_action)"
+    case "$recovery_action" in
+        resume)
+            bootstrap_mode=resume-full
+            log "Resuming BFSOS base bootstrap at the first incomplete stage"
+            ;;
+        restart)
+            bootstrap_mode=full
+            log "Rebuilding complete BFSOS base (bootstrap stages 1 -> 5)"
+            ;;
+        cancel)
+            log "Fresh-base rebuild cancelled"
+            return 130
+            ;;
+    esac
+
+    # The bootstrap uses terminal/session handling internally. When launched
+    # directly from the ISO builder, allocate a pseudo-terminal when possible.
     if command -v script >/dev/null 2>&1; then
         (
             cd "$PROJECT_DIR"
             export BFS_FULL_BOOTSTRAP_ASSUME_YES=yes
             export BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes
             export BFS_ISO_BUILD=yes
-            script -qec './bootstrap.sh full' /dev/null
+            script -qec "./bootstrap.sh $bootstrap_mode" /dev/null
         )
     else
         BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
         BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
         BFS_ISO_BUILD=yes \
-            "$PROJECT_DIR/bootstrap.sh" full
+            "$PROJECT_DIR/bootstrap.sh" "$bootstrap_mode"
     fi
 }
 
@@ -709,13 +753,10 @@ set -u
 exec </dev/tty1 >/dev/tty1 2>&1
 printf '\nBFSOS live environment\n======================\n'
 printf 'Local console: automatic login as bfs with passwordless sudo.\n'
-printf 'SSH is disabled by default. To enable password-based SSH for this boot:\n'
-printf '  sudo passwd bfs\n'
-printf '  sudo bfs-live-enable-ssh\n'
-printf 'If this system uses ssh.service instead, start that unit instead.\n\n'
+printf 'SSH is disabled by default. Enter 3) Shell from the live menu for manual SSH setup instructions.\n\n'
 
 # SSH host keys are intentionally not generated during normal live boot.
-# The explicit bfs-live-enable-ssh action creates per-boot keys on demand.
+# Users who need SSH explicitly generate keys and start the service from Shell.
 
 # Accessibility choice must happen before the normal live menu appears.
 /usr/local/sbin/bfs-live-console-font || true
@@ -744,21 +785,6 @@ printf '\nLive initialization complete. Starting bfs console session.\n'
 EOS
     chmod 0755 "$root/usr/local/sbin/bfs-live-init"
 
-    cat > "$root/usr/local/sbin/bfs-live-enable-ssh" <<'EOS'
-#!/usr/bin/env bash
-set -euo pipefail
-if [ "$(id -u)" -ne 0 ]; then
-    exec sudo "$0" "$@"
-fi
-if ! compgen -G '/etc/ssh/ssh_host_*_key' >/dev/null; then
-    ssh-keygen -A
-fi
-systemctl start sshd.service 2>/dev/null || systemctl start ssh.service
-printf 'BFSOS live SSH enabled for this boot.\n'
-printf 'Set a password for the bfs account with: sudo passwd bfs\n'
-EOS
-    chmod 0755 "$root/usr/local/sbin/bfs-live-enable-ssh"
-
     cat > "$root/etc/systemd/system/bfs-live-init.service" <<'EOS'
 [Unit]
 Description=BFSOS live-session initialization
@@ -785,7 +811,7 @@ set -u
 PROJECT=/home/bfs/BFSOS
 while true; do
     printf '\nBFSOS Live Menu\n===============\n'
-    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Enable SSH for this boot\n  6) Quit menu\n\nChoice: '
+    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Quit menu\n\nChoice: '
     read -r choice
     case "$choice" in
         1)
@@ -805,7 +831,11 @@ while true; do
             fi
             ;;
         3)
-            printf 'Type exit to return to the BFSOS live menu.\n'
+            printf 'Type exit to return to the BFSOS live menu.\n\n'
+            printf 'To enable SSH for this live session:\n'
+            printf '  sudo passwd bfs\n'
+            printf '  sudo ssh-keygen -A\n'
+            printf '  sudo systemctl start sshd.service  # or ssh.service if that is the installed unit\n\n'
             if command -v script >/dev/null 2>&1; then
                 script -qec 'bash -il' /dev/null
             else
@@ -813,8 +843,7 @@ while true; do
             fi
             ;;
         4) /usr/local/sbin/bfs-live-console-font ;;
-        5) sudo /usr/local/sbin/bfs-live-enable-ssh ;;
-        6) exit 0 ;;
+        5) exit 0 ;;
         *) printf 'Invalid choice.\n' ;;
     esac
 done

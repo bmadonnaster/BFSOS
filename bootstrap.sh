@@ -1117,7 +1117,7 @@ _latest_rootfs_archive() {
 _find_latest_installer() {
     local installer="$SCRIPT_DIR/scripts/install-bfs-menu-current.sh"
 
-    # RC1 policy: there is one authoritative runtime installer entry point.
+    # RC2 policy: there is one authoritative runtime installer entry point.
     # Historical revisions belong in Git and must never be selected at runtime
     # by filename sorting or mtime.
     [ -f "$installer" ] && [ -r "$installer" ] && [ -x "$installer" ] || {
@@ -2055,7 +2055,7 @@ trap _cleanup_on_exit EXIT
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
     BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
 else
-    BFS_VERSION="0.9.0-rc1"
+    BFS_VERSION="0.9.0-rc2"
 fi
 
 BUILD_DATE="$(date +%Y%m%d)"

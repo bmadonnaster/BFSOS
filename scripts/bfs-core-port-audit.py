@@ -35,8 +35,10 @@ def source_block(text: str) -> str:
 def main() -> int:
     ap=argparse.ArgumentParser()
     ap.add_argument('--root', default=str(Path(__file__).resolve().parents[1]))
-    ap.add_argument('--md', default='docs/BFSOS-core-audit-r321-20260923.md')
-    ap.add_argument('--tsv', default='docs/BFSOS-core-audit-r321-20260923.tsv')
+    ap.add_argument('--revision', default='r333')
+    ap.add_argument('--date', default='2026-09-24')
+    ap.add_argument('--md', default='docs/BFSOS-core-audit-r333-20260924.md')
+    ap.add_argument('--tsv', default='docs/BFSOS-core-audit-r333-20260924.tsv')
     ns=ap.parse_args()
     root=Path(ns.root).resolve()
     pkgfiles=sorted((root/'ports/core').glob('*/Pkgfile'))
@@ -98,8 +100,8 @@ def main() -> int:
 
     md=root/ns.md
     with md.open('w') as f:
-        f.write('# BFSOS `ports/core` audit — r321 source/static pass\n\n')
-        f.write('Date: 2026-09-23\n\n')
+        f.write(f'# BFSOS `ports/core` audit — {ns.revision} source/static pass\n\n')
+        f.write(f'Date: {ns.date}\n\n')
         f.write('## Scope and evidence\n\n')
         f.write(f'- Core directories: **{len(list((root/"ports/core").glob("*/")))}**; canonical Pkgfiles: **{len(pkgfiles)}**.\n')
         f.write(f'- Required metadata omissions: **{len(metadata)}**.\n')
@@ -110,7 +112,7 @@ def main() -> int:
         f.write(f'- `pkg_build()` recipes: **{len(custom)}**; with an explicit `Custom build required:` rationale: **{len(custom)-len(undocumented)}**.\n')
         f.write(f'- Direct `setup.py install` recipes: **{len(setup_py)}**.\n')
         f.write(f'- Stale `Pkgfile*` backup/copy files anywhere under maintained `ports/`: **{len(backups)}**.\n\n')
-        f.write('The complete package-by-package inventory is in `docs/BFSOS-core-audit-r321-20260923.tsv`. '\
+        f.write(f'The complete package-by-package inventory is in `{ns.tsv}`. '\
                 'This audit is deliberately source/static evidence: package builds, runtime behavior, and a true upstream-version sweep require a networked BFSOS host. '\
                 'The sandbox version checker was attempted and could not resolve upstream hosts, so the report does not mislabel unverified package versions as current.\n\n')
         f.write('## Findings requiring follow-up\n\n')

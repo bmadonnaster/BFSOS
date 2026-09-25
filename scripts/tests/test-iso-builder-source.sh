@@ -45,7 +45,7 @@ grep -q -- '-comp xz -b 1M -Xdict-size 100% -Xbcj x86' "$iso" || fail 'size-orie
 grep -q 'audit_live_root' "$iso" || fail 'live-root archive audit is missing'
 grep -q "Forbidden tar/package archives remain" "$iso" || fail 'forbidden-archive failure policy is missing'
 
-# The new RC1 policy must not copy base/package tar archives onto release media.
+# The RC2 policy must not copy base/package tar archives onto release media.
 if grep -Eq 'cp .*base_archive.*stage/bfsos|packages\.sha256|packages\.list|Preserve one copy of package archives' "$iso"; then
     fail 'old offline tar/package-archive staging policy is still present'
 fi

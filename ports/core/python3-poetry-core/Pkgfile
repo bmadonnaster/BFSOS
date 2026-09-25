@@ -4,7 +4,7 @@
 # Depends on: python3-build python3-installer
 
 name=python3-poetry-core
-version=2.4.1
+version=2.5.0
 release=1
 
 source=(
