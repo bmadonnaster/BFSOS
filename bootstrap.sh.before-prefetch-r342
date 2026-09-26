@@ -2117,38 +2117,22 @@ _prefetch_bootstrap_sources() {
     local pkgmk_conf="$1"
     shift
     local package="" normalized="" port_dir="" attempt=0 status=0
-    local -A seen_ports=()
+    local -A seen=()
 
     echo
     echo "Bootstrap source prefetch"
     echo "========================="
     echo "Downloading/verifying all sources required by Stages 1-3 before package compilation."
 
-    # pkgmk requires every configured output directory to exist even when it is
-    # being used only for source downloads (-do).  Create the temporary package
-    # directory once for the entire prefetch pass instead of per package.
-    if ! mkdir -p /tmp/lfs-pkg; then
-        echo "ERROR: Could not create temporary pkgmk package directory: /tmp/lfs-pkg" >&2
-        return 1
-    fi
-
     for package in "$@"; do
         normalized="${package%-pass*}"
-        port_dir="$(_find_port_dir "$package")" || {
-            rm -rf /tmp/lfs-pkg
-            return 1
-        }
-
-        # Stage aliases such as binutils-pass1/binutils-pass2 and
-        # gcc-pass1/gcc-pass2/gcc-pass3 resolve to the same canonical port.
-        # Fetch each canonical port directory only once, even when it appears in
-        # both toolchainpkg and basepkg.
-        [[ -n "${seen_ports[$port_dir]:-}" ]] && continue
-        seen_ports["$port_dir"]=1
+        [[ -n "${seen[$normalized]:-}" ]] && continue
+        seen["$normalized"]=1
+        port_dir="$(_find_port_dir "$package")" || return 1
 
         status=1
         for attempt in 1 2 3; do
-            printf '  %-28s (attempt %d/3) ' "$normalized" "$attempt"
+            printf '  [%d/3] %-28s ' "$attempt" "$normalized"
             if (
                 cd "$port_dir"
                 pkgmk -do -cf "$pkgmk_conf"
@@ -2163,12 +2147,9 @@ _prefetch_bootstrap_sources() {
         if [ "$status" -ne 0 ]; then
             echo "ERROR: source prefetch failed for $normalized ($port_dir)" >&2
             echo "Bootstrap 1 will not start compiling until all required sources are available." >&2
-            rm -rf /tmp/lfs-pkg
             return "$status"
         fi
     done
-
-    rm -rf /tmp/lfs-pkg
 
     echo
     echo "All bootstrap sources downloaded and verified."
@@ -2932,13 +2913,8 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
     # Front-load source acquisition for both the temporary toolchain and the
     # base-system stages. This turns transient mirror/network failures into an
     # early, bounded preflight failure rather than an interruption hours later.
-    # Capture the complete prefetch transcript in the Stage-1 preflight log so
-    # the failure dialog points at the actual pkgmk/download error, not only the
-    # final summary line.
     # shellcheck disable=SC2086
-    if ! _prefetch_bootstrap_sources /tmp/bootstrap.conf $toolchainpkg $basepkg \
-        > >(tee -a "$STAGE_PREFLIGHT_LOG") \
-        2> >(tee -a "$STAGE_PREFLIGHT_LOG" >&2); then
+    if ! _prefetch_bootstrap_sources /tmp/bootstrap.conf $toolchainpkg $basepkg; then
         _stage_preflight_note "ERROR: Bootstrap source prefetch did not complete; Stage 1 compilation was not started."
         return 1
     fi
