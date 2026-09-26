@@ -1473,7 +1473,7 @@ _stage_complete_text() {
 }
 
 _toolchain_complete() {
-    _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' >/dev/null 2>&1
+    { _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.zst' || _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz'; } >/dev/null 2>&1
 }
 
 _base_stage2_complete() {
@@ -2055,7 +2055,7 @@ trap _cleanup_on_exit EXIT
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
     BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
 else
-    BFS_VERSION="0.9.0-rc2"
+    BFS_VERSION="0.9.0-rc3"
 fi
 
 BUILD_DATE="$(date +%Y%m%d)"
@@ -2113,6 +2113,48 @@ _validate_package_ports() {
     done
 }
 
+_prefetch_bootstrap_sources() {
+    local pkgmk_conf="$1"
+    shift
+    local package="" normalized="" port_dir="" attempt=0 status=0
+    local -A seen=()
+
+    echo
+    echo "Bootstrap source prefetch"
+    echo "========================="
+    echo "Downloading/verifying all sources required by Stages 1-3 before package compilation."
+
+    for package in "$@"; do
+        normalized="${package%-pass*}"
+        [[ -n "${seen[$normalized]:-}" ]] && continue
+        seen["$normalized"]=1
+        port_dir="$(_find_port_dir "$package")" || return 1
+
+        status=1
+        for attempt in 1 2 3; do
+            printf '  [%d/3] %-28s ' "$attempt" "$normalized"
+            if (
+                cd "$port_dir"
+                pkgmk -do -cf "$pkgmk_conf"
+            ); then
+                printf 'OK\n'
+                status=0
+                break
+            fi
+            printf 'FAILED\n' >&2
+            sleep "$attempt"
+        done
+        if [ "$status" -ne 0 ]; then
+            echo "ERROR: source prefetch failed for $normalized ($port_dir)" >&2
+            echo "Bootstrap 1 will not start compiling until all required sources are available." >&2
+            return "$status"
+        fi
+    done
+
+    echo
+    echo "All bootstrap sources downloaded and verified."
+}
+
 _clean_start() {
     local answer
 
@@ -2123,8 +2165,8 @@ _clean_start() {
     echo "  /tmp/lfs*"
     echo "  $packagedir/*"
     echo "  $buildworkdir/*"
-    echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
-    echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
+    echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.zst"
+    echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.zst"
     echo
 
     if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
@@ -2238,7 +2280,7 @@ _clean_start() {
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
-        -name 'bfs-toolchain-*.tar.xz' \
+        \( -name 'bfs-toolchain-*.tar.zst' -o -name 'bfs-toolchain-*.tar.xz' \) \
         -print \
         -delete
 
@@ -2246,7 +2288,7 @@ _clean_start() {
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
-        -name 'bfs-rootfs-*.tar.xz' \
+        \( -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.xz' \) \
         -print \
         -delete
 
@@ -2286,19 +2328,20 @@ _clear_rootfs() {
 
 _restore_toolchain() {
     local archive
+    local status=0
     local restored_tools="${LFS}${TOOLS}"
     local listing_file
     local toolchain_member=""
 
-    archive="$(
-        _latest_archive \
-            "$TOOLCHAIN_ARCHIVE_DIR" \
-            'bfs-toolchain-*.tar.xz'
-    )" || {
+    archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.zst' 2>/dev/null || true)"
+    if [ -z "$archive" ]; then
+        archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' 2>/dev/null || true)"
+    fi
+    if [ -z "$archive" ]; then
         echo "ERROR: No toolchain archive found in:" >&2
         echo "  $TOOLCHAIN_ARCHIVE_DIR" >&2
         exit 1
-    }
+    fi
 
     echo "Restoring newest toolchain archive:"
     echo "  $archive"
@@ -2317,8 +2360,14 @@ _restore_toolchain() {
     # List the archive once. Some tar versions print members with a leading
     # "./" and others do not, so stage 7 must accept either representation.
     listing_file="$(/usr/bin/mktemp /tmp/bfs-toolchain-list.XXXXXX)"
+    status=0
 
-    if ! /usr/bin/nice -n 19 /bin/tar -tJf "$archive" > "$listing_file"; then
+    if [[ "$archive" == *.tar.zst ]]; then
+        /usr/bin/nice -n 19 /bin/tar --zstd -tf "$archive" > "$listing_file" || status=$?
+    else
+        /usr/bin/nice -n 19 /bin/tar -tJf "$archive" > "$listing_file" || status=$?
+    fi
+    if [ "${status:-0}" -ne 0 ]; then
         /usr/bin/rm -f "$listing_file"
         echo "ERROR: Toolchain archive is unreadable or damaged." >&2
         exit 1
@@ -2360,11 +2409,14 @@ _restore_toolchain() {
     # Remove the host-side convenience symlink before replacing its target.
     /usr/bin/rm -f "$TOOLS"
     /usr/bin/rm -rf "$restored_tools"
+    status=0
 
-    if ! /usr/bin/nice -n 19 /bin/tar -xJpf "$archive" \
-        -C "$LFS" \
-        "$toolchain_member"
-    then
+    if [[ "$archive" == *.tar.zst ]]; then
+        /usr/bin/nice -n 19 /bin/tar --zstd -xpf "$archive" -C "$LFS" "$toolchain_member" || status=$?
+    else
+        /usr/bin/nice -n 19 /bin/tar -xJpf "$archive" -C "$LFS" "$toolchain_member" || status=$?
+    fi
+    if [ "${status:-0}" -ne 0 ]; then
         echo "ERROR: Failed to extract the temporary toolchain." >&2
         exit 1
     fi
@@ -2412,21 +2464,22 @@ _restore_toolchain() {
 
 _restore_rootfs() {
     local archive
+    local status=0
 
     if [ "$(id -u)" -ne 0 ]; then
         echo "ERROR: Stage 6 base rootfs restore must run as root." >&2
         return 1
     fi
 
-    archive="$(
-        _latest_archive \
-            "$BASE_ARCHIVE_DIR" \
-            'bfs-rootfs-*.tar.xz'
-    )" || {
+    archive="$(_latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.zst' 2>/dev/null || true)"
+    if [ -z "$archive" ]; then
+        archive="$(_latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' 2>/dev/null || true)"
+    fi
+    if [ -z "$archive" ]; then
         echo "ERROR: No base rootfs archive found in:" >&2
         echo "  $BASE_ARCHIVE_DIR" >&2
         exit 1
-    }
+    fi
 
     echo "Restoring newest base rootfs archive:"
     echo "  $archive"
@@ -2434,7 +2487,13 @@ _restore_rootfs() {
     # Stage 6 destroys the current rootfs, including any temporary toolchain
     # living below it. Never use commands resolved through $TOOLS during this
     # operation; use the live system's absolute command paths throughout.
-    if ! /bin/tar -tJf "$archive" >/dev/null; then
+    status=0
+    if [[ "$archive" == *.tar.zst ]]; then
+        /bin/tar --zstd -tf "$archive" >/dev/null || status=$?
+    else
+        /bin/tar -tJf "$archive" >/dev/null || status=$?
+    fi
+    if [ "${status:-0}" -ne 0 ]; then
         echo "ERROR: Base rootfs archive is unreadable or damaged." >&2
         exit 1
     fi
@@ -2448,7 +2507,13 @@ _restore_rootfs() {
 
     _clear_rootfs
 
-    if ! /bin/tar -xJpf "$archive" -C "$LFS"; then
+    status=0
+    if [[ "$archive" == *.tar.zst ]]; then
+        /bin/tar --zstd -xpf "$archive" -C "$LFS" || status=$?
+    else
+        /bin/tar -xJpf "$archive" -C "$LFS" || status=$?
+    fi
+    if [ "$status" -ne 0 ]; then
         echo "ERROR: Failed to extract base rootfs archive." >&2
         exit 1
     fi
@@ -2845,6 +2910,15 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
     fi
     echo
 
+    # Front-load source acquisition for both the temporary toolchain and the
+    # base-system stages. This turns transient mirror/network failures into an
+    # early, bounded preflight failure rather than an interruption hours later.
+    # shellcheck disable=SC2086
+    if ! _prefetch_bootstrap_sources /tmp/bootstrap.conf $toolchainpkg $basepkg; then
+        _stage_preflight_note "ERROR: Bootstrap source prefetch did not complete; Stage 1 compilation was not started."
+        return 1
+    fi
+
     for i in $toolchainpkg; do
         local port_dir=""
 
@@ -2906,29 +2980,33 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
 
     _ensure_archive_dirs
 
-    toolchain_archive="$TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
+    toolchain_archive="$TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-${BFS_VERSION}-${BUILD_DATE}.tar.zst"
 
     rm -f "$toolchain_archive"
 
     _show_menu_progress "Creating toolchain archive"         "Compressing verified temporary toolchain archive..."
 
+    command -v zstd >/dev/null 2>&1 || {
+        echo "ERROR: zstd is required to create the bootstrap toolchain archive." >&2
+        return 1
+    }
     if ! (
         cd "$LFS"
-        XZ_DEFAULTS='-T0' tar -cJpf "$toolchain_archive" .
+        tar -I 'zstd -T0 -19' -cpf "$toolchain_archive" .
     ); then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive creation failed." >&2
         return 1
     fi
 
-    if ! tar -tJf "$toolchain_archive" >/dev/null; then
+    if ! tar --zstd -tf "$toolchain_archive" >/dev/null; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive verification failed." >&2
         return 1
     fi
 
     # A readable tarball is not enough: verify the expected toolchain payload.
-    if ! tar -tJf "$toolchain_archive" |
+    if ! tar --zstd -tf "$toolchain_archive" |
         grep -Eq '^\./tmp/lfs-tools/bin/(gcc|x86_64-lfs-linux-gnu-gcc)$'
     then
         rm -f "$toolchain_archive"
@@ -2936,19 +3014,19 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
         return 1
     fi
 
-    if ! tar -tJf "$toolchain_archive" | grep -Eq '^\./tmp/lfs-tools/bin/(ld|ld\.bfd)$'; then
+    if ! tar --zstd -tf "$toolchain_archive" | grep -Eq '^\./tmp/lfs-tools/bin/(ld|ld\.bfd)$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing the linker." >&2
         return 1
     fi
 
-    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
+    if ! tar --zstd -tf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing pkgmk." >&2
         return 1
     fi
 
-    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/lib/locale/locale-archive$'; then
+    if ! tar --zstd -tf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/lib/locale/locale-archive$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing the UTF-8 locale archive." >&2
         return 1
@@ -3297,14 +3375,15 @@ _compressrootfs() {
 
     _ensure_archive_dirs
 
-    rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
+    rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.zst"
     rm -f "$rootfs_archive"
 
     _show_menu_progress "Creating base archive"         "Compressing verified base rootfs archive..."
 
     if ! (
         cd "$LFS"
-        XZ_DEFAULTS='-T0' tar \
+        command -v zstd >/dev/null 2>&1 || exit 99
+        tar -I 'zstd -T0 -19' \
             --exclude='./var/lib/pkg/rejected' \
             --exclude=".$TOOLS" \
             --exclude='./tmp/*' \
@@ -3313,7 +3392,7 @@ _compressrootfs() {
             --exclude='./proc/*' \
             --exclude='./run/*' \
             --exclude='./root/.cache' \
-            -cJpf "$rootfs_archive" .
+            -cpf "$rootfs_archive" .
     ); then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive creation failed." >&2
@@ -3321,7 +3400,7 @@ _compressrootfs() {
         return 1
     fi
 
-    if ! tar -tJf "$rootfs_archive" >/dev/null; then
+    if ! tar --zstd -tf "$rootfs_archive" >/dev/null; then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive verification failed." >&2
         echo "No archive was kept." >&2
@@ -3329,9 +3408,9 @@ _compressrootfs() {
     fi
 
     # Sanity-check a few files required for any usable BFSOS base system.
-    if ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/bash$' ||
-       ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/pkgmk$' ||
-       ! tar -tJf "$rootfs_archive" | grep -q '^\./etc/os-release$'
+    if ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./usr/bin/bash$' ||
+       ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./usr/bin/pkgmk$' ||
+       ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./etc/os-release$'
     then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive is readable but missing required files." >&2

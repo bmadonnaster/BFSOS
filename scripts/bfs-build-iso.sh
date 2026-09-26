@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
 # Includes USB live-media discovery retry, live console accessibility, and
-# current RC2 live-session policy. Boot/install acceptance still requires
+# current RC3 live-session policy. Boot/install acceptance still requires
 # fresh VM + USB-emulation + bare-metal validation.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +14,8 @@ BUILD_DATE="$(date +%Y%m%d)"
 WORK_DIR="${BFS_ISO_WORK_DIR:-/var/tmp/bfsos-iso-${USER:-builder}}"
 OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-$HOME/BFSOS-ISO}"
 BASE_CACHE_DIR="${BFS_ISO_BASE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/bfsos/iso}"
-BASE_FILENAME="${BFS_ISO_BASE_FILENAME:-BFSOS-base-${ARCH}.tar.zst}"
+VERSION="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION" 2>/dev/null || printf '0.9.0-rc3')"
+BASE_FILENAME="${BFS_ISO_BASE_FILENAME:-BFSOS-base-${VERSION}-${ARCH}.tar.zst}"
 BASE_URL="${BFS_ISO_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}}"
 BASE_SHA256_URL="${BFS_ISO_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}.sha256}"
 BASE_MODE="${BFS_ISO_BASE_MODE:-auto}"
@@ -23,7 +24,6 @@ LOCAL_BASE_PATH="${BFS_ISO_LOCAL_BASE:-}"
 BASE_SOURCE="unknown"
 GIT_URL="${BFS_ISO_GIT_URL:-https://codeberg.org/bmadonnaster/BFSOS.git}"
 GIT_REF="${BFS_ISO_GIT_REF:-main}"
-VERSION="0.9.0-rc2"
 GIT_COMMIT="unknown"
 GIT_COMMIT_FULL="unknown"
 ISO_LABEL=""
@@ -97,7 +97,7 @@ parse_args() {
 
 load_project_metadata() {
     local project="$1" label_version=""
-    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0-rc2')"
+    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0-rc3')"
     GIT_COMMIT_FULL="$(git -C "$project" rev-parse HEAD 2>/dev/null || printf 'unknown')"
     GIT_COMMIT="${GIT_COMMIT_FULL:0:12}"
     label_version="${VERSION//[.-]/_}"
@@ -174,9 +174,15 @@ prepare_build_project() {
     rm -rf "$dest"
     git clone --no-tags "$GIT_URL" "$dest" >/dev/null 2>&1 || die "Failed to clone BFSOS Git repository"
     git -C "$dest" fetch --force --tags origin >/dev/null 2>&1 || die "Failed to fetch BFSOS Git refs"
-    if git -C "$dest" rev-parse --verify "origin/$GIT_REF^{commit}" >/dev/null 2>&1; then
-        git -C "$dest" checkout --detach "origin/$GIT_REF" >/dev/null 2>&1 || die "Failed to checkout origin/$GIT_REF"
+    if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/$GIT_REF"; then
+        # A normal branch build must leave the copy shipped in the live ISO on
+        # a real tracking branch. bfs-live-init can then safely use
+        # `git pull --ff-only` instead of failing on a detached HEAD.
+        git -C "$dest" checkout -B "$GIT_REF" "origin/$GIT_REF" >/dev/null 2>&1 ||             die "Failed to checkout tracking branch origin/$GIT_REF"
+        git -C "$dest" branch --set-upstream-to="origin/$GIT_REF" "$GIT_REF" >/dev/null 2>&1 ||             die "Failed to set upstream for $GIT_REF"
     elif git -C "$dest" rev-parse --verify "$GIT_REF^{commit}" >/dev/null 2>&1; then
+        # Explicit tags/commit IDs are immutable build inputs and intentionally
+        # remain detached for reproducibility.
         git -C "$dest" checkout --detach "$GIT_REF" >/dev/null 2>&1 || die "Failed to checkout $GIT_REF"
     else
         die "Requested BFSOS Git ref cannot be resolved: $GIT_REF"

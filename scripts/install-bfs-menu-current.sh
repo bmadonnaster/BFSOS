@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Revision: r75-bios-gpt-validation
+# Revision: r76-rc3-storage-introspection-ordering
 # r75: preflight BIOS+GPT GRUB validation - require a BIOS Boot partition before installation starts
 # r73: tracker source fixes - root ownership postflight, serial/LUKS console order, safe GRUB alias handling
 # r71: deterministic equal /home + /var LVM split from one initial free-extent snapshot
@@ -2557,8 +2557,11 @@ select_partition() {
 
         while true; do
                 get_available_partitions
-                ((${#AVAILABLE_PATHS[@]} > 0)) ||
-                        die "No unassigned partitions are available."
+                if ((${#AVAILABLE_PATHS[@]} == 0)); then
+                        dialog_message "No usable partitions" \
+                                "No usable partitions are currently available.\n\nCreate a partition table and partitions from the storage/partitioning menu, then rescan and try again."
+                        return 2
+                fi
 
                 menu_items=()
 
@@ -4427,8 +4430,12 @@ configure_disks() {
                         get_available_partitions
 
                         if ((${#AVAILABLE_PATHS[@]} == 0)); then
-                                [[ ${#STORAGE_DEVICES[@]} -gt 0 ]] ||
-                                        die "No unassigned partitions are available."
+                                if [[ ${#STORAGE_DEVICES[@]} -eq 0 ]]; then
+                                        dialog_message "No usable partitions" \
+                                                "No usable partitions were found.\n\nThis is normal for a blank or freshly wiped disk. Return to the storage menu, create a partition table and partitions, then rescan."
+                                        log "No usable partitions found; returning to the previous storage menu"
+                                        return 0
+                                fi
                                 break
                         fi
 
@@ -4520,10 +4527,17 @@ archive_timestamp_key() {
 }
 
 newest_base_archive() {
-        local directory="$1" file="" key="" best="" best_key=""
+        local directory="$1" file="" key="" best="" best_key="" release=""
         [[ -d "$directory" ]] || return 1
+        release="${BFS_INSTALL_RELEASE:-$(bfs_release_version)}"
         while IFS= read -r -d '' file; do
                 supported_base_archive "$file" || continue
+                # Automatic discovery must never silently cross release candidates.
+                # A maintainer can still choose another archive explicitly via Browse.
+                case "$(basename "$file")" in
+                        "BFSOS-base-${release}-"*.tar.*|"bfs-rootfs-${release}-"*.tar.*) ;;
+                        *) continue ;;
+                esac
                 key="$(archive_timestamp_key "$file")"
                 if [[ -z "$best" || "$key" > "$best_key" ||
                       ( "$key" == "$best_key" && "$file" > "$best" ) ]]; then
@@ -4688,9 +4702,21 @@ configure_zram_menu() {
 # the post-download pathname to be lost/contaminated in the live installer.
 BASE_ARCHIVE_RESULT=""
 
+bfs_release_version() {
+        local release=""
+        if [[ -r "$PROJECT_DIR/VERSION" ]]; then
+                release="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION")"
+        fi
+        if [[ -z "$release" && -r /etc/os-release ]]; then
+                release="$(awk -F= '$1 == "VERSION_ID" {gsub(/^['"']|['"']$/, "", $2); print $2; exit}' /etc/os-release)"
+        fi
+        printf '%s\n' "${release:-0.9.0-rc3}"
+}
+
 fetch_sourceforge_base() {
         local archive_dir="$1"
-        local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-x86_64.tar.zst}"
+        local release="${BFS_INSTALL_RELEASE:-$(bfs_release_version)}"
+        local filename="${BFS_INSTALL_BASE_FILENAME:-BFSOS-base-${release}-x86_64.tar.zst}"
         local url="${BFS_INSTALL_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${filename}}"
         local sha_url="${BFS_INSTALL_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${filename}.sha256}"
         local ca_file="${BFS_INSTALL_CA_FILE:-/etc/pki/tls/certs/ca-bundle.crt}"
@@ -4725,8 +4751,8 @@ fetch_sourceforge_base() {
 
         if { : </dev/tty; } 2>/dev/null; then
                 clear_screen >/dev/tty 2>/dev/null || true
-                printf '\nBFSOS base download\n===================\n\nDownloading: %s\nSource: SourceForge\n\n' \
-                        "$filename" >/dev/tty
+                printf '\nBFSOS base download\n===================\n\nRelease: %s\nFile:    %s\nSource:  %s\n\n' \
+                        "$release" "$filename" "$url" >/dev/tty
                 set +e
                 wget "${wget_args[@]}" -O "$archive" "$url" </dev/tty >/dev/tty 2>/dev/tty
                 status=$?
@@ -4788,8 +4814,9 @@ fetch_sourceforge_base() {
                 return 1
         fi
 
+        log "Verified BFSOS base artifact: release=$release file=$filename sha256=$actual source=$url"
         dialog_message "Base archive verified" \
-                "Download complete and SHA256 verification passed.\n\n$archive"
+                "Download complete and SHA256 verification passed.\n\nRelease: $release\nFile: $filename\nSHA256: $actual\nSource: $url"
         BASE_ARCHIVE_RESULT="$archive"
         return 0
 }
@@ -6550,7 +6577,27 @@ prepare_btrfs_subvolumes() {
                 snapshot_subvol="${BTRFS_SNAPSHOT_SUBVOLUMES[$index]}"
                 temp_mount="$(mktemp -d /tmp/bfs-btrfs.XXXXXX)"
 
-                mount "$device" "$temp_mount"
+                local mount_attempt=0 mount_status=1
+                for mount_attempt in 1 2 3 4 5; do
+                        if mount -t btrfs "$device" "$temp_mount"; then
+                                mount_status=0
+                                break
+                        fi
+                        warn "Btrfs first-mount attempt $mount_attempt/5 failed for $device; settling storage state before retry."
+                        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+                        sync
+                        sleep 1
+                done
+                if ((mount_status != 0)); then
+                        {
+                                echo "Btrfs mount diagnostics for $device:"
+                                command -v btrfs >/dev/null 2>&1 && btrfs filesystem show "$device" 2>&1 || true
+                                command -v btrfs >/dev/null 2>&1 && btrfs inspect-internal dump-super -f "$device" 2>&1 | head -80 || true
+                                dmesg 2>/dev/null | grep -i -E "btrfs|${device##*/}" | tail -80 || true
+                        } >&2
+                        rmdir "$temp_mount" 2>/dev/null || true
+                        die "Could not mount newly formatted Btrfs filesystem $device after 5 attempts."
+                fi
                 [[ -e "$temp_mount/$data_subvol" ]] ||
                         btrfs subvolume create "$temp_mount/$data_subvol"
                 [[ -e "$temp_mount/$snapshot_subvol" ]] ||
@@ -7779,6 +7826,51 @@ ensure_bfsos_git_ports || exit 1
 log "Synchronizing BFSOS ports tree through Git"
 run_package_operation "ports synchronization (ports -u)" ports -u
 
+# GLib/GObject-Introspection bootstrap ordering.
+#
+# A bootstrap GLib without introspection is valid before gobject-introspection
+# exists. Generated/final GLib metadata must not reject that pass. Once GI is
+# installed, rebuild GLib once so its GIR files exist before Polkit is built.
+ensure_glib_introspection_ready() {
+        local closure="${1:-}"
+        local glib_port="/usr/ports/opt/glib"
+        local glib_footprint="$glib_port/.footprint"
+        local gir=""
+
+        case " $closure " in
+                *" gobject-introspection "*|*" polkit "*) ;;
+                *) return 0 ;;
+        esac
+
+        if ! prt-get isinst gobject-introspection >/dev/null 2>&1; then
+                log "Preparing GObject Introspection before Polkit"
+                rm -f "$glib_footprint"
+                rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
+                run_package_operation "gobject-introspection bootstrap installation" \
+                        prt-get depinst gobject-introspection
+        fi
+
+        if [[ ! -r /usr/share/gir-1.0/Gio-2.0.gir || \
+              ! -r /usr/share/gir-1.0/GLib-2.0.gir || \
+              ! -r /usr/share/gir-1.0/GObject-2.0.gir ]]; then
+                log "Rebuilding GLib once with introspection enabled"
+                rm -f "$glib_footprint"
+                rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
+                run_package_operation "GLib introspection rebuild" \
+                        prt-get -fr update glib
+        fi
+
+        for gir in GLib-2.0.gir GObject-2.0.gir Gio-2.0.gir GioUnix-2.0.gir GModule-2.0.gir GLibUnix-2.0.gir; do
+                if [[ ! -r "/usr/share/gir-1.0/$gir" ]]; then
+                        echo "ERROR: required GLib introspection file is still missing: /usr/share/gir-1.0/$gir" >&2
+                        return 1
+                fi
+        done
+
+        log "GObject Introspection is installed and GLib GIR files are ready for Polkit"
+}
+
+
 log "Running mandatory installed-system upgrade"
 # prt-get update/sysup intentionally do not install dependencies newly added
 # since a package was first installed. Resolve those missing dependencies first
@@ -7787,6 +7879,7 @@ outdated_packages="$(prt-get quickdiff 2>/dev/null || true)"
 if [[ -n "$outdated_packages" ]]; then
         dependency_closure="$(prt-get quickdep $outdated_packages 2>/dev/null || true)"
         if [[ -n "$dependency_closure" ]]; then
+                ensure_glib_introspection_ready "$dependency_closure" || exit 1
                 missing_dependencies="$(prt-get isinst $dependency_closure 2>/dev/null | awk '/not installed/ {print $2}' | sort -u | tr '\n' ' ')"
                 if [[ -n "$missing_dependencies" ]]; then
                         read -r -a missing_dependency_array <<< "$missing_dependencies"
@@ -7801,64 +7894,6 @@ run_package_operation "mandatory package upgrade (prt-get sysup)" prt-get sysup
 log "Ensuring BFSOS package-build safety/cache tooling is installed"
 run_package_operation "mandatory build tooling (fakeroot/ccache)" prt-get depinst fakeroot fmt xxhash ccache
 
-# GLib and gobject-introspection have a deliberate bootstrap cycle: GLib must
-# initially build without introspection so gobject-introspection itself can be
-# built.  Desktop packages such as polkit subsequently require GLib's GIR files.
-# If the selected dependency closure needs gobject-introspection, complete the
-# second pass before entering the main prt-get transaction.
-ensure_glib_introspection_ready() {
-        local closure="${1:-}"
-        local glib_port="/usr/ports/opt/glib"
-        local glib_footprint="$glib_port/.footprint"
-
-        case " $closure " in
-                *" gobject-introspection "*|*" polkit "*) ;;
-                *) return 0 ;;
-        esac
-
-        if ! prt-get isinst gobject-introspection >/dev/null 2>&1; then
-                log "Preparing GObject Introspection bootstrap dependency"
-                run_package_operation "gobject-introspection bootstrap installation" \
-                        prt-get depinst gobject-introspection
-        fi
-
-        # A first-pass GLib build without introspection can cause pkgmk to create
-        # a temporary .footprint.  That footprint must never become authoritative:
-        # the normal/final GLib package includes GIR and typelib files.  If the
-        # current footprint lacks Gio-2.0.gir, discard it before the second pass so
-        # pkgmk can create/validate the final introspection-enabled footprint.
-        if [[ -f "$glib_footprint" ]] &&
-           ! grep -Fq 'usr/share/gir-1.0/Gio-2.0.gir' "$glib_footprint"; then
-                log "Removing bootstrap-only GLib footprint before introspection-enabled second pass"
-                rm -f "$glib_footprint"
-        fi
-
-        if [[ ! -r /usr/share/gir-1.0/Gio-2.0.gir || \
-              ! -r /usr/share/gir-1.0/GLib-2.0.gir || \
-              ! -r /usr/share/gir-1.0/GObject-2.0.gir ]]; then
-                log "Rebuilding GLib with introspection enabled (second bootstrap pass)"
-                rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
-                run_package_operation "GLib introspection second-pass rebuild" \
-                        prt-get -fr update glib
-        fi
-
-        for gir in GLib-2.0.gir GObject-2.0.gir Gio-2.0.gir; do
-                if [[ ! -r "/usr/share/gir-1.0/$gir" ]]; then
-                        echo "ERROR: required GLib introspection file is still missing: /usr/share/gir-1.0/$gir" >&2
-                        return 1
-                fi
-        done
-
-        # With footprint verification enabled, the authoritative GLib footprint
-        # must describe the final package, not the bootstrap pass.
-        if [[ "$VERIFY_FOOTPRINT_VALUE" == yes && -f "$glib_footprint" ]] &&
-           ! grep -Fq 'usr/share/gir-1.0/Gio-2.0.gir' "$glib_footprint"; then
-                echo "ERROR: final GLib footprint does not contain Gio-2.0.gir" >&2
-                return 1
-        fi
-
-        log "GLib introspection bootstrap cycle complete"
-}
 
 if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
         read -r -a PACKAGE_LIST_ARRAY <<< "$PACKAGE_LIST_VALUE"
