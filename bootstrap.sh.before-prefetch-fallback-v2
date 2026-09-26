@@ -2858,7 +2858,9 @@ PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"
 mkdir -p "\$PKGMK_SOURCE_DIR" || exit 1
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
 
-# Match the installed BFSOS source-fallback policy during Stage-1 prefetch.
+# Stage-1 prefetch must use the same source failover policy as the installed
+# BFSOS /etc/pkgmk.conf.  In particular, a dead/stalled GNU/X.Org/kernel URL
+# must advance to the configured fallback instead of hanging the bootstrap.
 PKGMK_SOURCE_MIRRORS=()
 PKGMK_SOURCE_FLAT_FALLBACKS=(
     "https://mirror.math.princeton.edu/pub/redcorelinux/amd64/distfiles"
@@ -2873,19 +2875,12 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
 PKGMK_DOWNLOAD_PROG="curl"
-
-# Prefetch should fail over quickly.  Do not spend curl-level retries on the
-# same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
-# outer prefetch loop retries the complete original+fallback chain up to 3x.
-PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 8 --speed-limit 1024 --speed-time 15 --retry 0"
+PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . $PWD/files/pkgmk.bootstrap
 EOF
 
-    # Existing /tmp/lfs-tools may contain a pristine CRUX pkgmk from an earlier
-    # interrupted bootstrap.  Rebuild it if BFSOS fallback support is missing.
-    if [ ! "$(PATH=$TOOLS/bin command -v pkgmk)" ] || \
-       ! grep -q 'try_source_fallbacks()' "$TOOLS/bin/pkgmk" 2>/dev/null; then
+    if [ ! "$(PATH=$TOOLS/bin command -v pkgmk)" ]; then
         # The first pkgutils build happens before pkgmk exists, so seed its
         # source into the same package namespace normal pkgmk will use later.
         mkdir -p "$sourcedir/pkgutils" || return 1
@@ -2899,16 +2894,18 @@ EOF
         tar -xf "$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz" -C /tmp || return 1
 
         # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile,
-        # so explicitly apply BFSOS source-fallback support before installing
-        # the temporary pkgmk used by prefetch.
-        if [ ! -r "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" ]; then
+        # so apply BFSOS source-fallback support explicitly.  Merely defining
+        # PKGMK_SOURCE_FALLBACKS in bootstrap.conf is not enough with pristine
+        # CRUX pkgmk: pkgmk itself must contain try_source_fallbacks().
+        if [ -r "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" ]; then
+            if ! grep -q 'try_source_fallbacks()' /tmp/pkgutils-5.40.12/pkgmk.in; then
+                patch -d /tmp/pkgutils-5.40.12 -p1 \
+                    < "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" || return 1
+            fi
+        else
             echo "ERROR: Missing BFSOS pkgmk source-fallback patch:" >&2
             echo "  $SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" >&2
             return 1
-        fi
-        if ! grep -q 'try_source_fallbacks()' /tmp/pkgutils-5.40.12/pkgmk.in; then
-            patch -d /tmp/pkgutils-5.40.12 -p1 \
-                < "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" || return 1
         fi
 
         # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile.
@@ -3643,6 +3640,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
+    "https://debian.netcologne.de/savannah/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
@@ -3763,6 +3761,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
+    "https://debian.netcologne.de/savannah/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
