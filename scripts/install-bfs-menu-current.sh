@@ -6488,6 +6488,18 @@ format_device() {
         [[ -n "$device" && "$format" != keep ]] || return 0
         unmount_device_everywhere "$device"
         swapoff "$device" 2>/dev/null || true
+
+        # A destructive format must remove stale filesystem signatures first.
+        # Some mkfs tools do not erase metadata from a previous filesystem at
+        # every offset. For example, mkfs.btrfs -f can leave an old ext4
+        # signature behind, causing blkid to report the device as ambiguous
+        # and preventing UUID detection.
+        log "Clearing stale filesystem signatures from $device"
+        wipefs -a "$device" ||
+                die "Could not clear stale filesystem signatures from $device."
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+        sync
+
         log "Formatting $device as $format for $role"
         case "$format" in
                 ext2) mkfs.ext2 -F "$device" ;;
