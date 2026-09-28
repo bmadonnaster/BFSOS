@@ -127,7 +127,7 @@ xorg-font-adobe-75dpi	xorg-font-adobe-75dpi	1.0.4	1	bdftopcf xorg-font-util mkfo
 xorg-font-adobe-utopia-100dpi	xorg-font-adobe-utopia-100dpi	1.0.5	1	bdftopcf xorg-font-util mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-adobe-utopia-100dpi-$version.tar.xz	no	ok
 xorg-font-adobe-utopia-75dpi	xorg-font-adobe-utopia-75dpi	1.0.5	1	bdftopcf xorg-font-util mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-adobe-utopia-75dpi-$version.tar.xz	no	ok
 xorg-font-adobe-utopia-type1	xorg-font-adobe-utopia-type1	1.0.5	1	fontconfig mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-adobe-utopia-type1-$version.tar.xz	no	ok
-xorg-font-alias	xorg-font-alias	1.0.6	1				https://xorg.freedesktop.org/archive/individual/font/font-alias-$version.tar.bz2	no	ok
+xorg-font-alias	xorg-font-alias	1.0.6	1				https://xorg.freedesktop.org/archive/individual/font/font-alias-$version.tar.xz	no	ok
 xorg-font-arabic-misc	xorg-font-arabic-misc	1.0.4	1	bdftopcf xorg-font-util mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-arabic-misc-$version.tar.xz	no	ok
 xorg-font-bh-100dpi	xorg-font-bh-100dpi	1.0.4	1	bdftopcf xorg-font-util mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-bh-100dpi-$version.tar.xz	no	ok
 xorg-font-bh-75dpi	xorg-font-bh-75dpi	1.0.4	1	bdftopcf xorg-font-util mkfontscale			https://xorg.freedesktop.org/archive/individual/font/font-bh-75dpi-$version.tar.xz	no	ok

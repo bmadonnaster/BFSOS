@@ -1295,6 +1295,40 @@ _finish_full_bootstrap() {
     return 0
 }
 
+_cleanup_completed_bootstrap_state() {
+    local target=""
+
+    # This function is called only after a verified Stage-5 archive exists.
+    # Preserve source/package/build caches and release artifacts; remove only
+    # the transient /tmp trees whose presence makes a later run look resumable.
+    _rootfs_archive_complete || {
+        echo "ERROR: Refusing completed-bootstrap cleanup without a verified base archive." >&2
+        return 1
+    }
+
+    case "$LFS:$TOOLS" in
+        /tmp/lfs-rootfs:/tmp/lfs-tools) ;;
+        *)
+            echo "ERROR: Refusing completed-bootstrap cleanup for unexpected paths: $LFS $TOOLS" >&2
+            return 1
+            ;;
+    esac
+
+    for target in "$LFS/dev/pts" "$LFS/dev" "$LFS/run" "$LFS/proc" "$LFS/sys" \
+                  "$LFS/$pkgmkwork" "$LFS/$pkgmkpkg" "$LFS/$pkgmksrc"; do
+        while mountpoint -q "$target" 2>/dev/null; do
+            sudo umount "$target" 2>/dev/null || sudo umount -l "$target" || return 1
+        done
+    done
+
+    echo "Bootstrap complete: removing transient resume trees $TOOLS and $LFS"
+    sudo rm -rf -- "$TOOLS" "$LFS" || return 1
+    [ ! -e "$TOOLS" ] && [ ! -L "$TOOLS" ] && [ ! -e "$LFS" ] && [ ! -L "$LFS" ] || {
+        echo "ERROR: Completed bootstrap temporary state still exists after cleanup." >&2
+        return 1
+    }
+}
+
 _run_full_bootstrap() {
     local stage=0 status=0 label=""
 
@@ -1368,6 +1402,7 @@ _run_full_bootstrap() {
     done
 
     _reset_terminal_ui
+    _cleanup_completed_bootstrap_state || return 1
     _finish_full_bootstrap
 }
 
@@ -1411,6 +1446,7 @@ _run_resume_full_bootstrap() {
     fi
     if [ "$start" -gt 5 ]; then
         echo "Full Bootstrap is already complete; a base archive exists."
+        _cleanup_completed_bootstrap_state || return 1
         _finish_full_bootstrap
         return $?
     fi
@@ -1461,6 +1497,7 @@ _run_resume_full_bootstrap() {
     done
 
     _reset_terminal_ui
+    _cleanup_completed_bootstrap_state || return 1
     _finish_full_bootstrap
 }
 
@@ -2055,7 +2092,7 @@ trap _cleanup_on_exit EXIT
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
     BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
 else
-    BFS_VERSION="0.9.0-rc3"
+    BFS_VERSION="0.9.0"
 fi
 
 BUILD_DATE="$(date +%Y%m%d)"
@@ -2124,6 +2161,8 @@ _prefetch_bootstrap_sources() {
     echo "========================="
     echo "Downloading/verifying all sources required by Stages 1-3 before package compilation."
 
+    rm -f "/tmp/bfsos-prefetch-unhealthy-origins.$$" 2>/dev/null || true
+
     # pkgmk requires every configured output directory to exist even when it is
     # being used only for source downloads (-do).  Create the temporary package
     # directory once for the entire prefetch pass instead of per package.
@@ -2169,6 +2208,7 @@ _prefetch_bootstrap_sources() {
     done
 
     rm -rf /tmp/lfs-pkg
+    rm -f "/tmp/bfsos-prefetch-unhealthy-origins.$$" 2>/dev/null || true
 
     echo
     echo "All bootstrap sources downloaded and verified."
@@ -2867,12 +2907,21 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
+    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://debian.netcologne.de/savannah/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
-PKGMK_DOWNLOAD_PROG="curl"
+# The prefetch download wrapper maintains a per-run transport-health cache.
+# Prefixes are derived from the authoritative mapping above rather than from a
+# second mirror table. A transport/stall failure on a primary prefix is paid
+# once per prefetch run; later matching sources fail fast into pkgmk's normal
+# configured fallback chain. HTTP errors such as 404 do not poison the prefix.
+BFS_PREFETCH_HEALTH_FILE="/tmp/bfsos-prefetch-unhealthy-origins.$$"
+BFS_PREFETCH_SOURCE_PREFIXES="\$(printf '%s\n' "\${PKGMK_SOURCE_FALLBACKS[@]}" | sed 's/|.*//' | sed '/^$/d')"
+export BFS_PREFETCH_HEALTH_FILE BFS_PREFETCH_SOURCE_PREFIXES
+PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 
 # Prefetch should fail over quickly.  Do not spend curl-level retries on the
 # same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
@@ -3642,6 +3691,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
+    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
@@ -3762,6 +3812,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
+    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"

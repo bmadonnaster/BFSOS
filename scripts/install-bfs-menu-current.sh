@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Revision: r76-rc3-storage-introspection-ordering
+# Revision: r77-0.9.0-release-hardening
 # r75: preflight BIOS+GPT GRUB validation - require a BIOS Boot partition before installation starts
 # r73: tracker source fixes - root ownership postflight, serial/LUKS console order, safe GRUB alias handling
 # r71: deterministic equal /home + /var LVM split from one initial free-extent snapshot
@@ -1366,8 +1366,108 @@ persistent_installation_complete() {
         return 0
 }
 
+clear_previous_install_state() {
+        local device="" status=0
+
+        log "Clearing previous installer state for a fresh start"
+        mkdir -p "$TARGET"
+
+        # Read the saved non-secret selections without entering recovery mode.
+        # This gives us the exact target/swap devices to clean up without
+        # reactivating MD/LUKS/LVM merely to tear them down again.
+        PROFILE_RECOVERY_MODE=no
+        if ! load_installer_profile "$INSTALLER_RESUME_FILE" yes; then
+                log "Warning: resume profile could not be fully parsed; continuing with target-mount cleanup"
+        fi
+
+        if findmnt -Rrn "$TARGET" 2>/dev/null | grep -q .; then
+                log "Unmounting all previous installer target mounts below $TARGET"
+                umount -R "$TARGET" 2>/dev/null || umount -Rl "$TARGET" 2>/dev/null || status=1
+        fi
+
+        # Disable only swap recorded by this installer profile. Never use
+        # swapoff -a here because unrelated host/live swap is not installer state.
+        if [[ -n "$SWAP_DEV" ]]; then
+                log "Disabling previous installer swap: $SWAP_DEV"
+                swapoff "$SWAP_DEV" 2>/dev/null || true
+        fi
+        for device in "${STORAGE_DEVICES[@]}"; do
+                [[ -n "$device" ]] || continue
+                if swapon --noheadings --raw --show=NAME 2>/dev/null | grep -Fxq -- "$device"; then
+                        log "Disabling previous installer swap: $device"
+                        swapoff "$device" 2>/dev/null || status=1
+                fi
+        done
+
+        command -v udevadm >/dev/null 2>&1 && udevadm settle || true
+
+        # Never remove through a still-mounted target. If even lazy unmount did
+        # not detach everything, keep the tree intact and require review.
+        if findmnt -Rrn "$TARGET" 2>/dev/null | grep -q .; then
+                log "Previous installer target still has mounted filesystems; leaving $TARGET intact"
+                status=1
+        else
+                rm -rf --one-file-system "$TARGET" 2>/dev/null || status=1
+                mkdir -p "$TARGET" || status=1
+        fi
+
+        rm -rf "$INSTALL_CHECKPOINT_DIR" 2>/dev/null || true
+        clear_resume_state
+
+        # Reset in-memory selections so the next menu pass cannot silently
+        # inherit values from the abandoned installation.
+        STORAGE_DEVICES=(); STORAGE_FORMATS=(); STORAGE_MOUNTPOINTS=(); STORAGE_SUBVOLUMES=()
+        RECOVERY_MD_ARRAYS=(); RECOVERY_MD_MEMBERS=(); RECOVERY_MD_UUIDS=()
+        RECOVERY_LUKS_DEVICES=(); RECOVERY_LUKS_MAPPINGS=(); RECOVERY_VGS=()
+        ROOT_DEV=""; ROOT_FORMAT=keep; BOOT_DEV=""; BOOT_FORMAT=keep
+        EFI_DEV=""; EFI_FORMAT=keep; SWAP_DEV=""; SWAP_FORMAT=keep
+        HOME_DEV=""; HOME_FORMAT=keep
+        DISKS_CONFIGURED=no
+        INSTALLATION_ALREADY_COMPLETE=no
+
+        if ((status != 0)); then
+                dialog_message "Clear previous install state" \
+                        "The cached installer state was cleared, but one or more target mounts/swap devices could not be cleanly released.\n\nNo filesystem signatures were erased and no partition was formatted. Use Storage maintenance to review/deactivate the remaining stack before continuing."
+        else
+                dialog_message "Clear previous install state" \
+                        "Previous installer cache/checkpoints were cleared, all installer target mounts were unmounted, and recorded target swap was disabled.\n\nNo filesystem signatures were erased. The installer will start fresh."
+        fi
+        return 0
+}
+
+choose_previous_install_action() {
+        local choice=""
+        themed_menu choice "Previous installation detected" \
+                "A previous BFSOS installer state exists. Resume it, clear the cached state and unmount/deactivate its target storage, or cancel." \
+                17 92 6 \
+                1 "Resume previous installation" \
+                2 "Clear previous install state and start fresh" \
+                3 "Cancel"
+        case "$choice" in
+                1) printf '%s\n' resume ;;
+                2)
+                        confirm "Clear the previous installer cache/checkpoints and unmount/deactivate installer-managed target storage?\n\nThis does NOT format, wipe, or repartition storage." || { printf '%s\n' cancel; return 0; }
+                        printf '%s\n' clear
+                        ;;
+                *) printf '%s\n' cancel ;;
+        esac
+}
+
 load_resume_state_if_present() {
+        local previous_action=""
         [[ -s "$INSTALLER_RESUME_FILE" ]] || return 0
+
+        previous_action="$(choose_previous_install_action)"
+        case "$previous_action" in
+                clear)
+                        clear_previous_install_state
+                        return 0
+                        ;;
+                cancel)
+                        log "Previous installation recovery cancelled by user"
+                        exit 0
+                        ;;
+        esac
 
         RESUME_STATE_PRESENT=yes
         INSTALLATION_ALREADY_COMPLETE=no
@@ -4710,7 +4810,7 @@ bfs_release_version() {
         if [[ -z "$release" && -r /etc/os-release ]]; then
                 release="$(awk -F= '$1 == "VERSION_ID" {gsub(/^['"']|['"']$/, "", $2); print $2; exit}' /etc/os-release)"
         fi
-        printf '%s\n' "${release:-0.9.0-rc3}"
+        printf '%s\n' "${release:-0.9.0}"
 }
 
 fetch_sourceforge_base() {

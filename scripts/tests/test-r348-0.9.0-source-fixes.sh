@@ -6,11 +6,11 @@ cd "$ROOT"
 fail(){ echo "FAIL: $*" >&2; exit 1; }
 pass(){ echo "PASS: $*"; }
 
-[[ $(tr -d '[:space:]' < VERSION) == 0.9.0-rc3 ]] || fail 'VERSION is not RC3'
-grep -q 'bfs_version=0.9.0-rc3' ports/core/aaa_filesystem/Pkgfile || fail 'aaa_filesystem RC3 identity missing'
-pass 'RC3 authoritative version and filesystem identity'
+[[ $(tr -d '[:space:]' < VERSION) == 0.9.0 ]] || fail 'VERSION is not 0.9.0'
+grep -q 'bfs_version=0.9.0' ports/core/aaa_filesystem/Pkgfile || fail 'aaa_filesystem 0.9.0 identity missing'
+pass '0.9.0 authoritative version and filesystem identity'
 
-for f in bootstrap.sh bootstrap-clean-start.sh scripts/bfs-build-iso.sh scripts/install-bfs-menu-current.sh scripts/bfs-publish-sourceforge-v4.sh; do
+for f in bootstrap.sh bootstrap-clean-start.sh scripts/bfs-build-iso.sh scripts/install-bfs-menu-current.sh scripts/bfs-publish-sourceforge.sh; do
   bash -n "$f" || fail "$f syntax"
 done
 pass 'bootstrap/ISO/installer/publisher shell syntax'
@@ -31,7 +31,7 @@ pass 'blank-disk and Btrfs recovery source fixes'
 
 grep -q 'BFSOS-base-${release}-x86_64.tar.zst' scripts/install-bfs-menu-current.sh || fail 'installer versioned base default missing'
 grep -q 'BFSOS-base-${VERSION}-${ARCH}.tar.zst' scripts/bfs-build-iso.sh || fail 'ISO versioned base default missing'
-grep -q 'BFSOS-base-${base_release}-${ARCH}.tar.zst' scripts/bfs-publish-sourceforge-v4.sh || fail 'publisher versioned base name missing'
+grep -q 'BFSOS-base-${base_release}-${ARCH}.tar.zst' scripts/bfs-publish-sourceforge.sh || fail 'publisher versioned base name missing'
 grep -q 'checkout -B "$GIT_REF" "origin/$GIT_REF"' scripts/bfs-build-iso.sh || fail 'ISO tracking-branch checkout missing'
 pass 'versioned base identity and live branch checkout source fixes'
 
@@ -40,9 +40,20 @@ grep -q "bfs-rootfs-\${BFS_VERSION}-\${BUILD_DATE}.tar.zst" bootstrap.sh || fail
 grep -q '_prefetch_bootstrap_sources /tmp/bootstrap.conf' bootstrap.sh || fail 'bootstrap source prefetch call missing'
 pass 'bootstrap prefetch and zstd artifact source fixes'
 
-./scripts/bfs-xorg-audit.py >/tmp/bfs-r340-xorg-audit.out || { cat /tmp/bfs-r340-xorg-audit.out; fail 'X.Org static audit'; }
+./scripts/bfs-xorg-audit.py >/tmp/bfs-r348-xorg-audit.out || { cat /tmp/bfs-r348-xorg-audit.out; fail 'X.Org static audit'; }
 grep -q '^version=26.2.3$' ports/xorg/mesa/Pkgfile || fail 'Mesa 26.2.3 update missing'
 grep -q '^version=1.0.6$' ports/xorg/xorg-font-alias/Pkgfile || fail 'font-alias 1.0.6 update missing'
 pass '180-port X.Org static audit and verified updates'
 
-echo 'r340 source regression checks passed.'
+grep -q 'base_remote="$SF_ROOT/base/archive/$base_release"' scripts/bfs-publish-sourceforge.sh || fail 'publisher archive layout missing'
+grep -q 'ACTIVE_RELEASE=.*VERSION' scripts/bfs-publish-sourceforge.sh || fail 'publisher authoritative release scoping missing'
+grep -q 'Clear previous install state and start fresh' scripts/install-bfs-menu-current.sh || fail 'installer fresh-start recovery option missing'
+grep -q 'wipefs -a "$device"' scripts/install-bfs-menu-current.sh || fail 'destructive format signature cleanup missing'
+grep -q '_cleanup_completed_bootstrap_state' bootstrap.sh || fail 'successful-bootstrap tmp cleanup missing'
+grep -q 'bfs-prefetch-curl' bootstrap.sh || fail 'prefetch health-cache wrapper missing'
+grep -q 'chown -R bfs:bfs /home/bfs/BFSOS' scripts/bfs-build-iso.sh || fail 'live checkout bfs ownership normalization missing'
+grep -q '^version=7.2.8$' ports/core/linux/Pkgfile || fail 'current kernel 7.2.8 update missing'
+grep -q '^version=6.18.54$' ports/core/linux-lts/Pkgfile || fail 'LTS kernel 6.18.54 update missing'
+pass 'r341-r347 release hardening source fixes'
+
+echo 'r348 0.9.0 source regression checks passed.' 

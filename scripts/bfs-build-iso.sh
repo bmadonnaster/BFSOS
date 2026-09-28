@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # BFSOS ISO builder - reusable verified-base workflow and local-package/repository implementation.
 # Includes USB live-media discovery retry, live console accessibility, and
-# current RC3 live-session policy. Boot/install acceptance still requires
+# current 0.9.0 live-session policy. Boot/install acceptance still requires
 # fresh VM + USB-emulation + bare-metal validation.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +14,7 @@ BUILD_DATE="$(date +%Y%m%d)"
 WORK_DIR="${BFS_ISO_WORK_DIR:-/var/tmp/bfsos-iso-${USER:-builder}}"
 OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-$HOME/BFSOS-ISO}"
 BASE_CACHE_DIR="${BFS_ISO_BASE_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/bfsos/iso}"
-VERSION="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION" 2>/dev/null || printf '0.9.0-rc3')"
+VERSION="$(tr -d '[:space:]' < "$PROJECT_DIR/VERSION" 2>/dev/null || printf '0.9.0')"
 BASE_FILENAME="${BFS_ISO_BASE_FILENAME:-BFSOS-base-${VERSION}-${ARCH}.tar.zst}"
 BASE_URL="${BFS_ISO_BASE_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}}"
 BASE_SHA256_URL="${BFS_ISO_BASE_SHA256_URL:-https://downloads.sourceforge.net/project/bfsos/BFSOS/base/latest/${BASE_FILENAME}.sha256}"
@@ -97,7 +97,7 @@ parse_args() {
 
 load_project_metadata() {
     local project="$1" label_version=""
-    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0-rc3')"
+    VERSION="$(tr -d '[:space:]' < "$project/VERSION" 2>/dev/null || printf '0.9.0')"
     GIT_COMMIT_FULL="$(git -C "$project" rev-parse HEAD 2>/dev/null || printf 'unknown')"
     GIT_COMMIT="${GIT_COMMIT_FULL:0:12}"
     label_version="${VERSION//[.-]/_}"
@@ -289,11 +289,13 @@ preflight() {
 
 project_base_candidates() {
     local dir=""
+    # Automatic/local reuse is release-scoped. A base from another BFSOS
+    # release is never eligible merely because it is newer on disk.
     for dir in "$PROJECT_DIR/archives/base" "$PROJECT_DIR/archive/base"; do
         [ -d "$dir" ] || continue
         find "$dir" -maxdepth 1 -type f \
-            \( -name 'bfs-rootfs-*.tar.xz' -o -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.gz' \
-               -o -name 'BFSOS-base-*.tar.xz' -o -name 'BFSOS-base-*.tar.zst' -o -name 'BFSOS-base-*.tar.gz' \) \
+            \( -name "bfs-rootfs-${VERSION}-*.tar.zst" -o -name "bfs-rootfs-${VERSION}-*.tar.xz" -o -name "bfs-rootfs-${VERSION}-*.tar.gz" \
+               -o -name "BFSOS-base-${VERSION}-${ARCH}.tar.zst" -o -name "BFSOS-base-${VERSION}-${ARCH}.tar.xz" -o -name "BFSOS-base-${VERSION}-${ARCH}.tar.gz" \) \
             -printf '%T@ %p\n' 2>/dev/null
     done | sort -nr
 }
@@ -438,8 +440,14 @@ choose_bootstrap_recovery_action() {
 }
 
 run_full_bootstrap() {
-    local recovery_action bootstrap_mode=full
-    recovery_action="$(choose_bootstrap_recovery_action)"
+    local requested_mode="${1:-auto}" recovery_action bootstrap_mode=full
+
+    if [ "$requested_mode" = rebuild ]; then
+        recovery_action=restart
+        log "Rebuild selected: ignoring all existing base archives and cached base images"
+    else
+        recovery_action="$(choose_bootstrap_recovery_action)"
+    fi
     case "$recovery_action" in
         resume)
             bootstrap_mode=resume-full
@@ -629,7 +637,16 @@ install_live_runtime() {
         fi
 
         passwd -l bfs >/dev/null 2>&1 || true
-        chown -R bfs:bfs /home/bfs
+
+        # The source checkout is staged while the ISO root is assembled as
+        # root. Normalize the complete live checkout to the normal live user
+        # immediately afterward so git/edit/copy workflows never require sudo.
+        chown -R bfs:bfs /home/bfs/BFSOS
+        chown bfs:bfs /home/bfs
+        if find /home/bfs/BFSOS \( ! -user bfs -o ! -group bfs \) -print -quit | grep -q .; then
+            echo "BFSOS live checkout ownership normalization failed" >&2
+            exit 1
+        fi
     '
     cat > "$root/etc/sudoers.d/90-bfs-live" <<'EOS'
 # Disposable live-media account. Local console auto-login is enabled.
@@ -1189,7 +1206,7 @@ main() {
                         BASE_SOURCE="local-project:$base_archive"
                         ;;
                     rebuild)
-                        run_full_bootstrap
+                        run_full_bootstrap rebuild
                         base_archive="$(latest_usable_base_archive 2>/dev/null || true)"
                         BASE_SOURCE="local-rebuilt:$base_archive"
                         ;;

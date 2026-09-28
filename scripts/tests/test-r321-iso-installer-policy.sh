@@ -11,7 +11,8 @@ grep -Fq -- '--sourceforge-base' "$iso" || fail "explicit SourceForge mode missi
 grep -Fq -- '--local-base PATH' "$iso" || fail "explicit local-base path mode missing"
 grep -Fq 'project_base_candidates' "$iso" || fail "local project-base discovery helper missing"
 grep -Fq '*.tar.zst|*.tar.zst.tmp' "$iso" || fail "temporary .tar.zst validation support missing"
-grep -Fq 'bfs-live-enable-ssh' "$iso" || fail "explicit live SSH enable action missing"
+! grep -Fq 'bfs-live-enable-ssh' "$iso" || fail "obsolete live SSH enable helper is still present"
+grep -Fq 'ssh-keygen -A' "$iso" || fail "manual live SSH instructions missing"
 ! grep -A20 "cat > \"\$root/usr/local/sbin/bfs-live-init\"" "$iso" | grep -Fq 'ssh-keygen -A' || \
     fail "live init still generates SSH host keys automatically"
 grep -Fq 'rm -f "$root"/etc/ssh/ssh_host_*' "$iso" || fail "ISO build does not remove baked SSH host keys"
