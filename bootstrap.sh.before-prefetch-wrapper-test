@@ -2921,7 +2921,7 @@ PKGMK_SOURCE_FALLBACKS=(
 BFS_PREFETCH_HEALTH_FILE="/tmp/bfsos-prefetch-unhealthy-origins.$$"
 BFS_PREFETCH_SOURCE_PREFIXES="\$(printf '%s\n' "\${PKGMK_SOURCE_FALLBACKS[@]}" | sed 's/|.*//' | sed '/^$/d')"
 export BFS_PREFETCH_HEALTH_FILE BFS_PREFETCH_SOURCE_PREFIXES
-PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 
 # Prefetch should fail over quickly.  Do not spend curl-level retries on the
 # same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
