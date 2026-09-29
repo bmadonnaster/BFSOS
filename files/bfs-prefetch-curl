@@ -4,6 +4,14 @@ set -u
 health_file="${BFS_PREFETCH_HEALTH_FILE:-}"
 prefixes="${BFS_PREFETCH_SOURCE_PREFIXES:-}"
 url="${!#:-}"
+
+{
+    printf 'cwd=%q\n' "$PWD"
+    printf 'argc=%s\n' "$#"
+    printf 'arg=%q\n' "$@"
+    printf '%s\n' '---'
+} >> /tmp/bfs-prefetch-args.log
+
 matched_prefix=""
 has_output=no
 expect_output_value=no

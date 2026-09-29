@@ -2155,6 +2155,25 @@ _prefetch_bootstrap_sources() {
     shift
     local package="" normalized="" port_dir="" attempt=0 status=0
     local -A seen_ports=()
+    local bootstrap_pkgmk="$TOOLS/bin/pkgmk"
+
+    # Source prefetch must use the temporary-toolchain pkgmk explicitly.
+    # bfs-prefetch-curl is curl-compatible, so pkgmk must retain curl's
+    # normal -o <source>.partial download destination.
+    if [ ! -x "$bootstrap_pkgmk" ]; then
+        echo "ERROR: bootstrap pkgmk is missing: $bootstrap_pkgmk" >&2
+        return 1
+    fi
+
+    sed -i         's/case ${PKGMK_DOWNLOAD_PROG} in/case ${PKGMK_DOWNLOAD_PROG##*\/} in/'         "$bootstrap_pkgmk"
+
+    sed -i         's/^[[:space:]]*curl)/        curl|bfs-prefetch-curl)/'         "$bootstrap_pkgmk"
+
+    if ! grep -Fq 'case ${PKGMK_DOWNLOAD_PROG##*/} in' "$bootstrap_pkgmk" ||
+       ! grep -Eq '^[[:space:]]*curl\|bfs-prefetch-curl\)' "$bootstrap_pkgmk"; then
+        echo "ERROR: bootstrap pkgmk does not support bfs-prefetch-curl safely." >&2
+        return 1
+    fi
 
     echo
     echo "Bootstrap source prefetch"
@@ -2190,7 +2209,7 @@ _prefetch_bootstrap_sources() {
             printf '  %-28s (attempt %d/3) ' "$normalized" "$attempt"
             if (
                 cd "$port_dir"
-                pkgmk -do -cf "$pkgmk_conf"
+                "$bootstrap_pkgmk" -do -cf "$pkgmk_conf"
             ); then
                 printf 'OK\n'
                 status=0
