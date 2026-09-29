@@ -2923,6 +2923,14 @@ BFS_PREFETCH_SOURCE_PREFIXES="\$(printf '%s\n' "\${PKGMK_SOURCE_FALLBACKS[@]}" |
 export BFS_PREFETCH_HEALTH_FILE BFS_PREFETCH_SOURCE_PREFIXES
 PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 
+# pkgmk only enables curl-style DOWNLOAD_OPTS when the downloader is named
+# "curl".  Our wrapper is curl-compatible, so teach the pkgmk used during
+# bootstrap prefetch to recognize it before sources are downloaded.
+if [ -n "$(PATH=$TOOLS/bin command -v pkgmk 2>/dev/null)" ]; then
+    sed -i         's/case ${PKGMK_DOWNLOAD_PROG} in/case ${PKGMK_DOWNLOAD_PROG##*\/} in/'         "$TOOLS/bin/pkgmk"
+    sed -i         's/^[[:space:]]*curl)/        curl|bfs-prefetch-curl)/'         "$TOOLS/bin/pkgmk"
+fi
+
 # Prefetch should fail over quickly.  Do not spend curl-level retries on the
 # same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
 # outer prefetch loop retries the complete original+fallback chain up to 3x.
