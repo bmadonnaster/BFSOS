@@ -38,15 +38,40 @@ reject_grep '5\) Quit menu' scripts/bfs-build-iso.sh 'redundant live Quit menu e
 pass 'live-menu shell/quit cleanup'
 
 require_grep 'https://github.com/bmadonnaster/BFSOS.git' scripts/bfs-build-iso.sh 'ISO builder is not using GitHub'
+
+# Codeberg is retired as an active BFSOS upstream.  The prt-get post-install
+# migration is the one intentional exception: it must recognize the old URL
+# so existing BFSOS installations can migrate themselves to GitHub.
 if grep -RnsI 'codeberg\.org/bmadonnaster/BFSOS' \
     README.md bootstrap.sh files ports scripts \
     --exclude='install-bfs-menu-v50-r*.sh' \
-    --exclude='*.md' --exclude='*.log' --exclude='*.tsv' >/tmp/bfsos-r355-codeberg.$$ 2>/dev/null; then
-    cat /tmp/bfsos-r355-codeberg.$$ >&2
-    rm -f /tmp/bfsos-r355-codeberg.$$
-    fail 'active BFSOS-specific Codeberg references remain'
+    --exclude='test-r355-ui-security-migration.sh' \
+    --exclude='*.md' --exclude='*.log' --exclude='*.tsv' \
+    >/tmp/bfsos-r355-codeberg.$$ 2>/dev/null; then
+
+    grep -v '^ports/core/prt-get/post-install:' \
+        /tmp/bfsos-r355-codeberg.$$ \
+        >/tmp/bfsos-r355-codeberg-active.$$ || true
+
+    if [[ -s /tmp/bfsos-r355-codeberg-active.$$ ]]; then
+        cat /tmp/bfsos-r355-codeberg-active.$$ >&2
+        rm -f /tmp/bfsos-r355-codeberg.$$ \
+              /tmp/bfsos-r355-codeberg-active.$$
+        fail 'active BFSOS-specific Codeberg references remain'
+    fi
 fi
-rm -f /tmp/bfsos-r355-codeberg.$$
+
+rm -f /tmp/bfsos-r355-codeberg.$$ \
+      /tmp/bfsos-r355-codeberg-active.$$
+
+require_grep 'https://codeberg.org/bmadonnaster/BFSOS.git' \
+    ports/core/prt-get/post-install \
+    'legacy Codeberg migration detector missing'
+
+require_grep 'https://github.com/bmadonnaster/BFSOS.git' \
+    ports/core/prt-get/post-install \
+    'GitHub migration destination missing'
+
 pass 'active GitHub migration references'
 
 if grep -RnsI -E 'AIza[0-9A-Za-z_-]{20,}' ports/opt/geoclue README.md docs/INSTALL.md scripts files >/tmp/bfsos-r355-secret.$$ 2>/dev/null; then
@@ -59,7 +84,7 @@ require_grep 'rm -f /etc/geoclue/conf.d/90-lfs-google.conf' ports/opt/geoclue/po
 pass 'Geoclue maintained-tree credential cleanup'
 
 require_grep 'PKGMK_DOWNLOAD_PROG="\$SCRIPT_DIR/files/bfs-prefetch-curl"' bootstrap.sh 'prefetch wrapper is not restored'
-require_grep 'refusing to download without an explicit output destination' files/bfs-prefetch-curl 'stdout guard missing from prefetch wrapper'
+require_grep 'refusing to write archive data to an interactive terminal' files/bfs-prefetch-curl 'stdout guard missing from prefetch wrapper'
 pass 'prefetch wrapper source guard'
 
 require_grep '1\|toolchain\|build-toolchain\)' bootstrap.sh 'direct stage 1 dispatch missing'
