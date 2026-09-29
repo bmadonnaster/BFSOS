@@ -218,7 +218,7 @@ compiler_build_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFS Linux Bootstrap" \
+                    --backtitle "BFSOS Bootstrap" \
                     --title "Compiler / Build Settings" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -245,7 +245,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFS Linux Bootstrap" \
+                            --backtitle "BFSOS Bootstrap" \
                             --title "Parallel Build Jobs" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -260,14 +260,14 @@ compiler_build_settings_menu() {
                     case "$value" in
                         auto) BFS_BUILD_JOBS=auto ;;
                         ''|*[!0-9]*)
-                            dialog --clear --backtitle "BFS Linux Bootstrap" \
+                            dialog --clear --backtitle "BFSOS Bootstrap" \
                                 --title "Invalid job count" \
                                 --msgbox "Use auto or a positive integer." 8 50 \
                                 </dev/tty >/dev/tty 2>&1 || true
                             continue
                             ;;
                         0)
-                            dialog --clear --backtitle "BFS Linux Bootstrap" \
+                            dialog --clear --backtitle "BFSOS Bootstrap" \
                                 --title "Invalid job count" \
                                 --msgbox "Job count must be greater than zero." 8 50 \
                                 </dev/tty >/dev/tty 2>&1 || true
@@ -280,7 +280,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFS Linux Bootstrap" \
+                            --backtitle "BFSOS Bootstrap" \
                             --title "Compiler Optimization" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -308,7 +308,7 @@ compiler_build_settings_menu() {
                             set +e
                             value="$(
                                 dialog --stdout --clear \
-                                    --backtitle "BFS Linux Bootstrap" \
+                                    --backtitle "BFSOS Bootstrap" \
                                     --title "Custom Compiler Flags" \
                                     --ok-label "Apply" \
                                     --cancel-label "Back" \
@@ -328,7 +328,7 @@ compiler_build_settings_menu() {
                 ccache)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFS Linux Bootstrap" \
+                        --backtitle "BFSOS Bootstrap" \
                         --title "ccache" \
                         --yes-label "Enable" \
                         --no-label "Disable" \
@@ -348,7 +348,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFS Linux Bootstrap" \
+                            --backtitle "BFSOS Bootstrap" \
                             --title "ccache Size" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -366,7 +366,7 @@ compiler_build_settings_menu() {
                 source-cache)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFS Linux Bootstrap" \
+                        --backtitle "BFSOS Bootstrap" \
                         --title "Base Source Cache" \
                         --yes-label "Keep" \
                         --no-label "Exclude" \
@@ -394,7 +394,7 @@ compiler_build_settings_menu() {
                 defaults)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFS Linux Bootstrap" \
+                        --backtitle "BFSOS Bootstrap" \
                         --title "Restore Build Defaults" \
                         --yes-label "Restore" \
                         --no-label "Cancel" \
@@ -493,7 +493,7 @@ integrity_verification_settings_menu() {
            [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if ! choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFS Linux Bootstrap" \
+                    --backtitle "BFSOS Bootstrap" \
                     --title "Integrity Verification" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -732,7 +732,7 @@ select_bootstrap_theme() {
         set +e
         choice="$(
             dialog --stdout --clear \
-                --backtitle "BFS Linux Bootstrap" \
+                --backtitle "BFSOS Bootstrap" \
                 --title "Interface Theme" \
                 --cancel-label "Back" \
                 --radiolist \
@@ -800,7 +800,7 @@ bootstrap_theme_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFS Linux Bootstrap" \
+                    --backtitle "BFSOS Bootstrap" \
                     --title "Bootstrap Settings - Interface Theme" \
                     --ok-label "Apply" \
                     --cancel-label "Back" \
@@ -876,7 +876,7 @@ bootstrap_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFS Linux Bootstrap" \
+                    --backtitle "BFSOS Bootstrap" \
                     --title "Bootstrap Settings" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -1225,7 +1225,7 @@ _confirm_full_bootstrap() {
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] && [ -w /dev/tty ]; then
         if dialog --clear \
-            --backtitle "BFS Linux Bootstrap" \
+            --backtitle "BFSOS Bootstrap" \
             --title "Run Full Bootstrap" \
             --yes-label "Start" \
             --no-label "Cancel" \
@@ -1259,7 +1259,7 @@ _finish_full_bootstrap() {
         if command -v dialog >/dev/null 2>&1 &&
            [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if dialog --clear \
-                --backtitle "BFS Linux Bootstrap" \
+                --backtitle "BFSOS Bootstrap" \
                 --title "Full Bootstrap Complete" \
                 --yes-label "Launch installer" \
                 --no-label "Done" \
@@ -1454,7 +1454,7 @@ _run_resume_full_bootstrap() {
     if [ "${BFS_FULL_BOOTSTRAP_ASSUME_YES:-no}" != yes ]; then
         if command -v dialog >/dev/null 2>&1 && [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if ! dialog --clear \
-                --backtitle "BFS Linux Bootstrap" \
+                --backtitle "BFSOS Bootstrap" \
                 --title "Resume Full Bootstrap" \
                 --yes-label "Resume" --no-label "Cancel" --defaultno \
                 --yesno "Resume the existing build at Stage $start and continue automatically through Stage 5?\n\nExisting successful work will be preserved. The workflow stops on the first failure." \
@@ -1564,7 +1564,7 @@ _show_stage5_archive_dialog() {
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] && [ -w /dev/tty ]; then
         dialog --clear \
-            --backtitle "BFS Linux Bootstrap" \
+            --backtitle "BFSOS Bootstrap" \
             --title "Create base rootfs archive" \
             --msgbox \
             "BFSOS will now create and verify the base rootfs archive.\n\nThis can take several minutes depending on system speed and compression workload.\n\nPress OK to begin." \
@@ -1632,7 +1632,7 @@ _show_stage_failure_dialog() {
         # failure dialog so the same error is not presented both as raw text
         # and again inside the Dialog UI.
         _reset_terminal_ui
-        dialog --clear --backtitle "BFS Linux Bootstrap" \
+        dialog --clear --backtitle "BFSOS Bootstrap" \
             --title "Bootstrap operation failed" --ok-label "Continue" \
             --msgbox "$message" 24 96 </dev/tty >/dev/tty 2>&1 || true
         _reset_terminal_ui
@@ -1652,7 +1652,7 @@ _show_menu_progress() {
     local title="$1" message="$2"
     if _menu_dialog_available; then
         _reset_terminal_ui
-        dialog --clear --backtitle "BFS Linux Bootstrap" \
+        dialog --clear --backtitle "BFSOS Bootstrap" \
             --title "$title" --infobox "$message" 8 72 \
             </dev/tty >/dev/tty 2>&1 || true
     else
@@ -1664,7 +1664,7 @@ _show_menu_success() {
     local title="$1" message="$2"
     if _menu_dialog_available; then
         _reset_terminal_ui
-        dialog --clear --backtitle "BFS Linux Bootstrap" \
+        dialog --clear --backtitle "BFSOS Bootstrap" \
             --title "$title" --ok-label "Continue" --msgbox "$message" 12 82 \
             </dev/tty >/dev/tty 2>&1 || true
         _reset_terminal_ui
@@ -1785,7 +1785,7 @@ _dialog_action_status() {
 _show_bootstrap_menu() {
     clear 2>/dev/null || printf '\033[2J\033[H'
     printf '%s\n' '============================================================' \
-        '                  BFS Linux Bootstrap' \
+        '                  BFSOS Bootstrap' \
         '============================================================' ''
 
     _txt_status() { "$1" && printf '%s%s%s' "$COLOR_GREEN" "$2" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; }
@@ -1848,7 +1848,7 @@ _select_bootstrap_menu_choice() {
         set +e
         choice="$(
             dialog --clear --colors --no-collapse \
-                --backtitle "BFS Linux Bootstrap" \
+                --backtitle "BFSOS Bootstrap" \
                 --title "Bootstrap menu" \
                 --ok-label "Select" \
                 --extra-button --extra-label "Settings" \
@@ -2754,7 +2754,7 @@ EOF_CPP
         elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
             dialog \
                 --clear \
-                --backtitle "BFS Linux Bootstrap" \
+                --backtitle "BFSOS Bootstrap" \
                 --title "Toolchain verification PASSED" \
                 --msgbox "$summary" 14 68
             clear 2>/dev/null || true
@@ -2771,7 +2771,7 @@ EOF_CPP
     elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
         dialog \
             --clear \
-            --backtitle "BFS Linux Bootstrap" \
+            --backtitle "BFSOS Bootstrap" \
             --title "Toolchain verification FAILED" \
             --msgbox "$summary" 12 72
         clear 2>/dev/null || true
@@ -2921,7 +2921,7 @@ PKGMK_SOURCE_FALLBACKS=(
 BFS_PREFETCH_HEALTH_FILE="/tmp/bfsos-prefetch-unhealthy-origins.$$"
 BFS_PREFETCH_SOURCE_PREFIXES="\$(printf '%s\n' "\${PKGMK_SOURCE_FALLBACKS[@]}" | sed 's/|.*//' | sed '/^$/d')"
 export BFS_PREFETCH_HEALTH_FILE BFS_PREFETCH_SOURCE_PREFIXES
-PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 
 # Prefetch should fail over quickly.  Do not spend curl-level retries on the
 # same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
@@ -3696,7 +3696,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
-PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . /var/lib/pkgmk/extension
@@ -3817,7 +3817,7 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
-PKGMK_DOWNLOAD_PROG="curl"
+PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
 PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . /var/lib/pkgmk/extension

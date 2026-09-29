@@ -4,9 +4,9 @@
 
 name=aaa_filesystem
 version=1
-release=21
-# BFS Linux distribution release. Change this value when preparing a new
-# BFS release; the aaa_filesystem package version remains independent.
+release=22
+# BFSOS distribution release. Change this value when preparing a new
+# BFSOS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.0
 
 source=(
@@ -248,18 +248,18 @@ pkg_build() {
     printf '%s\n' "$bfs_version" > "$PKG/etc/lfs-release"
 
     cat > "$PKG/etc/os-release" <<EOF
-NAME="BFS Linux"
-PRETTY_NAME="BFS Linux $bfs_version"
+NAME="BFSOS"
+PRETTY_NAME="BFSOS $bfs_version"
 ID=bfs
 VERSION="$bfs_version"
 VERSION_ID="$bfs_version"
-HOME_URL="https://codeberg.org/bmadonnaster/BFSOS"
-SUPPORT_URL="https://codeberg.org/bmadonnaster/BFSOS/issues"
-BUG_REPORT_URL="https://codeberg.org/bmadonnaster/BFSOS/issues"
+HOME_URL="https://github.com/bmadonnaster/BFSOS"
+SUPPORT_URL="https://github.com/bmadonnaster/BFSOS/issues"
+BUG_REPORT_URL="https://github.com/bmadonnaster/BFSOS/issues"
 EOF
 
     cat > "$PKG/etc/issue" <<EOF
-BFS Linux $bfs_version \\n \\l
+BFSOS $bfs_version \\n \\l
 
 EOF
 

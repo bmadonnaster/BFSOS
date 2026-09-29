@@ -22,7 +22,7 @@ BASE_MODE="${BFS_ISO_BASE_MODE:-auto}"
 REFRESH_BASE="${BFS_ISO_REFRESH_BASE:-no}"
 LOCAL_BASE_PATH="${BFS_ISO_LOCAL_BASE:-}"
 BASE_SOURCE="unknown"
-GIT_URL="${BFS_ISO_GIT_URL:-https://codeberg.org/bmadonnaster/BFSOS.git}"
+GIT_URL="${BFS_ISO_GIT_URL:-https://github.com/bmadonnaster/BFSOS.git}"
 GIT_REF="${BFS_ISO_GIT_REF:-main}"
 GIT_COMMIT="unknown"
 GIT_COMMIT_FULL="unknown"
@@ -63,7 +63,7 @@ Usage: $(basename "$0") [--refresh-base] [--sourceforge-base] [--local-base PATH
   --sourceforge-base
                     Explicitly use the SourceForge release base/cache path.
   --refresh-base    Force a fresh SourceForge base download (implies --sourceforge-base).
-  --git-ref REF     Build from this Codeberg branch, tag, or commit (default: main).
+  --git-ref REF     Build from this GitHub branch, tag, or commit (default: main).
 EOF
 }
 
@@ -834,7 +834,7 @@ set -u
 PROJECT=/home/bfs/BFSOS
 while true; do
     printf '\nBFSOS Live Menu\n===============\n'
-    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n  5) Quit menu\n\nChoice: '
+    printf '  1) Bootstrap BFSOS\n  2) Run BFSOS installer\n  3) Shell\n  4) Change console font\n\nChoice: '
     read -r choice
     case "$choice" in
         1)
@@ -854,8 +854,11 @@ while true; do
             fi
             ;;
         3)
-            printf 'Type exit to return to the BFSOS live menu.\n\n'
-            printf 'To enable SSH for this live session:\n'
+            printf '\nBFSOS Live Shell\n================\n\n'
+            printf 'You are in the disposable BFSOS live environment.\n'
+            printf 'Type exit to return to the BFSOS Live Menu.\n\n'
+            printf 'The live bfs account has passwordless sudo for this live session only.\n\n'
+            printf 'SSH is disabled by default. To enable it for this live session:\n'
             printf '  sudo passwd bfs\n'
             printf '  sudo ssh-keygen -A\n'
             printf '  sudo systemctl start sshd.service  # or ssh.service if that is the installed unit\n\n'
@@ -866,7 +869,6 @@ while true; do
             fi
             ;;
         4) /usr/local/sbin/bfs-live-console-font ;;
-        5) exit 0 ;;
         *) printf 'Invalid choice.\n' ;;
     esac
 done

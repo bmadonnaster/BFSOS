@@ -5,6 +5,33 @@ health_file="${BFS_PREFETCH_HEALTH_FILE:-}"
 prefixes="${BFS_PREFETCH_SOURCE_PREFIXES:-}"
 url="${!#:-}"
 matched_prefix=""
+has_output=no
+expect_output_value=no
+
+# pkgmk must provide an explicit destination.  A downloader used by pkgmk must
+# never let an archive fall through to stdout, because that corrupts the
+# controlling terminal during Bootstrap prefetch.  Accept all normal curl
+# destination forms while preserving the argument list byte-for-byte.
+for arg in "$@"; do
+    if [[ "$expect_output_value" == yes ]]; then
+        has_output=yes
+        expect_output_value=no
+        continue
+    fi
+    case "$arg" in
+        -o|--output) expect_output_value=yes ;;
+        -o?*|--output=*|-O|--remote-name|--remote-name-all) has_output=yes ;;
+    esac
+done
+
+if [[ "$expect_output_value" == yes ]]; then
+    printf 'pkgmk prefetch: curl output option is missing its destination\n' >&2
+    exit 2
+fi
+if [[ "$has_output" != yes ]]; then
+    printf 'pkgmk prefetch: refusing to download without an explicit output destination: %s\n' "$url" >&2
+    exit 2
+fi
 
 while IFS= read -r prefix; do
     [[ -n "$prefix" ]] || continue

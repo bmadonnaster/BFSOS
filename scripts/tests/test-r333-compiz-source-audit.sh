@@ -29,3 +29,10 @@ grep -Fq '/usr/share/bfsos/' "$ROOT/ports/compiz/compiz-meta/Pkgfile" || fail "c
 ! grep -Fq '/usr/share/doc' "$ROOT/ports/compiz/compiz-meta/Pkgfile" || fail "compiz-meta still uses stripped /usr/share/doc payload"
 
 echo "PASS: r333 Compiz source/dependency audit"
+
+# r355 follow-up: PyQt5.sip is a separate runtime extension package.
+[[ -f "$ROOT/ports/opt/pyqt5-sip/Pkgfile" ]] || { echo "missing pyqt5-sip port" >&2; exit 1; }
+grep -Eq '^version=12\.19\.0$' "$ROOT/ports/opt/pyqt5-sip/Pkgfile" || { echo "pyqt5-sip version drift" >&2; exit 1; }
+grep -Eq '^# Depends on:.*pyqt5-sip' "$ROOT/ports/opt/python3-pyqt5/Pkgfile" || { echo "python3-pyqt5 missing pyqt5-sip runtime dependency" >&2; exit 1; }
+grep -Eq '^# Depends on:.*pyqt5-sip' "$ROOT/ports/compiz/fusion-icon/Pkgfile" || { echo "fusion-icon missing pyqt5-sip dependency" >&2; exit 1; }
+! grep -Eq '^# Depends on:.*python3-pyqt5' "$ROOT/ports/opt/pyqt5-sip/Pkgfile" || { echo "pyqt5-sip dependency cycle detected" >&2; exit 1; }

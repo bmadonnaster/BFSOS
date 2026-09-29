@@ -1,82 +1,120 @@
 # BFSOS
 
-BFSOS is an x86_64 source-built Linux distribution maintained by Brian Madonna. It uses an LFS/MLFS-style bootstrap, CRUX `pkgutils`/ports for package builds, `prt-get` for dependency-aware package management, systemd as the default init system, and a Dialog-driven installer with support for advanced storage layouts.
+BFSOS is an x86_64 source-built Linux distribution maintained by Brian Madonna. It uses an LFS/MLFS-style bootstrap, CRUX `pkgutils`/ports for package builds, `prt-get` for dependency-aware package management, systemd, Dracut, GRUB, and a Dialog-based installer that supports both straightforward and layered storage layouts.
 
-> **Status:** BFSOS is approaching the 1.0 release-candidate stage. The core bootstrap, installer, storage stack, and boot path are under active regression testing. Treat current builds as development/RC software and keep backups of important data.
+> **Current release:** 0.9.0. BFSOS is usable for development and testing, but the 1.0 release line is still under active validation. Keep backups when testing installer/storage changes on important systems.
 
-## Core design
+## Highlights
 
 - Source-built temporary toolchain and base system.
-- Optional final-toolchain rebuild to validate that the base can rebuild itself.
+- Optional final-toolchain rebuild to verify that the base can rebuild itself.
 - CRUX-style ports and `pkgutils`, extended for BFSOS build conventions.
-- `prt-get` dependency management and `ports -u` repository synchronization.
+- `prt-get` dependency management and Git-backed ports synchronization.
 - x86_64 multilib support with 32-bit libraries under `/usr/lib32`.
-- systemd by default.
+- systemd with an explicit BFSOS service preset policy.
 - Dracut initramfs generation and GRUB bootloader support.
 - UEFI and legacy BIOS installation paths.
-- Installer support for Btrfs subvolumes/snapshots, LUKS, LVM, md RAID (linear/JBOD, RAID0, RAID1, RAID10, RAID4/5/6), and combinations of those layers.
-- Kernel selection between the current BFSOS kernel and a broad-support Linux 6.12 LTS flavor carrying the Debian 6.12 patch series.
-- Optional installer-managed ZRAM swap with explicit enable/disable and configurable sizing.
+- Installer support for Btrfs subvolumes/snapshots, LUKS, LVM, md RAID, and layered combinations.
+- Kernel selection between the default Linux **6.18.54 LTS** package and the optional **7.2.8** current kernel.
+- Optional installer-managed ZRAM swap.
+- Console-font choices on live media and the installed system for improved readability.
+- SourceForge-hosted release/base artifacts with versioned checksums.
+
+## Repository and releases
+
+The authoritative source repository is:
+
+```text
+https://github.com/bmadonnaster/BFSOS
+```
+
+Issues and support:
+
+```text
+https://github.com/bmadonnaster/BFSOS/issues
+```
+
+Large base archives and public ISO releases are hosted through the BFSOS SourceForge project. SourceForge remains the release-artifact host; GitHub is the source-control host.
 
 ## Repository layout
 
-- `bootstrap.sh` — authoritative BFSOS bootstrap menu and build stages.
-- `ports/` — package recipes. `ports/core` is the release-critical base collection; other collections are broader and may receive cleanup independently of the 1.0 core release.
-- `scripts/install-bfs-menu-*.sh` — installer revisions; use the newest validated revision.
-- `scripts/` — maintenance, migration, ports, and repository helpers.
-- `archives/` — generated toolchain/base archives (normally excluded from Git).
-- `logs/` — bootstrap/installer logs (normally excluded from release source archives).
+- `bootstrap.sh` — authoritative bootstrap menu, direct stage commands, full bootstrap, and ISO/installer handoff.
+- `ports/` — maintained package recipes and desktop/compatibility collections.
+- `scripts/install-bfs-menu-current.sh` — canonical installer.
+- `scripts/bfs-build-iso.sh` — canonical live ISO builder.
+- `scripts/bfs-publish-sourceforge.sh` — canonical SourceForge publisher.
+- `scripts/tests/` — source/regression checks.
+- `docs/` — installation, audit, tracker, and maintenance documentation.
+- `files/` — shared BFSOS build/runtime support files.
+- `archives/` — generated toolchain/base archives when present locally (normally not tracked).
+- `logs/` — local build/install logs (normally not part of release source archives).
 
-## Recommended build environment
+Historical tracker documents are kept under `docs/`; Git history is the rollback mechanism for obsolete script revisions.
 
-The Gentoo LiveGUI ISO is the primary development/test environment. A Linux host with working compiler/build tools, sufficient disk space, and network access can also be used.
+## Getting started
 
 ```sh
-git clone https://codeberg.org/bmadonnaster/BFSOS.git
+git clone https://github.com/bmadonnaster/BFSOS.git
 cd BFSOS
 ./bootstrap.sh
 ```
 
-The interactive bootstrap menu is preferred because it tracks stage readiness, logging, archives, and installer handoff.
+The no-argument command opens the interactive bootstrap menu. A full automated bootstrap can be started directly with:
+
+```sh
+./bootstrap.sh full
+```
+
+Individual stages can also be invoked directly:
+
+```sh
+./bootstrap.sh 1
+./bootstrap.sh 2
+./bootstrap.sh 3
+./bootstrap.sh 4
+./bootstrap.sh 5
+```
+
+See `docs/COMMAND-LINE.md` for the maintained script entry points and `docs/INSTALL.md` for the installer workflow.
 
 ## Bootstrap stages
 
-The normal release path is:
+The normal build path is:
 
-1. **Build temporary toolchain** — run as a regular user.
-2. **Build base system with temporary toolchain** — requires root; the menu uses `sudo`.
-3. **Rebuild base system with final toolchain** — optional but recommended for release validation.
+1. **Build temporary toolchain** — required.
+2. **Build base system with temporary toolchain** — required.
+3. **Rebuild base with the final toolchain** — optional validation stage.
 4. **Verify completed base system** — required before archiving.
-5. **Create and verify base rootfs archive** — required for installer deployment.
-6. Restore newest base rootfs archive.
-7. Restore newest temporary-toolchain archive.
+5. **Create/compress and verify the base rootfs archive** — required for installer/ISO reuse.
+6. Restore the newest base rootfs archive.
+7. Restore the newest temporary-toolchain archive.
 8. Chroot into the built/restored BFSOS rootfs.
-9. Launch the newest BFSOS installer.
+9. Launch the BFSOS installer.
 
-Generated archives are kept under `archives/toolchain/` and `archives/base/`.
+Generated bootstrap archives use zstd compression and carry BFSOS version/build identity.
 
 ## Installer and storage
 
-The installer can construct layered storage such as:
+The installer can build simple layouts or layered storage such as:
 
 ```text
 md RAID -> LUKS -> LVM -> Btrfs subvolumes
 ```
 
-or independent encrypted/LVM stacks for root, `/usr`, `/opt`, `/home`, and `/var`. It generates `/etc/fstab`, `/etc/crypttab`, `/etc/mdadm.conf`, Dracut configuration, persistent GRUB storage arguments, and the final initramfs/bootloader configuration from the selected topology.
+It supports filesystem/mount-point assignment, ZRAM, users/groups, networking, console/font settings, kernel selection, sudo policy, GRUB/UEFI configuration, a complete pre-install review, and a post-install choice to enter the target through chroot or finish/unmount cleanly.
 
-Because storage/boot regressions can make a system unbootable, new RAID/LUKS/LVM combinations should be tested in a VM before deploying them to important bare-metal systems.
+Storage operations can destroy data. Review the filesystem plan and final installation review before starting an install. Test unfamiliar RAID/LUKS/LVM combinations in a VM first.
 
 ## Package management
 
-Update the ports tree and installed packages with:
+Update ports and installed packages with:
 
 ```sh
 ports -u
 prt-get sysup
 ```
 
-Install a package and dependencies with:
+Install a package and its dependencies with:
 
 ```sh
 prt-get depinst <package>
@@ -84,30 +122,28 @@ prt-get depinst <package>
 
 BFSOS uses `python3` as the Python 3 package name; Python module ports use the `python3-*` naming convention.
 
-### Package-management component roles
+### Package-management roles
 
-- `pkgutils` provides the low-level package tools, including `pkgmk` and `pkgadd`.
-- `ports` provides the `ports -u` synchronization wrapper and dispatches repository definitions to protocol drivers under `/etc/ports/drivers/`.
-- `prt-get` is the dependency-aware package/ports frontend used for operations such as `depinst` and `sysup`.
-- `prt-utils` provides maintenance/helper commands such as `revdep`; it is not the repository synchronization driver.
+- `pkgutils` provides low-level package tools including `pkgmk` and `pkgadd`.
+- `ports` provides `ports -u` synchronization and repository drivers.
+- `prt-get` is the dependency-aware frontend used for `depinst`, `sysup`, and related operations.
+- `prt-utils` provides maintenance helpers such as `revdep`.
 
-BFSOS-maintained collections use one Git-backed monorepo definition (`/etc/ports/bfsos.git`) and one cached checkout, while the generic CRUX-style HttpUp/Git driver mechanism remains available for third-party collections.
+BFSOS-maintained collections use the Git-backed monorepo definition `/etc/ports/bfsos.git`.
 
 ## Logs and bug reports
 
-Bootstrap package logs are written below `logs/toolchain/` and `logs/base/`. Installer logs are preserved in the installed system under `/var/log/bfs/installer/` when logging is enabled.
+Bootstrap logs are written under the project's `logs/` hierarchy when enabled. Installer logs are copied into the installed system under `/var/log/bfs/installer/`.
 
-When reporting a bug, include the failing stage/package, relevant log, storage topology when applicable, kernel/initramfs version, and whether the failure occurred in a VM or on bare metal.
-
-Issues and support: https://codeberg.org/bmadonnaster/BFSOS/issues
+When reporting a problem, include the failing stage/package, relevant log, storage topology where applicable, kernel/initramfs version, and whether the problem occurred in a VM or on bare metal.
 
 ## Current limitations
 
-- BFSOS remains under active 1.0 RC validation; not every hardware/storage combination has been tested.
-- The non-core ports collection may contain stale or broken recipes even when the core system is release-ready.
-- Installer configuration-profile support is partial; secrets such as passwords and LUKS passphrases are never stored.
-- Alternative bootloaders such as Limine are a future enhancement; GRUB is the currently validated bootloader path.
+- Not every hardware/storage combination has been validated.
+- Non-core ports can lag or need repair independently of the release-critical base.
+- Reusable installer profiles intentionally do not persist passwords or LUKS passphrases.
+- GRUB is the currently validated bootloader path; alternative bootloaders remain future work.
 
 ## License
 
-See `LICENSE` and individual port/source licenses where applicable.
+See `LICENSE` and the licenses of the individual upstream packages/sources.

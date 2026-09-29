@@ -1,12 +1,12 @@
 ---
 name: Bug Report
-about: Report a problem with BFS Linux
+about: Report a problem with BFSOS
 title: "[BUG] "
 labels:
   - bug
 ---
 
-## BFS Linux version
+## BFSOS version
 
 ## Hardware / VM environment
 

@@ -1,7 +1,7 @@
 # Description: Python 3 bindings for Qt 5
 # URL: https://www.riverbankcomputing.com/software/pyqt/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: python3-pyqt-builder python3-sip qt5
+# Depends on: pyqt5-sip python3-pyqt-builder python3-sip qt5
 
 name=python3-pyqt5
 version=5.15.11

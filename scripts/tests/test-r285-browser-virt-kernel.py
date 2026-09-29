@@ -17,10 +17,16 @@ expected = {
 for rel, needle in expected.items():
     assert needle in text(rel), (rel, needle)
 
-for rel in ['ports/opt/qemu/Pkgfile','ports/opt/libvirt/Pkgfile','ports/opt/virt-manager/Pkgfile']:
+for rel in ['ports/opt/libvirt/Pkgfile','ports/opt/virt-manager/Pkgfile']:
     s=text(rel)
     assert 'build_opt=' in s
     assert '\npkg_build() {' not in s, f'{rel}: ordinary build should be extension-owned'
+
+qemu=text('ports/opt/qemu/Pkgfile')
+assert 'build_opt=' in qemu
+assert 'Custom build required' not in qemu or 'configure' in qemu
+assert "QEMU's ./configure wrapper" in qemu
+assert '\npkg_build() {' in qemu
 
 for rel in ['ports/opt/chromium/Pkgfile','ports/opt/gn/Pkgfile']:
     s=text(rel)
