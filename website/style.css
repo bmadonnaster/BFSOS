@@ -64,3 +64,15 @@ ul { padding-left: 1.35rem; }
   nav .sep { display: none; }
   nav a { padding: .3rem .4rem; }
 }
+
+.brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.brand-logo {
+    width: 72px;
+    height: auto;
+}
