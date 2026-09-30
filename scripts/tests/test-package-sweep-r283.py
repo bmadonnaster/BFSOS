@@ -28,7 +28,7 @@ expected = {
     'opt/libclc':'23.1.1', 'opt/rust-bindgen':'0.73.2',
     'opt/poppler':'26.09.0', 'opt/libpcap':'1.10.7', 'compat-32/libpcap-32':'1.10.7',
     'opt/imlib2':'1.12.7', 'compat-32/imlib2-32':'1.12.7',
-    'opt/libgcrypt':'1.12.3', 'compat-32/libgcrypt-32':'1.12.3',
+    'opt/libgcrypt':'1.12.4', 'compat-32/libgcrypt-32':'1.12.4',
     'opt/openldap':'2.7.1', 'compat-32/openldap-32':'2.7.1',
     'opt/samba':'4.24.7', 'opt/glib':'2.90.0', 'compat-32/glib-32':'2.90.0',
     'opt/firefox':'155.0.1', 'opt/firefox-bin':'155.0.1', 'opt/discord':'1.0.158',

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# bfs-home-migrate-v7.sh
+# bfs-home-migrate.sh
 #
-# Interactive BFS-Linux home-folder migration utility.
+# Interactive BFSOS home-folder migration utility.
 #
 # Features:
 #   1. Remove files supplied by /etc/skel from one or all home directories.

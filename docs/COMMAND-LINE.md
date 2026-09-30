@@ -45,3 +45,35 @@ scripts/install-bfs-menu-current.sh --log-file /path/to/log
 ```
 
 The installer currently remains menu-driven for destructive/storage decisions. Reusable non-secret configuration profiles can be saved/loaded from Installer Settings. A future fully non-interactive installation mode must require explicit storage/account policy rather than guessing destructive defaults.
+
+## Host requirements check
+
+Before a bootstrap on a new host, run:
+
+```text
+scripts/version-check.sh
+```
+
+The checker is synchronized with the LFS 13.1-systemd host requirements and adds BFSOS-specific bootstrap dependencies such as libarchive/bsdtar, GMP, MPFR, libtirpc, curl, Git, rsync, zstd, sudo, pkg-config, and autoreconf. ISO-only tools are reported separately.
+
+## Port maintenance
+
+Create a starter port from a normal upstream source URL with:
+
+```text
+cd ports/<collection>
+../../scripts/gentemplate.sh https://example.org/foo-1.2.3.tar.xz
+```
+
+Run `scripts/gentemplate.sh --help` for syntax. The generated Pkgfile is only a starting point; see `docs/PORTS.md` for build options, footprints, signatures, and maintainer workflow.
+
+Useful audit helpers include:
+
+```text
+scripts/checkupdate.sh
+scripts/bfs-maintained-port-version-audit.sh
+scripts/multilibvercheck.sh
+scripts/bfs-ports-static-audit.sh
+scripts/bfs-source-tests.sh
+scripts/bfs-runtime-check.sh
+```

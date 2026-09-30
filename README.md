@@ -75,7 +75,7 @@ Individual stages can also be invoked directly:
 ./bootstrap.sh 5
 ```
 
-See `docs/COMMAND-LINE.md` for the maintained script entry points and `docs/INSTALL.md` for the installer workflow.
+See `docs/COMMAND-LINE.md` for the maintained script entry points, `docs/INSTALL.md` for the installer workflow, and `docs/PORTS.md` for creating and maintaining packages.
 
 ## Bootstrap stages
 
@@ -104,6 +104,17 @@ md RAID -> LUKS -> LVM -> Btrfs subvolumes
 It supports filesystem/mount-point assignment, ZRAM, users/groups, networking, console/font settings, kernel selection, sudo policy, GRUB/UEFI configuration, a complete pre-install review, and a post-install choice to enter the target through chroot or finish/unmount cleanly.
 
 Storage operations can destroy data. Review the filesystem plan and final installation review before starting an install. Test unfamiliar RAID/LUKS/LVM combinations in a VM first.
+
+## Documentation and contributing
+
+- Installation: [`docs/INSTALL.md`](docs/INSTALL.md)
+- Maintainer/CLI workflows: [`docs/COMMAND-LINE.md`](docs/COMMAND-LINE.md)
+- Creating and maintaining ports: [`docs/PORTS.md`](docs/PORTS.md)
+- Contribution guidance: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Bugs and feature requests: <https://github.com/bmadonnaster/BFSOS/issues>
+- Release downloads: <https://sourceforge.net/projects/bfsos/files/BFSOS/>
+
+The public BFSOS website is intended for SourceForge Project Web. GitHub remains authoritative for source, pull requests, and issue tracking.
 
 ## Package management
 

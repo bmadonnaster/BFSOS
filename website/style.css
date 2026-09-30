@@ -1,0 +1,66 @@
+:root {
+  color-scheme: dark;
+  --page-bg: #17152d;
+  --page-bg-2: #24164a;
+  --panel: #201f38;
+  --panel-soft: #2a2846;
+  --text: #f4f4fa;
+  --muted: #bbb8cc;
+  --link: #b9a7ff;
+  --link-hover: #e2d8ff;
+  --border: #4b4773;
+  --accent: #7f6cff;
+  --accent-2: #506de8;
+}
+
+* { box-sizing: border-box; }
+html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--page-bg); }
+body {
+  margin: 0;
+  color: var(--text);
+  background: linear-gradient(135deg, var(--page-bg) 0%, var(--page-bg-2) 100%);
+  min-height: 100vh;
+  line-height: 1.55;
+}
+
+a { color: var(--link); }
+a:hover, a:focus { color: var(--link-hover); }
+a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+.site-shell { width: min(1180px, calc(100% - 2rem)); margin: 1rem auto; }
+.site-header, main, .site-footer {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+.site-header { padding: 1.25rem 1.5rem 1rem; text-align: center; }
+.brand { display: flex; justify-content: center; align-items: center; gap: .7rem; }
+.brand h1 { margin: 0; font: 700 clamp(2.5rem, 7vw, 5.2rem)/1 Georgia, serif; letter-spacing: .08em; }
+.penguin { font-size: clamp(2.4rem, 6vw, 4.7rem); filter: drop-shadow(0 0 .45rem #0008); }
+.tagline { color: var(--muted); margin: .35rem 0 .85rem; }
+nav { display: flex; gap: .35rem .75rem; justify-content: center; flex-wrap: wrap; }
+nav a { text-decoration: none; font-weight: 650; }
+nav .sep { color: #77738f; user-select: none; }
+
+main { margin-top: .85rem; padding: clamp(1.1rem, 3vw, 2rem); }
+h2 { margin-top: 0; font-size: 1.85rem; }
+h3 { margin-top: 1.8rem; }
+.lead { font-size: 1.1rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin: 1.2rem 0; }
+.card { background: var(--panel-soft); border: 1px solid var(--border); border-radius: .35rem; padding: 1rem; }
+.card h3 { margin: 0 0 .45rem; }
+.button { display: inline-block; padding: .55rem .85rem; border-radius: .3rem; background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: white; text-decoration: none; font-weight: 700; margin: .2rem .2rem .2rem 0; }
+.button:hover, .button:focus { color: white; filter: brightness(1.12); }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre { overflow: auto; padding: .9rem; background: #111020; border: 1px solid var(--border); border-radius: .3rem; }
+.notice { border-left: 4px solid var(--accent); padding: .7rem .9rem; background: #19182d; }
+.release { font-weight: 800; }
+ul { padding-left: 1.35rem; }
+.site-footer { margin-top: .85rem; padding: .9rem 1.2rem; color: var(--muted); text-align: center; font-size: .92rem; }
+
+@media (max-width: 620px) {
+  .site-shell { width: min(100% - 1rem, 1180px); margin: .5rem auto; }
+  .site-header { padding-inline: .7rem; }
+  nav .sep { display: none; }
+  nav a { padding: .3rem .4rem; }
+}

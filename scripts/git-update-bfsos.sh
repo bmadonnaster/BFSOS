@@ -14,15 +14,13 @@ command -v git >/dev/null 2>&1 || die "git is not installed"
 # BFSOS-owned collections are transported by Git now. Remove only obsolete
 # generated HttpUp state from the project tree; third-party user configs under
 # /etc/ports are outside this maintainer checkout and are not touched here.
+#
+# Do NOT delete .footprint/.signature metadata here. Those files are package
+# integrity data and may be intentionally maintained. Untracked metadata should
+# be reviewed by the maintainer rather than silently destroyed by a Git helper.
 if [[ -d "$REPO_ROOT/ports" ]]; then
-    # Development-tree hygiene: generated verification metadata is deliberately
-    # removed before committing. pkgmk will regenerate it when verification is
-    # enabled for release/testing workflows.
     find "$REPO_ROOT/ports" -type f \
-        \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' -o -name REPO \
-           -o -name '.md5sum' -o -name '.md5sums' \
-           -o -name '.footprint' -o -name '.footprints' \
-           -o -name '.signature' -o -name '.signatures' \) \
+        \( -name '.httpup-repo.current' -o -name '.httpup-urlinfo' -o -name REPO \) \
         -delete
 fi
 
@@ -42,7 +40,24 @@ else
     git -C "$REPO_ROOT" pull --ff-only || die "git pull --ff-only failed"
 fi
 
+# Stage normal project changes, but do not automatically add newly generated
+# package-integrity metadata. Tracked/reviewed metadata updates are still staged
+# normally; only previously-untracked .footprint/.signature/.md5sum files are
+# left for an explicit maintainer decision.
+mapfile -d '' -t _bfs_untracked_integrity < <(
+    git -C "$REPO_ROOT" ls-files --others --exclude-standard -z -- \
+        ':(glob)ports/**/.footprint' \
+        ':(glob)ports/**/.signature' \
+        ':(glob)ports/**/.md5sum'
+)
 git -C "$REPO_ROOT" add --all
+if ((${#_bfs_untracked_integrity[@]})); then
+    git -C "$REPO_ROOT" restore --staged -- "${_bfs_untracked_integrity[@]}" 2>/dev/null || true
+    warn "Untracked package-integrity metadata was left unstaged for review:"
+    printf '  %s\n' "${_bfs_untracked_integrity[@]}" >&2
+fi
+unset _bfs_untracked_integrity
+
 if git -C "$REPO_ROOT" diff --cached --quiet; then
     echo "No BFSOS changes to commit."
     exit 0
