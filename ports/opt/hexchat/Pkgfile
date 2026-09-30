@@ -3,17 +3,32 @@
 
 name=hexchat
 version=2.16.2
-release=1
-source=(https://github.com/${name}/${name}/releases/download/v${version}/${name}-${version}.tar.xz)
-pkg_build () {
-mkdir build &&
-cd    build &&
+release=2
 
-meson setup ..              \
-      --prefix=/usr         \
-      --buildtype=release   \
-      -Dwith-lua=false      \
-      -Dwith-python=false   &&
-ninja
-DESTDIR=$PKG ninja install
+source=(
+    https://github.com/${name}/${name}/releases/download/v${version}/${name}-${version}.tar.xz
+    Add-channel-context-menu-item-to-close-the-channel.patch
+    Automatically-reconnect-when-there-is-a-TLS-error.patch
+    Do-not-insert-an-extra-space-on-all-lines-when-loading-scrollback-with-colours.patch
+)
+
+pkg_build() {
+    # ERR_remove_state() was removed by OpenSSL 4.
+    sed -i '/ERR_remove_state *(0);/d' src/common/ssl.c
+
+    # HexChat defaults to gnu89, while current headers require C99+.
+    export CFLAGS="${CFLAGS:-} -std=gnu99"
+
+    mkdir -p build
+    cd build
+
+    meson setup .. \
+        --prefix=/usr \
+        --buildtype=release \
+        -Dwith-lua=false \
+        -Dwith-python=false \
+        -Dwith-perl=false
+
+    ninja
+    DESTDIR="$PKG" ninja install
 }
