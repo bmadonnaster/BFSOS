@@ -28,6 +28,110 @@ CONFIG_LOCALVERSION="-BFS-CUSTOM"
 
 Keep the packaged LTS kernel and its initramfs until the custom kernel has booted successfully.
 
+
+## Finding the options in `menuconfig`
+
+Kernel menu locations can move slightly between releases, so the most reliable way to find an option is to search by its config symbol.
+
+From the kernel source tree:
+
+```bash
+make menuconfig
+```
+
+Press `/` and search for the symbol **without** the `CONFIG_` prefix. For example:
+
+```text
+BLK_DEV_NVME
+SATA_AHCI
+EXT4_FS
+XFS_FS
+BTRFS_FS
+DM_CRYPT
+```
+
+The search result shows the prompt, dependencies, current value, and the current menu path for that exact kernel release.
+
+The major BFSOS groups are normally under:
+
+```text
+General setup
+  Initial RAM filesystem and RAM disk support
+  Control Group support
+
+Device Drivers
+  Generic Driver Options
+  NVM Express block device
+  SCSI device support
+  Serial ATA and Parallel ATA drivers (libata)
+  Multiple devices driver support (RAID and LVM)
+
+File systems
+  Ext4
+  XFS
+  Btrfs
+  F2FS
+  DOS/FAT filesystems
+```
+
+When in doubt, use `/` search because it reports the exact current path and any missing dependency.
+
+## Apply the BFSOS recommended baseline automatically
+
+The kernel source tree contains `scripts/config`, which can edit `.config` directly by symbol name. Start from the maintained BFSOS LTS configuration:
+
+```bash
+cp ~/BFSOS/ports/core/linux-lts/config .config
+```
+
+Then apply the common BFSOS boot/storage/filesystem baseline:
+
+```bash
+scripts/config     --enable BLK_DEV_INITRD     --enable DEVTMPFS     --enable DEVTMPFS_MOUNT     --enable CGROUPS     --enable MEMCG     --enable CGROUP_SCHED     --enable INOTIFY_USER     --enable TMPFS     --enable TMPFS_POSIX_ACL     --enable NET     --enable INET     --enable IPV6     --enable PARTITION_ADVANCED     --enable MSDOS_PARTITION     --enable EFI_PARTITION     --enable SCSI     --enable BLK_DEV_SD     --enable ATA     --enable SATA_AHCI     --enable NVME_CORE     --enable BLK_DEV_NVME     --enable BLK_DEV_MD     --enable MD     --module MD_RAID0     --module MD_RAID1     --module MD_RAID10     --module MD_RAID456     --enable BLK_DEV_DM     --module DM_CRYPT     --enable EXT4_FS     --enable XFS_FS     --enable BTRFS_FS     --module F2FS_FS     --module FAT_FS     --module MSDOS_FS     --module VFAT_FS     --enable NLS     --enable NLS_CODEPAGE_437     --module NLS_ISO8859_1     --enable EFI     --enable EFI_STUB     --enable EFIVAR_FS     --enable VT     --enable VT_CONSOLE     --enable FRAMEBUFFER_CONSOLE     --enable DRM     --enable DRM_FBDEV_EMULATION     --enable DRM_SIMPLEDRM     --enable KERNEL_ZSTD     --enable MODULE_COMPRESS_ZSTD     --enable RELOCATABLE     --enable RANDOMIZE_BASE     --enable STACKPROTECTOR     --enable STACKPROTECTOR_STRONG     --enable PSI
+```
+
+For a custom kernel name:
+
+```bash
+scripts/config --set-str LOCALVERSION "-BFS-CUSTOM"
+```
+
+Then reconcile dependencies and newly introduced kernel options:
+
+```bash
+make olddefconfig
+```
+
+A quick audit of the important settings:
+
+```bash
+grep -E 'CONFIG_(BLK_DEV_INITRD|DEVTMPFS|CGROUPS|NVME|BLK_DEV_NVME|SCSI|BLK_DEV_SD|ATA|SATA_AHCI|BLK_DEV_MD|MD_RAID|BLK_DEV_DM|DM_CRYPT|EXT4_FS|XFS_FS|BTRFS_FS|F2FS_FS|VFAT_FS|EFI|VT|FRAMEBUFFER_CONSOLE|DRM_SIMPLEDRM|KERNEL_ZSTD|MODULE_COMPRESS_ZSTD)=' .config
+```
+
+This is a baseline, not a replacement for hardware-specific configuration. Network, GPU, sound, USB, CPU, input, virtualization, and other machine-specific drivers still need to match the hardware.
+
+### Built-in versus module
+
+BFSOS uses Dracut, so many storage features can be modules as long as the initramfs contains them. Anything required to reach the root filesystem is safest as built-in (`=y`) when building a recovery kernel or booting without an initramfs.
+
+For an NVMe root using XFS:
+
+```bash
+scripts/config     --enable NVME_CORE     --enable BLK_DEV_NVME     --enable XFS_FS
+```
+
+For a SATA/AHCI root using ext4:
+
+```bash
+scripts/config     --enable SCSI     --enable BLK_DEV_SD     --enable ATA     --enable SATA_AHCI     --enable EXT4_FS
+```
+
+After changes:
+
+```bash
+make olddefconfig
+```
+
 ## BFSOS baseline options
 
 The maintained `linux` and `linux-lts` Pkgfiles explicitly reconcile important options after loading their known-good configs. For a general-purpose BFSOS kernel, verify at least the following groups.
@@ -55,21 +159,233 @@ BFSOS uses systemd and Dracut, so initramfs, devtmpfs, cgroups, normal networkin
 
 ### Storage used by the BFSOS installer
 
-Enable the controller/filesystem support needed to reach your root filesystem. The maintained BFSOS configs explicitly enable common x86_64 paths including:
+The kernel must contain the controller driver and filesystem support needed to reach the root filesystem. BFSOS supports NVMe and SATA/AHCI systems, USB storage, LVM/device mapper, LUKS, Linux MD RAID, and the common filesystems offered by the installer.
+
+#### NVMe
+
+For PCIe/NVMe SSDs, BFSOS enables:
 
 ```text
+CONFIG_NVME_CORE=y
 CONFIG_BLK_DEV_NVME=y
+```
+
+Typical area:
+
+```text
+Device Drivers
+  NVM Express block device
+```
+
+Enable it directly:
+
+```bash
+scripts/config     --enable NVME_CORE     --enable BLK_DEV_NVME
+```
+
+If `/` is directly on NVMe, building these in (`=y`) gives the simplest early-boot/recovery path.
+
+#### SATA / AHCI
+
+For normal SATA SSDs and hard disks, BFSOS enables:
+
+```text
 CONFIG_SCSI=y
 CONFIG_BLK_DEV_SD=y
 CONFIG_ATA=y
 CONFIG_SATA_AHCI=y
+```
+
+Typical areas:
+
+```text
+Device Drivers
+  SCSI device support
+    SCSI disk support
+
+Device Drivers
+  Serial ATA and Parallel ATA drivers (libata)
+    AHCI SATA support
+```
+
+Enable them directly:
+
+```bash
+scripts/config     --enable SCSI     --enable BLK_DEV_SD     --enable ATA     --enable SATA_AHCI
+```
+
+`CONFIG_BLK_DEV_SD` is important even for ordinary SATA disks because Linux exposes them through the SCSI disk layer.
+
+#### USB storage
+
+The BFSOS LTS config carries:
+
+```text
+CONFIG_USB_STORAGE=m
+```
+
+Enable it with:
+
+```bash
+scripts/config --module USB_STORAGE
+```
+
+The machine's USB host-controller driver must also be enabled.
+
+#### Partition tables
+
+For BIOS/MBR and GPT/UEFI layouts:
+
+```text
+CONFIG_PARTITION_ADVANCED=y
+CONFIG_MSDOS_PARTITION=y
+CONFIG_EFI_PARTITION=y
+```
+
+Enable them with:
+
+```bash
+scripts/config     --enable PARTITION_ADVANCED     --enable MSDOS_PARTITION     --enable EFI_PARTITION
+```
+
+#### Filesystems
+
+The maintained BFSOS LTS config currently uses:
+
+```text
 CONFIG_EXT4_FS=y
 CONFIG_XFS_FS=y
 CONFIG_BTRFS_FS=y
-CONFIG_F2FS_FS=y
+CONFIG_F2FS_FS=m
+CONFIG_FAT_FS=m
+CONFIG_MSDOS_FS=m
+CONFIG_VFAT_FS=m
 ```
 
-BFSOS also supports device-mapper/LVM, MD software RAID, and LUKS/dm-crypt layouts. Keep the required block, device-mapper, MD/RAID, and cryptographic options enabled when your installation uses those features. Storage needed before the real root is mounted must either be built into the kernel or be present in the Dracut initramfs.
+Typical menu locations:
+
+```text
+File systems
+  Ext4 journalling file system support
+  XFS filesystem support
+  Btrfs filesystem support
+  F2FS filesystem support
+
+File systems
+  DOS/FAT/EXFAT/NT Filesystems
+    MSDOS fs support
+    VFAT (Windows-95) fs support
+```
+
+Enable the normal BFSOS set:
+
+```bash
+scripts/config     --enable EXT4_FS     --enable XFS_FS     --enable BTRFS_FS     --module F2FS_FS     --module FAT_FS     --module MSDOS_FS     --module VFAT_FS
+```
+
+Use `/` in `menuconfig` to search `EXT4_FS`, `XFS_FS`, `BTRFS_FS`, `F2FS_FS`, or `VFAT_FS` for the exact location in the kernel being built.
+
+The root filesystem's driver must be available during early boot. With Dracut it may be a module included in the initramfs; without an initramfs it must be built into the kernel.
+
+VFAT is needed by Linux to mount a normal FAT32 EFI System Partition at `/boot/efi` for GRUB installation and maintenance.
+
+#### LVM / device mapper
+
+BFSOS uses device mapper for LVM:
+
+```text
+CONFIG_BLK_DEV_DM=y
+```
+
+Typical area:
+
+```text
+Device Drivers
+  Multiple devices driver support (RAID and LVM)
+    Device mapper support
+```
+
+Enable it with:
+
+```bash
+scripts/config --enable BLK_DEV_DM
+```
+
+#### LUKS / dm-crypt
+
+LUKS normally uses:
+
+```text
+CONFIG_DM_CRYPT=m
+```
+
+Typical area:
+
+```text
+Device Drivers
+  Multiple devices driver support (RAID and LVM)
+    Device mapper support
+      Crypt target support
+```
+
+Enable it with:
+
+```bash
+scripts/config     --enable BLK_DEV_DM     --module DM_CRYPT
+```
+
+Because BFSOS uses Dracut, `DM_CRYPT=m` is fine when the module is included in the initramfs. Use `--enable DM_CRYPT` if you deliberately want it built into the kernel.
+
+#### MD software RAID
+
+The maintained BFSOS LTS config includes:
+
+```text
+CONFIG_BLK_DEV_MD=y
+CONFIG_MD=y
+CONFIG_MD_RAID0=m
+CONFIG_MD_RAID1=m
+CONFIG_MD_RAID10=m
+CONFIG_MD_RAID456=m
+```
+
+Typical area:
+
+```text
+Device Drivers
+  Multiple devices driver support (RAID and LVM)
+    RAID support
+      RAID-0
+      RAID-1
+      RAID-10
+      RAID-4/RAID-5/RAID-6
+```
+
+Enable the BFSOS set:
+
+```bash
+scripts/config     --enable BLK_DEV_MD     --enable MD     --module MD_RAID0     --module MD_RAID1     --module MD_RAID10     --module MD_RAID456
+```
+
+For an MD array containing `/`, the required RAID personality must either be built in or included by Dracut.
+
+#### Example BFSOS storage stacks
+
+```text
+NVMe -> GPT -> LVM -> XFS
+SATA -> GPT -> LUKS -> LVM -> ext4
+4 x SATA HDD -> MD RAID10 -> LVM -> XFS
+NVMe -> GPT -> Btrfs
+```
+
+Every layer needed to reach `/` must be available during early boot.
+
+After changing storage options, regenerate the initramfs for the exact kernel:
+
+```bash
+KREL=$(make -s kernelrelease)
+sudo dracut --force "/boot/initramfs-$KREL.img" "$KREL"
+```
 
 ### UEFI
 
