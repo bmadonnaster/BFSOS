@@ -3,8 +3,8 @@
 
 
 name=webkitgtk
-version=2.52.6
-release=4
+version=2.54.0
+release=1
 source=(https://webkitgtk.org/releases/webkitgtk-${version}.tar.xz)
 pkg_build() {
 
