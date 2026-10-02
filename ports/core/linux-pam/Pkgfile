@@ -4,8 +4,8 @@ cription: Pluggable Authentication Modules for Linux
 # Depends on: meson ninja
 
 name=linux-pam
-version=1.7.2
-release=4
+version=1.7.3
+release=1
 
 source=(
     https://github.com/linux-pam/linux-pam/releases/download/v$version/Linux-PAM-$version.tar.xz

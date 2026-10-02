@@ -173,13 +173,52 @@ def fetch_text(url: str, timeout: int) -> str:
     with urlopen(req, timeout=timeout) as r: return r.read().decode("utf-8", "replace")
 
 
+def sqlite_archive_version(value: str) -> str:
+    """Convert SQLite's numeric archive token (for example 3530400) to 3.53.4."""
+    if not value.isdigit() or len(value) < 7:
+        return value
+    n = int(value)
+    major = n // 1_000_000
+    minor = (n // 10_000) % 100
+    patch = (n // 100) % 100
+    subpatch = n % 100
+    parts = [str(major), str(minor), str(patch)]
+    if subpatch:
+        parts.append(str(subpatch))
+    return ".".join(parts)
+
+
 def parse_book_index(raw: str) -> dict[str, str]:
+    """Parse only real package entries from an LFS-family long index.
+
+    The long index also contains executable/library description entries such as
+    ``libnsl: Glibc-2.44 -- description`` and
+    ``traceroute: Inetutils-2.8 -- description``. Those are not package
+    versions for libnsl/traceroute. Require the package token on the right
+    side to match the left-side package label before accepting a version.
+    """
     parser = LITextParser(); parser.feed(raw); out = {}
     for item in parser.items:
-        if ":" not in item: continue
+        if ":" not in item:
+            continue
         label, rest = item.split(":", 1)
-        m = re.search(r"(?:^|\s)[A-Za-z0-9+_.-]+-([0-9][0-9A-Za-z._+~-]*)(?:\s|$)", rest)
-        if m: out.setdefault(normalize_name(label), m.group(1).rstrip(".,;:"))
+        label_key = normalize_name(label)
+
+        m = re.search(
+            r"(?:^|\s)([A-Za-z0-9+_.-]+)-([0-9][0-9A-Za-z._+~-]*)(?:\s|$)",
+            rest,
+        )
+        if not m:
+            continue
+
+        package_token = normalize_name(m.group(1))
+        if package_token != label_key:
+            continue
+
+        version = m.group(2).rstrip(".,;:")
+        if label_key == "sqlite":
+            version = sqlite_archive_version(version)
+        out.setdefault(label_key, version)
     return out
 
 
@@ -351,10 +390,9 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             current_patches = set(local_patch_names(meta)); required_names = {p.filename for p in required}
             patch_change = bool(required_names - current_patches or obsolete)
             if target == meta.version and not patch_change: continue
+            # Never offer a downgrade. If BFSOS is already newer than the
+            # authoritative book value, it is not an update candidate at all.
             if target != meta.version and not newer(target, meta.version):
-                out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, meta.release,
-                                     policy, label, "REVIEW", "BFSOS is newer/different; no automatic downgrade", False,
-                                     patches=required, obsolete_patches=obsolete))
                 continue
             new_rel = "1" if target != meta.version else str(int(meta.release) + 1 if meta.release.isdigit() else meta.release)
             why = "authoritative development-book version"
@@ -365,7 +403,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             continue
 
         row = upstream.get(meta.rel, {})
-        if row.get("status") == "UPDATE" and row.get("latest"):
+        if row.get("status") == "UPDATE" and row.get("latest") and newer(row["latest"], meta.version):
             # Secondary distribution references are advisory only. Check CRUX
             # first, then Arch, and finally retain the generic upstream result.
             crux_v = crux_reference_version(meta, timeout)
@@ -394,16 +432,29 @@ def dcall(args, env):
     return cp.returncode, cp.stdout.strip()
 
 
-def choose_action_dialog(env):
-    code, out = dcall(["--title", "Maintainer updater", "--menu", "Choose an update task.", "18", "76", "8",
-                       "1", "Check all discovered port trees", "2", "Select port trees to check",
-                       "3", "Kernel / kernel-headers maintenance", "4", "Exit"], env)
-    return out if code == 0 else "4"
+def choose_action_dialog(env, retry_count=0):
+    items = [
+        "1", "Check all discovered port trees",
+        "2", "Select port trees to check",
+        "3", "Kernel / kernel-headers maintenance",
+    ]
+    if retry_count:
+        items += ["4", f"Retry failed updates ({retry_count})"]
+        exit_tag = "5"
+    else:
+        exit_tag = "4"
+    items += [exit_tag, "Exit"]
+    code, out = dcall(["--title", "Maintainer updater", "--menu", "Choose an update task.",
+                       "19", "82", "9", *items], env)
+    return out if code == 0 else exit_tag
 
 
 def choose_trees_dialog(trees, env):
     items = []
-    for t in trees: items += [t.name, f"{port_count(t)} ports", "on"]
+    # Nothing is preselected. "Check all discovered port trees" is the explicit
+    # top-level action for scanning everything.
+    for t in trees:
+        items += [t.name, f"{port_count(t)} ports", "off"]
     code, out = dcall(["--title", "Select port trees", "--separate-output", "--checklist",
                        "Space toggles a tree. Enter accepts.", "24", "88", "16", *items], env)
     return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
@@ -413,10 +464,104 @@ def choose_updates_dialog(cands, env):
     items = []
     for c in cands:
         desc = f"{c.old} -> {c.new} r{c.old_release}->{c.new_release} [{c.source_label}; {c.status}]"
-        items += [c.port, desc, "on" if c.selected and c.status == "UPDATE" else "off"]
+        # Only policy-approved UPDATE candidates may start checked.
+        # REVIEW/held/unknown items always start unchecked.
+        state = "on" if (c.status == "UPDATE" and c.selected) else "off"
+        items += [c.port, desc, state]
     code, out = dcall(["--title", "Updates found", "--separate-output", "--checklist",
-                       "ON = update. OFF = do not update. Review/held items default OFF.", "29", "125", "21", *items], env)
+                       "ON = update. OFF = do not update. REVIEW items always start OFF.", "29", "125", "21", *items], env)
     return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
+
+
+
+def _port_matches_logged_target(ports_root: Path, row: dict[str, str]) -> bool:
+    """Only retry a failed build if the tree still contains the applied target."""
+    rel = row.get("port", "")
+    pkgfile = ports_root / rel / "Pkgfile"
+    if not rel or not pkgfile.is_file():
+        return False
+    try:
+        meta = eval_pkgfile(pkgfile, ports_root)
+    except Exception:
+        return False
+    if row.get("new_version") and meta.version != row["new_version"]:
+        return False
+    if row.get("new_release") and meta.release != row["new_release"]:
+        return False
+    return True
+
+
+def find_retryable_failures(ports_root: Path) -> tuple[Path | None, list[dict[str, str]]]:
+    """Find the newest scan log containing failures that still match the tree.
+
+    A stale failure is ignored when the port was reverted, edited, or moved on
+    to a different version/release after that log was written.
+    """
+    if not LOG_ROOT.is_dir():
+        return None, []
+    for log in sorted(LOG_ROOT.glob("scan-*.tsv"), reverse=True):
+        rows = []
+        try:
+            with log.open(newline="", encoding="utf-8") as f:
+                for row in csv.DictReader((line for line in f if not line.startswith("#")), delimiter="\t"):
+                    result = row.get("result", "")
+                    if "BUILD FAILED" not in result and "INSTALL FAILED" not in result:
+                        continue
+                    if _port_matches_logged_target(ports_root, row):
+                        rows.append(row)
+        except (OSError, csv.Error):
+            continue
+        if rows:
+            return log, rows
+    return None, []
+
+
+def choose_retry_dialog(rows, env):
+    items = []
+    for row in rows:
+        desc = (
+            f"{row.get('new_version','?')} r{row.get('new_release','?')} "
+            f"[{row.get('result','FAILED')}]"
+        )
+        # Retrying is explicit; nothing is preselected.
+        items += [row.get("port", ""), desc, "off"]
+    code, out = dcall(
+        ["--title", "Retry failed updates", "--separate-output", "--checklist",
+         "Select failed ports to retry. Only failures whose applied version/release still matches the current tree are shown.",
+         "24", "120", "16", *items],
+        env,
+    )
+    return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
+
+
+def retry_failed_updates(rows, selected, ports_root: Path):
+    """Retry build (and prior install, when applicable) without reapplying versions."""
+    results = {}
+    by_port = {row.get("port", ""): row for row in rows}
+    for rel in selected:
+        row = by_port.get(rel)
+        if not row:
+            continue
+        port_dir = ports_root / rel
+        if not _port_matches_logged_target(ports_root, row):
+            results[rel] = "SKIPPED: tree changed since failed run"
+            continue
+
+        cp = run(["sudo", "pkgmk", "-d", "-kw"], cwd=port_dir)
+        if cp.returncode:
+            results[rel] = f"BUILD RETRY FAILED ({cp.returncode})"
+            continue
+
+        if "INSTALL FAILED" in row.get("result", ""):
+            name = eval_pkgfile(port_dir / "Pkgfile", ports_root).name
+            cp2 = run(["sudo", "prt-get", "-fr", "depinst", name])
+            if cp2.returncode:
+                results[rel] = f"BUILT; INSTALL RETRY FAILED ({cp2.returncode})"
+                continue
+            results[rel] = "BUILT+INSTALLED ON RETRY"
+        else:
+            results[rel] = "BUILT ON RETRY"
+    return results
 
 
 def detail_text(cands, selected):
@@ -441,7 +586,10 @@ def write_scan_log(path, cands, selected, results, warnings):
 
 
 def apply_selected(cands, selected, ports_root: Path, timeout: int):
-    results = {}; chosen = [c for c in cands if c.port in selected and c.status == "UPDATE"]
+    # Interactive REVIEW items start OFF, but an explicitly checked REVIEW item
+    # is a maintainer override and should be applied. Noninteractive --apply
+    # remains conservative because main() only auto-selects UPDATE candidates.
+    results = {}; chosen = [c for c in cands if c.port in selected and c.status in {"UPDATE", "REVIEW"}]
     if not chosen: return results
     with tempfile.TemporaryDirectory(prefix="bfs-selected-updates-") as td_s:
         tsv = Path(td_s)/"selected.tsv"
@@ -478,13 +626,15 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         cmd = ["sudo","pkgmk","-d","-kw"]
         cp = run(cmd, cwd=port_dir)
         if cp.returncode:
-            results[c.port] = f"BUILD FAILED ({cp.returncode}); obsolete patches retained"
+            suffix = "; obsolete patches retained" if c.obsolete_patches else ""
+            results[c.port] = f"BUILD FAILED ({cp.returncode}){suffix}"
             continue
         results[c.port] = "BUILT"
         if install:
             cp2 = run(["sudo","prt-get","-fr","depinst",c.name])
             if cp2.returncode:
-                results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}); obsolete patches retained"
+                suffix = "; obsolete patches retained" if c.obsolete_patches else ""
+                results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}){suffix}"
                 continue
             results[c.port] = "BUILT+INSTALLED"
         # Old patch files are removed only after the replacement port verified by build
@@ -535,16 +685,32 @@ def main():
         env=dict(os.environ)
         if interactive:
             rc=Path(td_s)/"dialogrc"; slackware_dialogrc(rc); env["DIALOGRC"]=str(rc)
-            action=choose_action_dialog(env)
-            if action=="4": return 0
-            if action=="1": chosen=sorted(available)
+            retry_log,retry_rows=find_retryable_failures(ports_root)
+            action=choose_action_dialog(env,len(retry_rows))
+            exit_tag="5" if retry_rows else "4"
+            if action==exit_tag: return 0
+            if action=="1":
+                chosen=sorted(available)
             elif action=="2":
                 picked=choose_trees_dialog(trees,env)
                 if picked is None:return 0
+                if not picked:
+                    dcall(["--title","Select port trees","--msgbox",
+                           "No port trees selected. Nothing was scanned.","8","58"],env)
+                    return 0
                 chosen=picked
             elif action=="3":
                 chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
                 ns.kernel_only=True
+            elif action=="4" and retry_rows:
+                picked=choose_retry_dialog(retry_rows,env)
+                if picked is None or not picked:
+                    return 0
+                results=retry_failed_updates(retry_rows,set(picked),ports_root)
+                source=f"\n\nSource log: {retry_log}" if retry_log else ""
+                body="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No retries run."
+                dcall(["--title","Retry results","--msgbox",body+source,"29","110"],env)
+                return 1 if any("FAILED" in v for v in results.values()) else 0
         elif ns.kernel_only:
             chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
         elif not chosen: chosen=sorted(available)
@@ -576,7 +742,7 @@ def main():
                          "1","Update files only","2","Update + build selected","3","Update + build + install selected","4","Cancel"],env)
         if code or mode=="4": write_scan_log(LOG_ROOT/f"scan-{stamp}.tsv",cands,selected,{},warnings); return 0
         code,_=dcall(["--title","Final confirmation","--yes-label","Apply Selected","--no-label","Cancel","--defaultno","--yesno",
-                      summary+"\n\nOnly checked items will be modified. Continue?","16","80"],env)
+                      summary+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","17","88"],env)
         if code:return 0
         results=apply_selected(cands,selected,ports_root,ns.timeout)
         if mode in {"2","3"}: build_selected(cands,selected,ports_root,mode=="3",results)

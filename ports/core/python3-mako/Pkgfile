@@ -2,7 +2,7 @@
 # Depends on: python3-setuptools python3-markupsafe
 
 name=python3-mako
-version=1.4.1
+version=1.4.3
 release=1
 source=(https://pypi.org/packages/source/m/mako/mako-$version.tar.gz)
 pkg_build() {

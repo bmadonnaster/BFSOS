@@ -3,8 +3,8 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=ports
-version=1.6
-release=3
+version=1.7
+release=1
 source=(https://crux.nu/files/tools/ports/$name-$version.tar.gz)
 
 pkg_build() {

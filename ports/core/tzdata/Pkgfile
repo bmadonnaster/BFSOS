@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=tzdata
-version=2026d
+version=2026e
 release=1
 
 source=(

@@ -4,6 +4,6 @@
 # Depends on: perl
 
 name=perl-class-inspector
-version=1.36
+version=1.37_01
 release=1
 source=(https://cpan.metacpan.org/authors/id/P/PL/PLICEASE/Class-Inspector-$version.tar.gz)

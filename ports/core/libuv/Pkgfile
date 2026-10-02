@@ -4,8 +4,8 @@
 # Depends on: autoconf automake libtool
 
 name=libuv
-version=1.52.1
-release=2
+version=1.53.0
+release=1
 
 source=(
     https://dist.libuv.org/dist/v$version/$name-v$version.tar.gz
