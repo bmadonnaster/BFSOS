@@ -27,7 +27,6 @@ import time
 from typing import Iterable
 from urllib.parse import unquote, urlsplit, urlunsplit
 
-TREES = ("core", "opt", "xorg", "plasma", "gnome", "lxqt", "xfce", "compiz", "contrib")
 SKIP_WORDS = ("alpha", "beta", "rc", "pre", "dev", "snapshot", "nightly", "preview")
 BLOCKED_QUALIFIERS = (
     "alt", "cqp", "darwin", "dist", "extended", "init", "kernel", "linux",
@@ -878,7 +877,14 @@ def discover(root: Path, args: list[str]) -> list[Path]:
         return sorted(set(out))
 
     repo = os.environ.get("REPO", "").strip()
-    roots = [Path(x) for x in repo.split()] if repo else [root / "ports" / t for t in TREES]
+    if repo:
+        roots = [Path(x) for x in repo.split()]
+    else:
+        ports_root = root / "ports"
+        roots = sorted(
+            p for p in ports_root.iterdir()
+            if p.is_dir() and not p.name.startswith(".") and p.name != "compat-32"
+        )
     out = []
     for r in roots:
         out.extend(sorted(r.glob("*/Pkgfile")))

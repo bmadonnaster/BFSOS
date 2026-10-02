@@ -1,0 +1,588 @@
+#!/usr/bin/env python3
+"""Primary BFSOS maintainer port updater.
+
+The tool is deliberately conservative: it scans first, shows an explicit
+per-port selection, and only writes checked items.  Development LFS-family book
+versions are consulted before generic upstream discovery.  MLFS development is
+authoritative for packages it carries; BFSOS kernel packages are the explicit
+exception and follow the BFSOS kernel policy.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import dataclasses
+import datetime as dt
+from html.parser import HTMLParser
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from urllib.parse import urljoin, urlsplit
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser()
+LOG_ROOT = ROOT / "logs" / "update"
+BOOKS = (
+    ("mlfs-dev", "MLFS DEV", "https://www.linuxfromscratch.org/mlfs/view/dev/longindex.html"),
+    ("lfs-dev", "LFS DEV", "https://www.linuxfromscratch.org/lfs/view/systemd/longindex.html"),
+    ("blfs-dev", "BLFS DEV", "https://www.linuxfromscratch.org/blfs/view/systemd/longindex.html"),
+    ("glfs-dev", "GLFS DEV", "https://www.linuxfromscratch.org/glfs/view/dev/longindex.html"),
+)
+MLFS_PATCH_PAGE = "https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/patches.html"
+KERNEL_PORTS = {"linux", "linux-lts", "linux-headers"}
+ALIASES = {
+    "dbus": {"dbus", "d-bus"}, "pkgconf": {"pkgconf", "pkg-config"},
+    "python3": {"python", "python3"}, "procps-ng": {"procps-ng", "procps"},
+    "util-linux": {"util-linux", "utillinux"}, "iana-etc": {"iana-etc", "ianaetc"},
+}
+LOCAL_PATCH_MARKERS = ("bfs", "bfsos", "local", "custom")
+
+
+@dataclasses.dataclass
+class PortMeta:
+    rel: str
+    path: Path
+    name: str
+    version: str
+    release: str
+    sources: list[str]
+
+
+@dataclasses.dataclass
+class PatchSpec:
+    url: str
+    filename: str
+    md5: str = ""
+
+
+@dataclasses.dataclass
+class Candidate:
+    port: str
+    name: str
+    old: str
+    new: str
+    old_release: str
+    new_release: str
+    policy: str
+    source_label: str
+    status: str
+    reason: str = ""
+    selected: bool = False
+    provider: str = ""
+    source: str = ""
+    patches: list[PatchSpec] = dataclasses.field(default_factory=list)
+    obsolete_patches: list[str] = dataclasses.field(default_factory=list)
+
+
+class LITextParser(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.depth = 0; self.buf: list[str] = []; self.items: list[str] = []
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "li":
+            if self.depth == 0: self.buf = []
+            self.depth += 1
+    def handle_endtag(self, tag):
+        if tag.lower() == "li" and self.depth:
+            self.depth -= 1
+            if self.depth == 0:
+                value = " ".join("".join(self.buf).split())
+                if value: self.items.append(value)
+                self.buf = []
+    def handle_data(self, data):
+        if self.depth: self.buf.append(data)
+
+
+def die(msg: str, code: int = 1):
+    print(f"ERROR: {msg}", file=sys.stderr); raise SystemExit(code)
+
+
+def run(cmd: list[str], *, env=None, cwd: Path | None = None, capture=False):
+    return subprocess.run(cmd, check=False, text=True, encoding="utf-8", errors="replace",
+                          cwd=str(cwd) if cwd else None, env=env,
+                          stdout=subprocess.PIPE if capture else None,
+                          stderr=subprocess.PIPE if capture else None)
+
+
+def normalize_name(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", value.lower().replace("c++", "cpp"))
+
+
+def version_key(value: str):
+    return tuple((0, int(p)) if p.isdigit() else (1, p.lower())
+                 for p in re.split(r"([0-9]+)", value.replace("~", "-").replace("_", ".")) if p)
+
+
+def newer(candidate: str, current: str) -> bool:
+    return version_key(candidate) > version_key(current)
+
+
+def source_filename(src: str) -> str:
+    src = src.strip()
+    if "::" in src and src.split("::", 1)[1].startswith(("http://", "https://", "ftp://")):
+        return src.split("::", 1)[0]
+    if src.startswith(("http://", "https://", "ftp://")):
+        return Path(urlsplit(src).path).name
+    return Path(src).name
+
+
+def eval_pkgfile(pkgfile: Path, ports_root: Path) -> PortMeta:
+    script = r'''
+set +u
+source "$1" >/dev/null 2>&1 || exit 31
+printf '%s\0%s\0%s\0' "${name-}" "${version-}" "${release-}"
+if declare -p source >/dev/null 2>&1; then
+  if declare -p source 2>/dev/null | grep -q '^declare -a'; then printf '%s\0' "${source[@]}"; else printf '%s\0' "${source}"; fi
+fi
+'''
+    cp = subprocess.run(["bash", "--noprofile", "--norc", "-c", script, "bfs-port-updater", str(pkgfile)],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+    if cp.returncode: raise RuntimeError(f"cannot evaluate {pkgfile}")
+    fields = cp.stdout.decode("utf-8", "replace").split("\0")
+    if fields and fields[-1] == "": fields.pop()
+    if len(fields) < 3 or not fields[0] or not fields[1]: raise RuntimeError(f"missing metadata in {pkgfile}")
+    return PortMeta(str(pkgfile.parent.relative_to(ports_root)), pkgfile.parent,
+                    fields[0], fields[1], fields[2] or "1", fields[3:])
+
+
+def discover_trees(ports_root: Path) -> list[Path]:
+    if not ports_root.is_dir(): die(f"ports root does not exist: {ports_root}")
+    return sorted(p for p in ports_root.iterdir() if p.is_dir() and not p.name.startswith(".") and any(p.glob("*/Pkgfile")))
+
+
+def port_count(tree: Path) -> int: return sum(1 for _ in tree.glob("*/Pkgfile"))
+
+
+def discover_ports(ports_root: Path, tree_names: list[str]) -> list[PortMeta]:
+    out = []
+    for tree in tree_names:
+        for pkgfile in sorted((ports_root / tree).glob("*/Pkgfile")):
+            try: out.append(eval_pkgfile(pkgfile, ports_root))
+            except Exception as exc: print(f"WARN: {exc}", file=sys.stderr)
+    return out
+
+
+def fetch_text(url: str, timeout: int) -> str:
+    req = Request(url, headers={"User-Agent": "BFSOS-port-updater/0.9.0"})
+    with urlopen(req, timeout=timeout) as r: return r.read().decode("utf-8", "replace")
+
+
+def parse_book_index(raw: str) -> dict[str, str]:
+    parser = LITextParser(); parser.feed(raw); out = {}
+    for item in parser.items:
+        if ":" not in item: continue
+        label, rest = item.split(":", 1)
+        m = re.search(r"(?:^|\s)[A-Za-z0-9+_.-]+-([0-9][0-9A-Za-z._+~-]*)(?:\s|$)", rest)
+        if m: out.setdefault(normalize_name(label), m.group(1).rstrip(".,;:"))
+    return out
+
+
+def parse_patch_page(raw: str, base_url: str) -> list[PatchSpec]:
+    specs: list[PatchSpec] = []
+    # LFS-family patch pages expose direct .patch links followed by an MD5 sum.
+    rx = re.compile(r'href=["\']([^"\']+\.patch(?:\?[^"\']*)?)["\']', re.I)
+    for m in rx.finditer(raw):
+        url = urljoin(base_url, m.group(1))
+        filename = Path(urlsplit(url).path).name
+        tail = re.sub(r"<[^>]+>", " ", raw[m.end():m.end()+1200])
+        md = re.search(r"MD5\s+sum\s*:\s*([0-9a-fA-F]{32})", tail, re.I)
+        spec = PatchSpec(url, filename, md.group(1).lower() if md else "")
+        if not any(x.filename == filename for x in specs): specs.append(spec)
+    return specs
+
+
+def book_keys(meta: PortMeta) -> list[str]:
+    raw = {meta.name, meta.path.name} | ALIASES.get(meta.name, set())
+    if meta.name.startswith("python3-"): raw.add(meta.name.removeprefix("python3-"))
+    if meta.name.endswith("-32"): raw.add(meta.name[:-3])
+    return [normalize_name(x) for x in raw if x]
+
+
+def relevant_patches(meta: PortMeta, patches: list[PatchSpec]) -> list[PatchSpec]:
+    keys = book_keys(meta)
+    result = []
+    for p in patches:
+        pn = normalize_name(p.filename.split("-", 1)[0])
+        # Also compare a longer prefix before the first numeric version.
+        stem = re.split(r"-(?=\d)", p.filename, maxsplit=1)[0]
+        if pn in keys or normalize_name(stem) in keys:
+            result.append(p)
+    return result
+
+
+def local_patch_names(meta: PortMeta) -> list[str]:
+    return [source_filename(s) for s in meta.sources if source_filename(s).lower().endswith((".patch", ".diff"))]
+
+
+def likely_book_obsolete(meta: PortMeta, required: list[PatchSpec]) -> list[str]:
+    required_names = {p.filename for p in required}
+    keys = book_keys(meta)
+    result = []
+    for name in local_patch_names(meta):
+        if name in required_names: continue
+        low = name.lower()
+        if any(mark in low for mark in LOCAL_PATCH_MARKERS): continue
+        stem = re.split(r"-(?=\d)", name, maxsplit=1)[0]
+        if normalize_name(stem) not in keys: continue
+        # Only auto-classify as obsolete when the book has a replacement patch
+        # for this same package.  Local patches remain untouched otherwise.
+        if required: result.append(name)
+    return result
+
+
+def lookup_book(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
+    if meta.name in KERNEL_PORTS: return None
+    for policy, _label, _url in BOOKS:
+        idx = indexes.get(policy, {})
+        for key in book_keys(meta):
+            if key in idx: return policy, idx[key]
+    return None
+
+
+def load_references(timeout: int):
+    indexes = {}; failures = []
+    for policy, label, url in BOOKS:
+        try:
+            indexes[policy] = parse_book_index(fetch_text(url, timeout))
+            if not indexes[policy]: failures.append(f"{label}: parsed zero package versions")
+        except Exception as exc:
+            indexes[policy] = {}; failures.append(f"{label}: {exc}")
+    mlfs_patches = []
+    try: mlfs_patches = parse_patch_page(fetch_text(MLFS_PATCH_PAGE, timeout), MLFS_PATCH_PAGE)
+    except Exception as exc: failures.append(f"MLFS patch index: {exc}")
+    return indexes, mlfs_patches, failures
+
+
+def read_audit_tsv(path: Path):
+    if not path.exists(): return {}
+    with path.open(newline="", encoding="utf-8") as f:
+        return {r.get("port", ""): r for r in csv.DictReader(f, delimiter="\t") if r.get("port")}
+
+
+def run_upstream_audit(ports_root: Path, trees: list[str], jobs: int, timeout: int, out: Path):
+    env = dict(os.environ); env["REPO"] = " ".join(str(ports_root / t) for t in trees)
+    cp = run([sys.executable, str(ROOT / "scripts/checkupdate.py"), "--jobs", str(jobs), "--timeout", str(timeout), "--tsv", str(out)], env=env)
+    if not out.exists(): raise RuntimeError(f"version checker produced no TSV (status {cp.returncode})")
+    return read_audit_tsv(out)
+
+
+def crux_reference_version(meta: PortMeta, timeout: int = 10) -> str:
+    """Best-effort official CRUX reference. Never authorizes an update."""
+    if not shutil.which("rsync"):
+        return ""
+    # CRUX PortDB currently exposes the official 3.8 repositories. Query the
+    # small Pkgfile directly; failure simply means no CRUX reference was found.
+    names = [meta.name, meta.path.name]
+    if meta.name.startswith("python3-"):
+        names.append(meta.name)
+    collections = ("core", "opt", "xorg", "compat-32", "contrib")
+    with tempfile.TemporaryDirectory(prefix="bfs-crux-ref-") as td_s:
+        dest = Path(td_s) / "Pkgfile"
+        for name in dict.fromkeys(names):
+            for collection in collections:
+                dest.unlink(missing_ok=True)
+                try:
+                    cp = subprocess.run(
+                        ["rsync", "--contimeout", "5", "--timeout", str(timeout), "-q",
+                         f"rsync://crux.nu/ports/crux-3.8/{collection}/{name}/Pkgfile", str(dest)],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout + 3,
+                    )
+                except (subprocess.TimeoutExpired, OSError):
+                    continue
+                if cp.returncode == 0 and dest.is_file():
+                    m = re.search(r"(?m)^version=(?:['\"])?([^\s'\"]+)", dest.read_text(errors="replace"))
+                    if m:
+                        return m.group(1)
+    return ""
+
+
+def arch_reference_version(meta: PortMeta, timeout: int = 10) -> str:
+    """Best-effort exact-name Arch package reference. Never authorizes an update."""
+    import urllib.parse
+    for name in dict.fromkeys([meta.name, meta.path.name]):
+        try:
+            url = "https://archlinux.org/packages/search/json/?name=" + urllib.parse.quote(name)
+            data = json.loads(fetch_text(url, timeout))
+        except Exception:
+            continue
+        for item in data.get("results", []):
+            if item.get("pkgname") == name and item.get("pkgver"):
+                return str(item["pkgver"])
+    return ""
+
+
+def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec], upstream, timeout: int) -> list[Candidate]:
+    out: list[Candidate] = []; by_name = {m.name: m for m in metas}
+    # Kernel candidates first so headers can track the proposed LTS point release.
+    lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
+    for meta in metas:
+        row = upstream.get(meta.rel, {})
+        if meta.name == "linux-lts" and row.get("status") == "UPDATE" and row.get("latest"):
+            lts_target = row["latest"]
+            out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
+                                 "kernel-bfsos-lts", "kernel.org LTS series", "UPDATE",
+                                 "BFSOS 6.18 LTS point-release policy", True, row.get("provider", ""), row.get("source", "")))
+        elif meta.name == "linux" and row.get("status") == "UPDATE" and row.get("latest"):
+            out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
+                                 "kernel-bfsos-current", "kernel.org current series", "REVIEW",
+                                 "optional current kernel; review separately from default LTS", False,
+                                 row.get("provider", ""), row.get("source", "")))
+
+    for meta in metas:
+        if meta.name in {"linux", "linux-lts"}: continue
+        if meta.name == "linux-headers":
+            if lts_target and lts_target != meta.version:
+                out.append(Candidate(meta.rel, meta.name, meta.version, lts_target, meta.release, "1",
+                                     "kernel-bfsos-lts", "BFSOS LTS kernel", "UPDATE",
+                                     "userspace kernel headers track linux-lts; glibc release bump required", True))
+            continue
+
+        book = lookup_book(meta, indexes)
+        if book:
+            policy, target = book; label = next(x[1] for x in BOOKS if x[0] == policy)
+            required = relevant_patches(meta, mlfs_patches) if policy == "mlfs-dev" else []
+            obsolete = likely_book_obsolete(meta, required) if policy == "mlfs-dev" else []
+            current_patches = set(local_patch_names(meta)); required_names = {p.filename for p in required}
+            patch_change = bool(required_names - current_patches or obsolete)
+            if target == meta.version and not patch_change: continue
+            if target != meta.version and not newer(target, meta.version):
+                out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, meta.release,
+                                     policy, label, "REVIEW", "BFSOS is newer/different; no automatic downgrade", False,
+                                     patches=required, obsolete_patches=obsolete))
+                continue
+            new_rel = "1" if target != meta.version else str(int(meta.release) + 1 if meta.release.isdigit() else meta.release)
+            why = "authoritative development-book version"
+            if patch_change and target == meta.version: why = "development-book patch set changed; packaging release bump"
+            elif patch_change: why += "; development-book patch set also changed"
+            out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, new_rel,
+                                 policy, label, "UPDATE", why, True, patches=required, obsolete_patches=obsolete))
+            continue
+
+        row = upstream.get(meta.rel, {})
+        if row.get("status") == "UPDATE" and row.get("latest"):
+            # Secondary distribution references are advisory only. Check CRUX
+            # first, then Arch, and finally retain the generic upstream result.
+            crux_v = crux_reference_version(meta, timeout)
+            arch_v = arch_reference_version(meta, timeout)
+            label = row.get("provider") or "upstream"
+            reason = row.get("reason") or "newer version found outside LFS-family policy"
+            if crux_v and newer(crux_v, meta.version):
+                label = "CRUX reference"
+                reason = f"CRUX carries {crux_v}; upstream candidate is {row['latest']}"
+            elif arch_v and newer(arch_v, meta.version):
+                label = "Arch reference"
+                reason = f"Arch carries {arch_v}; upstream candidate is {row['latest']}"
+            out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
+                                 "review", label, "REVIEW", reason, False,
+                                 row.get("provider", ""), row.get("source", "")))
+    return sorted(out, key=lambda c: c.port)
+
+
+def slackware_dialogrc(path: Path):
+    path.write_text('''aspect = 0\nseparate_widget = ""\ntab_len = 0\nvisit_items = OFF\nuse_scrollbar = OFF\nuse_shadow = ON\nuse_colors = ON\nscreen_color = (WHITE,BLUE,OFF)\nshadow_color = (WHITE,BLACK,OFF)\ndialog_color = (BLACK,CYAN,OFF)\ntitle_color = (YELLOW,CYAN,ON)\nborder_color = (CYAN,CYAN,ON)\nbutton_active_color = (WHITE,BLUE,ON)\nbutton_inactive_color = dialog_color\nbutton_key_active_color = button_active_color\nbutton_key_inactive_color = (RED,CYAN,OFF)\nbutton_label_active_color = button_active_color\nbutton_label_inactive_color = (BLACK,CYAN,ON)\ninputbox_color = (BLUE,WHITE,OFF)\ninputbox_border_color = border_color\nsearchbox_color = (YELLOW,WHITE,ON)\nsearchbox_title_color = (WHITE,WHITE,ON)\nsearchbox_border_color = (RED,WHITE,OFF)\nposition_indicator_color = button_key_inactive_color\nmenubox_color = dialog_color\nmenubox_border_color = border_color\nitem_color = dialog_color\nitem_selected_color = screen_color\ntag_color = title_color\ntag_selected_color = screen_color\ntag_key_color = button_key_inactive_color\ntag_key_selected_color = (RED,BLUE,ON)\ncheck_color = dialog_color\ncheck_selected_color = (WHITE,CYAN,ON)\nuarrow_color = (GREEN,CYAN,ON)\ndarrow_color = uarrow_color\nitemhelp_color = shadow_color\nform_active_text_color = inputbox_color\nform_text_color = (CYAN,BLUE,ON)\nform_item_readonly_color = (CYAN,WHITE,ON)\ngauge_color = (BLUE,WHITE,ON)\nborder2_color = dialog_color\ninputbox_border2_color = dialog_color\nsearchbox_border2_color = dialog_color\nmenubox_border2_color = dialog_color\n''')
+
+
+def dialog_available(): return shutil.which("dialog") is not None and sys.stdin.isatty() and sys.stderr.isatty()
+def dcall(args, env):
+    cp = subprocess.run(["dialog", "--stdout", "--clear", "--backtitle", "BFSOS Port Updater", *args], text=True, stdout=subprocess.PIPE, env=env)
+    return cp.returncode, cp.stdout.strip()
+
+
+def choose_action_dialog(env):
+    code, out = dcall(["--title", "Maintainer updater", "--menu", "Choose an update task.", "18", "76", "8",
+                       "1", "Check all discovered port trees", "2", "Select port trees to check",
+                       "3", "Kernel / kernel-headers maintenance", "4", "Exit"], env)
+    return out if code == 0 else "4"
+
+
+def choose_trees_dialog(trees, env):
+    items = []
+    for t in trees: items += [t.name, f"{port_count(t)} ports", "on"]
+    code, out = dcall(["--title", "Select port trees", "--separate-output", "--checklist",
+                       "Space toggles a tree. Enter accepts.", "24", "88", "16", *items], env)
+    return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
+
+
+def choose_updates_dialog(cands, env):
+    items = []
+    for c in cands:
+        desc = f"{c.old} -> {c.new} r{c.old_release}->{c.new_release} [{c.source_label}; {c.status}]"
+        items += [c.port, desc, "on" if c.selected and c.status == "UPDATE" else "off"]
+    code, out = dcall(["--title", "Updates found", "--separate-output", "--checklist",
+                       "ON = update. OFF = do not update. Review/held items default OFF.", "29", "125", "21", *items], env)
+    return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
+
+
+def detail_text(cands, selected):
+    blocks = []
+    for c in cands:
+        patches = ""
+        if c.patches: patches += "\n  patches: " + ", ".join(p.filename for p in c.patches)
+        if c.obsolete_patches: patches += "\n  obsolete after successful build: " + ", ".join(c.obsolete_patches)
+        blocks.append(f"[{'UPDATE' if c.port in selected else 'SKIP'}] {c.port}\n  {c.old} -> {c.new}; release {c.old_release} -> {c.new_release}\n  policy={c.policy}; source={c.source_label}; status={c.status}\n  {c.reason}{patches}")
+    return "\n\n".join(blocks)
+
+
+def write_scan_log(path, cands, selected, results, warnings):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        f.write("port\told_version\tnew_version\told_release\tnew_release\tpolicy\tsource\tstatus\tselected\tresult\treason\n")
+        for c in cands:
+            vals = [c.port,c.old,c.new,c.old_release,c.new_release,c.policy,c.source_label,c.status,
+                    "yes" if c.port in selected else "no", results.get(c.port,""),c.reason]
+            f.write("\t".join(x.replace("\t"," ").replace("\n"," ") for x in vals)+"\n")
+        for w in warnings: f.write(f"# WARNING: {w}\n")
+
+
+def apply_selected(cands, selected, ports_root: Path, timeout: int):
+    results = {}; chosen = [c for c in cands if c.port in selected and c.status == "UPDATE"]
+    if not chosen: return results
+    with tempfile.TemporaryDirectory(prefix="bfs-selected-updates-") as td_s:
+        tsv = Path(td_s)/"selected.tsv"
+        with tsv.open("w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f, delimiter="\t", lineterminator="\n")
+            w.writerow(["status","port","current","latest","provider","reason","source","new_release","patches_json","obsolete_patches_json"])
+            for c in chosen:
+                w.writerow(["UPDATE",c.port,c.old,c.new,c.source_label,c.reason,c.source,c.new_release,
+                            json.dumps([dataclasses.asdict(p) for p in c.patches]),json.dumps(c.obsolete_patches)])
+        env = dict(os.environ); env["BFSOS_PORTS_ROOT"] = str(ports_root)
+        cp = run([sys.executable,str(ROOT/"scripts"/"bfs-maintained-port-updater.py"),str(tsv),"--apply","--timeout",str(timeout)], env=env, capture=True)
+        combined = (cp.stdout or "")+(cp.stderr or "")
+        for c in chosen:
+            results[c.port] = "UPDATED" if re.search(rf"^UPDATED {re.escape(c.port)} ",combined,re.M) else "FAILED/REVIEW"
+        if cp.returncode: print(combined,file=sys.stderr)
+
+    # Header changes require glibc to be rebuilt against the new userspace headers.
+    if any(c.name == "linux-headers" and results.get(c.port)=="UPDATED" for c in chosen):
+        gp = ports_root/"core"/"glibc"/"Pkgfile"
+        if gp.exists():
+            text = gp.read_text(); m = re.search(r"(?m)^release=(\d+)\s*$",text)
+            if m:
+                old=int(m.group(1)); tmp=gp.with_name("Pkgfile.bfs-update-tmp")
+                tmp.write_text(text[:m.start()]+f"release={old+1}"+text[m.end():]); os.replace(tmp,gp)
+                results["core/glibc"] = f"RELEASE BUMP {old}->{old+1} (linux-headers)"
+            else: results["core/glibc"] = "NEEDS REVIEW: non-numeric release"
+    return results
+
+
+def build_selected(cands, selected, ports_root: Path, install: bool, results):
+    for c in cands:
+        if c.port not in selected or results.get(c.port) != "UPDATED": continue
+        port_dir = ports_root/c.port
+        cmd = ["sudo","pkgmk","-d","-kw"]
+        cp = run(cmd, cwd=port_dir)
+        if cp.returncode:
+            results[c.port] = f"BUILD FAILED ({cp.returncode}); obsolete patches retained"
+            continue
+        results[c.port] = "BUILT"
+        if install:
+            cp2 = run(["sudo","prt-get","-fr","depinst",c.name])
+            if cp2.returncode:
+                results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}); obsolete patches retained"
+                continue
+            results[c.port] = "BUILT+INSTALLED"
+        # Old patch files are removed only after the replacement port verified by build
+        # (and install too when Build+Install was requested).
+        for name in c.obsolete_patches:
+            p = port_dir/name
+            if p.is_file(): p.unlink()
+    return results
+
+
+def print_report(cands):
+    if not cands: print("No candidate updates found."); return
+    print(f"{'PORT':36} {'OLD':14} {'NEW':14} {'REL':9} {'STATUS':10} POLICY/SOURCE")
+    for c in cands:
+        print(f"{c.port[:36]:36} {c.old[:14]:14} {c.new[:14]:14} {c.old_release+'>'+c.new_release:9} {c.status[:10]:10} {c.source_label}")
+        print(f"  {c.reason}")
+        if c.patches: print("  patches: "+", ".join(p.filename for p in c.patches))
+        if c.obsolete_patches: print("  obsolete after verification: "+", ".join(c.obsolete_patches))
+
+
+def scan(ports_root, trees, jobs, timeout, stamp):
+    LOG_ROOT.mkdir(parents=True,exist_ok=True); audit=LOG_ROOT/f"upstream-{stamp}.tsv"
+    metas=discover_ports(ports_root,trees); indexes,patches,warnings=load_references(timeout)
+    upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit)
+    return make_candidates(metas,indexes,patches,upstream,timeout),warnings
+
+
+def main():
+    ap=argparse.ArgumentParser(description="BFSOS Dialog-driven maintainer port updater")
+    ap.add_argument("--ports-root",type=Path,default=DEFAULT_PORTS_ROOT)
+    ap.add_argument("--trees",nargs="*",help="collections to scan")
+    ap.add_argument("--list-trees",action="store_true")
+    ap.add_argument("--kernel-only",action="store_true",help="scan only the tree containing BFSOS kernel ports, then show kernel candidates")
+    ap.add_argument("--report-only",action="store_true")
+    ap.add_argument("--apply",action="store_true",help="apply safe policy-approved candidates (noninteractive)")
+    ap.add_argument("--build",action="store_true",help="with --apply, build selected ports using sudo pkgmk -d -kw")
+    ap.add_argument("--install",action="store_true",help="with --apply --build, install through prt-get after build")
+    ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS","10")))
+    ap.add_argument("--timeout",type=int,default=int(os.environ.get("BFS_AUDIT_TIMEOUT","15")))
+    ns=ap.parse_args()
+    ports_root=ns.ports_root.expanduser().resolve(); trees=discover_trees(ports_root)
+    if ns.list_trees:
+        for t in trees: print(f"{t.name}\t{port_count(t)}")
+        return 0
+    available={t.name for t in trees}; interactive=not(ns.report_only or ns.apply or ns.trees or ns.kernel_only) and dialog_available()
+    chosen=ns.trees[:] if ns.trees else []
+    with tempfile.TemporaryDirectory(prefix="bfs-port-updater-ui-") as td_s:
+        env=dict(os.environ)
+        if interactive:
+            rc=Path(td_s)/"dialogrc"; slackware_dialogrc(rc); env["DIALOGRC"]=str(rc)
+            action=choose_action_dialog(env)
+            if action=="4": return 0
+            if action=="1": chosen=sorted(available)
+            elif action=="2":
+                picked=choose_trees_dialog(trees,env)
+                if picked is None:return 0
+                chosen=picked
+            elif action=="3":
+                chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
+                ns.kernel_only=True
+        elif ns.kernel_only:
+            chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
+        elif not chosen: chosen=sorted(available)
+        bad=sorted(set(chosen)-available)
+        if bad: die("unknown port tree(s): "+", ".join(bad))
+        if not chosen: print("No port trees selected."); return 0
+        stamp=dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        cands,warnings=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
+        if ns.kernel_only: cands=[c for c in cands if c.name in KERNEL_PORTS]
+        for w in warnings: print(f"WARN: {w}",file=sys.stderr)
+
+        if not interactive:
+            print_report(cands); selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
+            results=apply_selected(cands,selected,ports_root,ns.timeout) if ns.apply else {}
+            if ns.apply and ns.build: build_selected(cands,selected,ports_root,ns.install,results)
+            log=LOG_ROOT/f"scan-{stamp}.tsv"; write_scan_log(log,cands,selected,results,warnings); print(f"Report: {log}")
+            for k,v in sorted(results.items()): print(f"{k}: {v}")
+            return 1 if any("FAILED" in v for v in results.values()) else 0
+
+        if not cands:
+            dcall(["--title","Port update scan","--msgbox","No candidate updates were found.","8","60"],env); return 0
+        picked=choose_updates_dialog(cands,env)
+        if picked is None:return 0
+        selected=set(picked)
+        dcall(["--title","Update plan","--msgbox",detail_text(cands,selected),"31","125"],env)
+        headers=any(c.name=="linux-headers" and c.port in selected for c in cands)
+        summary=f"Updates found: {len(cands)}\nSelected: {len(selected)}\nSkipped: {len(cands)-len(selected)}\nReview items: {sum(c.status=='REVIEW' for c in cands)}\nDependent glibc release bump: {'yes' if headers else 'no'}"
+        code,mode=dcall(["--title","Apply mode","--menu",summary+"\n\nChoose how far to continue.","20","82","4",
+                         "1","Update files only","2","Update + build selected","3","Update + build + install selected","4","Cancel"],env)
+        if code or mode=="4": write_scan_log(LOG_ROOT/f"scan-{stamp}.tsv",cands,selected,{},warnings); return 0
+        code,_=dcall(["--title","Final confirmation","--yes-label","Apply Selected","--no-label","Cancel","--defaultno","--yesno",
+                      summary+"\n\nOnly checked items will be modified. Continue?","16","80"],env)
+        if code:return 0
+        results=apply_selected(cands,selected,ports_root,ns.timeout)
+        if mode in {"2","3"}: build_selected(cands,selected,ports_root,mode=="3",results)
+        log=LOG_ROOT/f"scan-{stamp}.tsv"; write_scan_log(log,cands,selected,results,warnings)
+        text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."
+        dcall(["--title","Update results","--msgbox",text+f"\n\nLog: {log}","29","110"],env)
+        return 1 if any("FAILED" in v for v in results.values()) else 0
+
+if __name__=="__main__": raise SystemExit(main())

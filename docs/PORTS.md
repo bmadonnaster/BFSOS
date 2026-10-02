@@ -171,7 +171,7 @@ upstream source URL
 For development builds, `pkgmk -kw` is useful because BFSOS preserves the package build-work directory for inspection. Add `-d` when sources need to be downloaded, for example:
 
 ```bash
-sudo pkgmk -dkw
+sudo pkgmk -d -kw
 ```
 
 A plain `pkgmk` build does **not** exercise a package's `pre-install`/`post-install` installation scripts. When a port has install hooks, test the built package through the normal repository/`prt-get` installation path before considering the port complete.
@@ -322,3 +322,29 @@ BFSOS's package system is intentionally evolutionary rather than a verbatim copy
 - CRUX Signed Ports: <https://crux.nu/Wiki/SignedPorts>;
 - Emmett's `lfs-scripts`: <https://github.com/emmett1/lfs-scripts> — an important ancestor of the extended LFS/CRUX-style tooling used during BFSOS's evolution;
 - Linux From Scratch: <https://www.linuxfromscratch.org/> — the bootstrap/build-system foundation that inspired BFSOS.
+
+
+## Maintainer update console
+
+The primary source-tree version maintenance entry point is:
+
+```text
+scripts/bfs-port-updater.py
+```
+
+It dynamically discovers the collections that actually exist below `~/BFSOS/ports`; collection names are not hard-coded. The Dialog interface uses the same classic Slackware palette as Bootstrap/Installer and lets the maintainer check all collections, select any subset, or enter the dedicated kernel/kernel-headers workflow.
+
+The updater scans first and modifies nothing until a candidate list has been reviewed. Each candidate shows the port, old/new version, release change, policy/source, and status. In the checklist, **ON means update** and **OFF means leave the port untouched**. Development MLFS is authoritative for the packages it carries; the BFSOS LTS kernel/header policy is the explicit exception. Other LFS-family references are checked before generic upstream discovery. Generic upstream results are review candidates rather than automatic approvals.
+
+MLFS-required patches are synchronized into the port directory and added to `source=()` so pkgmk's normal automatic patch handling remains authoritative. An older book patch is removed from `source=()` during the proposed update but its local file is retained until the replacement port successfully builds (and installs when that mode is selected). BFSOS/local patches are not removed merely because the book does not list them.
+
+Useful noninteractive forms include:
+
+```text
+scripts/bfs-port-updater.py --list-trees
+scripts/bfs-port-updater.py --report-only --trees core opt
+scripts/bfs-port-updater.py --kernel-only --report-only
+scripts/bfs-port-updater.py --apply --build --trees core
+```
+
+A kernel-headers update also proposes/applies the required glibc packaging `release=` bump. Update/build logs are written beneath `logs/update/`. Normal package build verification uses `sudo pkgmk -d -kw`; ports with install hooks still require the normal repository/`prt-get` install path for hook testing.

@@ -8,10 +8,10 @@ STAMP=$(date +%Y%m%d-%H%M%S)
 LOG=${1:-"$ROOT/bfs-maintained-port-version-audit-$STAMP.log"}
 TSV=${2:-"${LOG%.log}.tsv"}
 
-export REPO="$ROOT/ports/core $ROOT/ports/opt $ROOT/ports/xorg $ROOT/ports/plasma $ROOT/ports/gnome $ROOT/ports/lxqt $ROOT/ports/xfce $ROOT/ports/compiz $ROOT/ports/contrib"
-
+mapfile -t _bfs_trees < <(find "$ROOT/ports" -mindepth 1 -maxdepth 1 -type d ! -name '.*' ! -name compat-32 -printf '%p\n' | sort)
+export REPO="${_bfs_trees[*]}"
 echo "BFSOS maintained-port online version audit v10"
-echo "Trees: core opt xorg plasma gnome lxqt xfce compiz contrib"
+echo "Trees: $(printf '%s ' "${_bfs_trees[@]##*/}")"
 echo "Excluded from online provider audit: compat-32 (checked against native counterparts separately)"
 echo "Safety: read-only; checker is read-only; reviewed UPDATE rows can be applied with scripts/bfs-maintained-port-updater.py"
 echo "Log: $LOG"

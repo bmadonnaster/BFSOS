@@ -75,7 +75,7 @@ Individual stages can also be invoked directly:
 ./bootstrap.sh 5
 ```
 
-See `docs/COMMAND-LINE.md` for the maintained script entry points, `docs/INSTALL.md` for the installer workflow, and `docs/PORTS.md` for creating and maintaining packages.
+See `docs/COMMAND-LINE.md` for the maintained script entry points, `docs/INSTALL.md` for the installer workflow, `docs/KERNEL-GRUB.md` for manual kernel/bootloader work, and `docs/PORTS.md` for creating and maintaining packages.
 
 ## Bootstrap stages
 
@@ -110,6 +110,7 @@ Storage operations can destroy data. Review the filesystem plan and final instal
 - Installation: [`docs/INSTALL.md`](docs/INSTALL.md)
 - Maintainer/CLI workflows: [`docs/COMMAND-LINE.md`](docs/COMMAND-LINE.md)
 - Creating and maintaining ports: [`docs/PORTS.md`](docs/PORTS.md)
+- Manual kernel build / UEFI + legacy GRUB: [`docs/KERNEL-GRUB.md`](docs/KERNEL-GRUB.md)
 - Contribution guidance: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Bugs and feature requests: <https://github.com/bmadonnaster/BFSOS/issues>
 - Release downloads: <https://sourceforge.net/projects/bfsos/files/BFSOS/>
@@ -140,7 +141,7 @@ BFSOS uses `python3` as the Python 3 package name; Python module ports use the `
 - `prt-get` is the dependency-aware frontend used for `depinst`, `sysup`, and related operations.
 - `prt-utils` provides maintenance helpers such as `revdep`.
 
-BFSOS-maintained collections use the Git-backed monorepo definition `/etc/ports/bfsos.git`.
+BFSOS-maintained collections use the Git-backed monorepo definition `/etc/ports/bfsos.git`. Maintainers can audit/update the source ports tree with `scripts/bfs-port-updater.py`, which dynamically discovers collections under `~/BFSOS/ports` and presents reviewable per-port update choices.
 
 ## Logs and bug reports
 

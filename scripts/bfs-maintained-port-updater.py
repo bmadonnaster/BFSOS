@@ -23,6 +23,7 @@ import argparse
 import csv
 import dataclasses
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -33,6 +34,7 @@ import tempfile
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser().resolve()
 REMOTE = ("http://", "https://", "ftp://")
 PATCH_SUFFIXES = (".patch", ".diff", ".patch.gz", ".diff.gz", ".patch.xz", ".diff.xz", ".patch.bz2", ".diff.bz2")
 ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip")
@@ -47,6 +49,9 @@ class AuditRow:
     provider: str
     reason: str
     source: str
+    new_release: str = ""
+    patches_json: str = ""
+    obsolete_patches_json: str = ""
 
 
 @dataclasses.dataclass
@@ -157,7 +162,7 @@ def looks_like_patch(path: Path) -> bool:
     return bool(re.search(r"(?m)^(diff --git |--- [^\n]+\n\+\+\+ |Index: )", text))
 
 
-def rewrite_version_release(text: str, old: str, new: str) -> str:
+def rewrite_version_release(text: str, old: str, new: str, requested_release: str = "") -> str:
     vm = re.search(r"(?m)^version=(.*)$", text)
     rm = re.search(r"(?m)^release=(.*)$", text)
     if not vm or not rm:
@@ -165,12 +170,87 @@ def rewrite_version_release(text: str, old: str, new: str) -> str:
     current_literal = vm.group(1).strip().strip("'\"")
     if current_literal != old:
         raise UpdateError(f"Pkgfile version assignment is {current_literal!r}, expected audit current {old!r}")
-    text = text[:vm.start()] + f"version={new}" + text[vm.end():]
-    # find release again because offsets changed
+    if new != old:
+        text = text[:vm.start()] + f"version={new}" + text[vm.end():]
     rm = re.search(r"(?m)^release=(.*)$", text)
     assert rm
-    text = text[:rm.start()] + "release=1" + text[rm.end():]
+    new_release = requested_release or ("1" if new != old else rm.group(1).strip())
+    text = text[:rm.start()] + f"release={new_release}" + text[rm.end():]
     return text
+
+
+def parse_patch_specs(raw: str) -> list[dict[str, str]]:
+    if not raw:
+        return []
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise UpdateError(f"invalid patches_json: {exc}") from exc
+    if not isinstance(value, list):
+        raise UpdateError("patches_json must be a list")
+    out = []
+    for item in value:
+        if not isinstance(item, dict) or not item.get("url") or not item.get("filename"):
+            raise UpdateError("invalid patch specification")
+        out.append({"url": str(item["url"]), "filename": str(item["filename"]), "md5": str(item.get("md5", ""))})
+    return out
+
+
+def parse_obsolete_patches(raw: str) -> list[str]:
+    if not raw:
+        return []
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise UpdateError(f"invalid obsolete_patches_json: {exc}") from exc
+    if not isinstance(value, list):
+        raise UpdateError("obsolete_patches_json must be a list")
+    return [str(x) for x in value]
+
+
+def rewrite_source_patch_entries(text: str, required: list[dict[str, str]], obsolete: list[str]) -> str:
+    if not required and not obsolete:
+        return text
+    m = re.search(r"(?ms)^source=\((.*?)^\)", text)
+    if not m:
+        # Support compact one-line arrays too.
+        m = re.search(r"(?m)^source=\(([^\n]*)\)", text)
+    if not m:
+        raise UpdateError("cannot safely locate source=(...) array for book patch synchronization")
+    body = m.group(1)
+    # Remove only names explicitly classified by the policy scanner as obsolete.
+    for name in obsolete:
+        body = re.sub(rf"(?m)^[ \t]*{re.escape(name)}[ \t]*\n?", "", body)
+        body = re.sub(rf"(?<![A-Za-z0-9_.+-]){re.escape(name)}(?![A-Za-z0-9_.+-])", "", body)
+    present = set(re.findall(r"[^\s()]+", body))
+    additions = [x["filename"] for x in required if x["filename"] not in present]
+    if additions:
+        if body and not body.endswith("\n"):
+            body += "\n"
+        body += "".join(f"    {name}\n" for name in additions)
+    return text[:m.start(1)] + body + text[m.end(1):]
+
+
+def sync_required_patches(staged_dir: Path, text: str, required: list[dict[str, str]], obsolete: list[str], timeout: int) -> str:
+    if not required and not obsolete:
+        return text
+    for spec in required:
+        filename = spec["filename"]
+        if Path(filename).name != filename or filename in {".", ".."}:
+            raise UpdateError(f"unsafe required patch filename: {filename}")
+        dest = staged_dir / filename
+        url = spec["url"]
+        # Always refresh the book-owned patch in staging.  A changed patch with
+        # the same filename must not silently reuse stale local bytes.
+        curl_download(url, dest, timeout)
+        expected = spec.get("md5", "").lower()
+        if expected:
+            actual = hashlib.md5(dest.read_bytes()).hexdigest()
+            if actual != expected:
+                raise UpdateError(f"MD5 mismatch for {filename}: expected {expected}, got {actual}")
+        if not looks_like_patch(dest):
+            raise UpdateError(f"downloaded book patch does not look like a patch: {filename}")
+    return rewrite_source_patch_entries(text, required, obsolete)
 
 
 def remote_source_raw_tokens(text: str) -> list[str]:
@@ -417,17 +497,21 @@ def read_rows(path: Path) -> list[AuditRow]:
         rows = list(csv.DictReader(f, delimiter="\t"))
     required = {"status", "port", "current", "latest", "provider", "reason", "source"}
     if not rows and path.stat().st_size:
-        # Header-only is valid.
         return []
     if rows and not required.issubset(rows[0]):
         raise UpdateError("audit TSV does not have the expected checker columns")
-    return [AuditRow(**{k: r.get(k, "") for k in required}) for r in rows]
+    return [AuditRow(
+        status=r.get("status", ""), port=r.get("port", ""), current=r.get("current", ""),
+        latest=r.get("latest", ""), provider=r.get("provider", ""), reason=r.get("reason", ""),
+        source=r.get("source", ""), new_release=r.get("new_release", ""),
+        patches_json=r.get("patches_json", ""), obsolete_patches_json=r.get("obsolete_patches_json", "")
+    ) for r in rows]
 
 
 def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool) -> str:
     if row.status != "UPDATE" or not row.latest:
         raise UpdateError("row is not a verified UPDATE")
-    port_dir = ROOT / "ports" / row.port
+    port_dir = PORTS_ROOT / row.port
     pkgfile = port_dir / "Pkgfile"
     if not pkgfile.is_file():
         raise UpdateError(f"port not found: {row.port}")
@@ -440,7 +524,13 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         shutil.copytree(port_dir, staged, symlinks=True)
         staged_pkg = staged / "Pkgfile"
         old_text = staged_pkg.read_text()
-        new_text = rewrite_version_release(old_text, row.current, row.latest)
+        new_text = rewrite_version_release(old_text, row.current, row.latest, row.new_release)
+        required_patches = parse_patch_specs(row.patches_json)
+        obsolete_patches = parse_obsolete_patches(row.obsolete_patches_json)
+        if required_patches or obsolete_patches:
+            if not apply:
+                return f"WOULD-SYNC-BOOK-PATCHES {row.port} {row.current} -> {row.latest}"
+            new_text = sync_required_patches(staged, new_text, required_patches, obsolete_patches, timeout)
         staged_pkg.write_text(new_text)
 
         proposed = eval_meta(staged_pkg)
@@ -470,20 +560,21 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
             return f"WOULD-UPDATE {row.port} {row.current} -> {row.latest} release=1{suffix}"
 
         # Commit newly vendored companion files first and Pkgfile last.
+        required_patch_names = {x["filename"] for x in required_patches}
         for child in staged.iterdir():
             if child.name == "Pkgfile":
                 continue
             original = port_dir / child.name
-            if original.exists():
+            if original.exists() and child.name not in required_patch_names:
                 continue
             if child.is_file():
                 shutil.copy2(child, original)
-            elif child.is_dir():
+            elif child.is_dir() and not original.exists():
                 shutil.copytree(child, original)
         tmp_pkg = pkgfile.with_name("Pkgfile.bfs-update-tmp")
         tmp_pkg.write_text(staged_pkg.read_text())
         os.replace(tmp_pkg, pkgfile)
-        return f"UPDATED {row.port} {row.current} -> {row.latest} release=1"
+        return f"UPDATED {row.port} {row.current} -> {row.latest} release={proposed.release}"
 
 
 def main() -> int:

@@ -4478,6 +4478,48 @@ pkgmkwork="var/cache/pkg/build-work"
 
 
 
+_run_force_full_bootstrap() {
+    local build_iso=no refresh_sources=no arg=""
+
+    shift || true
+    for arg in "$@"; do
+        case "$arg" in
+            --iso|--build-iso) build_iso=yes ;;
+            --refresh-sources) refresh_sources=yes ;;
+            --force) ;;
+            *)
+                echo "ERROR: Unknown full --force option: $arg" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [ "$refresh_sources" = yes ]; then
+        case "$sourcedir" in
+            "$SCRIPT_DIR"/sources|"$PWD"/sources) ;;
+            *)
+                echo "ERROR: Refusing source-cache cleanup for unexpected path: $sourcedir" >&2
+                return 1
+                ;;
+        esac
+        echo "Force rebuild: refreshing downloaded source cache: $sourcedir"
+        mkdir -p "$sourcedir"
+        find "$sourcedir" -mindepth 1 -maxdepth 1 -print -exec rm -rf -- {} +
+    fi
+
+    # Full Bootstrap already enters Stage 1 through _clean_start(), which
+    # removes /tmp/lfs-rootfs, /tmp/lfs-tools, package/build-work output, and
+    # prior Bootstrap base/toolchain archives while retaining sources.  --force
+    # makes that destructive clean-start intent explicit and noninteractive.
+    BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
+    BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
+        _run_full_bootstrap || return $?
+
+    if [ "$build_iso" = yes ]; then
+        _launch_iso_builder
+    fi
+}
+
 case "${1:-menu}" in
     menu|"")
         _bootstrap_menu
@@ -4516,7 +4558,14 @@ case "${1:-menu}" in
         _launch_bfs_installer
         ;;
     full|full-bootstrap|all)
-        _run_full_bootstrap
+        if [ "${2:-}" = "--force" ]; then
+            _run_force_full_bootstrap "${@:2}"
+        elif [ "$#" -gt 1 ]; then
+            echo "ERROR: Unknown full-bootstrap option: ${2:-}" >&2
+            exit 2
+        else
+            _run_full_bootstrap
+        fi
         ;;
     resume-full|resume-bootstrap|continue-full)
         _run_resume_full_bootstrap
@@ -4543,6 +4592,10 @@ Usage:
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 full|full-bootstrap|all
                   Run the complete build, verify, and archive workflow
+  $0 full --force [--iso] [--refresh-sources]
+                  Force a clean Stage 1->5 rebuild. Sources are retained unless
+                  --refresh-sources is also supplied; --iso builds ISO media
+                  only after the new base archive completes successfully.
   $0 resume-full|continue-full
                   Resume at the first incomplete stage and continue through Stage 5
   $0 0|stop|kill Stop a running bootstrap process group

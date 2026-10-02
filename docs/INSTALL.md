@@ -27,17 +27,20 @@ Choose **Run BFSOS installer** for a normal installation. The shell is intended 
 
 ## 3. Installer main menu
 
-The installer tracks each section with states such as `PENDING`, `CONFIGURED`, `COMPLETE`, and `AVAILABLE`. The normal configuration order is:
+The installer tracks each section with states such as `PENDING`, `CONFIGURED`, `COMPLETE`, and `AVAILABLE`. `PENDING` means required configuration is not ready, `CONFIGURED` means choices are saved, `COMPLETE` means a required step is satisfied, and `AVAILABLE` marks an optional action/resource that can be used.
 
-1. Storage assignment
-2. Base archive
-3. System settings
-4. Kernel selection
-5. Optional software
-6. Sudo configuration
-7. Bootloader
-8. Review selections
-9. Install BFSOS
+The main menu items are:
+
+1. **Storage assignment** — choose installation devices and configure partitioning, RAID, LUKS, LVM, filesystems/mount points, ZRAM, and storage inspection.
+2. **Base archive** — use a verified local base or download the current versioned BFSOS base from SourceForge.
+3. **System settings** — hostname, timezone, locale, networking, users/groups and root-login policy, SSH, console/font, and optional serial console.
+4. **Kernel selection** — choose the default LTS kernel, optional current kernel, or no kernel for an advanced/custom install.
+5. **Optional software** — select additional software groups/packages offered by the installer.
+6. **Sudo configuration** — choose no sudo, password-required sudo, or passwordless wheel-group sudo.
+7. **Bootloader** — configure GRUB for UEFI or legacy BIOS and optional EFI fallback installation.
+8. **Review selections** — inspect the complete install plan without changing it.
+9. **Install BFSOS** — begin installation only after required sections are ready.
+10. **Installer Settings** (when shown) — theme, logging, compiler/build settings, reusable profiles, console/serial settings, and storage-state maintenance.
 
 Use **Review selections** before starting the installation.
 
@@ -168,3 +171,8 @@ Installer logs are retained under:
 ```
 
 Include the relevant log when reporting an installation failure.
+
+
+## Manual kernel and GRUB
+
+Advanced users who want to build their own kernel or install/recover GRUB manually should use [`KERNEL-GRUB.md`](KERNEL-GRUB.md). It documents the BFSOS/LFS-oriented kernel configuration baseline, Dracut/initramfs workflow, rollback precautions, and separate UEFI and legacy BIOS GRUB procedures.

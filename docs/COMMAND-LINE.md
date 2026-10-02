@@ -16,6 +16,10 @@ The interactive menus remain the default user interface, but Bootstrap and the I
 ./bootstrap.sh 8                   chroot into BFSOS root
 ./bootstrap.sh 9                   launch installer
 ./bootstrap.sh full                run complete automated build through Stage 5
+./bootstrap.sh full --force        explicit clean Stage 1-5 rebuild; retain source cache
+./bootstrap.sh full --force --iso  clean base rebuild, then build ISO from the new base
+./bootstrap.sh full --force --refresh-sources
+                                   clean rebuild and also discard downloaded source cache
 ./bootstrap.sh resume-full         resume at first incomplete stage
 ./bootstrap.sh iso [ISO options]   launch ISO builder
 ./bootstrap.sh --help              full maintained usage
@@ -67,7 +71,21 @@ cd ports/<collection>
 
 Run `scripts/gentemplate.sh --help` for syntax. The generated Pkgfile is only a starting point; see `docs/PORTS.md` for build options, footprints, signatures, and maintainer workflow.
 
-Useful audit helpers include:
+The primary maintainer updater is:
+
+```text
+scripts/bfs-port-updater.py
+```
+
+It discovers the actual trees under `~/BFSOS/ports`, provides Dialog checklists for tree and per-port selection, follows the BFSOS LFS/MLFS policy, and can hand selected updates to the transactional updater. Report-only examples:
+
+```text
+scripts/bfs-port-updater.py --list-trees
+scripts/bfs-port-updater.py --report-only --trees core opt
+scripts/bfs-port-updater.py --kernel-only --report-only
+```
+
+Lower-level audit helpers remain available:
 
 ```text
 scripts/checkupdate.sh
