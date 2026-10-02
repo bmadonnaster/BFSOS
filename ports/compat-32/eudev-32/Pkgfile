@@ -4,8 +4,8 @@
 # Depends on: systemd kmod-32
 
 name=eudev-32
-version=3.2.14
-release=2
+version=3.2.15
+release=1
 source=(https://github.com/eudev-project/eudev/releases/download/v$version/eudev-$version.tar.gz)
 
 build_opt="--sbindir=/sbin --bindir=/sbin --with-rootprefix= --with-rootlibdir=/usr/lib32 --disable-introspection --disable-manpages --enable-split-usr"

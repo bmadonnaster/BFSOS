@@ -4,8 +4,8 @@
 # Depends on: fribidi glib-32
 
 name=fribidi-32
-version=1.0.16
-release=3
+version=1.0.17
+release=1
 source=(https://github.com/${name%-*}/${name%-*}/releases/download/v$version/${name%-*}-$version.tar.xz)
 
 build_opt="-D docs=false"

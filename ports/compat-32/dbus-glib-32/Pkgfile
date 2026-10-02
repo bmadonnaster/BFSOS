@@ -4,8 +4,8 @@
 # Depends on: dbus-32 dbus-glib glib-32
 
 name=dbus-glib-32
-version=0.114
-release=2
+version=0.116
+release=1
 source=(https://dbus.freedesktop.org/releases/${name%-*}/${name%-*}-$version.tar.gz)
 
 build_opt="--enable-bash-completion=no"

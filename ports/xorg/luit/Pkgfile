@@ -4,8 +4,8 @@
 # Depends on:
 
 name=luit
-version=20250912
-release=2
+version=20260907
+release=1
 source=(https://invisible-mirror.net/archives/$name/$name-$version.tgz)
 
 pkg_build() {

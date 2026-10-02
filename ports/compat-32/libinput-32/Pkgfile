@@ -5,8 +5,8 @@
 
 
 name=libinput-32
-version=1.31.3
-release=3
+version=1.32.0
+release=1
 source=(https://gitlab.freedesktop.org/libinput/libinput/-/archive/$version/libinput-$version.tar.bz2)
 
 build_opt="-D debug-gui=false -D documentation=false -D tests=false -D libwacom=false -D udev-dir=/lib/udev -D zshcompletiondir=no"

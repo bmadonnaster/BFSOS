@@ -4,8 +4,8 @@
 # Depends on: cairo fontconfig-32 glib-32 libXext-32 libXrender-32 libpng-32 pixman-32 xcb-util-32
 
 name=cairo-32
-version=1.18.4
-release=3
+version=1.18.6
+release=1
 source=(https://gitlab.freedesktop.org/cairo/cairo/-/archive/$version/cairo-$version.tar.bz2)
 
 build_opt="-D dwrite=disabled -D spectre=disabled -D symbol-lookup=disabled -D tests=disabled"

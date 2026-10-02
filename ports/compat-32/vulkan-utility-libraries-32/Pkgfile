@@ -5,9 +5,9 @@
 # Optional:
 
 name=vulkan-utility-libraries-32
-version=1.4.357.0
+version=1.4.363.0
 _commit=5a88b6042edb8f03eefc8de73bd73a899989373f
-release=3
+release=1
 source=(https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/$_commit/vulkan-utility-libraries-$version.tar.gz)
 
 build_opt="-Wno-dev"

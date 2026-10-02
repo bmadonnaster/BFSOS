@@ -4,22 +4,32 @@
 # Depends on:
 
 name=libidn133-32
-version=1.33
-release=3
+version=1.44
+release=2
 source=(https://ftp.gnu.org/gnu/libidn/libidn-$version.tar.gz)
 
-# Custom build required: legacy ABI package intentionally prunes development links
+# Legacy 32-bit ABI package. Only the runtime libidn shared library is kept.
 pkg_build() {
-  (
-    set -e
-	./configure \
-		--prefix=/usr \
-		--libdir=/usr/lib32 \
-		--disable-nls \
-		--disable-static
-	sed -i 's/^SUBDIRS = .*/SUBDIRS = gl lib\/gl lib/' Makefile
-	make
-	make DESTDIR=$PKG install
-	rm -r $PKG/usr/{bin,include,lib32/{libidn.so,libidn.la,pkgconfig},share}
-  )
+    ./configure \
+        --prefix=/usr \
+        --libdir=/usr/lib32 \
+        --disable-nls \
+        --disable-static || return 1
+
+    make -C gl -j"${JOBS:-1}" || return 1
+    make -C lib/gl -j"${JOBS:-1}" || return 1
+    make -C lib -j"${JOBS:-1}" || return 1
+
+    make -C lib DESTDIR="$PKG" install || return 1
+
+    # Runtime compatibility package only: keep versioned shared objects,
+    # remove development files and metadata.
+    rm -f \
+        "$PKG/usr/lib32/libidn.so" \
+        "$PKG/usr/lib32/libidn.la"
+
+    rm -rf \
+        "$PKG/usr/include" \
+        "$PKG/usr/lib32/pkgconfig" \
+        "$PKG/usr/share"
 }

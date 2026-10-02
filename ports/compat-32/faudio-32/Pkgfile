@@ -4,8 +4,8 @@
 # Depends on: libsdl2-32 faudio
 
 name=faudio-32
-version=26.09
-release=3
+version=26.10
+release=1
 source=(https://github.com/FNA-XNA/FAudio/archive/$version/faudio-$version.tar.gz)
 
 

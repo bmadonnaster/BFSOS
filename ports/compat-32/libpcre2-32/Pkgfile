@@ -4,8 +4,8 @@
 # Depends on: pcre2
 
 name=libpcre2-32
-version=10.48
-release=3
+version=10.49
+release=1
 source=(https://github.com/PhilipHazel/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz)
 
 build_opt="--enable-jit --enable-pcre2-16 --enable-pcre2-32"

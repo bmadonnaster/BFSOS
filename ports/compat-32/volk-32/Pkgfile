@@ -4,9 +4,9 @@
 # Depends on: vulkan-loader-32 volk
 
 name=volk-32
-version=1.4.357.0
+version=1.4.363.0
 _version=vulkan-sdk-$version
-release=3
+release=1
 source=(https://github.com/zeux/volk/archive/$_version/volk-$version.tar.gz)
 
 build_opt="-D VOLK_INSTALL=True -Wno-dev"
