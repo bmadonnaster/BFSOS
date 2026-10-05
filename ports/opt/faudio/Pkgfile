@@ -9,7 +9,7 @@ release=1
 source=(https://github.com/FNA-XNA/FAudio/archive/$version/$name-$version.tar.gz)
 
 pkg_build() {
-  cmake -S FAudio-$version -B build -G Ninja \
+  cmake -S . -B build -G Ninja \
     -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_INSTALL_LIBDIR=lib \
     -D CMAKE_BUILD_TYPE=Release \
