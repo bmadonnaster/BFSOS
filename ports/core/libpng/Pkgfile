@@ -1,7 +1,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=libpng
-version=1.6.58
-release=3
+version=1.6.59
+release=1
 source=(https://downloads.sourceforge.net/$name/$name-$version.tar.xz
         libpng-1.6.58-apng.patch.gz)
 
