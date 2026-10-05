@@ -5,7 +5,7 @@
 # Optional: polkit
 
 name=consolekit
-version=1.2.6
+version=2.0.0
 release=1
 source=(https://github.com/ConsoleKit2/ConsoleKit2/archive/$version/ConsoleKit2-$version.tar.gz
   system-session pam-foreground-compat.ck)

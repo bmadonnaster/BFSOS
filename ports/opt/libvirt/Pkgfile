@@ -4,8 +4,8 @@
 # Depends on: json-c dbus dnsmasq glib gnutls libcap-ng libnl libpcap libseccomp libssh2 libxml2 libxslt nftables parted polkit qemu readline systemd yajl
 
 name=libvirt
-version=12.7.0
-release=3
+version=12.8.0
+release=1
 source=(
     https://download.libvirt.org/libvirt-$version.tar.xz
     default-network.xml

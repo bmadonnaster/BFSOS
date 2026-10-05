@@ -4,8 +4,8 @@
 # Depends on: python3-build python3-installer python3-packaging python3-setuptools python3-wheel
 
 name=python3-sip
-version=6.10.0
-release=2
+version=6.17.0
+release=1
 source=(https://files.pythonhosted.org/packages/source/s/sip/sip-$version.tar.gz)
 
 pkg_build() {

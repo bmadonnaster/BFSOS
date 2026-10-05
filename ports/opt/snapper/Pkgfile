@@ -5,8 +5,8 @@
 # Optional: linux-pam
 
 name=snapper
-version=0.13.1
-release=2
+version=0.13.2
+release=1
 
 source=(https://github.com/openSUSE/snapper/archive/refs/tags/v$version.tar.gz)
 #snapper-boost-system-header-only.patch)

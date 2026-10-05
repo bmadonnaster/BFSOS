@@ -6,9 +6,9 @@
 
 name=vulkan-tools-32
 _name=Vulkan-Tools
-version=1.4.357.0
+version=1.4.363.0
 _version=vulkan-sdk-$version
-release=3
+release=1
 source=(https://github.com/KhronosGroup/Vulkan-Tools/archive/$_version/$_name-$version.tar.gz)
 
 # Custom build required: 32-bit helper executables are retained with renamed commands

@@ -78,7 +78,7 @@ SOURCE_TEMPLATE_PORTS = {
     "opt/cairo", "opt/glib-networking", "opt/libsecret", "opt/lmdb", "opt/nodejs",
 }
 
-# Coordinated Vulkan SDK build order. Existing members not present in a BFSOS
+# Coordinated package-family build order. Existing members not present in a BFSOS
 # tree are ignored, but every existing member must resolve to one target before
 # the group can become automatic.
 VULKAN_BUILD_ORDER = [
@@ -109,7 +109,21 @@ VERSION_LOCK_GROUPS = {
         "opt/volk", "compat-32/volk-32",
         "opt/vulkan-validation-layers", "compat-32/vulkan-validation-layers-32",
     },
+    # NVIDIA's native and 32-bit userspace packages come from the same vendor
+    # runfile and must never drift to different driver versions.  nvidia-fb-32
+    # is a separate fallback branch and is intentionally not part of this pair.
+    "nvidia-driver": {"opt/nvidia", "compat-32/nvidia-32"},
 }
+
+GROUP_BUILD_ORDER = {
+    "vulkan-sdk": VULKAN_BUILD_ORDER,
+    "nvidia-driver": ["opt/nvidia", "compat-32/nvidia-32"],
+}
+
+# Only Vulkan currently requires each freshly-built predecessor to be installed
+# before a later member can be meaningfully validated. NVIDIA native/32-bit can
+# both be built from the matching runfile without installing the first package.
+GROUP_BUILD_REQUIRES_INSTALLED_PREREQ = {"vulkan-sdk"}
 
 
 @dataclasses.dataclass
@@ -221,6 +235,10 @@ def comparison_version(meta: PortMeta, value: str) -> str:
     # their normal version semantics.
     if meta.name == "texlive":
         value = re.sub(r"-source$", "", value, flags=re.I)
+    # Upstreams/downstreams commonly spell release candidates both as 0.9-rc5
+    # and 0.9rc5.  Treat only this known pre-release separator as cosmetic; do
+    # not erase arbitrary punctuation from ordinary versions.
+    value = re.sub(r"(?<=\d)[._-](?=rc\d)", "", value, flags=re.I)
     return value
 
 
@@ -275,6 +293,29 @@ def family_allows(meta: PortMeta, target: str) -> bool:
     if locked is None:
         return True
     return major_component(meta.version) == str(locked) and major_component(target) == str(locked)
+
+
+def is_vcs_snapshot_version(value: str) -> bool:
+    low = value.lower()
+    return bool(
+        re.search(r"(?:^|[._-])r\d+(?:[._-]g[0-9a-f]{6,})?(?:$|[._-])", low)
+        or re.search(r"(?:^|[._-])g[0-9a-f]{7,}(?:$|[._-])", low)
+        or re.search(r"(?:^|[._-])git\d{6,}(?:$|[._-])", low)
+    )
+
+
+def port_tracks_vcs_snapshots(meta: PortMeta) -> bool:
+    if is_vcs_snapshot_version(meta.version):
+        return True
+    for url in _remote_source_urls(meta):
+        low = url.lower()
+        if any(mark in low for mark in ("/commit/", "/commits/", "/snapshot/", "/snapshots/")):
+            return True
+    return False
+
+
+def reject_downstream_snapshot(meta: PortMeta, candidate: str) -> bool:
+    return is_vcs_snapshot_version(candidate) and not port_tracks_vcs_snapshots(meta)
 
 
 def enforce_version_lock_groups(cands: list[Candidate], metas: list[PortMeta]) -> None:
@@ -356,8 +397,10 @@ def _selection_group_error(cands: list[Candidate], selected: set[str], ports_roo
 
 
 def _build_rank(port: str) -> tuple[int, str]:
-    if port in VULKAN_BUILD_ORDER:
-        return VULKAN_BUILD_ORDER.index(port), port
+    for group_index, group in enumerate(VERSION_LOCK_GROUPS):
+        order = GROUP_BUILD_ORDER.get(group, [])
+        if port in order:
+            return group_index * 1000 + order.index(port), port
     return 10_000, port
 
 
@@ -607,12 +650,18 @@ def validate_exact_target(meta: PortMeta, target: str, timeout: int) -> tuple[bo
 
 
 def special_browser_reference(meta: PortMeta, timeout: int) -> tuple[str, str, str]:
-    """Direct browser version providers used when generic discovery is weak."""
+    """Direct browser version providers, including Mozilla's distinct ESR channel."""
     try:
-        if meta.name == "firefox":
+        if meta.name in {"firefox", "firefox-esr"}:
             data = json.loads(fetch_text("https://product-details.mozilla.org/1.0/firefox_versions.json", timeout))
-            ver = str(data.get("LATEST_FIREFOX_VERSION") or "")
-            return ver, "Mozilla product-details", "" if not ver else f"https://archive.mozilla.org/pub/firefox/releases/{ver}/source/firefox-{ver}.source.tar.xz"
+            if meta.name == "firefox-esr":
+                ver = str(data.get("FIREFOX_ESR") or "")
+                provider = "Mozilla ESR"
+            else:
+                ver = str(data.get("LATEST_FIREFOX_VERSION") or "")
+                provider = "Mozilla product-details"
+            source = "" if not ver else f"https://archive.mozilla.org/pub/firefox/releases/{ver}/source/firefox-{ver}.source.tar.xz"
+            return ver, provider, source
         if meta.name == "chromium":
             data = json.loads(fetch_text("https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=1", timeout))
             if isinstance(data, list) and data:
@@ -636,13 +685,14 @@ def _all_group_metas(ports_root: Path, members: set[str]) -> list[PortMeta]:
 
 
 def expand_coordinated_metas(ports_root: Path, metas: list[PortMeta]) -> tuple[list[PortMeta], list[PortMeta]]:
-    """Pull the full Vulkan lock group into a scan when any member is scanned."""
+    """Pull every touched version-lock group into a scan across BFSOS trees."""
     rels = {m.rel for m in metas}
-    vulkan = VERSION_LOCK_GROUPS["vulkan-sdk"]
     extras: list[PortMeta] = []
-    if rels & vulkan:
-        known = {m.rel for m in metas}
-        for m in _all_group_metas(ports_root, vulkan):
+    known = set(rels)
+    for members in VERSION_LOCK_GROUPS.values():
+        if not (rels & members):
+            continue
+        for m in _all_group_metas(ports_root, members):
             if m.rel not in known:
                 extras.append(m)
                 known.add(m.rel)
@@ -995,11 +1045,14 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         # it does not artificially cap BFSOS when Arch is positively verified as
         # the same upstream project and carries a newer comparable release.
         if crux_newer and not (arch_newer and newer_for_port(meta, arch_v, crux_v)):
-            out.append(Candidate(meta.rel, meta.name, meta.version, crux_v, meta.release, "1",
-                                 "review", "CRUX reference", "REVIEW",
-                                 f"not MLFS-authoritative; CRUX carries {crux_v}", False,
-                                 source=candidate_source_url(meta, crux_v)))
-            continue
+            if reject_downstream_snapshot(meta, crux_v):
+                diagnostics.append(f"{meta.rel}\tCRUX {crux_v} rejected: downstream VCS snapshot; BFSOS port tracks releases")
+            else:
+                out.append(Candidate(meta.rel, meta.name, meta.version, crux_v, meta.release, "1",
+                                     "review", "CRUX reference", "REVIEW",
+                                     f"not MLFS-authoritative; CRUX carries {crux_v}", False,
+                                     source=candidate_source_url(meta, crux_v)))
+                continue
 
         if arch_v:
             if arch_ref.verified:
@@ -1013,11 +1066,34 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 and not versions_equivalent_for_port(meta, arch_v, meta.version)
                 and newer_for_port(meta, arch_v, meta.version)
                 and family_allows(meta, arch_v)):
-            out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
-                                 "review", "Arch reference", "REVIEW",
-                                 f"not MLFS-authoritative; verified same upstream; Arch carries {arch_v}", False,
-                                 source=candidate_source_url(meta, arch_v)))
-            continue
+            if reject_downstream_snapshot(meta, arch_v):
+                diagnostics.append(f"{meta.rel}\tArch {arch_v} rejected: downstream VCS snapshot; BFSOS port tracks releases")
+            else:
+                out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
+                                     "review", "Arch reference", "REVIEW",
+                                     f"not MLFS-authoritative; verified same upstream; Arch carries {arch_v}", False,
+                                     source=candidate_source_url(meta, arch_v)))
+                continue
+
+        # Explicit browser channels take precedence over generic discovery. In
+        # particular, firefox-esr must never be compared against rapid-release
+        # Firefox simply because a generic provider reports it.
+        browser_v, browser_provider, browser_source = special_browser_reference(meta, timeout)
+        if meta.name in {"firefox", "firefox-esr", "chromium"}:
+            if browser_v:
+                diagnostics.append(f"{meta.rel}\tbrowser-provider\t{browser_provider}\tcurrent={meta.version} latest={browser_v}")
+                if newer_for_port(meta, browser_v, meta.version) and family_allows(meta, browser_v):
+                    out.append(Candidate(meta.rel, meta.name, meta.version, browser_v, meta.release, "1",
+                                         "review", browser_provider, "REVIEW",
+                                         "explicit browser provider found newer release", False,
+                                         browser_provider, browser_source or candidate_source_url(meta, browser_v)))
+                    continue
+            else:
+                diagnostics.append(f"{meta.rel}\tbrowser-provider unavailable")
+            if meta.name == "firefox-esr":
+                # ESR has an explicit channel; never fall through to a generic
+                # rapid-release Firefox result when that channel is unavailable.
+                continue
 
         row = upstream.get(meta.rel, {})
         if row.get("status") == "UPDATE" and row.get("latest") and newer_for_port(meta, row["latest"], meta.version):
@@ -1026,19 +1102,9 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
                                      "review", row.get("provider") or "upstream", "REVIEW",
                                      row.get("reason") or "newer version found outside MLFS authority", False,
-                                     row.get("provider", ""), row.get("source", "") or candidate_source_url(meta, row["latest"])))
+                                     row.get("provider", ""), candidate_source_url(meta, row["latest"]) or (row.get("source", "") if row["latest"] in row.get("source", "") else "")))
                 continue
             diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{row['latest']}")
-
-        # Explicit browser providers fill generic discovery blind spots.
-        browser_v, browser_provider, browser_source = special_browser_reference(meta, timeout)
-        if browser_v and newer_for_port(meta, browser_v, meta.version) and family_allows(meta, browser_v):
-            diagnostics.append(f"{meta.rel}\tbrowser-provider\t{browser_provider}\t{browser_v}")
-            out.append(Candidate(meta.rel, meta.name, meta.version, browser_v, meta.release, "1",
-                                 "review", browser_provider, "REVIEW",
-                                 "explicit browser provider found newer release", False,
-                                 browser_provider, browser_source))
-            continue
 
         # A reference-book target is a final conservative lead, never automatic.
         if btarget and newer_for_port(meta, btarget, meta.version) and family_allows(meta, btarget):
@@ -1176,7 +1242,7 @@ def find_retryable_failures(ports_root: Path) -> tuple[Path | None, list[dict[st
             # The newest actionable result for a port is its current updater
             # state.  Success clears older failures; a current failure remains.
             seen.add(rel)
-            if "BUILD FAILED" not in result and "INSTALL FAILED" not in result and "RETRY FAILED" not in result:
+            if not any(mark in result for mark in ("BUILD FAILED", "INSTALL FAILED", "RETRY FAILED", "BLOCKED:")):
                 continue
             if _port_matches_logged_target(ports_root, row):
                 retry_rows.append(row)
@@ -1205,7 +1271,10 @@ def retry_failed_updates(rows, selected, ports_root: Path):
     """Retry build (and prior install, when applicable) without reapplying versions."""
     results = {}
     by_port = {row.get("port", ""): row for row in rows}
-    for rel in selected:
+    # Coordinated families retain their dependency order during retry. BLOCKED
+    # rows remain visible even when a previous scan already advanced Pkgfiles to
+    # the target version, so an interrupted SDK transaction does not disappear.
+    for rel in sorted(selected, key=_build_rank):
         row = by_port.get(rel)
         if not row:
             continue
@@ -1293,18 +1362,69 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
     chosen.sort(key=lambda c: _build_rank(c.port))
     if not chosen: return results
     with tempfile.TemporaryDirectory(prefix="bfs-selected-updates-") as td_s:
-        tsv = Path(td_s)/"selected.tsv"
+        td = Path(td_s)
+        tsv = td/"selected.tsv"
         with tsv.open("w", encoding="utf-8", newline="") as f:
             w = csv.writer(f, delimiter="\t", lineterminator="\n")
             w.writerow(["status","port","current","latest","provider","reason","source","new_release","patches_json","obsolete_patches_json"])
             for c in chosen:
                 w.writerow(["UPDATE",c.port,c.old,c.new,c.source_label,c.reason,c.source,c.new_release,
                             json.dumps([dataclasses.asdict(p) for p in c.patches]),json.dumps(c.obsolete_patches)])
+
+        # Version-locked families are staged transactionally across port dirs.
+        # The maintained updater commits one row at a time, so snapshot every
+        # selected group member here and restore the whole family if any member
+        # is rejected. This prevents a half-applied SDK/driver tree.
+        backups: dict[str, Path] = {}
+        chosen_ports = {c.port for c in chosen}
+        for group, members in VERSION_LOCK_GROUPS.items():
+            touched = chosen_ports & members
+            if not touched:
+                continue
+            group_backup = td / ("backup-" + group)
+            for rel in sorted(touched):
+                src = ports_root / rel
+                if src.is_dir():
+                    dst = group_backup / rel
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(src, dst, symlinks=True)
+            backups[group] = group_backup
+
         env = dict(os.environ); env["BFSOS_PORTS_ROOT"] = str(ports_root)
         cp = run([sys.executable,str(ROOT/"scripts"/"bfs-maintained-port-updater.py"),str(tsv),"--apply","--timeout",str(timeout)], env=env, capture=True)
         combined = (cp.stdout or "")+(cp.stderr or "")
         for c in chosen:
-            results[c.port] = "UPDATED" if re.search(rf"^UPDATED {re.escape(c.port)} ",combined,re.M) else "FAILED/REVIEW"
+            if re.search(rf"^UPDATED {re.escape(c.port)} ", combined, re.M):
+                results[c.port] = "UPDATED"
+                continue
+            review = re.search(
+                rf"^NEEDS-REVIEW {re.escape(c.port)} .*?: (.+)$", combined, re.M
+            )
+            if review:
+                results[c.port] = "NEEDS REVIEW: " + review.group(1).strip()
+            else:
+                results[c.port] = "FAILED/REVIEW"
+
+        for group, members in VERSION_LOCK_GROUPS.items():
+            touched = chosen_ports & members
+            if not touched or not any(results.get(rel) != "UPDATED" for rel in touched):
+                continue
+            backup = backups.get(group)
+            if backup:
+                for rel in sorted(touched):
+                    current = ports_root / rel
+                    saved = backup / rel
+                    if current.exists():
+                        shutil.rmtree(current)
+                    if saved.is_dir():
+                        current.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(saved, current, symlinks=True)
+            failed = [rel for rel in sorted(touched) if results.get(rel) != "UPDATED"]
+            detail = f"{group} apply transaction rolled back; failed/review: {', '.join(failed)}"
+            for rel in touched:
+                prior = results.get(rel, "")
+                results[rel] = f"ROLLED BACK: {detail}" + (f"; {prior}" if prior and prior != "UPDATED" else "")
+
         if cp.returncode: print(combined,file=sys.stderr)
 
     # Header changes require glibc to be rebuilt against the new userspace headers.
@@ -1365,7 +1485,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                     failed_groups.add(group)
                 continue
             results[c.port] = "BUILT+INSTALLED"
-        elif group:
+        elif group and group in GROUP_BUILD_REQUIRES_INSTALLED_PREREQ:
             members = selected_group_members.get(group, [])
             try:
                 idx = members.index(c.port)
@@ -1471,7 +1591,7 @@ def main():
         write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
         print(f"Report: {log}")
         for k,v in sorted(results.items()): print(f"{k}: {v}")
-        return 1 if any("FAILED" in v for v in results.values()) else 0
+        return 1 if any(any(mark in v for mark in ("FAILED", "NEEDS REVIEW", "BLOCKED:", "ROLLED BACK:")) for v in results.values()) else 0
 
     # Interactive mode is a persistent main menu.  Completing a scan, finding
     # zero updates, cancelling a sub-menu, or retrying failures all return here.

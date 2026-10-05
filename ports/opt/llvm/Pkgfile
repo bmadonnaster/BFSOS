@@ -5,8 +5,8 @@
 # Optional: doxygen git graphviz libunwind libxml2 python3-psutil python3-pygments python3-pyyaml rsync sphinx texlive valgrind zip z3
 
 name=llvm
-version=23.1.1
-release=2
+version=23.1.2
+release=1
 keep_static=1
 source=(
     https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz

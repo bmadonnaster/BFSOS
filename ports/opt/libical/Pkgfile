@@ -5,8 +5,8 @@
 # Optional: db doxygen graphviz gtk-doc icu pygobject
 
 name=libical
-version=4.0.5
-release=3
+version=4.0.6
+release=1
 
 source=(
   https://github.com/$name/$name/releases/download/v$version/$name-$version.tar.gz

@@ -1,0 +1,4 @@
+c31e86af066ab264445896a96e03ac7c  Add-channel-context-menu-item-to-close-the-channel.patch
+456e4dd16b39cc10ff6567dfa904bfb8  Automatically-reconnect-when-there-is-a-TLS-error.patch
+769843665a592fc9e3e6e2c87eea0244  Do-not-insert-an-extra-space-on-all-lines-when-loading-scrollback-with-colours.patch
+6970b1eef39db56c9f5380efd81e55bf  hexchat-2.16.2.tar.xz

@@ -185,6 +185,67 @@ def rewrite_version_release(text: str, old: str, new: str, requested_release: st
     return text
 
 
+def _source_token_template_from_target(raw_token: str, target_url: str, meta: Meta, latest: str) -> str:
+    """Preserve useful $name/$version templating when installing a verified target URL."""
+    alias = ""
+    raw_url = raw_token
+    if "::" in raw_token:
+        alias, raw_url = raw_token.split("::", 1)
+    templated = target_url
+    if "${name}" in raw_url:
+        templated = templated.replace(meta.name, "${name}")
+    elif "$name" in raw_url:
+        templated = templated.replace(meta.name, "$name")
+    if "${version}" in raw_url:
+        templated = templated.replace(latest, "${version}")
+    elif "$version" in raw_url:
+        templated = templated.replace(latest, "$version")
+    return f"{alias}::{templated}" if alias else templated
+
+
+def rewrite_primary_source_from_handoff(text: str, before: Meta, latest: str, target_source: str) -> str:
+    """Safely replace one primary archive with the source selected by the primary updater."""
+    target_source = (target_source or "").strip()
+    if not target_source:
+        return text
+    target_url = source_url(target_source) or target_source
+    if not target_url.startswith(REMOTE):
+        raise UpdateError(f"handoff source is not a remote URL: {target_source}")
+
+    tokens = [tok for tok in remote_source_raw_tokens(text)
+              if is_archive_name(source_filename(tok))]
+    if not tokens:
+        raise UpdateError("cannot identify a primary remote source archive for handoff")
+
+    if len(tokens) == 1:
+        chosen = tokens[0]
+    else:
+        # Prefer a unique archive visibly coupled to this package/version. This
+        # keeps secondary data archives/signatures untouched; ambiguity is review.
+        scored = []
+        pkgkey = re.sub(r"[^a-z0-9]+", "", before.name.lower())
+        for tok in tokens:
+            low = tok.lower()
+            score = 0
+            if "$version" in low or "${version}" in low or before.version.lower() in low:
+                score += 3
+            if "$name" in low or "${name}" in low:
+                score += 2
+            if pkgkey and pkgkey in re.sub(r"[^a-z0-9]+", "", low):
+                score += 1
+            scored.append((score, tok))
+        best = max(score for score, _ in scored)
+        winners = [tok for score, tok in scored if score == best and score > 0]
+        if len(winners) != 1:
+            raise UpdateError("ambiguous primary remote source archive; refusing handoff rewrite")
+        chosen = winners[0]
+
+    replacement = _source_token_template_from_target(chosen, target_url, before, latest)
+    if chosen not in text:
+        raise UpdateError("primary source token disappeared during staged rewrite")
+    return text.replace(chosen, replacement, 1)
+
+
 def rewrite_coordinated_sources(port: str, text: str, old: str, new: str) -> str:
     """Update package-specific secondary sources that are version-coupled."""
     if port == "gnome/gucharmap" and old != new:
@@ -601,6 +662,10 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         old_text = staged_pkg.read_text()
         new_text = rewrite_version_release(old_text, row.current, row.latest, row.new_release)
         new_text = rewrite_coordinated_sources(row.port, new_text, row.current, row.latest)
+        # The primary updater may have derived a canonical target source whose
+        # host/path layout cannot be obtained by changing version= alone. Apply
+        # that handoff before evaluating and validating the staged Pkgfile.
+        new_text = rewrite_primary_source_from_handoff(new_text, before, row.latest, row.source)
         required_patches = parse_patch_specs(row.patches_json)
         obsolete_patches = parse_obsolete_patches(row.obsolete_patches_json)
         if required_patches or obsolete_patches:

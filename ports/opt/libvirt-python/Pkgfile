@@ -4,7 +4,7 @@
 # Depends on: libvirt python3
 
 name=libvirt-python
-version=12.7.0
+version=12.8.0
 release=1
 source=(https://download.libvirt.org/python/libvirt_python-$version.tar.gz)
 

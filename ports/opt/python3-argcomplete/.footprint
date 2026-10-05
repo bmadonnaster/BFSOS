@@ -1,0 +1,57 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/bin/
+-rwxr-xr-x	root/root	usr/bin/activate-global-python-argcomplete
+-rwxr-xr-x	root/root	usr/bin/register-python-argcomplete
+drwxr-xr-x	root/root	usr/lib/
+drwxr-xr-x	root/root	usr/lib/python3.14/
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/INSTALLER
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/METADATA
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/RECORD
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/REQUESTED (EMPTY)
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/WHEEL
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/direct_url.json
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/entry_points.txt
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/licenses/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/licenses/LICENSE.rst
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete-3.7.2.dist-info/licenses/NOTICE
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__init__.py
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/__init__.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/_check_console_script.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/_check_module.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/completers.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/exceptions.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/finders.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/io.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/lexers.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/__pycache__/shell_integration.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/_check_console_script.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/_check_module.py
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/bash_completion.d/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/bash_completion.d/_python-argcomplete
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/completers.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/exceptions.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/finders.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/io.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/lexers.py
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/__init__.py (EMPTY)
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/__pycache__/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/__pycache__/__init__.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/__pycache__/_argparse.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/__pycache__/_shlex.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/_argparse.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/packages/_shlex.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/py.typed (EMPTY)
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/__init__.py (EMPTY)
+drwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/__pycache__/
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/__pycache__/__init__.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/__pycache__/activate_global_python_argcomplete.cpython-314.pyc
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/__pycache__/register_python_argcomplete.cpython-314.pyc
+-rwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/activate_global_python_argcomplete.py
+-rwxr-xr-x	root/root	usr/lib/python3.14/site-packages/argcomplete/scripts/register_python_argcomplete.py
+-rw-r--r--	root/root	usr/lib/python3.14/site-packages/argcomplete/shell_integration.py

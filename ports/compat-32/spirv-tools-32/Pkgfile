@@ -4,8 +4,8 @@
 # Depends on: spirv-tools
 
 name=spirv-tools-32
-version=1.4.357.0
-release=3
+version=1.4.363.0
+release=1
 source=(https://github.com/KhronosGroup/SPIRV-Tools/archive/vulkan-sdk-$version/SPIRV-Tools-v$version.tar.gz)
 
 # Custom build required: both static and shared configurations are built

@@ -4,8 +4,8 @@
 # Depends on: alsa-lib gtk3 libnotify libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXi libXrandr libXrender libXScrnSaver libXtst nspr nss
 
 name=discord
-version=1.0.158
-release=4
+version=1.0.160
+release=1
 source=(https://dl.discordapp.net/apps/linux/$version/$name-$version.tar.gz)
 
 pkg_build() {

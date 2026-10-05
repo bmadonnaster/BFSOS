@@ -2,8 +2,8 @@
 # Depends on: cmake spirv-headers
 
 name=spirv-tools
-version=1.4.357.0
-release=2
+version=1.4.363.0
+release=1
 source=(https://github.com/KhronosGroup/SPIRV-Tools/archive/vulkan-sdk-${version}/SPIRV-Tools-${version}.tar.gz)
 pkg_build () {
 mkdir build &&
