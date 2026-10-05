@@ -15,7 +15,9 @@ python3 -m py_compile \
 grep -q 'MLFS_PATCH_PAGE' "$ROOT/scripts/bfs-port-updater.py"
 grep -q 'kernel-bfsos-lts' "$ROOT/scripts/bfs-port-updater.py"
 grep -q 'Dependent glibc release bump' "$ROOT/scripts/bfs-port-updater.py"
-grep -q 'sudo","pkgmk","-d","-kw' "$ROOT/scripts/bfs-port-updater.py"
+grep -q 'BFS_PKG_BUILD_WORK=' "$ROOT/scripts/bfs-port-updater.py"
+grep -q 'bfs-pkgmk' "$ROOT/scripts/bfs-port-updater.py"
+grep -q '"-d", "-kw"' "$ROOT/scripts/bfs-port-updater.py"
 
 grep -q 'full --force \[--iso\] \[--refresh-sources\]' "$ROOT/bootstrap.sh"
 grep -q './bootstrap.sh full --force --iso' "$ROOT/docs/COMMAND-LINE.md"

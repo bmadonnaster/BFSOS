@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory() as td:
     diagnostics = []
     c = front["make_candidates"]([meta], {k:{} for k,_,_ in front["BOOKS"]}, [], {}, 1, diagnostics)
     assert len(c) == 1 and c[0].new == "1.2" and c[0].source_label == "CRUX reference"
-    assert any("not LFS-mapped; checking CRUX" in x for x in diagnostics)
+    assert any("not MLFS-authoritative; checking CRUX" in x for x in diagnostics)
 
 # New retry logs use a fingerprint, so a manual Pkgfile edit invalidates a
 # recorded failure even when version/release remain unchanged.

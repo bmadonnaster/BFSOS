@@ -186,20 +186,44 @@ def rewrite_version_release(text: str, old: str, new: str, requested_release: st
 
 
 def _source_token_template_from_target(raw_token: str, target_url: str, meta: Meta, latest: str) -> str:
-    """Preserve useful $name/$version templating when installing a verified target URL."""
+    """Preserve shell templates without corrupting repository/host names.
+
+    Never do a global string replacement of the package name: names such as
+    ``mlt`` and ``discord`` can occur inside an owner or hostname
+    (``mltframework``, ``discordapp``), turning valid URLs into
+    ``$nameframework``/``$nameapp`` and then into broken empty-variable paths
+    when the Pkgfile is evaluated.
+    """
     alias = ""
     raw_url = raw_token
     if "::" in raw_token:
         alias, raw_url = raw_token.split("::", 1)
+
+    # If the existing token is already version-dynamic and the target URL is
+    # simply the evaluated current URL with the version changed, keep the raw
+    # token exactly.  This is the safest and most common case.
+    # raw_token may still contain shell variables; compare against the evaluated
+    # URL stored in before.sources when possible in the caller instead.  Here we
+    # only preserve obvious version templates whose fixed URL structure matches.
+    if "$version" in raw_url or "${version}" in raw_url:
+        fixed = raw_url.replace("${version}", latest).replace("$version", latest)
+        fixed = fixed.replace("${name}", meta.name).replace("$name", meta.name)
+        if fixed == target_url:
+            return raw_token
+
     templated = target_url
-    if "${name}" in raw_url:
-        templated = templated.replace(meta.name, "${name}")
-    elif "$name" in raw_url:
-        templated = templated.replace(meta.name, "$name")
+    # Restore version templating only for the exact release token.
     if "${version}" in raw_url:
         templated = templated.replace(latest, "${version}")
     elif "$version" in raw_url:
         templated = templated.replace(latest, "$version")
+
+    # Restore $name only at path/filename token boundaries, never as an
+    # arbitrary substring of a host or repository owner.
+    if "${name}" in raw_url:
+        templated = re.sub(rf"(?:(?<=/)|(?<=-)|(?<=_))({re.escape(meta.name)})(?=(?:/|-|_|\.|$))", "${name}", templated)
+    elif "$name" in raw_url:
+        templated = re.sub(rf"(?:(?<=/)|(?<=-)|(?<=_))({re.escape(meta.name)})(?=(?:/|-|_|\.|$))", "$name", templated)
     return f"{alias}::{templated}" if alias else templated
 
 
@@ -555,6 +579,20 @@ def versioned_local_patches(meta: Meta, old: str) -> list[str]:
     ]
 
 
+
+def stale_versioned_remote_companions(meta: Meta, primary_url: str, old: str, latest: str) -> list[str]:
+    """Return remote secondary sources still pinned to the previous version."""
+    if not old or old == latest:
+        return []
+    stale = []
+    for src in meta.sources:
+        url = source_url(src)
+        if not url or url == primary_url:
+            continue
+        if old in url:
+            stale.append(url)
+    return stale
+
 def decompress_patch(path: Path, out: Path) -> Path:
     if path.name.endswith(".gz"):
         tool = ["gzip", "-dc"]
@@ -678,6 +716,16 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         problems = inventory_local_companions(proposed, staged, row.current)
         if problems:
             raise UpdateError("; ".join(problems))
+
+        primary_url = source_url(row.source) or row.source
+        stale_remote = stale_versioned_remote_companions(
+            proposed, primary_url, row.current, row.latest
+        )
+        if stale_remote:
+            raise UpdateError(
+                "version-specific secondary remote source requires review: "
+                + ", ".join(stale_remote)
+            )
         if apply:
             validate_changed_remote_archives(before, proposed, timeout)
 

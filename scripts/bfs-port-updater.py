@@ -611,7 +611,14 @@ def candidate_source_url(meta: PortMeta, target: str) -> str:
     if meta.rel == "opt/libsecret":
         return f"https://download.gnome.org/sources/libsecret/{gnome_series(target)}/libsecret-{target}.tar.xz"
     if meta.rel == "opt/lmdb":
-        return f"https://github.com/LMDB/lmdb/archive/LMDB_{target}.tar.gz"
+        # LMDB 1.x release archives are published from the canonical OpenLDAP
+        # repository.  The GitHub LMDB mirror does not publish GitHub releases
+        # and the old /archive/LMDB_$version form can 404 for valid releases.
+        return f"https://git.openldap.org/openldap/openldap/-/archive/LMDB_{target}/openldap-LMDB_{target}.tar.bz2"
+    if meta.rel == "opt/libcap-ng":
+        # Upstream moved release distribution away from people.redhat.com in
+        # the 0.9 series.  Keep the verified stevegrubb/libcap-ng identity.
+        return f"https://github.com/stevegrubb/libcap-ng/archive/refs/tags/v{target}.tar.gz"
     if meta.rel == "opt/nodejs":
         return f"https://nodejs.org/dist/v{target}/node-v{target}.tar.xz"
 
@@ -655,7 +662,17 @@ def special_browser_reference(meta: PortMeta, timeout: int) -> tuple[str, str, s
         if meta.name in {"firefox", "firefox-esr"}:
             data = json.loads(fetch_text("https://product-details.mozilla.org/1.0/firefox_versions.json", timeout))
             if meta.name == "firefox-esr":
-                ver = str(data.get("FIREFOX_ESR") or "")
+                # Mozilla publishes two ESR keys during overlap periods: the
+                # older supported ESR in FIREFOX_ESR and the newer/current
+                # train in FIREFOX_ESR_NEXT.  Prefer the newest comparable
+                # ESR release rather than silently pinning BFSOS to the older
+                # train merely because FIREFOX_ESR remains populated.
+                esr_values = [
+                    str(data.get("FIREFOX_ESR") or ""),
+                    str(data.get("FIREFOX_ESR_NEXT") or ""),
+                ]
+                esr_values = [v for v in esr_values if v]
+                ver = max(esr_values, key=version_key) if esr_values else ""
                 provider = "Mozilla ESR"
             else:
                 ver = str(data.get("LATEST_FIREFOX_VERSION") or "")
@@ -1440,10 +1457,161 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
     return results
 
 
+def snapshot_selected_ports(selected: set[str], ports_root: Path) -> Path | None:
+    """Snapshot selected port directories before apply+build validation."""
+    if not selected:
+        return None
+    root = Path(tempfile.mkdtemp(prefix="bfs-port-updater-build-backup-"))
+    for rel in sorted(selected):
+        src = ports_root / rel
+        if src.is_dir():
+            dst = root / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(src, dst, symlinks=True)
+    return root
+
+
+def read_build_work_backend(port_dir: Path) -> str:
+    """Read BFSOS simple top-level build_work= metadata without sourcing Pkgfile."""
+    pkgfile = port_dir / "Pkgfile"
+    if not pkgfile.is_file():
+        return "tmpfs"
+    rx = re.compile(r"^\s*build_work\s*=\s*[\"']?([^\"'\s#]+)")
+    for line in pkgfile.read_text(errors="replace").splitlines():
+        m = rx.match(line)
+        if not m:
+            continue
+        value = m.group(1).strip().lower()
+        if value not in {"tmpfs", "disk"}:
+            raise ValueError(f"invalid build_work={value}; expected tmpfs or disk")
+        return value
+    return "tmpfs"
+
+
+def _pkgmk_conf_path_value(var: str, fallback: str) -> str:
+    """Read a simple BFSOS pkgmk.conf path assignment without sourcing shell."""
+    conf = Path("/etc/pkgmk.conf")
+    if conf.is_file():
+        rx = re.compile(rf"^\s*{re.escape(var)}\s*=\s*[\"']?([^\"'\n]+)")
+        for line in conf.read_text(errors="replace").splitlines():
+            m = rx.match(line)
+            if not m:
+                continue
+            raw = m.group(1).strip()
+            # BFSOS uses ${VAR:-/default/path} for the disk root. Extract only
+            # the literal default; never evaluate arbitrary shell syntax.
+            default_m = re.fullmatch(r"\$\{[A-Za-z_][A-Za-z0-9_]*:-([^}]+)\}", raw)
+            if default_m:
+                return default_m.group(1)
+            if raw.startswith("/"):
+                return raw
+    return fallback
+
+
+def build_work_roots() -> dict[str, Path]:
+    """Return the effective BFSOS work roots used by pkgmk.conf."""
+    tmpfs_root = _pkgmk_conf_path_value("PKGMK_TMPFS_WORK_ROOT", "/var/cache/pkg/build-work")
+    disk_default = _pkgmk_conf_path_value("PKGMK_DISK_WORK_ROOT", "/var/cache/pkg/build-work-disk")
+    disk_root = os.environ.get("PKGMK_DISK_WORK_ROOT", disk_default)
+    return {"tmpfs": Path(tmpfs_root), "disk": Path(disk_root)}
+
+
+def _existing_fs_probe(path: Path) -> Path:
+    """Find an existing path on the same prospective filesystem for statvfs."""
+    probe = path
+    while not probe.exists() and probe != probe.parent:
+        probe = probe.parent
+    return probe
+
+
+def build_work_preflight(backend: str) -> dict[str, object]:
+    """Inspect the actual filesystem that will hold pkgmk build work."""
+    root = build_work_roots()[backend]
+    probe = _existing_fs_probe(root)
+    st = os.statvfs(probe)
+    free_bytes = st.f_bavail * st.f_frsize
+    free_inodes = st.f_favail
+    # Deliberately only an "effectively full" guard, not a package size
+    # estimate. This catches a saturated tmpfs before launching pkgmk.
+    min_bytes = 512 * 1024 * 1024
+    min_inodes = 1024
+    ok = free_bytes >= min_bytes and free_inodes >= min_inodes
+    return {
+        "backend": backend,
+        "root": root,
+        "probe": probe,
+        "free_bytes": free_bytes,
+        "free_inodes": free_inodes,
+        "ok": ok,
+    }
+
+
+def format_bytes(value: int) -> str:
+    n = float(max(0, value))
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if n < 1024 or unit == "TiB":
+            return f"{n:.1f}{unit}" if unit != "B" else f"{int(n)}B"
+        n /= 1024
+    return f"{int(value)}B"
+
+
+def pkgmk_build_command(backend: str) -> list[str]:
+    """Use the BFSOS wrapper when installed; always export the chosen backend."""
+    wrapper = shutil.which("bfs-pkgmk")
+    tool = wrapper if wrapper else "pkgmk"
+    return ["sudo", "env", f"BFS_PKG_BUILD_WORK={backend}", tool, "-d", "-kw"]
+
+
+def is_enospc_output(text: str) -> bool:
+    low = text.lower()
+    return (
+        "no space left on device" in low
+        or "enospc" in low
+        or "errno 28" in low
+        or "error 28" in low
+    )
+
+
+def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: dict[str, str], backup_root: Path | None) -> None:
+    """Restore pre-apply port state when validation never produced a package.
+
+    A failed build must not leave the tree claiming a version that was never
+    successfully packaged. Successful builds (including later install failures)
+    remain applied so they can be retried without discarding verified port work.
+    Infrastructure failures and workspace-blocked ports are also restored.
+    """
+    if backup_root is None:
+        return
+    try:
+        rollback_prefixes = (
+            "BUILD FAILED",
+            "INFRASTRUCTURE FAILED:",
+            "BLOCKED: build workspace out of space",
+            "BLOCKED: build workspace preflight failed",
+        )
+        for rel in sorted(selected):
+            result = results.get(rel, "")
+            if not result.startswith(rollback_prefixes):
+                continue
+            saved = backup_root / rel
+            current = ports_root / rel
+            if not saved.is_dir():
+                continue
+            failed = result
+            if current.exists():
+                shutil.rmtree(current)
+            current.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(saved, current, symlinks=True)
+            results[rel] = f"ROLLED BACK: {failed}"
+    finally:
+        shutil.rmtree(backup_root, ignore_errors=True)
+
+
 def build_selected(cands, selected, ports_root: Path, install: bool, results):
     ordered = sorted(cands, key=lambda c: _build_rank(c.port))
     failed_groups: set[str] = set()
     unstaged_groups: set[str] = set()
+    enospc_abort = False
 
     # Build-only mode deliberately does not alter the live package database.
     # For version-locked SDK groups that means a later member cannot safely be
@@ -1458,6 +1626,10 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
     for c in ordered:
         if c.port not in selected or results.get(c.port) != "UPDATED":
             continue
+        if enospc_abort:
+            results[c.port] = "BLOCKED: build workspace out of space after prior ENOSPC infrastructure failure"
+            continue
+
         group = next((g for g, members in VERSION_LOCK_GROUPS.items() if c.port in members), "")
         if group and group in failed_groups:
             results[c.port] = f"BLOCKED: {group} prior genuine build/install failure"
@@ -1467,12 +1639,55 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             continue
 
         port_dir = ports_root/c.port
-        cp = run(["sudo","pkgmk","-d","-kw"], cwd=port_dir)
+        try:
+            backend = read_build_work_backend(port_dir)
+        except ValueError as exc:
+            results[c.port] = f"BLOCKED: build workspace preflight failed: {exc}"
+            continue
+
+        try:
+            preflight = build_work_preflight(backend)
+        except OSError as exc:
+            results[c.port] = f"BLOCKED: build workspace preflight failed: backend={backend}: {exc}"
+            continue
+
+        root = preflight["root"]
+        free_b = int(preflight["free_bytes"])
+        free_i = int(preflight["free_inodes"])
+        diag = (
+            f"backend={backend} root={root} "
+            f"free={format_bytes(free_b)} inodes={free_i}"
+        )
+        print(f"BUILD-WORK {c.port}: {diag}")
+        if not preflight["ok"]:
+            results[c.port] = f"BLOCKED: build workspace preflight failed: effectively full; {diag}"
+            continue
+
+        # Use bfs-pkgmk when available so the updater follows the same ABI,
+        # build-work, payload-validation, and history policy as normal BFSOS
+        # package builds. Export the already-resolved backend explicitly so a
+        # selected port cannot silently fall back to tmpfs.
+        cp = run(pkgmk_build_command(backend), cwd=port_dir, capture=True)
+        combined = (cp.stdout or "") + (cp.stderr or "")
+        if combined:
+            print(combined, end="" if combined.endswith("\n") else "\n")
+        log_stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        safe_port = c.port.replace("/", "-")
+        build_log = LOG_ROOT / f"build-{log_stamp}-{safe_port}.log"
+        LOG_ROOT.mkdir(parents=True, exist_ok=True)
+        build_log.write_text(f"# BFSOS build-work: {diag}\n" + combined)
         if cp.returncode:
             suffix = "; obsolete patches retained" if c.obsolete_patches else ""
-            results[c.port] = f"BUILD FAILED ({cp.returncode}){suffix}"
-            if group:
-                failed_groups.add(group)
+            if is_enospc_output(combined):
+                results[c.port] = (
+                    f"INFRASTRUCTURE FAILED: build workspace out of space; "
+                    f"{diag}; log={build_log}{suffix}"
+                )
+                enospc_abort = True
+            else:
+                results[c.port] = f"BUILD FAILED ({cp.returncode}); log={build_log}{suffix}"
+                if group:
+                    failed_groups.add(group)
             continue
 
         results[c.port] = "BUILT"
@@ -1585,8 +1800,11 @@ def main():
         for w in warnings: print(f"WARN: {w}",file=sys.stderr)
         print_report(cands)
         selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
+        build_backup = snapshot_selected_ports(selected, ports_root) if ns.apply and ns.build else None
         results=apply_selected(cands,selected,ports_root,ns.timeout) if ns.apply else {}
-        if ns.apply and ns.build: build_selected(cands,selected,ports_root,ns.install,results)
+        if ns.apply and ns.build:
+            build_selected(cands,selected,ports_root,ns.install,results)
+            rollback_failed_build_ports(selected, ports_root, results, build_backup)
         log=LOG_ROOT/f"scan-{stamp}.tsv"
         write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
         print(f"Report: {log}")
@@ -1673,8 +1891,11 @@ def main():
                           summary+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","17","88"],env)
             if code:
                 continue
+            build_backup = snapshot_selected_ports(selected, ports_root) if mode in {"2","3"} else None
             results=apply_selected(cands,selected,ports_root,ns.timeout)
-            if mode in {"2","3"}: build_selected(cands,selected,ports_root,mode=="3",results)
+            if mode in {"2","3"}:
+                build_selected(cands,selected,ports_root,mode=="3",results)
+                rollback_failed_build_ports(selected, ports_root, results, build_backup)
             log=LOG_ROOT/f"scan-{stamp}.tsv"
             write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
             text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."
