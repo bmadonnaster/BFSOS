@@ -2,7 +2,7 @@
 # URL: https://www.kernel.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=linux-headers
-version=6.18.54
+version=6.18.55
 release=1
 # Keep libc/userspace headers aligned with the BFSOS default kernel line.
 # The optional current/mainline kernel remains separately available as `linux`.
