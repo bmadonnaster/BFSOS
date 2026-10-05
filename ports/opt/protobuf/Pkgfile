@@ -2,8 +2,8 @@
 # Depends on: cmake abseil-cpp
 
 name=protobuf
-version=36.1
-release=2
+version=36.2
+release=1
 
 keep_static=1
 

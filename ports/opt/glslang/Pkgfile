@@ -2,8 +2,8 @@
 # Depends on: cmake spirv-tools
 
 name=glslang
-version=16.5.0
-release=2
+version=16.6.0
+release=1
 source=(https://github.com/KhronosGroup/glslang/archive/$version/$name-sdk-$version.tar.gz)
 build_opt="-D CMAKE_INSTALL_PREFIX=/usr
       -D CMAKE_BUILD_TYPE=Release

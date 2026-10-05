@@ -10,7 +10,6 @@ exception and follow the BFSOS kernel policy.
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
 import csv
 import dataclasses
 import datetime as dt
@@ -24,7 +23,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request, urlopen
 
@@ -100,14 +98,6 @@ class PatchSpec:
 
 
 @dataclasses.dataclass
-class ArchReference:
-    version: str = ""
-    upstream_url: str = ""
-    verified: bool = False
-    reason: str = ""
-
-
-@dataclasses.dataclass
 class Candidate:
     port: str
     name: str
@@ -159,50 +149,13 @@ def normalize_name(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", value.lower().replace("c++", "cpp"))
 
 
-def normalize_version(value: str) -> str:
-    """Normalize cosmetic separators without changing the version lineage."""
-    value = value.strip().lower().replace("~", ".")
-    value = re.sub(r"[-_]+", ".", value)
-    value = re.sub(r"\.+", ".", value).strip(".")
-    return value
-
-
 def version_key(value: str):
-    value = normalize_version(value)
-    return tuple((0, int(p)) if p.isdigit() else (1, p)
-                 for p in re.split(r"([0-9]+)", value) if p and p != ".")
-
-
-def versions_equivalent(a: str, b: str) -> bool:
-    return normalize_version(a) == normalize_version(b)
+    return tuple((0, int(p)) if p.isdigit() else (1, p.lower())
+                 for p in re.split(r"([0-9]+)", value.replace("~", "-").replace("_", ".")) if p)
 
 
 def newer(candidate: str, current: str) -> bool:
-    if versions_equivalent(candidate, current):
-        return False
     return version_key(candidate) > version_key(current)
-
-
-def versions_comparable(candidate: str, current: str) -> bool:
-    """Reject obviously incompatible downstream version-numbering lineages.
-
-    This is intentionally conservative.  A same-name package using a bare integer
-    downstream generation (for example Arch signify 33) must not be compared to
-    a dotted upstream release such as 0.14 without an explicit normalization rule.
-    """
-    ca = normalize_version(candidate)
-    cu = normalize_version(current)
-    if ca == cu:
-        return True
-    cnums = re.findall(r"\d+", ca)
-    unums = re.findall(r"\d+", cu)
-    if not cnums or not unums:
-        return False
-    c_bare = ca.isdigit()
-    u_bare = cu.isdigit()
-    if c_bare != u_bare and (len(cnums) == 1 or len(unums) == 1):
-        return False
-    return True
 
 
 def same_series(a: str, b: str, components: int = 2) -> bool:
@@ -436,37 +389,25 @@ def run_upstream_audit(ports_root: Path, trees: list[str], jobs: int, timeout: i
 
 
 def crux_reference_version(meta: PortMeta, timeout: int = 10) -> str:
-    """Best-effort official CRUX reference with a strict per-port time budget.
-
-    CRUX is only a secondary reference source. A slow or unreachable rsync
-    endpoint must never make a BFSOS tree scan appear hung.
-    """
+    """Best-effort official CRUX reference. Never authorizes an update."""
     if not shutil.which("rsync"):
         return ""
+    # CRUX PortDB currently exposes the official 3.8 repositories. Query the
+    # small Pkgfile directly; failure simply means no CRUX reference was found.
     names = [meta.name, meta.path.name]
     if meta.name.startswith("python3-"):
         names.append(meta.name)
     collections = ("core", "opt", "xorg", "compat-32", "contrib")
-
-    # Cap the entire CRUX lookup for one BFSOS port. The old implementation
-    # could spend timeout * names * collections seconds here.
-    budget = max(1.0, min(float(timeout), 5.0))
-    deadline = time.monotonic() + budget
     with tempfile.TemporaryDirectory(prefix="bfs-crux-ref-") as td_s:
         dest = Path(td_s) / "Pkgfile"
         for name in dict.fromkeys(names):
             for collection in collections:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    return ""
-                attempt = max(1, min(2, int(remaining + 0.999)))
                 dest.unlink(missing_ok=True)
                 try:
                     cp = subprocess.run(
-                        ["rsync", "--contimeout", str(attempt), "--timeout", str(attempt), "-q",
+                        ["rsync", "--contimeout", "5", "--timeout", str(timeout), "-q",
                          f"rsync://crux.nu/ports/crux-3.8/{collection}/{name}/Pkgfile", str(dest)],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                        timeout=min(remaining, attempt + 0.5),
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout + 3,
                     )
                 except (subprocess.TimeoutExpired, OSError):
                     continue
@@ -477,67 +418,8 @@ def crux_reference_version(meta: PortMeta, timeout: int = 10) -> str:
     return ""
 
 
-def _remote_source_urls(meta: PortMeta) -> list[str]:
-    urls = []
-    for src in meta.sources:
-        raw = src.split("::", 1)[-1] if "::" in src else src
-        if raw.startswith(("http://", "https://", "ftp://")):
-            urls.append(raw)
-    return urls
-
-
-def _project_identity(url: str) -> tuple[str, str]:
-    """Return a conservative (host, project-path) identity for an upstream URL."""
-    if not url:
-        return "", ""
-    try:
-        u = urlsplit(url)
-    except Exception:
-        return "", ""
-    host = (u.hostname or "").lower().removeprefix("www.")
-    path = re.sub(r"/+", "/", u.path or "").strip("/")
-    path = re.sub(r"\.(?:git|tar|tar\.gz|tar\.xz|tgz|zip)$", "", path, flags=re.I)
-
-    # Repository hosts: owner/project is the stable identity.
-    if host == "github.com":
-        parts = path.split("/")
-        return (host, "/".join(parts[:2]).lower()) if len(parts) >= 2 else (host, path.lower())
-    if "gitlab" in host:
-        path = path.split("/-/", 1)[0]
-        parts = path.split("/")
-        return (host, "/".join(parts[:2]).lower()) if len(parts) >= 2 else (host, path.lower())
-    if host.endswith("kernel.org"):
-        # kernel.org snapshot URLs and repository URLs share the .git path.
-        m = re.search(r"(.+?\.git)(?:/|$)", u.path, re.I)
-        return host, (m.group(1).strip("/").lower() if m else path.lower())
-
-    return host, path.lower()
-
-
-def arch_identity_matches(meta: PortMeta, arch_url: str) -> tuple[bool, str]:
-    """Verify an Arch package's upstream URL against the BFSOS port sources."""
-    ahost, aproj = _project_identity(arch_url)
-    if not ahost:
-        return False, "Arch package has no usable upstream URL"
-
-    local = [_project_identity(u) for u in _remote_source_urls(meta)]
-    local = [(h, p) for h, p in local if h]
-    for lhost, lproj in local:
-        if lhost != ahost:
-            continue
-        if lproj == aproj:
-            return True, f"same upstream identity {ahost}/{aproj}"
-        # For non-forge hosts, accept only when the package/project stem appears
-        # in both paths on the same host. This handles release/archive subdirs
-        # without reducing identity verification to package-name equality alone.
-        stem = normalize_name(meta.name.removesuffix("-32"))
-        if stem and stem in normalize_name(lproj) and stem in normalize_name(aproj):
-            return True, f"same upstream host/project stem {ahost} ({meta.name})"
-    return False, "Arch upstream does not match BFSOS source identity"
-
-
-def arch_reference(meta: PortMeta, timeout: int = 10) -> ArchReference:
-    """Best-effort Arch reference, accepted only after upstream identity checks."""
+def arch_reference_version(meta: PortMeta, timeout: int = 10) -> str:
+    """Best-effort exact-name Arch package reference. Never authorizes an update."""
     import urllib.parse
     for name in dict.fromkeys([meta.name, meta.path.name]):
         try:
@@ -546,95 +428,15 @@ def arch_reference(meta: PortMeta, timeout: int = 10) -> ArchReference:
         except Exception:
             continue
         for item in data.get("results", []):
-            if item.get("pkgname") != name or not item.get("pkgver"):
-                continue
-            version = str(item["pkgver"])
-            upstream_url = str(item.get("url") or "")
-            verified, reason = arch_identity_matches(meta, upstream_url)
-            if not verified:
-                return ArchReference(version, upstream_url, False, reason)
-            if not versions_comparable(version, meta.version):
-                return ArchReference(
-                    version, upstream_url, False,
-                    f"incompatible version lineage {meta.version} vs {version}",
-                )
-            return ArchReference(version, upstream_url, True, reason)
-    return ArchReference()
-
-
-def arch_reference_version(meta: PortMeta, timeout: int = 10) -> str:
-    """Compatibility wrapper for older callers/tests."""
-    ref = arch_reference(meta, timeout)
-    return ref.version if ref.verified else ""
-
-
-def prefetch_fallback_references(
-    metas: list[PortMeta],
-    indexes: dict[str, dict[str, str]],
-    timeout: int,
-    jobs: int,
-    diagnostics: list[str] | None = None,
-) -> dict[str, tuple[str, ArchReference]]:
-    """Resolve CRUX/Arch fallbacks concurrently for non-LFS-mapped ports.
-
-    Candidate identity remains the full BFSOS port path.  The work is parallel,
-    bounded, and progress is printed so a large Core scan never looks frozen.
-    """
-    diagnostics = diagnostics if diagnostics is not None else []
-    targets = [
-        m for m in metas
-        if m.name not in KERNEL_PORTS and lookup_book(m, indexes) is None
-    ]
-    if not targets:
-        return {}
-
-    workers = max(1, min(int(jobs or 1), 12, len(targets)))
-    crux_timeout = max(1, min(int(timeout), 5))
-    arch_timeout = max(1, min(int(timeout), 5))
-    results: dict[str, tuple[str, ArchReference]] = {}
-
-    def one(meta: PortMeta) -> tuple[str, str, ArchReference]:
-        crux_v = crux_reference_version(meta, crux_timeout)
-        # A same/older CRUX reference does not block a newer verified Arch
-        # release. A newer CRUX release is already a valid conservative candidate.
-        if crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v):
-            return meta.rel, crux_v, ArchReference()
-        arch_ref = arch_reference(meta, arch_timeout)
-        return meta.rel, crux_v, arch_ref
-
-    print(
-        f"Fallback references: checking {len(targets)} non-LFS ports "
-        f"with {workers} workers (CRUX/Arch max {crux_timeout}s each)...",
-        file=sys.stderr,
-        flush=True,
-    )
-    done = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        future_map = {pool.submit(one, meta): meta for meta in targets}
-        for fut in concurrent.futures.as_completed(future_map):
-            meta = future_map[fut]
-            try:
-                rel, crux_v, arch_ref = fut.result()
-            except Exception as exc:
-                rel, crux_v, arch_ref = meta.rel, "", ArchReference(reason=f"lookup error: {exc}")
-                diagnostics.append(f"{meta.rel}\tfallback lookup error\t{exc}")
-            results[rel] = (crux_v, arch_ref)
-            done += 1
-            if done == 1 or done % 10 == 0 or done == len(targets):
-                print(
-                    f"... fallback checked {done}/{len(targets)}",
-                    file=sys.stderr,
-                    flush=True,
-                )
-    return results
+            if item.get("pkgname") == name and item.get("pkgver"):
+                return str(item["pkgver"])
+    return ""
 
 
 def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec], upstream, timeout: int,
-                    diagnostics: list[str] | None = None,
-                    fallback_refs: dict[str, tuple[str, ArchReference]] | None = None) -> list[Candidate]:
+                    diagnostics: list[str] | None = None) -> list[Candidate]:
     out: list[Candidate] = []; by_name = {m.name: m for m in metas}
     diagnostics = diagnostics if diagnostics is not None else []
-    fallback_refs = fallback_refs or {}
     # Kernel candidates first so headers can track the proposed LTS point release.
     lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
     for meta in metas:
@@ -730,16 +532,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         # already returned UPDATE, which silently omitted otherwise-verifiable
         # Core (and other tree) updates.
         diagnostics.append(f"{meta.rel}\tnot LFS-mapped; checking CRUX")
-        if meta.rel in fallback_refs:
-            crux_v, arch_ref = fallback_refs[meta.rel]
-        else:
-            # Direct calls are retained for unit tests and callers that do not
-            # use scan(); normal tree scans prefetch these concurrently.
-            crux_v = crux_reference_version(meta, min(timeout, 5))
-            arch_ref = ArchReference()
-            if not (crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v)):
-                arch_ref = arch_reference(meta, min(timeout, 5))
-
+        crux_v = crux_reference_version(meta, timeout)
         if crux_v:
             diagnostics.append(f"{meta.rel}\tCRUX\t{crux_v}")
         else:
@@ -750,26 +543,15 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                                  f"unmapped from LFS-family books; CRUX carries {crux_v}", False))
             continue
 
-        arch_v = arch_ref.version
+        arch_v = arch_reference_version(meta, timeout)
         if arch_v:
-            if arch_ref.verified:
-                diagnostics.append(
-                    f"{meta.rel}\tArch\t{arch_v}\tidentity verified: {arch_ref.reason}"
-                )
-            else:
-                diagnostics.append(
-                    f"{meta.rel}\tArch\t{arch_v}\trejected: {arch_ref.reason or 'identity not verified'}"
-                )
+            diagnostics.append(f"{meta.rel}\tArch\t{arch_v}")
         else:
             diagnostics.append(f"{meta.rel}\tnot found in Arch; checking upstream")
-
-        if (arch_v and arch_ref.verified
-                and not versions_equivalent(arch_v, meta.version)
-                and newer(arch_v, meta.version)
-                and family_allows(meta, arch_v)):
+        if arch_v and newer(arch_v, meta.version) and family_allows(meta, arch_v):
             out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
                                  "review", "Arch reference", "REVIEW",
-                                 f"unmapped from LFS-family books; verified same upstream; Arch carries {arch_v}", False))
+                                 f"unmapped from LFS-family books; Arch carries {arch_v}", False))
             continue
 
         row = upstream.get(meta.rel, {})
@@ -1078,8 +860,7 @@ def scan(ports_root, trees, jobs, timeout, stamp):
     metas=discover_ports(ports_root,trees); indexes,patches,warnings=load_references(timeout)
     upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit)
     diagnostics: list[str] = []
-    fallback_refs = prefetch_fallback_references(metas,indexes,timeout,jobs,diagnostics)
-    cands = make_candidates(metas,indexes,patches,upstream,timeout,diagnostics,fallback_refs)
+    cands = make_candidates(metas,indexes,patches,upstream,timeout,diagnostics)
     return cands,warnings,diagnostics
 
 

@@ -5,7 +5,7 @@
 # Optional: keyutils krb5 libcap-ng linux-pam python3-docutils samba
 
 name=cifs-utils
-version=7.7
+version=7.8
 release=1
 source=(https://www.samba.org/ftp/linux-cifs/cifs-utils/cifs-utils-$version.tar.bz2)
 

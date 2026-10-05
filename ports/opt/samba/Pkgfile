@@ -5,7 +5,7 @@
 # Optional: avahi cups cyrus-sasl fuse3 libaio libarchive libcap libgcrypt libnsl libunwind nss python3-markdown xfsprogs
 
 name=samba
-version=4.24.7
+version=4.25.0
 release=1
 
 source=(

@@ -4,8 +4,8 @@
 # Depends on: rustc libssh2 sqlite openssl pkgconf
 
 name=cargo-c
-version=0.10.24
-release=2
+version=0.10.25
+release=1
 
 source=(
   https://github.com/lu-zero/cargo-c/archive/v$version/$name-$version.tar.gz

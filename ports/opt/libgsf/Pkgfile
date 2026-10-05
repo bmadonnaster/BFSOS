@@ -4,8 +4,8 @@
 # Depends on: glib libxml2 gdk-pixbuf
 
 name=libgsf
-version=1.14.58
-release=2
+version=1.14.60
+release=1
 source=(https://download.gnome.org/sources/$name/1.14/$name-$version.tar.xz)
 
 pkg_build() {

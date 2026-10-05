@@ -4,9 +4,9 @@
 # Depends on: fontconfig glib pixman libXext libXrender xcb-util libpng
 # Optional: ghostscript gtk+-3 gtk+-2 gtk-doc libdrm librsvg libxml2 lzo mesa poppler valgrind jbig2dec libspectre Skia
 name=cairo
-version=1.18.4
-release=3
-source=(https://mirror.subgraph.com/$name-$version.tar.xz)
+version=1.18.6
+release=1
+source=(https://cairographics.org/releases/$name-$version.tar.xz)
 
 pkg_build() {
         meson setup build . --prefix=/usr --buildtype=release -Dxlib-xcb=enabled || return $?

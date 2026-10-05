@@ -5,8 +5,8 @@
 # Depends on:
 
 name=libpaper
-version=2.2.8
-release=2
+version=2.3.0
+release=1
 source=(https://github.com/rrthomas/libpaper/releases/download/v$version/$name-$version.tar.gz)
 
 pkg_build() {

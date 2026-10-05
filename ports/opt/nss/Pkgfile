@@ -4,7 +4,7 @@
 # Depends on: nspr sqlite zlib
 
 name=nss
-version=3.129
+version=3.130
 release=1
 source=(https://archive.mozilla.org/pub/security/nss/releases/NSS_${version//./_}_RTM/src/nss-$version.tar.gz
         nss-config.in

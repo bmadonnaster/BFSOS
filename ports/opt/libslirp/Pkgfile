@@ -4,7 +4,7 @@
 # Depends on: glib
 
 name=libslirp
-version=4.9.4
+version=4.9.5
 release=1
 source=(https://gitlab.freedesktop.org/slirp/libslirp/-/archive/v$version/libslirp-v$version.tar.bz2)
 

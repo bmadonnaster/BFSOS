@@ -4,8 +4,8 @@
 # Depends on: bison flex
 
 name=acpica
-version=20260408
-release=3
+version=20260930
+release=1
 source=(https://github.com/open-acpica/acpica/releases/download/$version/acpica-unix-$version.tar.gz)
 
 pkg_build() {

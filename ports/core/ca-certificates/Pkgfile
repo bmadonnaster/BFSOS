@@ -4,7 +4,7 @@
 # Depends on: coreutils
 
 name=ca-certificates
-version=20260813
+version=20260925
 release=1
 
 # The curl PEM remains a bootstrap seed for the early toolchain only.  The
