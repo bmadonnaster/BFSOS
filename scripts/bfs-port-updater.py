@@ -213,6 +213,29 @@ def newer(candidate: str, current: str) -> bool:
     return version_key(candidate) > version_key(current)
 
 
+def comparison_version(meta: PortMeta, value: str) -> str:
+    """Return a package-scoped comparable version without changing stored versions."""
+    value = value.strip()
+    # TeX Live source archives use a cosmetic "-source" suffix for the same
+    # dated release. Keep this narrow: suffixes for unrelated packages retain
+    # their normal version semantics.
+    if meta.name == "texlive":
+        value = re.sub(r"-source$", "", value, flags=re.I)
+    return value
+
+
+def versions_equivalent_for_port(meta: PortMeta, a: str, b: str) -> bool:
+    return versions_equivalent(comparison_version(meta, a), comparison_version(meta, b))
+
+
+def newer_for_port(meta: PortMeta, candidate: str, current: str) -> bool:
+    candidate_cmp = comparison_version(meta, candidate)
+    current_cmp = comparison_version(meta, current)
+    if versions_equivalent(candidate_cmp, current_cmp):
+        return False
+    return version_key(candidate_cmp) > version_key(current_cmp)
+
+
 def versions_comparable(candidate: str, current: str) -> bool:
     """Reject obviously incompatible downstream version-numbering lineages.
 
@@ -900,9 +923,9 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             if meta.rel in SAME_SERIES_UPSTREAM_OVERRIDES:
                 upstream_latest = row.get("latest", "")
                 if (row.get("status") == "UPDATE" and upstream_latest
-                        and newer(upstream_latest, meta.version)
+                        and newer_for_port(meta, upstream_latest, meta.version)
                         and same_series(upstream_latest, meta.version)
-                        and (target == meta.version or newer(upstream_latest, target))):
+                        and (target == meta.version or newer_for_port(meta, upstream_latest, target))):
                     diagnostics.append(f"{meta.rel}\tMLFS {target}; same-series upstream override {upstream_latest}")
                     target = upstream_latest
                     policy = "upstream-point-release"
@@ -912,9 +935,9 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             current_patches = set(local_patch_names(meta))
             required_names = {p.filename for p in required}
             patch_change = bool(required_names - current_patches or obsolete)
-            if versions_equivalent(target, meta.version) and not patch_change:
+            if versions_equivalent_for_port(meta, target, meta.version) and not patch_change:
                 continue
-            if target != meta.version and not newer(target, meta.version):
+            if target != meta.version and not newer_for_port(meta, target, meta.version):
                 continue
             if not family_allows(meta, target):
                 diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{target}")
@@ -956,7 +979,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         else:
             crux_v = crux_reference_version(meta, min(timeout, 5))
             arch_ref = ArchReference()
-            if not (crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v)):
+            if not (crux_v and newer_for_port(meta, crux_v, meta.version) and family_allows(meta, crux_v)):
                 arch_ref = arch_reference(meta, min(timeout, 5))
 
         if crux_v:
@@ -964,14 +987,14 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         else:
             diagnostics.append(f"{meta.rel}\tnot found in CRUX; checking Arch")
         arch_v = arch_ref.version
-        crux_newer = bool(crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v))
+        crux_newer = bool(crux_v and newer_for_port(meta, crux_v, meta.version) and family_allows(meta, crux_v))
         arch_newer = bool(arch_v and arch_ref.verified
-                          and newer(arch_v, meta.version)
+                          and newer_for_port(meta, arch_v, meta.version)
                           and family_allows(meta, arch_v))
         # Prefer the newer verified reference. CRUX remains the first lookup, but
         # it does not artificially cap BFSOS when Arch is positively verified as
         # the same upstream project and carries a newer comparable release.
-        if crux_newer and not (arch_newer and newer(arch_v, crux_v)):
+        if crux_newer and not (arch_newer and newer_for_port(meta, arch_v, crux_v)):
             out.append(Candidate(meta.rel, meta.name, meta.version, crux_v, meta.release, "1",
                                  "review", "CRUX reference", "REVIEW",
                                  f"not MLFS-authoritative; CRUX carries {crux_v}", False,
@@ -987,8 +1010,8 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             diagnostics.append(f"{meta.rel}\tnot found in Arch; checking upstream")
 
         if (arch_v and arch_ref.verified
-                and not versions_equivalent(arch_v, meta.version)
-                and newer(arch_v, meta.version)
+                and not versions_equivalent_for_port(meta, arch_v, meta.version)
+                and newer_for_port(meta, arch_v, meta.version)
                 and family_allows(meta, arch_v)):
             out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
                                  "review", "Arch reference", "REVIEW",
@@ -997,7 +1020,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             continue
 
         row = upstream.get(meta.rel, {})
-        if row.get("status") == "UPDATE" and row.get("latest") and newer(row["latest"], meta.version):
+        if row.get("status") == "UPDATE" and row.get("latest") and newer_for_port(meta, row["latest"], meta.version):
             if family_allows(meta, row["latest"]):
                 diagnostics.append(f"{meta.rel}\tupstream\t{row['latest']}")
                 out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
@@ -1009,7 +1032,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
 
         # Explicit browser providers fill generic discovery blind spots.
         browser_v, browser_provider, browser_source = special_browser_reference(meta, timeout)
-        if browser_v and newer(browser_v, meta.version) and family_allows(meta, browser_v):
+        if browser_v and newer_for_port(meta, browser_v, meta.version) and family_allows(meta, browser_v):
             diagnostics.append(f"{meta.rel}\tbrowser-provider\t{browser_provider}\t{browser_v}")
             out.append(Candidate(meta.rel, meta.name, meta.version, browser_v, meta.release, "1",
                                  "review", browser_provider, "REVIEW",
@@ -1018,7 +1041,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             continue
 
         # A reference-book target is a final conservative lead, never automatic.
-        if btarget and newer(btarget, meta.version) and family_allows(meta, btarget):
+        if btarget and newer_for_port(meta, btarget, meta.version) and family_allows(meta, btarget):
             ok, why_exact, exact_url = validate_exact_target(meta, btarget, timeout)
             if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS and not ok:
                 diagnostics.append(f"{meta.rel}\t{blabel} target rejected\t{btarget}\t{why_exact}")
@@ -1299,22 +1322,39 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
 
 def build_selected(cands, selected, ports_root: Path, install: bool, results):
     ordered = sorted(cands, key=lambda c: _build_rank(c.port))
-    blocked_groups: set[str] = set()
+    failed_groups: set[str] = set()
+    unstaged_groups: set[str] = set()
+
+    # Build-only mode deliberately does not alter the live package database.
+    # For version-locked SDK groups that means a later member cannot safely be
+    # validated after an earlier prerequisite was rebuilt unless that new
+    # prerequisite is installed or staged. Stop at that boundary instead of
+    # reporting a misleading BUILD FAILED against the old installed SDK.
+    selected_group_members = {
+        g: [c.port for c in ordered if c.port in selected and c.port in members and results.get(c.port) == "UPDATED"]
+        for g, members in VERSION_LOCK_GROUPS.items()
+    }
+
     for c in ordered:
         if c.port not in selected or results.get(c.port) != "UPDATED":
             continue
         group = next((g for g, members in VERSION_LOCK_GROUPS.items() if c.port in members), "")
-        if group and group in blocked_groups:
-            results[c.port] = f"BLOCKED: {group} prior build failure"
+        if group and group in failed_groups:
+            results[c.port] = f"BLOCKED: {group} prior genuine build/install failure"
             continue
+        if group and group in unstaged_groups:
+            results[c.port] = f"BLOCKED: {group} updated prerequisite built but not installed/staged"
+            continue
+
         port_dir = ports_root/c.port
         cp = run(["sudo","pkgmk","-d","-kw"], cwd=port_dir)
         if cp.returncode:
             suffix = "; obsolete patches retained" if c.obsolete_patches else ""
             results[c.port] = f"BUILD FAILED ({cp.returncode}){suffix}"
             if group:
-                blocked_groups.add(group)
+                failed_groups.add(group)
             continue
+
         results[c.port] = "BUILT"
         if install:
             cp2 = run(["sudo","prt-get","-fr","depinst",c.name])
@@ -1322,12 +1362,22 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                 suffix = "; obsolete patches retained" if c.obsolete_patches else ""
                 results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}){suffix}"
                 if group:
-                    blocked_groups.add(group)
+                    failed_groups.add(group)
                 continue
             results[c.port] = "BUILT+INSTALLED"
+        elif group:
+            members = selected_group_members.get(group, [])
+            try:
+                idx = members.index(c.port)
+            except ValueError:
+                idx = -1
+            if idx >= 0 and idx < len(members) - 1:
+                unstaged_groups.add(group)
+
         for name in c.obsolete_patches:
             p = port_dir/name
-            if p.is_file(): p.unlink()
+            if p.is_file():
+                p.unlink()
     return results
 
 
