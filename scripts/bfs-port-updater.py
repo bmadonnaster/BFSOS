@@ -44,6 +44,26 @@ ALIASES = {
 }
 LOCAL_PATCH_MARKERS = ("bfs", "bfsos", "local", "custom")
 
+# Packages whose compatibility/API generation must not be crossed by generic
+# upstream discovery.  These guards complement checkupdate.py and keep the
+# maintainer UI conservative even when a provider reports a newer family.
+PACKAGE_FAMILY_MAJOR_LOCKS = {
+    "compat-32/gtk-32": 2,
+}
+
+# Coordinated SDK families must move together.  A partial update is held for
+# review until every existing member of the group has the same target version.
+VERSION_LOCK_GROUPS = {
+    "vulkan-sdk": {
+        "opt/spirv-headers", "opt/spirv-tools", "compat-32/spirv-tools-32",
+        "opt/vulkan-headers", "opt/vulkan-loader", "compat-32/vulkan-loader-32",
+        "opt/vulkan-tools", "compat-32/vulkan-tools-32",
+        "opt/vulkan-utility-libraries", "compat-32/vulkan-utility-libraries-32",
+        "opt/volk", "compat-32/volk-32",
+        "opt/vulkan-validation-layers", "compat-32/vulkan-validation-layers-32",
+    },
+}
+
 
 @dataclasses.dataclass
 class PortMeta:
@@ -121,6 +141,38 @@ def version_key(value: str):
 
 def newer(candidate: str, current: str) -> bool:
     return version_key(candidate) > version_key(current)
+
+
+def major_component(value: str) -> str:
+    m = re.search(r"\d+", value)
+    return m.group(0) if m else ""
+
+
+def family_allows(meta: PortMeta, target: str) -> bool:
+    locked = PACKAGE_FAMILY_MAJOR_LOCKS.get(meta.rel)
+    if locked is None:
+        return True
+    return major_component(meta.version) == str(locked) and major_component(target) == str(locked)
+
+
+def enforce_version_lock_groups(cands: list[Candidate], metas: list[PortMeta]) -> None:
+    """Hold partial coordinated SDK updates instead of applying a mixed stack."""
+    by_port = {c.port: c for c in cands}
+    ports_root = metas[0].path.parent.parent if metas else DEFAULT_PORTS_ROOT
+    existing = {rel for rel in set().union(*VERSION_LOCK_GROUPS.values()) if (ports_root / rel / "Pkgfile").is_file()}
+    for group, members in VERSION_LOCK_GROUPS.items():
+        present = sorted(existing & members)
+        proposed = [by_port[p] for p in present if p in by_port and by_port[p].new != by_port[p].old]
+        if not proposed:
+            continue
+        targets = {c.new for c in proposed}
+        untouched = [p for p in present if p not in by_port or by_port[p].new == by_port[p].old]
+        if len(targets) != 1 or untouched:
+            detail = f"{group} must update as one version-locked set"
+            for c in proposed:
+                c.status = "REVIEW"
+                c.selected = False
+                c.reason = f"{c.reason}; {detail}"
 
 
 def source_filename(src: str) -> str:
@@ -356,8 +408,10 @@ def arch_reference_version(meta: PortMeta, timeout: int = 10) -> str:
     return ""
 
 
-def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec], upstream, timeout: int) -> list[Candidate]:
+def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec], upstream, timeout: int,
+                    diagnostics: list[str] | None = None) -> list[Candidate]:
     out: list[Candidate] = []; by_name = {m.name: m for m in metas}
+    diagnostics = diagnostics if diagnostics is not None else []
     # Kernel candidates first so headers can track the proposed LTS point release.
     lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
     for meta in metas:
@@ -385,6 +439,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         book = lookup_book(meta, indexes)
         if book:
             policy, target = book; label = next(x[1] for x in BOOKS if x[0] == policy)
+            diagnostics.append(f"{meta.rel}\tLFS-mapped\t{label}\t{target}")
             required = relevant_patches(meta, mlfs_patches) if policy == "mlfs-dev" else []
             obsolete = likely_book_obsolete(meta, required) if policy == "mlfs-dev" else []
             current_patches = set(local_patch_names(meta)); required_names = {p.filename for p in required}
@@ -394,33 +449,68 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             # authoritative book value, it is not an update candidate at all.
             if target != meta.version and not newer(target, meta.version):
                 continue
+            if not family_allows(meta, target):
+                diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{target}")
+                continue
             new_rel = "1" if target != meta.version else str(int(meta.release) + 1 if meta.release.isdigit() else meta.release)
             why = "authoritative development-book version"
             if patch_change and target == meta.version: why = "development-book patch set changed; packaging release bump"
             elif patch_change: why += "; development-book patch set also changed"
+
+            # A local patch whose filename names the old package version is not
+            # automatically portable to the new release.  Hold it for explicit
+            # review unless an authoritative replacement patch was identified.
+            old_version_patches = [n for n in local_patch_names(meta) if meta.version in n]
+            status, selected = "UPDATE", True
+            if target != meta.version and old_version_patches and not required:
+                status, selected = "REVIEW", False
+                why += "; version-specific local patch requires applicability/replacement review: " + ", ".join(old_version_patches)
             out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, new_rel,
-                                 policy, label, "UPDATE", why, True, patches=required, obsolete_patches=obsolete))
+                                 policy, label, status, why, selected, patches=required, obsolete_patches=obsolete))
+            continue
+
+        # No LFS-family mapping: always run the fallback chain.  Previously the
+        # CRUX/Arch lookups only happened when generic upstream discovery had
+        # already returned UPDATE, which silently omitted otherwise-verifiable
+        # Core (and other tree) updates.
+        diagnostics.append(f"{meta.rel}\tnot LFS-mapped; checking CRUX")
+        crux_v = crux_reference_version(meta, timeout)
+        if crux_v:
+            diagnostics.append(f"{meta.rel}\tCRUX\t{crux_v}")
+        else:
+            diagnostics.append(f"{meta.rel}\tnot found in CRUX; checking Arch")
+        if crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v):
+            out.append(Candidate(meta.rel, meta.name, meta.version, crux_v, meta.release, "1",
+                                 "review", "CRUX reference", "REVIEW",
+                                 f"unmapped from LFS-family books; CRUX carries {crux_v}", False))
+            continue
+
+        arch_v = arch_reference_version(meta, timeout)
+        if arch_v:
+            diagnostics.append(f"{meta.rel}\tArch\t{arch_v}")
+        else:
+            diagnostics.append(f"{meta.rel}\tnot found in Arch; checking upstream")
+        if arch_v and newer(arch_v, meta.version) and family_allows(meta, arch_v):
+            out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
+                                 "review", "Arch reference", "REVIEW",
+                                 f"unmapped from LFS-family books; Arch carries {arch_v}", False))
             continue
 
         row = upstream.get(meta.rel, {})
         if row.get("status") == "UPDATE" and row.get("latest") and newer(row["latest"], meta.version):
-            # Secondary distribution references are advisory only. Check CRUX
-            # first, then Arch, and finally retain the generic upstream result.
-            crux_v = crux_reference_version(meta, timeout)
-            arch_v = arch_reference_version(meta, timeout)
-            label = row.get("provider") or "upstream"
-            reason = row.get("reason") or "newer version found outside LFS-family policy"
-            if crux_v and newer(crux_v, meta.version):
-                label = "CRUX reference"
-                reason = f"CRUX carries {crux_v}; upstream candidate is {row['latest']}"
-            elif arch_v and newer(arch_v, meta.version):
-                label = "Arch reference"
-                reason = f"Arch carries {arch_v}; upstream candidate is {row['latest']}"
-            out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
-                                 "review", label, "REVIEW", reason, False,
-                                 row.get("provider", ""), row.get("source", "")))
-    return sorted(out, key=lambda c: c.port)
+            if family_allows(meta, row["latest"]):
+                diagnostics.append(f"{meta.rel}\tupstream\t{row['latest']}")
+                out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
+                                     "review", row.get("provider") or "upstream", "REVIEW",
+                                     row.get("reason") or "newer version found outside LFS-family policy", False,
+                                     row.get("provider", ""), row.get("source", "")))
+            else:
+                diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{row['latest']}")
+        else:
+            diagnostics.append(f"{meta.rel}\tno newer version found")
 
+    enforce_version_lock_groups(out, metas)
+    return sorted(out, key=lambda c: c.port)
 
 def slackware_dialogrc(path: Path):
     path.write_text('''aspect = 0\nseparate_widget = ""\ntab_len = 0\nvisit_items = OFF\nuse_scrollbar = OFF\nuse_shadow = ON\nuse_colors = ON\nscreen_color = (WHITE,BLUE,OFF)\nshadow_color = (WHITE,BLACK,OFF)\ndialog_color = (BLACK,CYAN,OFF)\ntitle_color = (YELLOW,CYAN,ON)\nborder_color = (CYAN,CYAN,ON)\nbutton_active_color = (WHITE,BLUE,ON)\nbutton_inactive_color = dialog_color\nbutton_key_active_color = button_active_color\nbutton_key_inactive_color = (RED,CYAN,OFF)\nbutton_label_active_color = button_active_color\nbutton_label_inactive_color = (BLACK,CYAN,ON)\ninputbox_color = (BLUE,WHITE,OFF)\ninputbox_border_color = border_color\nsearchbox_color = (YELLOW,WHITE,ON)\nsearchbox_title_color = (WHITE,WHITE,ON)\nsearchbox_border_color = (RED,WHITE,OFF)\nposition_indicator_color = button_key_inactive_color\nmenubox_color = dialog_color\nmenubox_border_color = border_color\nitem_color = dialog_color\nitem_selected_color = screen_color\ntag_color = title_color\ntag_selected_color = screen_color\ntag_key_color = button_key_inactive_color\ntag_key_selected_color = (RED,BLUE,ON)\ncheck_color = dialog_color\ncheck_selected_color = (WHITE,CYAN,ON)\nuarrow_color = (GREEN,CYAN,ON)\ndarrow_color = uarrow_color\nitemhelp_color = shadow_color\nform_active_text_color = inputbox_color\nform_text_color = (CYAN,BLUE,ON)\nform_item_readonly_color = (CYAN,WHITE,ON)\ngauge_color = (BLUE,WHITE,ON)\nborder2_color = dialog_color\ninputbox_border2_color = dialog_color\nsearchbox_border2_color = dialog_color\nmenubox_border2_color = dialog_color\n''')
@@ -474,8 +564,15 @@ def choose_updates_dialog(cands, env):
 
 
 
+def pkgfile_fingerprint(pkgfile: Path) -> str:
+    try:
+        return hashlib.sha256(pkgfile.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
 def _port_matches_logged_target(ports_root: Path, row: dict[str, str]) -> bool:
-    """Only retry a failed build if the tree still contains the applied target."""
+    """Only retry a failed build if the tree still contains the recorded target."""
     rel = row.get("port", "")
     pkgfile = ports_root / rel / "Pkgfile"
     if not rel or not pkgfile.is_file():
@@ -488,33 +585,52 @@ def _port_matches_logged_target(ports_root: Path, row: dict[str, str]) -> bool:
         return False
     if row.get("new_release") and meta.release != row["new_release"]:
         return False
+    # New logs record the exact Pkgfile that failed.  A manual fix outside the
+    # updater invalidates that retry entry even when version/release stay equal.
+    if row.get("pkgfile_sha256") and pkgfile_fingerprint(pkgfile) != row["pkgfile_sha256"]:
+        return False
     return True
 
 
-def find_retryable_failures(ports_root: Path) -> tuple[Path | None, list[dict[str, str]]]:
-    """Find the newest scan log containing failures that still match the tree.
+def _iter_scan_rows_newest_first():
+    for log in sorted(LOG_ROOT.glob("scan-*.tsv"), reverse=True):
+        try:
+            with log.open(newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader((line for line in f if not line.startswith("#")), delimiter="\t"))
+        except (OSError, csv.Error):
+            continue
+        yield log, rows
 
-    A stale failure is ignored when the port was reverted, edited, or moved on
-    to a different version/release after that log was written.
+
+def find_retryable_failures(ports_root: Path) -> tuple[Path | None, list[dict[str, str]]]:
+    """Return only the latest active state for each failed port.
+
+    Historical failures remain in their logs, but a newer successful build,
+    retry, revert, version/release change, or Pkgfile edit makes the old failure
+    non-active and removes it from the Retry menu.
     """
     if not LOG_ROOT.is_dir():
         return None, []
-    for log in sorted(LOG_ROOT.glob("scan-*.tsv"), reverse=True):
-        rows = []
-        try:
-            with log.open(newline="", encoding="utf-8") as f:
-                for row in csv.DictReader((line for line in f if not line.startswith("#")), delimiter="\t"):
-                    result = row.get("result", "")
-                    if "BUILD FAILED" not in result and "INSTALL FAILED" not in result:
-                        continue
-                    if _port_matches_logged_target(ports_root, row):
-                        rows.append(row)
-        except (OSError, csv.Error):
-            continue
-        if rows:
-            return log, rows
-    return None, []
-
+    seen: set[str] = set()
+    retry_rows: list[dict[str, str]] = []
+    source_log: Path | None = None
+    for log, rows in _iter_scan_rows_newest_first():
+        for row in rows:
+            rel = row.get("port", "")
+            result = row.get("result", "")
+            # A scan/checklist row with no action result is historical context,
+            # not a state transition, and must not clear an older real failure.
+            if not rel or not result or rel in seen:
+                continue
+            # The newest actionable result for a port is its current updater
+            # state.  Success clears older failures; a current failure remains.
+            seen.add(rel)
+            if "BUILD FAILED" not in result and "INSTALL FAILED" not in result and "RETRY FAILED" not in result:
+                continue
+            if _port_matches_logged_target(ports_root, row):
+                retry_rows.append(row)
+                source_log = source_log or log
+    return source_log, sorted(retry_rows, key=lambda r: r.get("port", ""))
 
 def choose_retry_dialog(rows, env):
     items = []
@@ -574,16 +690,42 @@ def detail_text(cands, selected):
     return "\n\n".join(blocks)
 
 
-def write_scan_log(path, cands, selected, results, warnings):
+def write_scan_log(path, cands, selected, results, warnings, diagnostics=None, ports_root: Path | None = None):
     path.parent.mkdir(parents=True, exist_ok=True)
+    ports_root = ports_root or DEFAULT_PORTS_ROOT
     with path.open("w", encoding="utf-8") as f:
-        f.write("port\told_version\tnew_version\told_release\tnew_release\tpolicy\tsource\tstatus\tselected\tresult\treason\n")
+        f.write("port\told_version\tnew_version\told_release\tnew_release\tpolicy\tsource\tstatus\tselected\tresult\treason\tpkgfile_sha256\n")
         for c in cands:
+            fp = pkgfile_fingerprint(ports_root / c.port / "Pkgfile")
             vals = [c.port,c.old,c.new,c.old_release,c.new_release,c.policy,c.source_label,c.status,
-                    "yes" if c.port in selected else "no", results.get(c.port,""),c.reason]
+                    "yes" if c.port in selected else "no", results.get(c.port,""),c.reason,fp]
             f.write("\t".join(x.replace("\t"," ").replace("\n"," ") for x in vals)+"\n")
         for w in warnings: f.write(f"# WARNING: {w}\n")
+        for d in diagnostics or []: f.write(f"# TRACE: {d}\n")
 
+
+def write_retry_state_log(rows, results, ports_root: Path):
+    """Record retry outcomes so a successful retry retires the old failure."""
+    if not results:
+        return None
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    path = LOG_ROOT / f"scan-{stamp}-retry.tsv"
+    by_port = {r.get("port", ""): r for r in rows}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        f.write("port\told_version\tnew_version\told_release\tnew_release\tpolicy\tsource\tstatus\tselected\tresult\treason\tpkgfile_sha256\n")
+        for rel, result in sorted(results.items()):
+            row = by_port.get(rel, {})
+            pkgfile = ports_root / rel / "Pkgfile"
+            try:
+                meta = eval_pkgfile(pkgfile, ports_root)
+                ver, release = meta.version, meta.release
+            except Exception:
+                ver, release = row.get("new_version", ""), row.get("new_release", "")
+            vals = [rel,row.get("old_version",ver),ver,row.get("old_release",release),release,
+                    "retry",row.get("source",""),"RETRY","yes",result,"retry state",pkgfile_fingerprint(pkgfile)]
+            f.write("\t".join(x.replace("\t"," ").replace("\n"," ") for x in vals)+"\n")
+    return path
 
 def apply_selected(cands, selected, ports_root: Path, timeout: int):
     # Interactive REVIEW items start OFF, but an explicitly checked REVIEW item
@@ -659,8 +801,9 @@ def scan(ports_root, trees, jobs, timeout, stamp):
     LOG_ROOT.mkdir(parents=True,exist_ok=True); audit=LOG_ROOT/f"upstream-{stamp}.tsv"
     metas=discover_ports(ports_root,trees); indexes,patches,warnings=load_references(timeout)
     upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit)
-    return make_candidates(metas,indexes,patches,upstream,timeout),warnings
-
+    diagnostics: list[str] = []
+    cands = make_candidates(metas,indexes,patches,upstream,timeout,diagnostics)
+    return cands,warnings,diagnostics
 
 def main():
     ap=argparse.ArgumentParser(description="BFSOS Dialog-driven maintainer port updater")
@@ -679,76 +822,117 @@ def main():
     if ns.list_trees:
         for t in trees: print(f"{t.name}\t{port_count(t)}")
         return 0
-    available={t.name for t in trees}; interactive=not(ns.report_only or ns.apply or ns.trees or ns.kernel_only) and dialog_available()
-    chosen=ns.trees[:] if ns.trees else []
-    with tempfile.TemporaryDirectory(prefix="bfs-port-updater-ui-") as td_s:
-        env=dict(os.environ)
-        if interactive:
-            rc=Path(td_s)/"dialogrc"; slackware_dialogrc(rc); env["DIALOGRC"]=str(rc)
-            retry_log,retry_rows=find_retryable_failures(ports_root)
-            action=choose_action_dialog(env,len(retry_rows))
-            exit_tag="5" if retry_rows else "4"
-            if action==exit_tag: return 0
-            if action=="1":
-                chosen=sorted(available)
-            elif action=="2":
-                picked=choose_trees_dialog(trees,env)
-                if picked is None:return 0
-                if not picked:
-                    dcall(["--title","Select port trees","--msgbox",
-                           "No port trees selected. Nothing was scanned.","8","58"],env)
-                    return 0
-                chosen=picked
-            elif action=="3":
-                chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
-                ns.kernel_only=True
-            elif action=="4" and retry_rows:
-                picked=choose_retry_dialog(retry_rows,env)
-                if picked is None or not picked:
-                    return 0
-                results=retry_failed_updates(retry_rows,set(picked),ports_root)
-                source=f"\n\nSource log: {retry_log}" if retry_log else ""
-                body="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No retries run."
-                dcall(["--title","Retry results","--msgbox",body+source,"29","110"],env)
-                return 1 if any("FAILED" in v for v in results.values()) else 0
-        elif ns.kernel_only:
+
+    available={t.name for t in trees}
+    interactive=not(ns.report_only or ns.apply or ns.trees or ns.kernel_only) and dialog_available()
+
+    # Non-interactive path remains one-shot and script-friendly.
+    if not interactive:
+        chosen=ns.trees[:] if ns.trees else []
+        if ns.kernel_only:
             chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
-        elif not chosen: chosen=sorted(available)
+        elif not chosen:
+            chosen=sorted(available)
         bad=sorted(set(chosen)-available)
         if bad: die("unknown port tree(s): "+", ".join(bad))
         if not chosen: print("No port trees selected."); return 0
         stamp=dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-        cands,warnings=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
+        cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
         if ns.kernel_only: cands=[c for c in cands if c.name in KERNEL_PORTS]
         for w in warnings: print(f"WARN: {w}",file=sys.stderr)
-
-        if not interactive:
-            print_report(cands); selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
-            results=apply_selected(cands,selected,ports_root,ns.timeout) if ns.apply else {}
-            if ns.apply and ns.build: build_selected(cands,selected,ports_root,ns.install,results)
-            log=LOG_ROOT/f"scan-{stamp}.tsv"; write_scan_log(log,cands,selected,results,warnings); print(f"Report: {log}")
-            for k,v in sorted(results.items()): print(f"{k}: {v}")
-            return 1 if any("FAILED" in v for v in results.values()) else 0
-
-        if not cands:
-            dcall(["--title","Port update scan","--msgbox","No candidate updates were found.","8","60"],env); return 0
-        picked=choose_updates_dialog(cands,env)
-        if picked is None:return 0
-        selected=set(picked)
-        dcall(["--title","Update plan","--msgbox",detail_text(cands,selected),"31","125"],env)
-        headers=any(c.name=="linux-headers" and c.port in selected for c in cands)
-        summary=f"Updates found: {len(cands)}\nSelected: {len(selected)}\nSkipped: {len(cands)-len(selected)}\nReview items: {sum(c.status=='REVIEW' for c in cands)}\nDependent glibc release bump: {'yes' if headers else 'no'}"
-        code,mode=dcall(["--title","Apply mode","--menu",summary+"\n\nChoose how far to continue.","20","82","4",
-                         "1","Update files only","2","Update + build selected","3","Update + build + install selected","4","Cancel"],env)
-        if code or mode=="4": write_scan_log(LOG_ROOT/f"scan-{stamp}.tsv",cands,selected,{},warnings); return 0
-        code,_=dcall(["--title","Final confirmation","--yes-label","Apply Selected","--no-label","Cancel","--defaultno","--yesno",
-                      summary+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","17","88"],env)
-        if code:return 0
-        results=apply_selected(cands,selected,ports_root,ns.timeout)
-        if mode in {"2","3"}: build_selected(cands,selected,ports_root,mode=="3",results)
-        log=LOG_ROOT/f"scan-{stamp}.tsv"; write_scan_log(log,cands,selected,results,warnings)
-        text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."
-        dcall(["--title","Update results","--msgbox",text+f"\n\nLog: {log}","29","110"],env)
+        print_report(cands)
+        selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
+        results=apply_selected(cands,selected,ports_root,ns.timeout) if ns.apply else {}
+        if ns.apply and ns.build: build_selected(cands,selected,ports_root,ns.install,results)
+        log=LOG_ROOT/f"scan-{stamp}.tsv"
+        write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
+        print(f"Report: {log}")
+        for k,v in sorted(results.items()): print(f"{k}: {v}")
         return 1 if any("FAILED" in v for v in results.values()) else 0
+
+    # Interactive mode is a persistent main menu.  Completing a scan, finding
+    # zero updates, cancelling a sub-menu, or retrying failures all return here.
+    with tempfile.TemporaryDirectory(prefix="bfs-port-updater-ui-") as td_s:
+        env=dict(os.environ)
+        rc=Path(td_s)/"dialogrc"; slackware_dialogrc(rc); env["DIALOGRC"]=str(rc)
+        while True:
+            retry_log,retry_rows=find_retryable_failures(ports_root)
+            action=choose_action_dialog(env,len(retry_rows))
+            exit_tag="5" if retry_rows else "4"
+            if action==exit_tag:
+                return 0
+
+            chosen=[]
+            kernel_only=False
+            if action=="1":
+                chosen=sorted(available)
+            elif action=="2":
+                picked=choose_trees_dialog(trees,env)
+                if picked is None:
+                    continue
+                if not picked:
+                    dcall(["--title","Select port trees","--msgbox",
+                           "No port trees selected. Nothing was scanned.","8","58"],env)
+                    continue
+                chosen=picked
+            elif action=="3":
+                chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
+                kernel_only=True
+            elif action=="4" and retry_rows:
+                picked=choose_retry_dialog(retry_rows,env)
+                if picked is None or not picked:
+                    continue
+                results=retry_failed_updates(retry_rows,set(picked),ports_root)
+                retry_state=write_retry_state_log(retry_rows,results,ports_root)
+                source=f"\n\nSource log: {retry_log}" if retry_log else ""
+                state=f"\nRetry state: {retry_state}" if retry_state else ""
+                body="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No retries run."
+                dcall(["--title","Retry results","--msgbox",body+source+state,"29","110"],env)
+                continue
+            else:
+                continue
+
+            bad=sorted(set(chosen)-available)
+            if bad:
+                dcall(["--title","Port update scan","--msgbox",
+                       "Unknown port tree(s): "+", ".join(bad),"9","70"],env)
+                continue
+            if not chosen:
+                dcall(["--title","Port update scan","--msgbox","No port trees selected.","8","60"],env)
+                continue
+
+            stamp=dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+            cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
+            if kernel_only: cands=[c for c in cands if c.name in KERNEL_PORTS]
+            for w in warnings: print(f"WARN: {w}",file=sys.stderr)
+            if not cands:
+                # Critical UI rule: zero results is completion, not Exit.
+                log=LOG_ROOT/f"scan-{stamp}.tsv"
+                write_scan_log(log,[],set(),{},warnings,diagnostics,ports_root)
+                dcall(["--title","Port update scan","--msgbox","No candidate updates were found.\n\nReturning to the main menu.","10","64"],env)
+                continue
+
+            picked=choose_updates_dialog(cands,env)
+            if picked is None:
+                continue
+            selected=set(picked)
+            dcall(["--title","Update plan","--msgbox",detail_text(cands,selected),"31","125"],env)
+            headers=any(c.name=="linux-headers" and c.port in selected for c in cands)
+            summary=f"Updates found: {len(cands)}\nSelected: {len(selected)}\nSkipped: {len(cands)-len(selected)}\nReview items: {sum(c.status=='REVIEW' for c in cands)}\nDependent glibc release bump: {'yes' if headers else 'no'}"
+            code,mode=dcall(["--title","Apply mode","--menu",summary+"\n\nChoose how far to continue.","20","82","4",
+                             "1","Update files only","2","Update + build selected","3","Update + build + install selected","4","Cancel"],env)
+            if code or mode=="4":
+                write_scan_log(LOG_ROOT/f"scan-{stamp}.tsv",cands,selected,{},warnings,diagnostics,ports_root)
+                continue
+            code,_=dcall(["--title","Final confirmation","--yes-label","Apply Selected","--no-label","Cancel","--defaultno","--yesno",
+                          summary+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","17","88"],env)
+            if code:
+                continue
+            results=apply_selected(cands,selected,ports_root,ns.timeout)
+            if mode in {"2","3"}: build_selected(cands,selected,ports_root,mode=="3",results)
+            log=LOG_ROOT/f"scan-{stamp}.tsv"
+            write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
+            text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."
+            dcall(["--title","Update results","--msgbox",text+f"\n\nLog: {log}\n\nReturning to the main menu.","29","110"],env)
 
 if __name__=="__main__": raise SystemExit(main())

@@ -1,0 +1,32 @@
+# Description: Vulkan tools
+# URL: https://www.khronos.org/vulkan/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: glslang volk vulkan-headers vulkan-loader
+# Optional: wayland
+
+name=vulkan-tools
+_name=Vulkan-Tools
+version=1.4.357.0
+_version=vulkan-sdk-$version
+release=1
+source=(https://github.com/KhronosGroup/Vulkan-Tools/archive/$_version/$_name-$version.tar.gz)
+
+pkg_build() {
+    prt-get isinst wayland || PKGMK_VULKAN_TOOLS+=' -D BUILD_WSI_WAYLAND_SUPPORT=OFF'
+
+    cmake -S . -B build -G Ninja $PKGMK_VULKAN_TOOLS \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGLSLANG_INSTALL_DIR=/usr \
+        -DBUILD_CUBE=TRUE \
+        -DBUILD_VULKANINFO=TRUE \
+        -DCUBE_WSI_SELECTION=XCB \
+        -DBUILD_WSI_XCB_SUPPORT=TRUE \
+        -DBUILD_WSI_XLIB_SUPPORT=TRUE \
+        -DBUILD_ICD=OFF \
+        -Wno-dev || return 1
+
+    cmake --build build -j "${JOBS:-1}" || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
+}

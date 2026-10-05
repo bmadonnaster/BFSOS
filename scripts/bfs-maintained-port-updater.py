@@ -39,6 +39,12 @@ REMOTE = ("http://", "https://", "ftp://")
 PATCH_SUFFIXES = (".patch", ".diff", ".patch.gz", ".diff.gz", ".patch.xz", ".diff.xz", ".patch.bz2", ".diff.bz2")
 ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip")
 
+# GNOME source trees are not completely uniform.  Keep exceptions explicit and
+# data-driven instead of teaching the generic version rewrite the wrong rule.
+GNOME_SOURCE_DIR_RULES = {
+    "gnome/gnome-backgrounds": "major",
+}
+
 
 @dataclasses.dataclass
 class AuditRow:
@@ -177,6 +183,75 @@ def rewrite_version_release(text: str, old: str, new: str, requested_release: st
     new_release = requested_release or ("1" if new != old else rm.group(1).strip())
     text = text[:rm.start()] + f"release={new_release}" + text[rm.end():]
     return text
+
+
+def rewrite_coordinated_sources(port: str, text: str, old: str, new: str) -> str:
+    """Update package-specific secondary sources that are version-coupled."""
+    if port == "gnome/gucharmap" and old != new:
+        # Gucharmap's generated tables must use the same Unicode data version.
+        text = re.sub(
+            r"https://www\.unicode\.org/Public/[^/]+/ucd/(UCD|Unihan)\.zip",
+            lambda m: f"https://www.unicode.org/Public/{new}/ucd/{m.group(1)}.zip",
+            text,
+        )
+    rule = GNOME_SOURCE_DIR_RULES.get(port)
+    if rule == "major":
+        # Example: gnome-backgrounds 51.0.1 lives under sources/.../51/.
+        text = text.replace("${version%.*}", "${version%%.*}")
+    return text
+
+
+def remote_archive_urls(meta: Meta) -> list[str]:
+    return [u for src in meta.sources if (u := source_url(src)) and is_archive_name(source_filename(src))]
+
+
+def remote_url_exists(url: str, timeout: int) -> tuple[bool, str]:
+    common = [
+        "curl", "--fail", "--location", "--silent", "--show-error",
+        "--connect-timeout", "8", "--max-time", str(timeout),
+        "--user-agent", "BFSOS-maintained-port-updater/0.9.0",
+    ]
+    errors = []
+    for extra in (["--head"], ["--range", "0-0", "--output", "/dev/null"]):
+        cp = run(common + list(extra) + [url], capture=True)
+        if cp.returncode == 0:
+            return True, ""
+        if "416" in (cp.stderr or "") and "--range" in extra:
+            return True, ""
+        errors.append((cp.stderr or "").strip() or f"curl exit {cp.returncode}")
+    return False, errors[-1] if errors else "source probe failed"
+
+
+def validate_changed_remote_archives(before: Meta, proposed: Meta, timeout: int) -> None:
+    """Refuse an automatic rewrite that constructs a dead primary source URL."""
+    old_urls = set(remote_archive_urls(before))
+    for url in remote_archive_urls(proposed):
+        if url in old_urls:
+            continue
+        ok, why = remote_url_exists(url, timeout)
+        if not ok:
+            raise UpdateError(f"rewritten source URL is not reachable: {url}: {why}")
+
+
+def source_identity(meta: Meta) -> list[str]:
+    return [source_filename(src) for src in meta.sources]
+
+
+def invalidate_generated_checksums(port_dir: Path, before: Meta, proposed: Meta) -> list[str]:
+    """Remove stale generated checksums when source filenames change.
+
+    pkgmk regenerates .md5sum on the next build.  Keeping an old generated file
+    causes a false MISSING/NEW failure before compilation.
+    """
+    if source_identity(before) == source_identity(proposed):
+        return []
+    removed = []
+    for name in (".md5sum", ".md5sums"):
+        path = port_dir / name
+        if path.is_file():
+            path.unlink()
+            removed.append(name)
+    return removed
 
 
 def parse_patch_specs(raw: str) -> list[dict[str, str]]:
@@ -525,6 +600,7 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         staged_pkg = staged / "Pkgfile"
         old_text = staged_pkg.read_text()
         new_text = rewrite_version_release(old_text, row.current, row.latest, row.new_release)
+        new_text = rewrite_coordinated_sources(row.port, new_text, row.current, row.latest)
         required_patches = parse_patch_specs(row.patches_json)
         obsolete_patches = parse_obsolete_patches(row.obsolete_patches_json)
         if required_patches or obsolete_patches:
@@ -537,6 +613,8 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         problems = inventory_local_companions(proposed, staged, row.current)
         if problems:
             raise UpdateError("; ".join(problems))
+        if apply:
+            validate_changed_remote_archives(before, proposed, timeout)
 
         # Vendor explicit patch URLs, redirected patch endpoints, and small
         # suffix-less remote companions whose downloaded content is a patch.
@@ -571,10 +649,15 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
                 shutil.copy2(child, original)
             elif child.is_dir() and not original.exists():
                 shutil.copytree(child, original)
+        # Generated checksum metadata belongs to the evaluated source list.
+        # Commit the Pkgfile first, then invalidate stale generated checksums;
+        # pkgmk will recreate them on the next build.
         tmp_pkg = pkgfile.with_name("Pkgfile.bfs-update-tmp")
         tmp_pkg.write_text(staged_pkg.read_text())
         os.replace(tmp_pkg, pkgfile)
-        return f"UPDATED {row.port} {row.current} -> {row.latest} release={proposed.release}"
+        removed_checksums = invalidate_generated_checksums(port_dir, before, proposed)
+        suffix = f"; invalidated {','.join(removed_checksums)}" if removed_checksums else ""
+        return f"UPDATED {row.port} {row.current} -> {row.latest} release={proposed.release}{suffix}"
 
 
 def main() -> int:

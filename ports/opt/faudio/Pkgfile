@@ -1,10 +1,10 @@
 # Description: XAudio2 reimplementation
 # URL: https://github.com/FNA-XNA/FAudio/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: sdl2 gst-libav
+# Depends on: sdl3 gst-libav
 
 name=faudio
-version=26.09
+version=26.10
 release=1
 source=(https://github.com/FNA-XNA/FAudio/archive/$version/$name-$version.tar.gz)
 

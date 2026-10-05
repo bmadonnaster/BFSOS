@@ -1,0 +1,24 @@
+# Description: SDL version 3, Simple DirectMedia Layer
+# URL: https://www.libsdl.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: mesa
+# Optional: alsa dbus ibus libsamplerate libxkbcommon pipewire pulseaudio wayland xorg-libs
+
+name=sdl3
+version=3.4.18
+release=1
+source=(https://www.libsdl.org/release/SDL3-$version.tar.gz)
+
+pkg_build() {
+    cmake -S . -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DSDL_SHARED=ON \
+        -DSDL_STATIC=OFF \
+        -DSDL_TEST_LIBRARY=OFF \
+        -Wno-dev || return 1
+
+    cmake --build build -j "${JOBS:-1}" || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
+}

@@ -1,0 +1,32 @@
+# Description: SDL version 3, Simple DirectMedia Layer (32-bit)
+# URL: https://www.libsdl.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: sdl3 mesa-32
+# Optional: alsa-lib-32 ibus-32 libxkbcommon-32 pipewire-32 pulseaudio-32 wayland-32 xorg-libs-32
+
+name=libsdl3-32
+version=3.4.18
+release=1
+source=(https://www.libsdl.org/release/SDL3-$version.tar.gz)
+
+pkg_build() {
+    export PKG_CONFIG_LIBDIR=/usr/lib32/pkgconfig:/usr/share/pkgconfig
+
+    cmake -S . -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib32 \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DSDL_SHARED=ON \
+        -DSDL_STATIC=OFF \
+        -DSDL_TEST_LIBRARY=OFF \
+        -Wno-dev || return 1
+
+    cmake --build build -j "${JOBS:-1}" || return 1
+    DESTDIR="$PKG" cmake --install build || return 1
+
+    rm -rf "$PKG/usr/bin" "$PKG/usr/include" "$PKG/usr/share"
+}
+
+pre_build() {
+    _bfs_require_compat32_extension 2 || return $?
+}
