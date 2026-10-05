@@ -6,8 +6,10 @@
 
 name=lame
 version=4.0
-release=1
-source=(http://downloads.sourceforge.net/project/$name/$name/$version/$name-$version.tar.gz)
+release=2
+source=(http://downloads.sourceforge.net/project/$name/$name/$version/$name-$version.tar.gz
+        lame-4.0-id3-utf16.patch
+        lame-4.0-export-pinfo.patch)
 
 pkg_build() {
     ./configure --prefix=/usr --enable-mp3rtp --disable-static &&

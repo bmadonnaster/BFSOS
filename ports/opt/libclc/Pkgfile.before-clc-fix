@@ -3,11 +3,11 @@
 
 name=libclc
 version=23.1.2
-release=2
+release=1
 source=(https://github.com/llvm/llvm-project/releases/download/llvmorg-$version/llvm-project-$version.src.tar.xz)
 
 pkg_build() {
-    rm -rf build
+    rm -rf build build-spirv-unknown-mesa3d build-spirv64-unknown-mesa3d
 
     cmake -S llvm -B build \
         -G Ninja \
@@ -28,6 +28,25 @@ pkg_build() {
         cmake -P build/runtimes/cmake_install.cmake \
         || return 1
 
+    for target in spirv-unknown-mesa3d spirv64-unknown-mesa3d; do
+        bdir="build-$target"
+
+        cmake -S libclc -B "$bdir" \
+            -G Ninja \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_DIR=/usr/lib/cmake/llvm \
+            -DLLVM_TOOLS_BINARY_DIR=/usr/bin \
+            -DLLVM_DEFAULT_TARGET_TRIPLE="$target" \
+            || return 1
+
+        cmake --build "$bdir" -j "${JOBS:-1}" \
+            || return 1
+
+        DESTDIR="$PKG" cmake --install "$bdir" \
+            || return 1
+    done
+
     install -d "$PKG/usr/share/pkgconfig"
 
     cat > "$PKG/usr/share/pkgconfig/libclc.pc" <<'PC_EOF'
@@ -38,6 +57,6 @@ clang_resource_dir=${libdir}/clang/23
 
 Name: libclc
 Description: LLVM OpenCL C device libraries
-Version: 23.1.2
+Version: 23.1.1
 PC_EOF
 }
