@@ -68,36 +68,6 @@ GNOME_CACHE_VALIDATED_BOOK_PORTS = {
     "gnome/gnome-backgrounds",
 }
 
-# Only MLFS DEV membership is authoritative. LFS/BLFS/GLFS are reference
-# providers and must never become automatic UPDATE/ON merely because a book
-# carries a newer version.
-REFERENCE_BOOK_POLICIES = {"lfs-dev", "blfs-dev", "glfs-dev"}
-
-# Known source families where the canonical target URL can be derived safely.
-SOURCE_TEMPLATE_PORTS = {
-    "opt/cairo", "opt/glib-networking", "opt/libsecret", "opt/lmdb", "opt/nodejs",
-}
-
-# Coordinated Vulkan SDK build order. Existing members not present in a BFSOS
-# tree are ignored, but every existing member must resolve to one target before
-# the group can become automatic.
-VULKAN_BUILD_ORDER = [
-    "opt/spirv-headers",
-    "opt/spirv-tools",
-    "compat-32/spirv-tools-32",
-    "opt/vulkan-headers",
-    "opt/vulkan-loader",
-    "compat-32/vulkan-loader-32",
-    "opt/vulkan-utility-libraries",
-    "compat-32/vulkan-utility-libraries-32",
-    "opt/volk",
-    "compat-32/volk-32",
-    "opt/vulkan-validation-layers",
-    "compat-32/vulkan-validation-layers-32",
-    "opt/vulkan-tools",
-    "compat-32/vulkan-tools-32",
-]
-
 # Coordinated SDK families must move together.  A partial update is held for
 # review until every existing member of the group has the same target version.
 VERSION_LOCK_GROUPS = {
@@ -255,9 +225,8 @@ def family_allows(meta: PortMeta, target: str) -> bool:
 
 
 def enforce_version_lock_groups(cands: list[Candidate], metas: list[PortMeta]) -> None:
-    """Make coordinated SDK groups automatic only when the whole target is ready."""
+    """Hold partial coordinated SDK updates instead of applying a mixed stack."""
     by_port = {c.port: c for c in cands}
-    meta_by_port = {m.rel: m for m in metas}
     ports_root = metas[0].path.parent.parent if metas else DEFAULT_PORTS_ROOT
     existing = {rel for rel in set().union(*VERSION_LOCK_GROUPS.values()) if (ports_root / rel / "Pkgfile").is_file()}
     for group, members in VERSION_LOCK_GROUPS.items():
@@ -265,77 +234,14 @@ def enforce_version_lock_groups(cands: list[Candidate], metas: list[PortMeta]) -
         proposed = [by_port[p] for p in present if p in by_port and by_port[p].new != by_port[p].old]
         if not proposed:
             continue
-        targets = {normalize_version(c.new) for c in proposed}
-        if len(targets) != 1:
-            detail = f"{group} held: mixed targets: " + ", ".join(sorted({c.new for c in proposed}))
+        targets = {c.new for c in proposed}
+        untouched = [p for p in present if p not in by_port or by_port[p].new == by_port[p].old]
+        if len(targets) != 1 or untouched:
+            detail = f"{group} must update as one version-locked set"
             for c in proposed:
-                c.status = "REVIEW"; c.selected = False; c.reason = f"{c.reason}; {detail}"
-            continue
-        target_norm = next(iter(targets))
-        target_display = proposed[0].new
-        missing = []
-        for p in present:
-            m = meta_by_port.get(p)
-            c = by_port.get(p)
-            if m and normalize_version(m.version) == target_norm:
-                continue  # already at the coordinated target
-            if c and normalize_version(c.new) == target_norm:
-                continue
-            missing.append(p)
-        if missing:
-            detail = f"{group} held: complete common target {target_display} unavailable; missing candidates: " + ", ".join(missing)
-            for c in proposed:
-                c.status = "REVIEW"; c.selected = False; c.reason = f"{c.reason}; {detail}"
-            continue
-
-        # Complete validated group: updater, not the maintainer, selects every
-        # member that actually needs a version change. Members already at target
-        # need no redundant rebuild merely to satisfy the transaction guard.
-        for c in proposed:
-            c.status = "UPDATE"
-            c.selected = True
-            c.policy = group
-            c.reason = f"{c.reason}; complete {group} target {target_display} validated; coordinated automatic update"
-
-
-def _selection_group_error(cands: list[Candidate], selected: set[str], ports_root: Path) -> str:
-    by_port = {c.port: c for c in cands}
-    for group, members in VERSION_LOCK_GROUPS.items():
-        existing = {p for p in members if (ports_root / p / "Pkgfile").is_file()}
-        touched = selected & existing
-        if not touched:
-            continue
-        targets = {normalize_version(by_port[p].new) for p in touched if p in by_port}
-        if len(targets) != 1:
-            return f"{group} partial/mixed selection refused"
-        target = next(iter(targets))
-        required_updates = set()
-        unresolved = []
-        for p in existing:
-            pkg = ports_root / p / "Pkgfile"
-            try:
-                m = eval_pkgfile(pkg, ports_root)
-            except Exception:
-                unresolved.append(p); continue
-            if normalize_version(m.version) == target:
-                continue
-            c = by_port.get(p)
-            if c and normalize_version(c.new) == target:
-                required_updates.add(p)
-            else:
-                unresolved.append(p)
-        if unresolved or touched != required_updates:
-            return (f"{group} partial selection refused; target={target}; "
-                    f"required-updates={','.join(sorted(required_updates))}; "
-                    f"selected={','.join(sorted(touched))}; "
-                    f"unresolved={','.join(sorted(unresolved))}")
-    return ""
-
-
-def _build_rank(port: str) -> tuple[int, str]:
-    if port in VULKAN_BUILD_ORDER:
-        return VULKAN_BUILD_ORDER.index(port), port
-    return 10_000, port
+                c.status = "REVIEW"
+                c.selected = False
+                c.reason = f"{c.reason}; {detail}"
 
 
 def source_filename(src: str) -> str:
@@ -490,140 +396,13 @@ def likely_book_obsolete(meta: PortMeta, required: list[PatchSpec]) -> list[str]
     return result
 
 
-def lookup_mlfs_authoritative(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
-    """Return an authoritative MLFS DEV mapping only.
-
-    LFS/BLFS/GLFS are deliberately excluded: they are references, not BFSOS
-    automatic-update authority.
-    """
-    if meta.name in KERNEL_PORTS:
-        return None
-    idx = indexes.get("mlfs-dev", {})
-    for key in book_keys(meta):
-        if key in idx:
-            return "mlfs-dev", idx[key]
-    return None
-
-
-def lookup_book_reference(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
-    """Return the first non-MLFS LFS-family reference for diagnostics/review."""
-    if meta.name in KERNEL_PORTS:
-        return None
+def lookup_book(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
+    if meta.name in KERNEL_PORTS: return None
     for policy, _label, _url in BOOKS:
-        if policy not in REFERENCE_BOOK_POLICIES:
-            continue
         idx = indexes.get(policy, {})
         for key in book_keys(meta):
-            if key in idx:
-                return policy, idx[key]
+            if key in idx: return policy, idx[key]
     return None
-
-
-def lookup_book(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
-    """Compatibility helper: MLFS authority first, then reference-only books."""
-    return lookup_mlfs_authoritative(meta, indexes) or lookup_book_reference(meta, indexes)
-
-
-def gnome_series(version: str) -> str:
-    nums = re.findall(r"\d+", version)
-    if not nums:
-        return ""
-    major = int(nums[0])
-    # GNOME platform releases use a single generation directory (e.g. 51),
-    # while classic libraries use major.minor (2.90, 0.21).
-    if major >= 40:
-        return nums[0]
-    return ".".join(nums[:2]) if len(nums) >= 2 else nums[0]
-
-
-def candidate_source_url(meta: PortMeta, target: str) -> str:
-    """Derive a conservative target source URL without editing the Pkgfile."""
-    if meta.rel == "opt/cairo":
-        return f"https://cairographics.org/releases/cairo-{target}.tar.xz"
-    if meta.rel == "opt/glib-networking":
-        return f"https://download.gnome.org/sources/glib-networking/{gnome_series(target)}/glib-networking-{target}.tar.xz"
-    if meta.rel == "opt/libsecret":
-        return f"https://download.gnome.org/sources/libsecret/{gnome_series(target)}/libsecret-{target}.tar.xz"
-    if meta.rel == "opt/lmdb":
-        return f"https://github.com/LMDB/lmdb/archive/LMDB_{target}.tar.gz"
-    if meta.rel == "opt/nodejs":
-        return f"https://nodejs.org/dist/v{target}/node-v{target}.tar.xz"
-
-    # GNOME-protected ports always use the official release service for exact
-    # target validation rather than trusting whichever generic provider won.
-    if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS:
-        return f"https://download.gnome.org/sources/{meta.name}/{gnome_series(target)}/{meta.name}-{target}.tar.xz"
-
-    # Generic safe rewrite: only when the evaluated current version occurs in a
-    # remote URL. This does not guess a new host/path layout.
-    for url in _remote_source_urls(meta):
-        if meta.version in url:
-            return url.replace(meta.version, target)
-    return ""
-
-
-def remote_exists(url: str, timeout: int = 10) -> bool:
-    if not url:
-        return False
-    # GET is used instead of HEAD because several upstream mirrors reject HEAD.
-    try:
-        req = Request(url, headers={"User-Agent": "BFSOS-port-updater/0.9.0", "Range": "bytes=0-0"})
-        with urlopen(req, timeout=max(1, min(timeout, 10))) as r:
-            return 200 <= getattr(r, "status", 200) < 400
-    except Exception:
-        return False
-
-
-def validate_exact_target(meta: PortMeta, target: str, timeout: int) -> tuple[bool, str, str]:
-    url = candidate_source_url(meta, target)
-    if not url:
-        return False, "no safe target source template", ""
-    if not remote_exists(url, timeout):
-        return False, f"target source does not exist: {url}", url
-    return True, "exact target source verified", url
-
-
-def special_browser_reference(meta: PortMeta, timeout: int) -> tuple[str, str, str]:
-    """Direct browser version providers used when generic discovery is weak."""
-    try:
-        if meta.name == "firefox":
-            data = json.loads(fetch_text("https://product-details.mozilla.org/1.0/firefox_versions.json", timeout))
-            ver = str(data.get("LATEST_FIREFOX_VERSION") or "")
-            return ver, "Mozilla product-details", "" if not ver else f"https://archive.mozilla.org/pub/firefox/releases/{ver}/source/firefox-{ver}.source.tar.xz"
-        if meta.name == "chromium":
-            data = json.loads(fetch_text("https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=1", timeout))
-            if isinstance(data, list) and data:
-                ver = str(data[0].get("version") or "")
-                return ver, "Chromium Dash", ""
-    except Exception:
-        pass
-    return "", "", ""
-
-
-def _all_group_metas(ports_root: Path, members: set[str]) -> list[PortMeta]:
-    out = []
-    for rel in sorted(members):
-        pkg = ports_root / rel / "Pkgfile"
-        if pkg.is_file():
-            try:
-                out.append(eval_pkgfile(pkg, ports_root))
-            except Exception as exc:
-                print(f"WARN: cannot evaluate coordinated port {rel}: {exc}", file=sys.stderr)
-    return out
-
-
-def expand_coordinated_metas(ports_root: Path, metas: list[PortMeta]) -> tuple[list[PortMeta], list[PortMeta]]:
-    """Pull the full Vulkan lock group into a scan when any member is scanned."""
-    rels = {m.rel for m in metas}
-    vulkan = VERSION_LOCK_GROUPS["vulkan-sdk"]
-    extras: list[PortMeta] = []
-    if rels & vulkan:
-        known = {m.rel for m in metas}
-        for m in _all_group_metas(ports_root, vulkan):
-            if m.rel not in known:
-                extras.append(m)
-                known.add(m.rel)
-    return metas + extras, extras
 
 
 def load_references(timeout: int):
@@ -804,7 +583,7 @@ def prefetch_fallback_references(
     diagnostics = diagnostics if diagnostics is not None else []
     targets = [
         m for m in metas
-        if m.name not in KERNEL_PORTS and lookup_mlfs_authoritative(m, indexes) is None
+        if m.name not in KERNEL_PORTS and lookup_book(m, indexes) is None
     ]
     if not targets:
         return {}
@@ -816,9 +595,10 @@ def prefetch_fallback_references(
 
     def one(meta: PortMeta) -> tuple[str, str, ArchReference]:
         crux_v = crux_reference_version(meta, crux_timeout)
-        # Always check Arch too. A verified Arch release may be newer than CRUX;
-        # exact-name alone is never enough because arch_reference() verifies
-        # upstream identity and version lineage.
+        # A same/older CRUX reference does not block a newer verified Arch
+        # release. A newer CRUX release is already a valid conservative candidate.
+        if crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v):
+            return meta.rel, crux_v, ArchReference()
         arch_ref = arch_reference(meta, arch_timeout)
         return meta.rel, crux_v, arch_ref
 
@@ -852,11 +632,9 @@ def prefetch_fallback_references(
 def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec], upstream, timeout: int,
                     diagnostics: list[str] | None = None,
                     fallback_refs: dict[str, tuple[str, ArchReference]] | None = None) -> list[Candidate]:
-    out: list[Candidate] = []
-    by_name = {m.name: m for m in metas}
+    out: list[Candidate] = []; by_name = {m.name: m for m in metas}
     diagnostics = diagnostics if diagnostics is not None else []
     fallback_refs = fallback_refs or {}
-
     # Kernel candidates first so headers can track the proposed LTS point release.
     lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
     for meta in metas:
@@ -873,8 +651,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                                  row.get("provider", ""), row.get("source", "")))
 
     for meta in metas:
-        if meta.name in {"linux", "linux-lts"}:
-            continue
+        if meta.name in {"linux", "linux-lts"}: continue
         if meta.name == "linux-headers":
             if lts_target and lts_target != meta.version:
                 out.append(Candidate(meta.rel, meta.name, meta.version, lts_target, meta.release, "1",
@@ -882,78 +659,82 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                                      "userspace kernel headers track linux-lts; glibc release bump required", True))
             continue
 
-        # MLFS DEV alone is authoritative.
-        mlfs = lookup_mlfs_authoritative(meta, indexes)
-        if mlfs:
-            policy, target = mlfs
-            diagnostics.append(f"{meta.rel}\tMLFS-authoritative\tMLFS DEV\t{target}")
+        book = lookup_book(meta, indexes)
+        if book:
+            policy, target = book; label = next(x[1] for x in BOOKS if x[0] == policy)
+            diagnostics.append(f"{meta.rel}\tLFS-mapped\t{label}\t{target}")
             row = upstream.get(meta.rel, {})
 
-            if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS and target != meta.version:
-                ok, why_exact, exact_url = validate_exact_target(meta, target, timeout)
-                if not ok:
-                    diagnostics.append(f"{meta.rel}\tMLFS target rejected\t{target}\t{why_exact}")
+            # Do not trust a GNOME book target that GNOME's own release cache
+            # cannot confirm. This prevents phantom releases such as the bogus
+            # gnome-backgrounds 51.0.1 candidate.
+            if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS and row.get("provider") == "gnome-cache":
+                upstream_latest = row.get("latest", "")
+                if target != meta.version and upstream_latest and target != upstream_latest:
+                    diagnostics.append(
+                        f"{meta.rel}\tbook target rejected: {target} not present in GNOME cache; latest={upstream_latest}"
+                    )
                     continue
-            else:
-                exact_url = ""
 
+            # WebKitGTK point/security releases can land upstream before BLFS.
+            # Permit only a newer point release in the exact same major.minor
+            # stable series; never cross series based on generic upstream data.
             if meta.rel in SAME_SERIES_UPSTREAM_OVERRIDES:
                 upstream_latest = row.get("latest", "")
                 if (row.get("status") == "UPDATE" and upstream_latest
                         and newer(upstream_latest, meta.version)
                         and same_series(upstream_latest, meta.version)
                         and (target == meta.version or newer(upstream_latest, target))):
-                    diagnostics.append(f"{meta.rel}\tMLFS {target}; same-series upstream override {upstream_latest}")
+                    diagnostics.append(
+                        f"{meta.rel}\tbook {target}; same-series upstream override {upstream_latest}"
+                    )
                     target = upstream_latest
                     policy = "upstream-point-release"
+                    label = row.get("provider") or "upstream"
 
             required = relevant_patches(meta, mlfs_patches) if policy == "mlfs-dev" else []
             obsolete = likely_book_obsolete(meta, required) if policy == "mlfs-dev" else []
-            current_patches = set(local_patch_names(meta))
-            required_names = {p.filename for p in required}
+            current_patches = set(local_patch_names(meta)); required_names = {p.filename for p in required}
             patch_change = bool(required_names - current_patches or obsolete)
-            if versions_equivalent(target, meta.version) and not patch_change:
-                continue
+            if target == meta.version and not patch_change: continue
+            # Never offer a downgrade. If BFSOS is already newer than the
+            # authoritative book value, it is not an update candidate at all.
             if target != meta.version and not newer(target, meta.version):
                 continue
             if not family_allows(meta, target):
                 diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{target}")
                 continue
-
             new_rel = "1" if target != meta.version else str(int(meta.release) + 1 if meta.release.isdigit() else meta.release)
-            why = "MLFS DEV authoritative version"
-            if policy == "upstream-point-release":
-                why = "same-series upstream point release ahead of MLFS DEV"
-            if patch_change and target == meta.version:
-                why = "MLFS DEV patch set changed; packaging release bump"
-            elif patch_change:
-                why += "; MLFS DEV patch set also changed"
+            why = (
+                "same-series upstream point release ahead of development book"
+                if policy == "upstream-point-release"
+                else "authoritative development-book version"
+            )
+            if patch_change and target == meta.version: why = "development-book patch set changed; packaging release bump"
+            elif patch_change: why += "; development-book patch set also changed"
 
+            # A local patch whose filename names the old package version is not
+            # automatically portable to the new release.  Hold it for explicit
+            # review unless an authoritative replacement patch was identified.
             old_version_patches = [n for n in local_patch_names(meta) if meta.version in n]
             status, selected = "UPDATE", True
             if target != meta.version and old_version_patches and not required:
                 status, selected = "REVIEW", False
                 why += "; version-specific local patch requires applicability/replacement review: " + ", ".join(old_version_patches)
-            source = exact_url or candidate_source_url(meta, target)
             out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, new_rel,
-                                 policy, "MLFS DEV", status, why, selected,
-                                 source=source, patches=required, obsolete_patches=obsolete))
+                                 policy, label, status, why, selected, patches=required, obsolete_patches=obsolete))
             continue
 
-        # LFS/BLFS/GLFS are references only. Record the lead, then continue through
-        # CRUX -> verified Arch -> direct upstream before falling back to the book.
-        book_ref = lookup_book_reference(meta, indexes)
-        if book_ref:
-            bpolicy, btarget = book_ref
-            blabel = next(x[1] for x in BOOKS if x[0] == bpolicy)
-            diagnostics.append(f"{meta.rel}\tbook-reference-only\t{blabel}\t{btarget}")
-        else:
-            bpolicy = btarget = blabel = ""
-
-        diagnostics.append(f"{meta.rel}\tnot MLFS-authoritative; checking CRUX")
+        # No LFS-family mapping: always run the fallback chain.  Previously the
+        # CRUX/Arch lookups only happened when generic upstream discovery had
+        # already returned UPDATE, which silently omitted otherwise-verifiable
+        # Core (and other tree) updates.
+        diagnostics.append(f"{meta.rel}\tnot LFS-mapped; checking CRUX")
         if meta.rel in fallback_refs:
             crux_v, arch_ref = fallback_refs[meta.rel]
         else:
+            # Direct calls are retained for unit tests and callers that do not
+            # use scan(); normal tree scans prefetch these concurrently.
             crux_v = crux_reference_version(meta, min(timeout, 5))
             arch_ref = ArchReference()
             if not (crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v)):
@@ -963,26 +744,22 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             diagnostics.append(f"{meta.rel}\tCRUX\t{crux_v}")
         else:
             diagnostics.append(f"{meta.rel}\tnot found in CRUX; checking Arch")
-        arch_v = arch_ref.version
-        crux_newer = bool(crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v))
-        arch_newer = bool(arch_v and arch_ref.verified
-                          and newer(arch_v, meta.version)
-                          and family_allows(meta, arch_v))
-        # Prefer the newer verified reference. CRUX remains the first lookup, but
-        # it does not artificially cap BFSOS when Arch is positively verified as
-        # the same upstream project and carries a newer comparable release.
-        if crux_newer and not (arch_newer and newer(arch_v, crux_v)):
+        if crux_v and newer(crux_v, meta.version) and family_allows(meta, crux_v):
             out.append(Candidate(meta.rel, meta.name, meta.version, crux_v, meta.release, "1",
                                  "review", "CRUX reference", "REVIEW",
-                                 f"not MLFS-authoritative; CRUX carries {crux_v}", False,
-                                 source=candidate_source_url(meta, crux_v)))
+                                 f"unmapped from LFS-family books; CRUX carries {crux_v}", False))
             continue
 
+        arch_v = arch_ref.version
         if arch_v:
             if arch_ref.verified:
-                diagnostics.append(f"{meta.rel}\tArch\t{arch_v}\tidentity verified: {arch_ref.reason}")
+                diagnostics.append(
+                    f"{meta.rel}\tArch\t{arch_v}\tidentity verified: {arch_ref.reason}"
+                )
             else:
-                diagnostics.append(f"{meta.rel}\tArch\t{arch_v}\trejected: {arch_ref.reason or 'identity not verified'}")
+                diagnostics.append(
+                    f"{meta.rel}\tArch\t{arch_v}\trejected: {arch_ref.reason or 'identity not verified'}"
+                )
         else:
             diagnostics.append(f"{meta.rel}\tnot found in Arch; checking upstream")
 
@@ -992,8 +769,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 and family_allows(meta, arch_v)):
             out.append(Candidate(meta.rel, meta.name, meta.version, arch_v, meta.release, "1",
                                  "review", "Arch reference", "REVIEW",
-                                 f"not MLFS-authoritative; verified same upstream; Arch carries {arch_v}", False,
-                                 source=candidate_source_url(meta, arch_v)))
+                                 f"unmapped from LFS-family books; verified same upstream; Arch carries {arch_v}", False))
             continue
 
         row = upstream.get(meta.rel, {})
@@ -1002,43 +778,15 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 diagnostics.append(f"{meta.rel}\tupstream\t{row['latest']}")
                 out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
                                      "review", row.get("provider") or "upstream", "REVIEW",
-                                     row.get("reason") or "newer version found outside MLFS authority", False,
-                                     row.get("provider", ""), row.get("source", "") or candidate_source_url(meta, row["latest"])))
-                continue
-            diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{row['latest']}")
-
-        # Explicit browser providers fill generic discovery blind spots.
-        browser_v, browser_provider, browser_source = special_browser_reference(meta, timeout)
-        if browser_v and newer(browser_v, meta.version) and family_allows(meta, browser_v):
-            diagnostics.append(f"{meta.rel}\tbrowser-provider\t{browser_provider}\t{browser_v}")
-            out.append(Candidate(meta.rel, meta.name, meta.version, browser_v, meta.release, "1",
-                                 "review", browser_provider, "REVIEW",
-                                 "explicit browser provider found newer release", False,
-                                 browser_provider, browser_source))
-            continue
-
-        # A reference-book target is a final conservative lead, never automatic.
-        if btarget and newer(btarget, meta.version) and family_allows(meta, btarget):
-            ok, why_exact, exact_url = validate_exact_target(meta, btarget, timeout)
-            if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS and not ok:
-                diagnostics.append(f"{meta.rel}\t{blabel} target rejected\t{btarget}\t{why_exact}")
-                continue
-            source = exact_url if ok else candidate_source_url(meta, btarget)
-            reason = f"{blabel} reference only; not MLFS-authoritative"
-            if ok:
-                reason += "; exact target source verified"
-            elif source:
-                reason += "; source template derived but remote validation unavailable"
-            out.append(Candidate(meta.rel, meta.name, meta.version, btarget, meta.release, "1",
-                                 "book-reference", f"{blabel} reference", "REVIEW",
-                                 reason, False, source=source))
-            continue
-
-        diagnostics.append(f"{meta.rel}\tno newer verified/reference version found")
+                                     row.get("reason") or "newer version found outside LFS-family policy", False,
+                                     row.get("provider", ""), row.get("source", "")))
+            else:
+                diagnostics.append(f"{meta.rel}\tfamily-guard\t{meta.version}\t{row['latest']}")
+        else:
+            diagnostics.append(f"{meta.rel}\tno newer version found")
 
     enforce_version_lock_groups(out, metas)
     return sorted(out, key=lambda c: c.port)
-
 
 def slackware_dialogrc(path: Path):
     path.write_text('''aspect = 0\nseparate_widget = ""\ntab_len = 0\nvisit_items = OFF\nuse_scrollbar = OFF\nuse_shadow = ON\nuse_colors = ON\nscreen_color = (WHITE,BLUE,OFF)\nshadow_color = (WHITE,BLACK,OFF)\ndialog_color = (BLACK,CYAN,OFF)\ntitle_color = (YELLOW,CYAN,ON)\nborder_color = (CYAN,CYAN,ON)\nbutton_active_color = (WHITE,BLUE,ON)\nbutton_inactive_color = dialog_color\nbutton_key_active_color = button_active_color\nbutton_key_inactive_color = (RED,CYAN,OFF)\nbutton_label_active_color = button_active_color\nbutton_label_inactive_color = (BLACK,CYAN,ON)\ninputbox_color = (BLUE,WHITE,OFF)\ninputbox_border_color = border_color\nsearchbox_color = (YELLOW,WHITE,ON)\nsearchbox_title_color = (WHITE,WHITE,ON)\nsearchbox_border_color = (RED,WHITE,OFF)\nposition_indicator_color = button_key_inactive_color\nmenubox_color = dialog_color\nmenubox_border_color = border_color\nitem_color = dialog_color\nitem_selected_color = screen_color\ntag_color = title_color\ntag_selected_color = screen_color\ntag_key_color = button_key_inactive_color\ntag_key_selected_color = (RED,BLUE,ON)\ncheck_color = dialog_color\ncheck_selected_color = (WHITE,CYAN,ON)\nuarrow_color = (GREEN,CYAN,ON)\ndarrow_color = uarrow_color\nitemhelp_color = shadow_color\nform_active_text_color = inputbox_color\nform_text_color = (CYAN,BLUE,ON)\nform_item_readonly_color = (CYAN,WHITE,ON)\ngauge_color = (BLUE,WHITE,ON)\nborder2_color = dialog_color\ninputbox_border2_color = dialog_color\nsearchbox_border2_color = dialog_color\nmenubox_border2_color = dialog_color\n''')
@@ -1259,15 +1007,7 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
     # Interactive REVIEW items start OFF, but an explicitly checked REVIEW item
     # is a maintainer override and should be applied. Noninteractive --apply
     # remains conservative because main() only auto-selects UPDATE candidates.
-    results = {}
-    group_error = _selection_group_error(cands, set(selected), ports_root)
-    if group_error:
-        for c in cands:
-            if c.port in selected and any(c.port in members for members in VERSION_LOCK_GROUPS.values()):
-                results[c.port] = "BLOCKED: " + group_error
-        return results
-    chosen = [c for c in cands if c.port in selected and c.status in {"UPDATE", "REVIEW"}]
-    chosen.sort(key=lambda c: _build_rank(c.port))
+    results = {}; chosen = [c for c in cands if c.port in selected and c.status in {"UPDATE", "REVIEW"}]
     if not chosen: return results
     with tempfile.TemporaryDirectory(prefix="bfs-selected-updates-") as td_s:
         tsv = Path(td_s)/"selected.tsv"
@@ -1298,22 +1038,14 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
 
 
 def build_selected(cands, selected, ports_root: Path, install: bool, results):
-    ordered = sorted(cands, key=lambda c: _build_rank(c.port))
-    blocked_groups: set[str] = set()
-    for c in ordered:
-        if c.port not in selected or results.get(c.port) != "UPDATED":
-            continue
-        group = next((g for g, members in VERSION_LOCK_GROUPS.items() if c.port in members), "")
-        if group and group in blocked_groups:
-            results[c.port] = f"BLOCKED: {group} prior build failure"
-            continue
+    for c in cands:
+        if c.port not in selected or results.get(c.port) != "UPDATED": continue
         port_dir = ports_root/c.port
-        cp = run(["sudo","pkgmk","-d","-kw"], cwd=port_dir)
+        cmd = ["sudo","pkgmk","-d","-kw"]
+        cp = run(cmd, cwd=port_dir)
         if cp.returncode:
             suffix = "; obsolete patches retained" if c.obsolete_patches else ""
             results[c.port] = f"BUILD FAILED ({cp.returncode}){suffix}"
-            if group:
-                blocked_groups.add(group)
             continue
         results[c.port] = "BUILT"
         if install:
@@ -1321,10 +1053,10 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             if cp2.returncode:
                 suffix = "; obsolete patches retained" if c.obsolete_patches else ""
                 results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}){suffix}"
-                if group:
-                    blocked_groups.add(group)
                 continue
             results[c.port] = "BUILT+INSTALLED"
+        # Old patch files are removed only after the replacement port verified by build
+        # (and install too when Build+Install was requested).
         for name in c.obsolete_patches:
             p = port_dir/name
             if p.is_file(): p.unlink()
@@ -1343,18 +1075,9 @@ def print_report(cands):
 
 def scan(ports_root, trees, jobs, timeout, stamp):
     LOG_ROOT.mkdir(parents=True,exist_ok=True); audit=LOG_ROOT/f"upstream-{stamp}.tsv"
-    base_metas=discover_ports(ports_root,trees)
-    metas, extras = expand_coordinated_metas(ports_root, base_metas)
-    indexes,patches,warnings=load_references(timeout)
+    metas=discover_ports(ports_root,trees); indexes,patches,warnings=load_references(timeout)
     upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit)
-    if extras:
-        extra_trees=sorted({m.rel.split("/",1)[0] for m in extras})
-        extra_audit=LOG_ROOT/f"upstream-{stamp}-coordinated.tsv"
-        extra_rows=run_upstream_audit(ports_root,extra_trees,jobs,timeout,extra_audit,[m.name for m in extras])
-        upstream.update(extra_rows)
     diagnostics: list[str] = []
-    if extras:
-        diagnostics.append("coordinated scan expanded to: " + ", ".join(m.rel for m in extras))
     fallback_refs = prefetch_fallback_references(metas,indexes,timeout,jobs,diagnostics)
     cands = make_candidates(metas,indexes,patches,upstream,timeout,diagnostics,fallback_refs)
     return cands,warnings,diagnostics
