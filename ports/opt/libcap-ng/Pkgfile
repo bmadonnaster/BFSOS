@@ -1,8 +1,19 @@
 # Description: POSIX capabilities library
 # URL: https://people.redhat.com/sgrubb/libcap-ng/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+
 name=libcap-ng
-version=0.8.5
+version=0.9.6
 release=1
-source=(https://people.redhat.com/sgrubb/libcap-ng/libcap-ng-$version.tar.gz)
-build_opt=(--without-python)
+source=(https://github.com/stevegrubb/libcap-ng/archive/refs/tags/v$version.tar.gz)
+
+pkg_build() {
+    ./autogen.sh
+
+    ./configure \
+        --prefix=/usr \
+        --without-python
+
+    make
+    make DESTDIR="$PKG" install
+}

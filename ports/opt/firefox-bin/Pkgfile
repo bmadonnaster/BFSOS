@@ -4,8 +4,8 @@
 # Depends on: gtk3 glib dbus libX11 libXcomposite libXcursor libXdamage libXext libXfixes libXi libXrandr libXtst alsa-lib pulseaudio
 
 name=firefox-bin
-version=155.0.1
-release=4
+version=157.0
+release=1
 source=(https://archive.mozilla.org/pub/firefox/releases/$version/linux-x86_64/en-US/firefox-$version.tar.xz \
 	policies.json firefox.desktop firefox-bin)
 

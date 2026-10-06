@@ -4,8 +4,8 @@
 # Depends on: acl zlib linux-pam gnutls dbus libusb xdg-utils colord
 
 name=cups
-version=2.4.19
-release=2
+version=2.4.20
+release=1
 source=(https://github.com/OpenPrinting/cups/releases/download/v$version/$name-$version-source.tar.gz
         cups.service cups.socket cups.path)
 

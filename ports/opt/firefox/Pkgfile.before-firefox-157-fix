@@ -5,12 +5,12 @@
 # Optional: alsa-lib curl ffmpeg geoclue liboauth libproxy pciutils valgrind wget wireless-tools yasm
 
 name=firefox
-version=157.0
+version=155.0.1
 release=1
 source=(
     https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz
     firefox.desktop
-)
+firefox-155-system-av1-gkcodecs.patch)
 
 pkg_build() {
     if [ "$(python3 -c 'import sys; print(sys.stdout.encoding.lower())')" != 'utf-8' ]; then
@@ -84,6 +84,7 @@ ac_add_options --without-wasm-sandboxed-libraries
 unset MOZ_TELEMETRY_REPORTING
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/firefox-build-dir
 MOZ_APP_REMOTINGNAME=firefox
+MOZ_APP_PROFILE=firefox
 EOF_MOZ
 
     # Keep one recipe usable for Xorg-only, Wayland-only, and combined desktop

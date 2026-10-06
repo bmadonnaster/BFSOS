@@ -5,8 +5,8 @@
 # Optional:	gnuplot	doxygen
 
 name=libqalculate
-version=5.12.0
-release=2
+version=5.13.0
+release=1
 source=(https://github.com/Qalculate/$name/releases/download/v$version/$name-$version.tar.gz)
 build_opt=" --prefix=/usr
             --disable-static

@@ -1,6 +1,5 @@
 drwxr-xr-x	root/root	usr/
 drwxr-xr-x	root/root	usr/bin/
--rwxr-xr-x	root/root	usr/bin/captest
 -rwxr-xr-x	root/root	usr/bin/filecap
 -rwxr-xr-x	root/root	usr/bin/netcap
 -rwxr-xr-x	root/root	usr/bin/pscap
@@ -18,6 +17,13 @@ drwxr-xr-x	root/root	usr/lib/pkgconfig/
 drwxr-xr-x	root/root	usr/share/
 drwxr-xr-x	root/root	usr/share/aclocal/
 -rw-r--r--	root/root	usr/share/aclocal/cap-ng.m4
+drwxr-xr-x	root/root	usr/share/bash-completion/
+drwxr-xr-x	root/root	usr/share/bash-completion/completions/
+lrwxrwxrwx	root/root	usr/share/bash-completion/completions/cap-audit -> libcap-ng.bash_completion
+lrwxrwxrwx	root/root	usr/share/bash-completion/completions/filecap -> libcap-ng.bash_completion
+-rw-r--r--	root/root	usr/share/bash-completion/completions/libcap-ng.bash_completion
+lrwxrwxrwx	root/root	usr/share/bash-completion/completions/netcap -> libcap-ng.bash_completion
+lrwxrwxrwx	root/root	usr/share/bash-completion/completions/pscap -> libcap-ng.bash_completion
 drwxr-xr-x	root/root	usr/share/man/
 drwxr-xr-x	root/root	usr/share/man/man3/
 -rw-r--r--	root/root	usr/share/man/man3/capng_apply.3.gz
@@ -39,12 +45,12 @@ drwxr-xr-x	root/root	usr/share/man/man3/
 -rw-r--r--	root/root	usr/share/man/man3/capng_save_state.3.gz
 -rw-r--r--	root/root	usr/share/man/man3/capng_set_rootid.3.gz
 -rw-r--r--	root/root	usr/share/man/man3/capng_setpid.3.gz
+-rw-r--r--	root/root	usr/share/man/man3/capng_stage_additional_groups.3.gz
 -rw-r--r--	root/root	usr/share/man/man3/capng_update.3.gz
 -rw-r--r--	root/root	usr/share/man/man3/capng_updatev.3.gz
 drwxr-xr-x	root/root	usr/share/man/man7/
 -rw-r--r--	root/root	usr/share/man/man7/libdrop_ambient.7.gz
 drwxr-xr-x	root/root	usr/share/man/man8/
--rw-r--r--	root/root	usr/share/man/man8/captest.8.gz
 -rw-r--r--	root/root	usr/share/man/man8/filecap.8.gz
 -rw-r--r--	root/root	usr/share/man/man8/netcap.8.gz
 -rw-r--r--	root/root	usr/share/man/man8/pscap.8.gz
