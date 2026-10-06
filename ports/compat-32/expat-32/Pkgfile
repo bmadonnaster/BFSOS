@@ -4,8 +4,8 @@
 # Depends on: expat
 
 name=expat-32
-version=2.8.5
-release=3
+version=2.9.0
+release=1
 source=(https://github.com/libexpat/libexpat/releases/download/R_${version//./_}/expat-$version.tar.xz)
 
 
