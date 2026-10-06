@@ -141,24 +141,24 @@ with tempfile.TemporaryDirectory() as td_s:
     assert all(c.status == "UPDATE" and c.selected and c.policy == "nvidia-driver" for c in cands)
     assert u._build_rank("opt/nvidia") < u._build_rank("compat-32/nvidia-32")
 
-    old_run = u.run
+    old_stream = u.run_build_streaming
     try:
         class CP:
             returncode = 0
             stdout = ""
             stderr = ""
         calls = []
-        def fake_run(cmd, **kwargs):
-            calls.append((cmd, kwargs.get("cwd")))
+        def fake_stream(cmd, cwd, log_path, header):
+            calls.append((cmd, cwd))
             return CP()
-        u.run = fake_run
+        u.run_build_streaming = fake_stream
         results = {c.port: "UPDATED" for c in cands}
         u.build_selected(cands, {c.port for c in cands}, ports, False, results)
         assert results["opt/nvidia"] == "BUILT"
         assert results["compat-32/nvidia-32"] == "BUILT"
         assert len(calls) == 2
     finally:
-        u.run = old_run
+        u.run_build_streaming = old_stream
 
 # Primary updater must retain the helper's actual NEEDS-REVIEW reason.
 with tempfile.TemporaryDirectory() as td_s:

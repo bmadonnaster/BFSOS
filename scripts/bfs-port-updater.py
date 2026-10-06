@@ -31,8 +31,9 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser()
 LOG_ROOT = ROOT / "logs" / "update"
+MLFS_PACKAGES_PAGE = "https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/packages.html"
 BOOKS = (
-    ("mlfs-dev", "MLFS DEV", "https://www.linuxfromscratch.org/mlfs/view/dev/longindex.html"),
+    ("mlfs-dev", "MLFS DEV", MLFS_PACKAGES_PAGE),
     ("lfs-dev", "LFS DEV", "https://www.linuxfromscratch.org/lfs/view/systemd/longindex.html"),
     ("blfs-dev", "BLFS DEV", "https://www.linuxfromscratch.org/blfs/view/systemd/longindex.html"),
     ("glfs-dev", "GLFS DEV", "https://www.linuxfromscratch.org/glfs/view/dev/longindex.html"),
@@ -68,9 +69,35 @@ GNOME_CACHE_VALIDATED_BOOK_PORTS = {
     "gnome/gnome-backgrounds",
 }
 
-# Only MLFS DEV membership is authoritative. LFS/BLFS/GLFS are reference
-# providers and must never become automatic UPDATE/ON merely because a book
-# carries a newer version.
+# Development-book authority is explicit per BFSOS port.  This preserves the
+# historical r106 MLFS mapping instead of treating every package found in a
+# development book as automatic authority.  Kernel packages remain governed by
+# BFSOS's LTS policy and are intentionally excluded here.
+MLFS_DEV_MANAGED_PORTS = {
+    "core/acl", "core/attr", "core/autoconf", "core/automake", "core/bash",
+    "core/bc", "core/binutils", "core/bison", "core/bzip2", "core/coreutils",
+    "core/dbus", "core/diffutils", "core/e2fsprogs", "core/elfutils",
+    "core/expat", "core/file", "core/findutils", "core/flex", "core/gawk",
+    "core/gcc", "core/gdbm", "core/gettext", "core/glibc", "core/gmp",
+    "core/gperf", "core/grep", "core/groff", "core/grub", "core/gzip",
+    "core/iana-etc", "core/inetutils", "core/iproute2", "core/kbd",
+    "core/kmod", "core/less", "core/libcap", "core/libffi",
+    "core/libpipeline", "core/libtool", "core/libxcrypt", "core/lz4",
+    "core/m4", "core/make", "core/man-db", "core/man-pages", "core/meson",
+    "core/mpc", "core/mpdecimal", "core/mpfr", "core/ncurses", "core/ninja",
+    "core/openssl", "core/patch", "core/pkgconf", "core/procps-ng",
+    "core/psmisc", "core/python3", "core/python3-flit-core",
+    "core/python3-markupsafe", "core/python3-packaging",
+    "core/python3-setuptools", "core/python3-wheel", "core/readline",
+    "core/sed", "core/shadow", "core/sqlite", "core/systemd", "core/tar",
+    "core/texinfo", "core/tzdata", "core/util-linux", "core/vim",
+    "core/xz", "core/zlib", "core/zstd",
+}
+
+# Package-specific development-book preferences may be added deliberately.
+# They are not global policy for their respective books.
+DEV_BOOK_AUTHORITIES = {"opt/rustc": "blfs-dev"}
+
 REFERENCE_BOOK_POLICIES = {"lfs-dev", "blfs-dev", "glfs-dev"}
 
 # Known source families where the canonical target URL can be derived safely.
@@ -186,6 +213,46 @@ class LITextParser(HTMLParser):
                 self.buf = []
     def handle_data(self, data):
         if self.depth: self.buf.append(data)
+
+
+class InventoryTextParser(HTMLParser):
+    BLOCKS = {"p", "h3", "h4", "dt", "li"}
+    def __init__(self):
+        super().__init__(); self.depth = 0; self.buf: list[str] = []; self.items: list[str] = []
+    def handle_starttag(self, tag, attrs):
+        if tag in self.BLOCKS:
+            if self.depth == 0: self.buf = []
+            self.depth += 1
+    def handle_endtag(self, tag):
+        if tag in self.BLOCKS and self.depth:
+            self.depth -= 1
+            if self.depth == 0:
+                value = " ".join("".join(self.buf).split())
+                if value: self.items.append(value)
+                self.buf = []
+    def handle_data(self, data):
+        if self.depth: self.buf.append(data)
+
+
+def parse_package_inventory(raw: str) -> dict[str, str]:
+    """Parse Chapter 3 package inventory rows such as ``Acl (2.4.0) - 400 KB``."""
+    parser = InventoryTextParser(); parser.feed(raw)
+    out: dict[str, str] = {}
+    rx = re.compile(r"^(.+?)\s*\(([0-9][0-9A-Za-z._+~-]*)\)\s*-", re.I)
+    for item in parser.items:
+        m = rx.search(item)
+        if not m:
+            continue
+        label = m.group(1).strip().rstrip(":")
+        # Package headings are names, not prose.  Reject obviously descriptive
+        # blocks so a nearby version in explanatory text cannot become policy.
+        if len(label.split()) > 4 or any(ch in label for ch in ":;/"):
+            continue
+        name = normalize_name(label)
+        version = m.group(2).rstrip(".,;:")
+        if name == "sqlite": version = sqlite_archive_version(version)
+        out.setdefault(name, version)
+    return out
 
 
 def die(msg: str, code: int = 1):
@@ -557,17 +624,23 @@ def likely_book_obsolete(meta: PortMeta, required: list[PatchSpec]) -> list[str]
 
 
 def lookup_mlfs_authoritative(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
-    """Return an authoritative MLFS DEV mapping only.
-
-    LFS/BLFS/GLFS are deliberately excluded: they are references, not BFSOS
-    automatic-update authority.
-    """
-    if meta.name in KERNEL_PORTS:
+    """Return MLFS DEV authority only for the curated BFSOS mapping."""
+    if meta.name in KERNEL_PORTS or meta.rel not in MLFS_DEV_MANAGED_PORTS:
         return None
     idx = indexes.get("mlfs-dev", {})
     for key in book_keys(meta):
         if key in idx:
             return "mlfs-dev", idx[key]
+    return None
+
+def lookup_explicit_dev_authority(meta: PortMeta, indexes: dict[str, dict[str, str]]) -> tuple[str, str] | None:
+    policy = DEV_BOOK_AUTHORITIES.get(meta.rel)
+    if not policy:
+        return None
+    idx = indexes.get(policy, {})
+    for key in book_keys(meta):
+        if key in idx:
+            return policy, idx[key]
     return None
 
 
@@ -720,7 +793,8 @@ def load_references(timeout: int):
     indexes = {}; failures = []
     for policy, label, url in BOOKS:
         try:
-            indexes[policy] = parse_book_index(fetch_text(url, timeout))
+            raw = fetch_text(url, timeout)
+            indexes[policy] = parse_package_inventory(raw) if policy == "mlfs-dev" else parse_book_index(raw)
             if not indexes[policy]: failures.append(f"{label}: parsed zero package versions")
         except Exception as exc:
             indexes[policy] = {}; failures.append(f"{label}: {exc}")
@@ -972,12 +1046,18 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                                      "userspace kernel headers track linux-lts; glibc release bump required", True))
             continue
 
-        # MLFS DEV alone is authoritative.
+        # Development-book authority is explicit per BFSOS port.
         mlfs = lookup_mlfs_authoritative(meta, indexes)
-        if mlfs:
-            policy, target = mlfs
-            diagnostics.append(f"{meta.rel}\tMLFS-authoritative\tMLFS DEV\t{target}")
+        explicit_dev = lookup_explicit_dev_authority(meta, indexes)
+        authoritative = mlfs or explicit_dev
+        if authoritative:
+            policy, target = authoritative
+            source_label = "MLFS DEV" if policy == "mlfs-dev" else next(x[1] for x in BOOKS if x[0] == policy)
+            diagnostics.append(f"{meta.rel}\tdev-book-authoritative\t{source_label}\t{target}")
             row = upstream.get(meta.rel, {})
+            if newer_for_port(meta, meta.version, target):
+                diagnostics.append(f"{meta.rel}\t{source_label} {target} ignored: BFSOS {meta.version} is newer")
+                continue
 
             if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS and target != meta.version:
                 ok, why_exact, exact_url = validate_exact_target(meta, target, timeout)
@@ -1011,7 +1091,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 continue
 
             new_rel = "1" if target != meta.version else str(int(meta.release) + 1 if meta.release.isdigit() else meta.release)
-            why = "MLFS DEV authoritative version"
+            why = f"{source_label} explicit authoritative version"
             if policy == "upstream-point-release":
                 why = "same-series upstream point release ahead of MLFS DEV"
             if patch_change and target == meta.version:
@@ -1026,7 +1106,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                 why += "; version-specific local patch requires applicability/replacement review: " + ", ".join(old_version_patches)
             source = exact_url or candidate_source_url(meta, target)
             out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, new_rel,
-                                 policy, "MLFS DEV", status, why, selected,
+                                 policy, source_label, status, why, selected,
                                  source=source, patches=required, obsolete_patches=obsolete))
             continue
 
@@ -1555,11 +1635,68 @@ def format_bytes(value: int) -> str:
     return f"{int(value)}B"
 
 
-def pkgmk_build_command(backend: str) -> list[str]:
-    """Use the BFSOS wrapper when installed; always export the chosen backend."""
+def logical_cpu_count() -> int:
+    return max(1, os.cpu_count() or 1)
+
+
+def read_build_jobs(port_dir: Path, logical_cpus: int | None = None) -> tuple[int, str]:
+    """Resolve effective package parallelism without sourcing arbitrary Pkgfile code."""
+    logical = logical_cpus or logical_cpu_count()
+    explicit = os.environ.get("BFS_BUILD_JOBS") or os.environ.get("JOBS")
+    jobs = logical
+    source = "default-all-cpus"
+    if explicit:
+        try:
+            jobs = max(1, int(explicit))
+            source = "user-override"
+        except ValueError:
+            pass
+
+    pkgfile = port_dir / "Pkgfile"
+    if pkgfile.is_file():
+        m = re.search(r"(?m)^\s*build_jobs\s*=\s*[\"']?([0-9]+)[\"']?\s*(?:#.*)?$", pkgfile.read_text(errors="replace"))
+        if m:
+            cap = max(1, int(m.group(1)))
+            if cap < jobs:
+                jobs = cap
+                source = "port-override"
+    return jobs, source
+
+
+def pkgmk_build_command(backend: str, jobs: int) -> list[str]:
+    """Use bfs-pkgmk and carry effective build policy across sudo's env reset."""
     wrapper = shutil.which("bfs-pkgmk")
     tool = wrapper if wrapper else "pkgmk"
-    return ["sudo", "env", f"BFS_PKG_BUILD_WORK={backend}", tool, "-d", "-kw"]
+    return [
+        "sudo", "env",
+        f"BFS_PKG_BUILD_WORK={backend}",
+        f"BFS_PKG_BUILD_JOBS={jobs}",
+        f"JOBS={jobs}",
+        f"MAKEFLAGS=-j{jobs}",
+        f"CMAKE_BUILD_PARALLEL_LEVEL={jobs}",
+        tool, "-d", "-kw",
+    ]
+
+
+def run_build_streaming(cmd: list[str], cwd: Path, log_path: Path, header: str) -> subprocess.CompletedProcess:
+    """Tee build output live to the terminal and persistent per-port log."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    chunks: list[str] = []
+    with log_path.open("w", encoding="utf-8") as log:
+        log.write(header)
+        log.flush()
+        proc = subprocess.Popen(
+            cmd, cwd=str(cwd), text=True, encoding="utf-8", errors="replace",
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1,
+        )
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            print(line, end="", flush=True)
+            log.write(line)
+            log.flush()
+            chunks.append(line)
+        rc = proc.wait()
+    return subprocess.CompletedProcess(cmd, rc, "".join(chunks), "")
 
 
 def is_enospc_output(text: str) -> bool:
@@ -1663,19 +1800,22 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             results[c.port] = f"BLOCKED: build workspace preflight failed: effectively full; {diag}"
             continue
 
+        logical = logical_cpu_count()
+        jobs, jobs_source = read_build_jobs(port_dir, logical)
+        cpu_diag = f"logical_cpus={logical} jobs={jobs} source={jobs_source}"
+        print(f"BUILD-CPU {c.port}: {cpu_diag}", flush=True)
+        print(f"BUILDING {c.port} ({c.name})", flush=True)
+
         # Use bfs-pkgmk when available so the updater follows the same ABI,
-        # build-work, payload-validation, and history policy as normal BFSOS
-        # package builds. Export the already-resolved backend explicitly so a
-        # selected port cannot silently fall back to tmpfs.
-        cp = run(pkgmk_build_command(backend), cwd=port_dir, capture=True)
-        combined = (cp.stdout or "") + (cp.stderr or "")
-        if combined:
-            print(combined, end="" if combined.endswith("\n") else "\n")
+        # build-work, payload-validation, history, and parallel-build policy as
+        # normal BFSOS package builds.  Tee output while the build runs so the
+        # UI and the persistent log never go visually silent for long builds.
         log_stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
         safe_port = c.port.replace("/", "-")
         build_log = LOG_ROOT / f"build-{log_stamp}-{safe_port}.log"
-        LOG_ROOT.mkdir(parents=True, exist_ok=True)
-        build_log.write_text(f"# BFSOS build-work: {diag}\n" + combined)
+        header = f"# BFSOS build-work: {diag}\n# BFSOS build-cpu: {cpu_diag}\n"
+        cp = run_build_streaming(pkgmk_build_command(backend, jobs), port_dir, build_log, header)
+        combined = cp.stdout or ""
         if cp.returncode:
             suffix = "; obsolete patches retained" if c.obsolete_patches else ""
             if is_enospc_output(combined):

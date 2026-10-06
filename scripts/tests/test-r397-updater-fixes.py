@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory() as td:
     d.mkdir(parents=True)
     (d/'Pkgfile').write_text('name=demo\nversion=2\nrelease=1\nbuild_work=disk\n')
     calls = []
-    old_run = u.run
+    old_run = u.run_build_streaming
     old_preflight = u.build_work_preflight
     old_which = u.shutil.which
     old_log_root = u.LOG_ROOT
@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory() as td:
         def fake_run(cmd, **kwargs):
             calls.append(cmd)
             return SimpleNamespace(returncode=0, stdout='ok\n', stderr='')
-        u.run = fake_run
+        u.run_build_streaming = lambda cmd, cwd, log_path, header: fake_run(cmd, cwd=cwd)
         results = {'opt/demo': 'UPDATED'}
         u.build_selected([cand('opt/demo','demo')], {'opt/demo'}, ports, False, results)
         assert results['opt/demo'] == 'BUILT'
@@ -70,7 +70,7 @@ with tempfile.TemporaryDirectory() as td:
         assert 'BFS_PKG_BUILD_WORK=disk' in calls[0], calls[0]
         assert '/usr/bin/bfs-pkgmk' in calls[0], calls[0]
     finally:
-        u.run = old_run
+        u.run_build_streaming = old_run
         u.build_work_preflight = old_preflight
         u.shutil.which = old_which
         u.LOG_ROOT = old_log_root
@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory() as td:
     d.mkdir(parents=True)
     (d/'Pkgfile').write_text('name=plain\nversion=2\nrelease=1\n')
     calls = []
-    old_run = u.run
+    old_run = u.run_build_streaming
     old_preflight = u.build_work_preflight
     old_which = u.shutil.which
     old_log_root = u.LOG_ROOT
@@ -98,12 +98,12 @@ with tempfile.TemporaryDirectory() as td:
         def fake_run(cmd, **kwargs):
             calls.append(cmd)
             return SimpleNamespace(returncode=0, stdout='', stderr='')
-        u.run = fake_run
+        u.run_build_streaming = lambda cmd, cwd, log_path, header: fake_run(cmd, cwd=cwd)
         results = {'opt/plain': 'UPDATED'}
         u.build_selected([cand('opt/plain','plain')], {'opt/plain'}, ports, False, results)
         assert 'BFS_PKG_BUILD_WORK=tmpfs' in calls[0], calls[0]
     finally:
-        u.run = old_run
+        u.run_build_streaming = old_run
         u.build_work_preflight = old_preflight
         u.shutil.which = old_which
         u.LOG_ROOT = old_log_root
@@ -117,7 +117,7 @@ with tempfile.TemporaryDirectory() as td:
         d.mkdir(parents=True)
         (d/'Pkgfile').write_text(f'name={name}\nversion=2\nrelease=1\n')
     calls = []
-    old_run = u.run
+    old_run = u.run_build_streaming
     old_preflight = u.build_work_preflight
     old_which = u.shutil.which
     old_log_root = u.LOG_ROOT
@@ -131,8 +131,8 @@ with tempfile.TemporaryDirectory() as td:
         u.shutil.which = lambda name: '/usr/bin/bfs-pkgmk'
         def fake_run(cmd, **kwargs):
             calls.append(cmd)
-            return SimpleNamespace(returncode=1, stdout='', stderr='tar: Write failed: No space left on device\n')
-        u.run = fake_run
+            return SimpleNamespace(returncode=1, stdout='tar: Write failed: No space left on device\n', stderr='')
+        u.run_build_streaming = lambda cmd, cwd, log_path, header: fake_run(cmd, cwd=cwd)
         cs = [cand(f'opt/{x}',x) for x in ('a','b','c')]
         results = {c.port:'UPDATED' for c in cs}
         u.build_selected(cs, set(results), ports, False, results)
@@ -141,7 +141,7 @@ with tempfile.TemporaryDirectory() as td:
         assert results['opt/b'].startswith('BLOCKED: build workspace out of space'), results
         assert results['opt/c'].startswith('BLOCKED: build workspace out of space'), results
     finally:
-        u.run = old_run
+        u.run_build_streaming = old_run
         u.build_work_preflight = old_preflight
         u.shutil.which = old_which
         u.LOG_ROOT = old_log_root
@@ -153,7 +153,7 @@ with tempfile.TemporaryDirectory() as td:
     d = ports/'opt'/'full'
     d.mkdir(parents=True)
     (d/'Pkgfile').write_text('name=full\nversion=2\nrelease=1\n')
-    old_run = u.run
+    old_run = u.run_build_streaming
     old_preflight = u.build_work_preflight
     try:
         u.build_work_preflight = lambda backend: {
@@ -161,12 +161,12 @@ with tempfile.TemporaryDirectory() as td:
             'probe': Path('/var/cache/pkg/build-work'), 'free_bytes': 156*1024,
             'free_inodes': 100000, 'ok': False,
         }
-        u.run = lambda *a, **k: (_ for _ in ()).throw(AssertionError('pkgmk must not run'))
+        u.run_build_streaming = lambda *a, **k: (_ for _ in ()).throw(AssertionError('pkgmk must not run'))
         results = {'opt/full':'UPDATED'}
         u.build_selected([cand('opt/full','full')], {'opt/full'}, ports, False, results)
         assert results['opt/full'].startswith('BLOCKED: build workspace preflight failed')
     finally:
-        u.run = old_run
+        u.run_build_streaming = old_run
         u.build_work_preflight = old_preflight
 
 print('r397 updater regressions: PASS')

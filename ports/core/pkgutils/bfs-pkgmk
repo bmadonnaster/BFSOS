@@ -51,6 +51,26 @@ case "$BFS_PKG_BUILD_WORK" in
 esac
 unset bfs_port_build_work
 
+# Resolve package-build parallelism before pkgmk sources pkgmk.conf.  Explicit
+# BFS_PKG_BUILD_JOBS/JOBS is preserved, otherwise use every available logical
+# CPU.  A simple top-level build_jobs=N is an intentional per-port upper cap.
+bfs_jobs="${BFS_PKG_BUILD_JOBS:-${JOBS:-}}"
+if [ -z "$bfs_jobs" ]; then
+    bfs_jobs="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || printf 1)"
+fi
+case "$bfs_jobs" in *[!0-9]*|'') bfs_jobs=1 ;; esac
+[ "$bfs_jobs" -gt 0 ] 2>/dev/null || bfs_jobs=1
+if [ -r ./Pkgfile ]; then
+    bfs_port_jobs="$(sed -n 's/^[[:space:]]*build_jobs[[:space:]]*=[[:space:]]*["'"'"']\{0,1\}\([0-9][0-9]*\).*/\1/p' ./Pkgfile | head -n1)"
+    if [ -n "$bfs_port_jobs" ] && [ "$bfs_port_jobs" -lt "$bfs_jobs" ]; then
+        bfs_jobs="$bfs_port_jobs"
+    fi
+fi
+export JOBS="$bfs_jobs"
+export MAKEFLAGS="-j$bfs_jobs"
+export CMAKE_BUILD_PARALLEL_LEVEL="$bfs_jobs"
+unset bfs_jobs bfs_port_jobs
+
 human_elapsed() {
     total="${1:-0}"
     case "$total" in *[!0-9]*|'') total=0 ;; esac
