@@ -4,7 +4,7 @@
 # Depends on: libxml2-32 llvm-32 spirv-headers spirv-tools-32 spirv-llvm-translator
 
 name=spirv-llvm-translator-32
-version=23.1.1
+version=23.1.2
 release=1
 
 source=(https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v${version}/SPIRV-LLVM-Translator-${version}.tar.gz)

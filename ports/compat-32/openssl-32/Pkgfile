@@ -4,8 +4,8 @@
 # Depends on: zlib-32
 
 name=openssl-32
-version=4.0.2
-release=2
+version=4.0.3
+release=1
 source=(https://github.com/openssl/openssl/releases/download/openssl-$version/openssl-$version.tar.gz)
 
 # Custom build required: OpenSSL uses its Configure target and install_sw
