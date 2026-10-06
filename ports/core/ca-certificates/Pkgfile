@@ -5,8 +5,7 @@
 
 name=ca-certificates
 version=20260925
-release=1
-
+release=2
 # The curl PEM remains a bootstrap seed for the early toolchain only.  The
 # installed trust lifecycle is driven by the pinned Mozilla NSS certdata input
 # below and make-ca -r, so normal package installation never downloads roots.

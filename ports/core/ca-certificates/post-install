@@ -14,4 +14,10 @@ if [ -x /usr/sbin/make-ca ] && [ -x /usr/bin/trust ]; then
         exit 1
     }
     /usr/sbin/make-ca -r
+
+    # make-ca -r may rebuild /etc/ssl/certs. Recreate compatibility links only
+    # after trust generation so consumers such as Steam keep finding the bundle.
+    install -d -m 0755 /etc/ssl/certs
+    ln -sfn ../cert.pem /etc/ssl/certs/ca-certificates.crt
+    ln -sfn /etc/ssl/cert.pem /etc/ssl/ca-bundle.crt
 fi

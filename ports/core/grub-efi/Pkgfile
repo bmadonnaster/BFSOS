@@ -2,8 +2,8 @@
 name=grub-efi
 version=2.14
 release=1
-source=(https://ftp.gnu.org/gnu/grub/grub-$version.tar.xz
-        https://ftp.gnu.org/gnu/unifont/unifont-17.0.05/unifont-17.0.05.pcf.gz
+source=(https://ftpmirror.gnu.org/grub/grub-$version.tar.xz
+        https://ftpmirror.gnu.org/unifont/unifont-17.0.05/unifont-17.0.05.pcf.gz
         extra_deps.lst)
 renames=(SKIP unifont-17.0.05.pcf.noextract SKIP)
 build_opt="--disable-efiemu

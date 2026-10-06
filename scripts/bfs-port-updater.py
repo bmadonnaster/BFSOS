@@ -31,6 +31,89 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser()
 LOG_ROOT = ROOT / "logs" / "update"
+
+DISTRO_VERSION_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]*$")
+
+def project_distro_version(project_root: Path = ROOT) -> str:
+    try:
+        value = (project_root / "VERSION").read_text().strip()
+    except OSError:
+        return "0.9.0"
+    return value or "0.9.0"
+
+def _replace_once(text: str, pattern: str, repl: str, label: str) -> str:
+    new, count = re.subn(pattern, repl, text, count=1, flags=re.M)
+    if count != 1:
+        raise RuntimeError(f"could not update {label}")
+    return new
+
+def apply_distro_version(project_root: Path, new_version: str) -> list[str]:
+    """Update active BFSOS release consumers transactionally.
+
+    VERSION is authoritative, but aaa_filesystem must embed the release into the
+    installed system identity.  Active script fallbacks are kept in sync so a
+    copied/standalone helper still reports the selected release when VERSION is
+    unavailable.  aaa_filesystem's package release is bumped once whenever the
+    distro release changes, ensuring sysup sees the identity change.
+    """
+    new_version = (new_version or "").strip()
+    if not DISTRO_VERSION_RX.fullmatch(new_version):
+        raise ValueError("version must use only letters, digits, '.', '-', '_', or '+' and may not contain spaces/slashes")
+    project_root = project_root.resolve()
+    version_path = project_root / "VERSION"
+    old_version = version_path.read_text().strip() if version_path.is_file() else ""
+    if old_version == new_version:
+        return []
+
+    edits: dict[Path, str] = {}
+    edits[version_path] = new_version + "\n"
+
+    aaa = project_root / "ports/core/aaa_filesystem/Pkgfile"
+    aaa_text = aaa.read_text()
+    aaa_text = _replace_once(aaa_text, r"^bfs_version=.*$", f"bfs_version={new_version}", "aaa_filesystem bfs_version")
+    m = re.search(r"(?m)^release=(\d+)\s*$", aaa_text)
+    if not m:
+        raise RuntimeError("could not find aaa_filesystem release")
+    next_release = int(m.group(1)) + 1
+    aaa_text = _replace_once(aaa_text, r"^release=\d+\s*$", f"release={next_release}", "aaa_filesystem release")
+    edits[aaa] = aaa_text
+
+    replacements = [
+        (project_root / "bootstrap.sh", r'BFS_VERSION="0\.9\.0"', f'BFS_VERSION="{new_version}"', "bootstrap fallback"),
+        (project_root / "bootstrap-clean-start.sh", r'BFS_VERSION="0\.9\.0"', f'BFS_VERSION="{new_version}"', "clean-start fallback"),
+        (project_root / "scripts/bfs-build-iso.sh", r"printf '0\.9\.0'", f"printf '{new_version}'", "ISO fallback"),
+        (project_root / "scripts/install-bfs-menu-current.sh", r'\$\{release:-0\.9\.0\}', '${release:-' + new_version + '}', "installer fallback"),
+    ]
+    for path, pattern, repl, label in replacements:
+        text = path.read_text()
+        new, count = re.subn(pattern, repl, text)
+        if count < 1:
+            # Fall back to the previous authoritative VERSION value when this
+            # feature is used again after the first release bump.
+            old_pat = re.escape(old_version) if old_version else None
+            if old_pat:
+                if label == "bootstrap fallback" or label == "clean-start fallback":
+                    new, count = re.subn(r'BFS_VERSION="' + old_pat + r'"', f'BFS_VERSION="{new_version}"', text)
+                elif label == "ISO fallback":
+                    new, count = re.subn(r"printf '" + old_pat + r"'", f"printf '{new_version}'", text)
+                elif label == "installer fallback":
+                    new, count = re.subn(r'\$\{release:-' + old_pat + r'\}', '${release:-' + new_version + '}', text)
+        if count < 1:
+            raise RuntimeError(f"could not update {label} in {path.relative_to(project_root)}")
+        edits[path] = new
+
+    # User-facing release documentation follows the authoritative marker.
+    for rel in ("README.md", "docs/INSTALL.md"):
+        path = project_root / rel
+        if path.is_file() and old_version:
+            text = path.read_text()
+            if old_version in text:
+                edits[path] = text.replace(old_version, new_version)
+
+    # Commit only after every planned edit has been derived successfully.
+    for path, text in edits.items():
+        path.write_text(text)
+    return [str(path.relative_to(project_root)) for path in edits]
 MLFS_PACKAGES_PAGE = "https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/packages.html"
 BOOKS = (
     ("mlfs-dev", "MLFS DEV", MLFS_PACKAGES_PAGE),
@@ -1262,16 +1345,24 @@ def choose_action_dialog(env, retry_count=0):
         "1", "Check all discovered port trees",
         "2", "Select port trees to check",
         "3", "Kernel / kernel-headers maintenance",
+        "4", f"Set BFSOS distro version (current: {project_distro_version()})",
     ]
     if retry_count:
-        items += ["4", f"Retry failed updates ({retry_count})"]
-        exit_tag = "5"
+        items += ["5", f"Retry failed updates ({retry_count})"]
+        exit_tag = "6"
     else:
-        exit_tag = "4"
+        exit_tag = "5"
     items += [exit_tag, "Exit"]
     code, out = dcall(["--title", "Maintainer updater", "--menu", "Choose an update task.",
-                       "19", "82", "9", *items], env)
+                       "20", "88", "10", *items], env)
     return out if code == 0 else exit_tag
+
+def choose_distro_version_dialog(env):
+    current = project_distro_version()
+    code, out = dcall(["--title", "BFSOS distro version", "--inputbox",
+                       "Enter the BFSOS release version.\n\nThis updates VERSION, active release fallbacks, release documentation, and aaa_filesystem; aaa_filesystem release is bumped so sysup can install the new identity.",
+                       "13", "92", current], env)
+    return None if code else out.strip()
 
 
 def choose_trees_dialog(trees, env):
@@ -1904,16 +1995,35 @@ def pkgmk_footprint_update_command(backend: str, jobs: int) -> list[str]:
 
 
 def cleanup_successful_build_work(root: str | Path, package_name: str) -> tuple[bool, str]:
-    # Delete exactly one pkgmk-$name work tree, never an arbitrary path.
+    """Remove exactly one successful pkgmk workspace, including root-owned trees.
+
+    Builds run through sudo, so their work directories are normally root-owned.
+    Cleanup therefore crosses the same privilege boundary, but only after strict
+    validation that the target is an immediate pkgmk-$name child of one of the
+    configured build-work roots. Cleanup failure is non-fatal to the updater.
+    """
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9+_.-]*", package_name or ""):
         return False, "unsafe package name"
-    base = Path(root).resolve()
+    try:
+        base = Path(root).resolve()
+        allowed = {p.resolve() for p in build_work_roots().values()}
+    except Exception as exc:
+        return False, f"could not resolve build-work root: {exc}"
+    if base not in allowed:
+        return False, f"refusing cleanup outside configured build-work roots: {base}"
     target = (base / f"pkgmk-{package_name}").resolve()
     if target.parent != base or target.name != f"pkgmk-{package_name}":
         return False, "unsafe build-work path"
-    if target.exists():
-        shutil.rmtree(target)
+    if not target.exists():
         return True, str(target)
+    try:
+        cp = subprocess.run(["sudo", "rm", "-rf", "--", str(target)], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    except OSError as exc:
+        return False, f"cleanup command failed to start: {exc}"
+    if cp.returncode != 0:
+        detail = cp.stderr.strip() or cp.stdout.strip() or f"sudo rm exited {cp.returncode}"
+        return False, detail
     return True, str(target)
 
 
@@ -2102,7 +2212,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         if ok_cleanup:
             print(f"BUILD-WORK CLEANUP {c.port}: {cleanup_detail}", flush=True)
         else:
-            print(f"BUILD-WORK CLEANUP SKIPPED {c.port}: {cleanup_detail}", flush=True)
+            print(f"BUILD-WORK CLEANUP WARNING {c.port}: {cleanup_detail}", flush=True)
 
         for name in c.obsolete_patches:
             p = port_dir/name
@@ -2168,7 +2278,20 @@ def main():
     ap.add_argument("--install",action="store_true",help="with --apply --build, install through prt-get after build")
     ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS","10")))
     ap.add_argument("--timeout",type=int,default=int(os.environ.get("BFS_AUDIT_TIMEOUT","15")))
+    ap.add_argument("--set-distro-version", metavar="VERSION", help="set BFSOS distro release across active consumers and exit")
     ns=ap.parse_args()
+    if ns.set_distro_version:
+        try:
+            changed = apply_distro_version(ROOT, ns.set_distro_version)
+        except (OSError, RuntimeError, ValueError) as exc:
+            die(f"distro version update failed: {exc}")
+        if changed:
+            print(f"BFSOS distro version set to {ns.set_distro_version}")
+            for rel in changed:
+                print(f"  updated: {rel}")
+        else:
+            print(f"BFSOS distro version already {ns.set_distro_version}")
+        return 0
     ports_root=ns.ports_root.expanduser().resolve(); trees=discover_trees(ports_root)
     if ns.list_trees:
         for t in trees: print(f"{t.name}\t{port_count(t)}")
@@ -2214,7 +2337,7 @@ def main():
         while True:
             retry_log,retry_rows=find_retryable_failures(ports_root)
             action=choose_action_dialog(env,len(retry_rows))
-            exit_tag="5" if retry_rows else "4"
+            exit_tag="6" if retry_rows else "5"
             if action==exit_tag:
                 return 0
 
@@ -2234,7 +2357,20 @@ def main():
             elif action=="3":
                 chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
                 kernel_only=True
-            elif action=="4" and retry_rows:
+            elif action=="4":
+                requested=choose_distro_version_dialog(env)
+                if requested is None:
+                    continue
+                try:
+                    changed=apply_distro_version(ROOT,requested)
+                except (OSError,RuntimeError,ValueError) as exc:
+                    dcall(["--title","BFSOS distro version","--msgbox",f"Version update failed:\n\n{exc}","12","88"],env)
+                    continue
+                body=(f"BFSOS distro version is now {requested}.\n\n" +
+                      ("Updated:\n" + "\n".join(changed) if changed else "No files changed; that version was already active."))
+                dcall(["--title","BFSOS distro version","--msgbox",body,"24","100"],env)
+                continue
+            elif action=="5" and retry_rows:
                 picked=choose_retry_dialog(retry_rows,env)
                 if picked is None or not picked:
                     continue

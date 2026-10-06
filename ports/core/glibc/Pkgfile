@@ -7,7 +7,7 @@ name=glibc
 version=2.44
 release=5
 source=(
-    https://ftp.gnu.org/gnu/glibc/glibc-$version.tar.xz
+    https://ftpmirror.gnu.org/glibc/glibc-$version.tar.xz
     glibc-fhs-1.patch
     glibc-2.44-upstream_fix-1.patch
     genlocales
