@@ -31,17 +31,41 @@ case "$PWD/" in
 esac
 
 # Select the build-work backend before pkgmk creates or extracts any work.
-# An administrator-provided BFS_PKG_BUILD_WORK wins; otherwise read only the
-# simple top-level build_work= metadata rather than sourcing arbitrary Pkgfile
-# code in this wrapper.
-if [ -z "${BFS_PKG_BUILD_WORK:-}" ] && [ -r ./Pkgfile ]; then
+# An explicit environment override wins. Otherwise honor build_work= metadata,
+# but redirect unsafe tmpfs choices and known-large builds to persistent disk.
+bfs_backend_forced=0
+[ -n "${BFS_PKG_BUILD_WORK:-}" ] && bfs_backend_forced=1
+bfs_port_build_work=""
+if [ "$bfs_backend_forced" -eq 0 ] && [ -r ./Pkgfile ]; then
     bfs_port_build_work="$(
         sed -n 's/^[[:space:]]*build_work[[:space:]]*=[[:space:]]*["'"'"']\{0,1\}\([^"'"'"'[:space:]#]*\).*/\1/p' ./Pkgfile | head -n1
     )"
     [ -n "$bfs_port_build_work" ] && BFS_PKG_BUILD_WORK="$bfs_port_build_work"
 fi
-BFS_PKG_BUILD_WORK="${BFS_PKG_BUILD_WORK:-tmpfs}"
-case "$BFS_PKG_BUILD_WORK" in
+
+bfs_pkg_name="$(sed -n 's/^[[:space:]]*name[[:space:]]*=[[:space:]]*["'"'"']\{0,1\}\([^"'"'"'[:space:]#]*\).*/\1/p' ./Pkgfile 2>/dev/null | head -n1)"
+bfs_large=0
+case "$bfs_pkg_name" in
+    llvm|llvm-32|clang|clang-32|mesa|mesa-32|rustc|gcc|chromium|firefox|firefox-esr|webkitgtk*|qtwebengine*) bfs_large=1 ;;
+esac
+
+bfs_tmpfs_root="/var/cache/pkg/build-work"
+bfs_min_gib="${BFS_TMPFS_MIN_FREE_GIB:-16}"
+case "$bfs_min_gib" in *[!0-9]*|'') bfs_min_gib=16 ;; esac
+bfs_min_kb=$((bfs_min_gib * 1024 * 1024))
+bfs_tmpfs_free_kb="$(df -Pk "$bfs_tmpfs_root" 2>/dev/null | awk 'NR==2 {print $4}')"
+case "$bfs_tmpfs_free_kb" in *[!0-9]*|'') bfs_tmpfs_free_kb=0 ;; esac
+
+if [ "$bfs_backend_forced" -eq 0 ]; then
+    if [ "$bfs_large" -eq 1 ]; then
+        BFS_PKG_BUILD_WORK=disk
+    elif [ "${BFS_PKG_BUILD_WORK:-tmpfs}" = tmpfs ] && [ "$bfs_tmpfs_free_kb" -lt "$bfs_min_kb" ]; then
+        BFS_PKG_BUILD_WORK=disk
+    else
+        BFS_PKG_BUILD_WORK="${BFS_PKG_BUILD_WORK:-tmpfs}"
+    fi
+fi
+case "${BFS_PKG_BUILD_WORK:-tmpfs}" in
     tmpfs|disk) export BFS_PKG_BUILD_WORK ;;
     *)
         printf 'BFSOS pkgmk: invalid build_work backend %s (expected tmpfs or disk)\n' \
@@ -49,7 +73,17 @@ case "$BFS_PKG_BUILD_WORK" in
         exit 2
         ;;
 esac
-unset bfs_port_build_work
+if [ "$BFS_PKG_BUILD_WORK" = disk ]; then
+    bfs_disk_root="${PKGMK_DISK_WORK_ROOT:-/var/cache/pkg/build-work-disk}"
+    bfs_probe="$bfs_disk_root"
+    while [ ! -e "$bfs_probe" ] && [ "$bfs_probe" != / ]; do bfs_probe="${bfs_probe%/*}"; [ -n "$bfs_probe" ] || bfs_probe=/; done
+    bfs_fs="$(stat -f -c %T "$bfs_probe" 2>/dev/null || true)"
+    case "$bfs_fs" in tmpfs|ramfs)
+        printf 'BFSOS pkgmk: refusing disk backend because %s is %s\n' "$bfs_disk_root" "$bfs_fs" >&2
+        exit 2 ;;
+    esac
+fi
+unset bfs_port_build_work bfs_pkg_name bfs_large bfs_tmpfs_root bfs_min_gib bfs_min_kb bfs_tmpfs_free_kb bfs_backend_forced bfs_disk_root bfs_probe bfs_fs
 
 # Resolve package-build parallelism before pkgmk sources pkgmk.conf.  Explicit
 # BFS_PKG_BUILD_JOBS/JOBS is preserved, otherwise use every available logical

@@ -76,7 +76,7 @@ with tempfile.TemporaryDirectory() as td:
         u.LOG_ROOT = old_log_root
 
 
-# Missing metadata keeps the existing tmpfs default.
+# Missing metadata keeps tmpfs when the configured safety headroom is healthy.
 with tempfile.TemporaryDirectory() as td:
     ports = Path(td)/'ports'
     d = ports/'opt'/'plain'
@@ -91,7 +91,7 @@ with tempfile.TemporaryDirectory() as td:
         u.LOG_ROOT = Path(td)/'logs'
         u.build_work_preflight = lambda backend: {
             'backend': backend, 'root': Path('/var/cache/pkg/build-work'),
-            'probe': Path('/var/cache/pkg/build-work'), 'free_bytes': 10*1024**3,
+            'probe': Path('/var/cache/pkg/build-work'), 'free_bytes': 20*1024**3,
             'free_inodes': 100000, 'ok': True,
         }
         u.shutil.which = lambda name: '/usr/bin/bfs-pkgmk'

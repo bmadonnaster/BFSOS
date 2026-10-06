@@ -152,6 +152,16 @@ GROUP_BUILD_ORDER = {
 # both be built from the matching runfile without installing the first package.
 GROUP_BUILD_REQUIRES_INSTALLED_PREREQ = {"vulkan-sdk"}
 
+# Large package families should never rely on the RAM-backed build root merely
+# because a port omitted build_work=disk.  These are conservative identities;
+# per-port build_work metadata still remains supported.
+LARGE_BUILD_PACKAGE_NAMES = {
+    "llvm", "llvm-32", "clang", "clang-32", "mesa", "mesa-32",
+    "rustc", "gcc", "chromium", "firefox", "firefox-esr",
+}
+LARGE_BUILD_PREFIXES = ("webkitgtk", "qtwebengine")
+DEFAULT_TMPFS_HEADROOM_GIB = 16
+
 
 @dataclasses.dataclass
 class PortMeta:
@@ -699,6 +709,17 @@ def candidate_source_url(meta: PortMeta, target: str) -> str:
     # target validation rather than trusting whichever generic provider won.
     if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS:
         return f"https://download.gnome.org/sources/{meta.name}/{gnome_series(target)}/{meta.name}-{target}.tar.xz"
+
+    # Generic GNOME source-template migration, including compat-32 ports such
+    # as pango-32.  Never retain the old series directory across a series jump.
+    for url in _remote_source_urls(meta):
+        parsed = urlsplit(url)
+        if parsed.netloc.lower() in {"download.gnome.org", "ftp.gnome.org"}:
+            m = re.search(r"/sources/([^/]+)/[^/]+/([^/]+)$", parsed.path)
+            if m and meta.version in m.group(2):
+                module = m.group(1)
+                filename = m.group(2).replace(meta.version, target)
+                return f"https://download.gnome.org/sources/{module}/{gnome_series(target)}/{filename}"
 
     # Generic safe rewrite: only when the evaluated current version occurs in a
     # remote URL. This does not guess a new host/path layout.
@@ -1551,11 +1572,11 @@ def snapshot_selected_ports(selected: set[str], ports_root: Path) -> Path | None
     return root
 
 
-def read_build_work_backend(port_dir: Path) -> str:
-    """Read BFSOS simple top-level build_work= metadata without sourcing Pkgfile."""
+def read_build_work_preference(port_dir: Path) -> str | None:
+    """Read explicit BFSOS top-level build_work= metadata without sourcing Pkgfile."""
     pkgfile = port_dir / "Pkgfile"
     if not pkgfile.is_file():
-        return "tmpfs"
+        return None
     rx = re.compile(r"^\s*build_work\s*=\s*[\"']?([^\"'\s#]+)")
     for line in pkgfile.read_text(errors="replace").splitlines():
         m = rx.match(line)
@@ -1565,7 +1586,31 @@ def read_build_work_backend(port_dir: Path) -> str:
         if value not in {"tmpfs", "disk"}:
             raise ValueError(f"invalid build_work={value}; expected tmpfs or disk")
         return value
-    return "tmpfs"
+    return None
+
+
+def read_build_work_backend(port_dir: Path) -> str:
+    """Compatibility helper returning the historical default backend."""
+    return read_build_work_preference(port_dir) or "tmpfs"
+
+
+def package_name_from_pkgfile(port_dir: Path) -> str:
+    pkgfile = port_dir / "Pkgfile"
+    if not pkgfile.is_file():
+        return port_dir.name
+    m = re.search(r"(?m)^\s*name\s*=\s*[\"']?([^\"'\s#]+)", pkgfile.read_text(errors="replace"))
+    return m.group(1).strip() if m else port_dir.name
+
+
+def is_known_large_build(port_dir: Path, port_rel: str = "") -> bool:
+    name = package_name_from_pkgfile(port_dir)
+    base = name[:-3] if name.endswith("-32") else name
+    if name in LARGE_BUILD_PACKAGE_NAMES or base in LARGE_BUILD_PACKAGE_NAMES:
+        return True
+    if any(base.startswith(prefix) for prefix in LARGE_BUILD_PREFIXES):
+        return True
+    # Kernel compilation is large even though the package names vary.
+    return port_rel in {"core/linux", "core/linux-lts"}
 
 
 def _pkgmk_conf_path_value(var: str, fallback: str) -> str:
@@ -1604,26 +1649,92 @@ def _existing_fs_probe(path: Path) -> Path:
     return probe
 
 
-def build_work_preflight(backend: str) -> dict[str, object]:
+def _mount_fstype(path: Path) -> str:
+    """Return the filesystem type for the longest matching mount point."""
+    probe = _existing_fs_probe(path).resolve()
+    best_len = -1
+    best_type = "unknown"
+    try:
+        for raw in Path("/proc/self/mountinfo").read_text(errors="replace").splitlines():
+            left, sep, right = raw.partition(" - ")
+            if not sep:
+                continue
+            fields = left.split()
+            rfields = right.split()
+            if len(fields) < 5 or not rfields:
+                continue
+            mount = fields[4].replace("\040", " ")
+            mp = Path(mount)
+            try:
+                probe.relative_to(mp)
+            except ValueError:
+                continue
+            if len(str(mp)) > best_len:
+                best_len = len(str(mp))
+                best_type = rfields[0]
+    except OSError:
+        pass
+    return best_type
+
+
+def build_work_preflight(backend: str, min_bytes: int = 512 * 1024 * 1024) -> dict[str, object]:
     """Inspect the actual filesystem that will hold pkgmk build work."""
     root = build_work_roots()[backend]
     probe = _existing_fs_probe(root)
     st = os.statvfs(probe)
     free_bytes = st.f_bavail * st.f_frsize
     free_inodes = st.f_favail
-    # Deliberately only an "effectively full" guard, not a package size
-    # estimate. This catches a saturated tmpfs before launching pkgmk.
-    min_bytes = 512 * 1024 * 1024
     min_inodes = 1024
-    ok = free_bytes >= min_bytes and free_inodes >= min_inodes
+    fstype = _mount_fstype(probe)
+    disk_is_ram = backend == "disk" and fstype in {"tmpfs", "ramfs"}
+    ok = free_bytes >= min_bytes and free_inodes >= min_inodes and not disk_is_ram
     return {
-        "backend": backend,
-        "root": root,
-        "probe": probe,
-        "free_bytes": free_bytes,
-        "free_inodes": free_inodes,
-        "ok": ok,
+        "backend": backend, "root": root, "probe": probe,
+        "free_bytes": free_bytes, "free_inodes": free_inodes,
+        "fstype": fstype, "disk_is_ram": disk_is_ram, "ok": ok,
     }
+
+
+def _tmpfs_headroom_bytes() -> int:
+    raw = os.environ.get("BFS_TMPFS_MIN_FREE_GIB", str(DEFAULT_TMPFS_HEADROOM_GIB))
+    try:
+        gib = max(1, int(raw))
+    except ValueError:
+        gib = DEFAULT_TMPFS_HEADROOM_GIB
+    return gib * 1024**3
+
+
+def select_build_work_backend(port_dir: Path, port_rel: str = "") -> tuple[str, str, dict[str, object]]:
+    """Choose a safe backend before launching pkgmk."""
+    pref = read_build_work_preference(port_dir)
+    tmp = build_work_preflight("tmpfs")
+    disk = build_work_preflight("disk")
+    headroom = _tmpfs_headroom_bytes()
+    large = is_known_large_build(port_dir, port_rel)
+
+    def require_disk(reason: str):
+        if disk.get("disk_is_ram"):
+            raise OSError(f"disk build root resolves to {disk.get('fstype')}, not persistent storage")
+        if not disk.get("ok"):
+            raise OSError(
+                f"disk build root unavailable/too full: root={disk['root']} "
+                f"free={format_bytes(int(disk['free_bytes']))} inodes={disk['free_inodes']}"
+            )
+        return "disk", reason, disk
+
+    if pref == "disk":
+        return require_disk("explicit build_work=disk")
+    if large:
+        return require_disk("known-large package")
+    if not tmp.get("ok") or int(tmp["free_bytes"]) < headroom:
+        reason = (
+            f"tmpfs insufficient headroom ({format_bytes(int(tmp['free_bytes']))} free; "
+            f"need {format_bytes(headroom)})"
+        )
+        return require_disk(reason)
+    if pref == "tmpfs":
+        return "tmpfs", "explicit build_work=tmpfs", tmp
+    return "tmpfs", "default tmpfs with sufficient headroom", tmp
 
 
 def format_bytes(value: int) -> str:
@@ -1709,6 +1820,82 @@ def is_enospc_output(text: str) -> bool:
     )
 
 
+def read_port_dependencies(port_dir: Path) -> set[str]:
+    """Read simple # Depends on: metadata used by BFSOS ports."""
+    pkgfile = port_dir / "Pkgfile"
+    if not pkgfile.is_file():
+        return set()
+    deps: set[str] = set()
+    for line in pkgfile.read_text(errors="replace").splitlines():
+        m = re.match(r"^\s*#\s*Depends on:\s*(.*)$", line, re.I)
+        if m:
+            deps.update(x for x in m.group(1).split() if x and x != "-")
+    return deps
+
+
+def order_candidates_for_build(cands, selected: set[str], ports_root: Path):
+    """Stable topological order using BFSOS # Depends on metadata."""
+    chosen = [c for c in cands if c.port in selected]
+    by_name = {c.name: c for c in chosen}
+    deps = {c.port: {by_name[d].port for d in read_port_dependencies(ports_root/c.port) if d in by_name} for c in chosen}
+    ordered = []
+    remaining = {c.port: c for c in chosen}
+    while remaining:
+        ready = [c for rel,c in remaining.items() if not (deps.get(rel,set()) & remaining.keys())]
+        if not ready:
+            ready = list(remaining.values())
+        ready.sort(key=lambda c: (_build_rank(c.port), c.port))
+        for c in ready:
+            if c.port not in remaining:
+                continue
+            ordered.append(c)
+            remaining.pop(c.port, None)
+    unselected = [c for c in cands if c.port not in selected]
+    return ordered + sorted(unselected, key=lambda c: (_build_rank(c.port), c.port))
+
+
+def footprint_mismatch_lines(text: str) -> list[str]:
+    lines=[]
+    active=False
+    for line in text.splitlines():
+        if "ERROR: Footprint mismatch found:" in line:
+            active=True
+            continue
+        if active:
+            if re.match(r"^(MISSING|NEW|CHANGED)\s+", line):
+                lines.append(line.rstrip())
+                continue
+            if lines and (line.startswith("=======>") or not line.strip()):
+                break
+    return lines
+
+def _footprint_normalized_signature(line: str) -> str:
+    # Version-only library payload changes are safe to refresh automatically.
+    line = re.sub(r"^(MISSING|NEW)\s+", "", line)
+    line = re.sub(r"(?<=\.)[0-9]+(?:\.[0-9]+)+", "<VER>", line)
+    line = re.sub(r"(?<=so\.)[0-9]+(?:\.[0-9]+)*", "<SONAMEVER>", line)
+    return line
+
+def safe_versioned_library_footprint_change(text: str) -> tuple[bool, list[str]]:
+    lines = footprint_mismatch_lines(text)
+    if not lines or any(l.startswith("CHANGED") for l in lines):
+        return False, lines
+    missing=[l for l in lines if l.startswith("MISSING")]
+    new=[l for l in lines if l.startswith("NEW")]
+    if not missing or len(missing) != len(new):
+        return False, lines
+    # Be intentionally conservative: only shared-library files/symlinks under
+    # lib/lib32 qualify for unattended refresh.
+    if any(" usr/lib/" not in l and " usr/lib32/" not in l and " lib/" not in l for l in lines):
+        return False, lines
+    return sorted(map(_footprint_normalized_signature, missing)) == sorted(map(_footprint_normalized_signature, new)), lines
+
+def pkgmk_footprint_update_command(backend: str, jobs: int) -> list[str]:
+    cmd = pkgmk_build_command(backend, jobs)
+    # Replace the normal -d -kw tail with the documented footprint refresh.
+    return cmd[:-2] + ["-d", "-uf", "-kw"]
+
+
 def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: dict[str, str], backup_root: Path | None) -> None:
     """Restore pre-apply port state when validation never produced a package.
 
@@ -1725,6 +1912,7 @@ def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: d
             "INFRASTRUCTURE FAILED:",
             "BLOCKED: build workspace out of space",
             "BLOCKED: build workspace preflight failed",
+            "FOOTPRINT REVIEW:",
         )
         for rel in sorted(selected):
             result = results.get(rel, "")
@@ -1745,7 +1933,7 @@ def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: d
 
 
 def build_selected(cands, selected, ports_root: Path, install: bool, results):
-    ordered = sorted(cands, key=lambda c: _build_rank(c.port))
+    ordered = order_candidates_for_build(cands, selected, ports_root)
     failed_groups: set[str] = set()
     unstaged_groups: set[str] = set()
     enospc_abort = False
@@ -1759,6 +1947,8 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         g: [c.port for c in ordered if c.port in selected and c.port in members and results.get(c.port) == "UPDATED"]
         for g, members in VERSION_LOCK_GROUPS.items()
     }
+
+    selected_by_name = {c.name: c for c in ordered if c.port in selected}
 
     for c in ordered:
         if c.port not in selected or results.get(c.port) != "UPDATED":
@@ -1776,24 +1966,31 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             continue
 
         port_dir = ports_root/c.port
-        try:
-            backend = read_build_work_backend(port_dir)
-        except ValueError as exc:
-            results[c.port] = f"BLOCKED: build workspace preflight failed: {exc}"
-            continue
+
+        # In build-only mode, never test a dependent against an older installed
+        # prerequisite when the selected newer prerequisite was just built.
+        if not install:
+            stale=[]
+            for dep in read_port_dependencies(port_dir):
+                dc = selected_by_name.get(dep)
+                if dc and str(results.get(dc.port, "")).startswith(("BUILT", "FOOTPRINT UPDATED")):
+                    stale.append(dep)
+            if stale:
+                results[c.port] = "BLOCKED: updated prerequisite built but not installed/staged: " + ", ".join(sorted(stale))
+                continue
 
         try:
-            preflight = build_work_preflight(backend)
-        except OSError as exc:
-            results[c.port] = f"BLOCKED: build workspace preflight failed: backend={backend}: {exc}"
+            backend, backend_reason, preflight = select_build_work_backend(port_dir, c.port)
+        except (ValueError, OSError) as exc:
+            results[c.port] = f"BLOCKED: build workspace preflight failed: {exc}"
             continue
 
         root = preflight["root"]
         free_b = int(preflight["free_bytes"])
         free_i = int(preflight["free_inodes"])
         diag = (
-            f"backend={backend} root={root} "
-            f"free={format_bytes(free_b)} inodes={free_i}"
+            f"backend={backend} root={root} reason={backend_reason} "
+            f"free={format_bytes(free_b)} inodes={free_i} fstype={preflight.get('fstype','unknown')}"
         )
         print(f"BUILD-WORK {c.port}: {diag}")
         if not preflight["ok"]:
@@ -1816,6 +2013,30 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         header = f"# BFSOS build-work: {diag}\n# BFSOS build-cpu: {cpu_diag}\n"
         cp = run_build_streaming(pkgmk_build_command(backend, jobs), port_dir, build_log, header)
         combined = cp.stdout or ""
+        if cp.returncode and "ERROR: Footprint mismatch found:" in combined:
+            safe_fp, fp_lines = safe_versioned_library_footprint_change(combined)
+            print(f"FOOTPRINT CHANGED {c.port}: {len(fp_lines)} mismatch rows", flush=True)
+            for line in fp_lines:
+                print(f"  {line}", flush=True)
+            if safe_fp:
+                fp_log = LOG_ROOT / f"footprint-{log_stamp}-{safe_port}.log"
+                fp_header = header + "# BFSOS maintainer footprint refresh: safe versioned-library change\n"
+                fp_cp = run_build_streaming(pkgmk_footprint_update_command(backend, jobs), port_dir, fp_log, fp_header)
+                if fp_cp.returncode == 0:
+                    combined = fp_cp.stdout or ""
+                    cp = fp_cp
+                    results[c.port] = "BUILT; FOOTPRINT UPDATED"
+                else:
+                    results[c.port] = f"FOOTPRINT REVIEW: automatic refresh failed ({fp_cp.returncode}); log={fp_log}"
+                    if group:
+                        failed_groups.add(group)
+                    continue
+            else:
+                results[c.port] = f"FOOTPRINT REVIEW: payload changed beyond safe versioned-library refresh; log={build_log}"
+                if group:
+                    failed_groups.add(group)
+                continue
+
         if cp.returncode:
             suffix = "; obsolete patches retained" if c.obsolete_patches else ""
             if is_enospc_output(combined):
@@ -1830,7 +2051,8 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                     failed_groups.add(group)
             continue
 
-        results[c.port] = "BUILT"
+        if not str(results.get(c.port, "")).startswith("BUILT; FOOTPRINT UPDATED"):
+            results[c.port] = "BUILT"
         if install:
             cp2 = run(["sudo","prt-get","-fr","depinst",c.name])
             if cp2.returncode:
@@ -1839,7 +2061,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                 if group:
                     failed_groups.add(group)
                 continue
-            results[c.port] = "BUILT+INSTALLED"
+            results[c.port] = "BUILT+INSTALLED" + ("; FOOTPRINT UPDATED" if "FOOTPRINT UPDATED" in str(results.get(c.port, "")) else "")
         elif group and group in GROUP_BUILD_REQUIRES_INSTALLED_PREREQ:
             members = selected_group_members.get(group, [])
             try:

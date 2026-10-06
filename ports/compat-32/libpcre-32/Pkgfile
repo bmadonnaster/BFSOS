@@ -5,7 +5,7 @@
 name=libpcre-32
 version=8.45
 release=3
-source=(https://downloads.sourceforge.net/project/pcre/pcre/$version/pcre-$version.tar.bz2)
+source=(pcre-$version.tar.bz2::https://sourceforge.net/projects/pcre/files/pcre/$version/pcre-$version.tar.bz2/download)
 
 build_opt="--enable-unicode-properties --enable-pcre16 --enable-pcre32 --enable-jit --disable-pcregrep-libz --disable-pcregrep-libbz2 --disable-pcretest-libreadline"
 

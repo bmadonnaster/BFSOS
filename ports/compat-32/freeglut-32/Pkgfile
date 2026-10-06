@@ -6,7 +6,7 @@
 name=freeglut-32
 version=3.8.0
 release=4
-source=(https://downloads.sourceforge.net/project/freeglut/freeglut/$version/freeglut-$version.tar.gz)
+source=(https://github.com/freeglut/freeglut/releases/download/v$version/freeglut-$version.tar.gz)
 
 
 post_build() {

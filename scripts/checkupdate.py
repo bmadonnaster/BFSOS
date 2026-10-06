@@ -56,16 +56,25 @@ SERIES_LOCKS = {
     "opt/pangomm": 2,
     "opt/spirv-llvm-translator": 1,
     "xorg/libva": 1,
+    "compat-32/libva-32": 1,
+    "compat-32/openssl11-32": 3,
+    "compat-32/libpng12-32": 2,
+    "compat-32/libjpeg6-turbo-32": 1,
+    "compat-32/libtiff4-32": 1,
 }
 GSTREAMER_PORTS = {
     "opt/gstreamer", "opt/gst-libav", "opt/gst-plugins-bad",
     "opt/gst-plugins-base", "opt/gst-plugins-good", "opt/gst-plugins-ugly",
+    "compat-32/gstreamer-32", "compat-32/gst-libav-32",
+    "compat-32/gst-plugins-bad-32", "compat-32/gst-plugins-base-32",
+    "compat-32/gst-plugins-good-32", "compat-32/gst-plugins-ugly-32",
 }
 WEBKIT_PORTS = {"gnome/webkitgtk", "gnome/webkitgtk-41"}
 BLOCKED_PORT_VERSIONS = {
     # Historical/abandoned version lines whose numeric value sorts above the
     # actively maintained stable line.
     "opt/pango": {"1.90.0"},
+    "compat-32/pango-32": {"1.90.0"},
     "opt/taglib": {"2.3.2"},
 }
 EVEN_MINOR_STABLE_PORTS = {
@@ -93,6 +102,12 @@ GIT_REPO_OVERRIDES = {
     "opt/swig": "https://github.com/swig/swig.git",
     "opt/taglib": "https://github.com/taglib/taglib.git",
     "xorg/glew": "https://github.com/nigels-com/glew.git",
+    "compat-32/glew-32": "https://github.com/nigels-com/glew.git",
+    "compat-32/libndp-32": "https://github.com/jpirko/libndp.git",
+    "compat-32/libwebp-32": "https://github.com/webmproject/libwebp.git",
+    "compat-32/libpng12-32": "https://github.com/pnggroup/libpng.git",
+    "compat-32/openssl11-32": "https://github.com/openssl/openssl.git",
+    "compat-32/lcms2-32": "https://github.com/mm2/Little-CMS.git",
     "core/procps-ng": "https://gitlab.com/procps-ng/procps.git",
     "core/psmisc": "https://gitlab.com/psmisc/psmisc.git",
     "lxqt/libfm-extra": "https://github.com/lxde/libfm.git",

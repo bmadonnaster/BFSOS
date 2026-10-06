@@ -6,7 +6,7 @@
 name=glew-32
 version=2.3.1
 release=3
-source=(https://downloads.sourceforge.net/project/glew/glew/$version/glew-$version.tgz)
+source=(glew-$version.tgz::https://sourceforge.net/projects/glew/files/glew/$version/glew-$version.tgz/download)
 
 # Custom build required: upstream Make variables differ between build and staged install
 pkg_build() {

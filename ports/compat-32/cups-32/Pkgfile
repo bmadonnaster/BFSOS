@@ -5,9 +5,9 @@
 # Optional: dbus-32 gnutls-32
 
 name=cups-32
-version=2.4.19
-release=4
-source=(https://github.com/OpenPrinting/cups/releases/download/v$version/${name%-*}-$version-source.tar.gz)
+version=2.4.20
+release=1
+source=(https://github.com/OpenPrinting/cups/releases/download/v$version/cups-$version-source.tar.gz)
 
 # Custom build required: only the install-libs target belongs in the compat package
 pkg_build() {

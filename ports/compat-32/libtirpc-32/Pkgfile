@@ -6,7 +6,7 @@
 name=libtirpc-32
 version=1.3.8
 release=1
-source=(https://downloads.sourceforge.net/project/${name%-*}/${name%-*}/$version/${name%-*}-$version.tar.bz2)
+source=(libtirpc-$version.tar.bz2::https://sourceforge.net/projects/libtirpc/files/libtirpc/$version/libtirpc-$version.tar.bz2/download)
 
 build_opt="--disable-gssapi"
 
