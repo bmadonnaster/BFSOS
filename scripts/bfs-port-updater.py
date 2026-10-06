@@ -1890,10 +1890,31 @@ def safe_versioned_library_footprint_change(text: str) -> tuple[bool, list[str]]
         return False, lines
     return sorted(map(_footprint_normalized_signature, missing)) == sorted(map(_footprint_normalized_signature, new)), lines
 
+def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
+    cmd = pkgmk_build_command(backend, jobs)
+    # The initial build stopped at footprint verification, so no package archive
+    # exists yet.  Create one while ignoring only the already-reviewed footprint.
+    return cmd[:-2] + ["-d", "-if", "-kw"]
+
+
 def pkgmk_footprint_update_command(backend: str, jobs: int) -> list[str]:
     cmd = pkgmk_build_command(backend, jobs)
-    # Replace the normal -d -kw tail with the documented footprint refresh.
+    # Once the reviewed package exists, regenerate .footprint from that archive.
     return cmd[:-2] + ["-d", "-uf", "-kw"]
+
+
+def cleanup_successful_build_work(root: str | Path, package_name: str) -> tuple[bool, str]:
+    # Delete exactly one pkgmk-$name work tree, never an arbitrary path.
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9+_.-]*", package_name or ""):
+        return False, "unsafe package name"
+    base = Path(root).resolve()
+    target = (base / f"pkgmk-{package_name}").resolve()
+    if target.parent != base or target.name != f"pkgmk-{package_name}":
+        return False, "unsafe build-work path"
+    if target.exists():
+        shutil.rmtree(target)
+        return True, str(target)
+    return True, str(target)
 
 
 def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: dict[str, str], backup_root: Path | None) -> None:
@@ -2021,6 +2042,12 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             if safe_fp:
                 fp_log = LOG_ROOT / f"footprint-{log_stamp}-{safe_port}.log"
                 fp_header = header + "# BFSOS maintainer footprint refresh: safe versioned-library change\n"
+                pkg_cp = run_build_streaming(pkgmk_footprint_package_command(backend, jobs), port_dir, fp_log, fp_header)
+                if pkg_cp.returncode != 0:
+                    results[c.port] = f"FOOTPRINT REVIEW: reviewed package pass failed ({pkg_cp.returncode}); log={fp_log}"
+                    if group:
+                        failed_groups.add(group)
+                    continue
                 fp_cp = run_build_streaming(pkgmk_footprint_update_command(backend, jobs), port_dir, fp_log, fp_header)
                 if fp_cp.returncode == 0:
                     combined = fp_cp.stdout or ""
@@ -2070,6 +2097,12 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                 idx = -1
             if idx >= 0 and idx < len(members) - 1:
                 unstaged_groups.add(group)
+
+        ok_cleanup, cleanup_detail = cleanup_successful_build_work(root, c.name)
+        if ok_cleanup:
+            print(f"BUILD-WORK CLEANUP {c.port}: {cleanup_detail}", flush=True)
+        else:
+            print(f"BUILD-WORK CLEANUP SKIPPED {c.port}: {cleanup_detail}", flush=True)
 
         for name in c.obsolete_patches:
             p = port_dir/name

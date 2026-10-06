@@ -113,6 +113,9 @@ GIT_REPO_OVERRIDES = {
     "lxqt/libfm-extra": "https://github.com/lxde/libfm.git",
     "lxqt/menu-cache": "https://github.com/lxde/menu-cache.git",
     "opt/cdrdao": "https://github.com/cdrdao/cdrdao.git",
+    "opt/doxygen": "https://github.com/doxygen/doxygen.git",
+    "opt/duktape": "https://github.com/svaarala/duktape.git",
+    "opt/libraw": "https://github.com/LibRaw/LibRaw.git",
     "opt/poppler": "https://gitlab.freedesktop.org/poppler/poppler.git",
     "plasma/polkit-qt5": "https://invent.kde.org/libraries/polkit-qt-1.git",
 }
@@ -179,15 +182,15 @@ class HttpCache:
         try:
             cp = subprocess.run(
                 [
-                    "curl", "--fail", "--location", "--silent", "--show-error",
-                    "--compressed", "--connect-timeout", "4", "--max-time",
+                    "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
+                    "--compressed", "--connect-timeout", "8", "--max-time",
                     str(self.timeout), "--user-agent", "BFSOS-checkupdate/10", url,
                 ],
                 text=True,
                 encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                timeout=self.timeout + 3,
+                timeout=self.timeout + 12,
                 env={**os.environ, "LC_ALL": "C"},
             )
             if cp.returncode != 0:
@@ -209,8 +212,8 @@ class HttpCache:
 
     def exists(self, url: str) -> tuple[bool, str]:
         common = [
-            "curl", "--fail", "--location", "--silent", "--show-error",
-            "--connect-timeout", "4", "--max-time", str(self.timeout),
+            "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
+            "--connect-timeout", "8", "--max-time", str(self.timeout),
             "--user-agent", "BFSOS-checkupdate/10",
         ]
         errors: list[str] = []
@@ -220,7 +223,7 @@ class HttpCache:
                     common + extra + [url],
                     text=True, encoding="utf-8", errors="replace",
                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    timeout=self.timeout + 3, env={**os.environ, "LC_ALL": "C"},
+                    timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
                 )
                 if cp.returncode == 0:
                     return True, ""
@@ -238,8 +241,8 @@ class HttpCache:
     def resolve(self, url: str) -> tuple[str, str]:
         """Resolve redirects without keeping the response body."""
         cmd = [
-            "curl", "--fail", "--location", "--silent", "--show-error",
-            "--connect-timeout", "4", "--max-time", str(self.timeout),
+            "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
+            "--connect-timeout", "8", "--max-time", str(self.timeout),
             "--user-agent", "BFSOS-checkupdate/10", "--range", "0-0",
             "--output", "/dev/null", "--write-out", "%{url_effective}", url,
         ]
@@ -247,7 +250,7 @@ class HttpCache:
             cp = subprocess.run(
                 cmd, text=True, encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=self.timeout + 3, env={**os.environ, "LC_ALL": "C"},
+                timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
             )
         except subprocess.TimeoutExpired as exc:
             raise FetchError("timeout") from exc
@@ -260,7 +263,7 @@ class HttpCache:
             cp = subprocess.run(
                 head, text=True, encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=self.timeout + 3, env={**os.environ, "LC_ALL": "C"},
+                timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
             )
             if cp.returncode != 0:
                 raise FetchError(cp.stderr.strip() or msg)
@@ -807,9 +810,112 @@ def netfilter_release_page(port: Port, http: HttpCache) -> tuple[str | None, str
     return latest, "netfilter", reason
 
 
+
+def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
+    u = urlsplit(source)
+    parts = [x for x in u.path.split('/') if x]
+    if len(parts) < 5 or parts[2:4] != ['releases', 'download']:
+        return None, 'github-release', 'source is not a GitHub release asset'
+    owner, repo, current_tag = parts[0], parts[1], parts[4]
+    effective, _ = http.resolve(f'https://github.com/{owner}/{repo}/releases/latest')
+    m = re.search(r'/releases/tag/([^/?#]+)', effective)
+    if not m:
+        return None, 'github-release', f'latest release did not resolve to a tag: {effective}'
+    latest_tag = unquote(m.group(1))
+    # Derive the tag->version convention from the current release asset URL.
+    if port.version not in current_tag:
+        # Common underscore form such as Expat R_2_8_5.
+        enc = port.version.replace('.', '_')
+        if enc not in current_tag:
+            return None, 'github-release', 'current version is not encoded in release tag'
+        prefix, suffix = current_tag.split(enc, 1)
+        if not latest_tag.startswith(prefix) or (suffix and not latest_tag.endswith(suffix)):
+            return None, 'github-release', 'published tag does not match current tag convention'
+        end = len(latest_tag)-len(suffix) if suffix else len(latest_tag)
+        latest = latest_tag[len(prefix):end].replace('_','.')
+    else:
+        prefix, suffix = current_tag.split(port.version, 1)
+        if not latest_tag.startswith(prefix) or (suffix and not latest_tag.endswith(suffix)):
+            return None, 'github-release', 'published tag does not match current tag convention'
+        end = len(latest_tag)-len(suffix) if suffix else len(latest_tag)
+        latest = latest_tag[len(prefix):end]
+    if not candidate_allowed(latest, port.version, port, 'github-release'):
+        return None, 'github-release', f'published release rejected by policy: {latest}'
+    return only_if_newer(port.version, latest), 'github-release', ''
+
+
+def sqlite_release_page(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get('https://www.sqlite.org/download.html')
+    ids = re.findall(r'(?:sqlite-(?:autoconf|src|amalgamation)-)(\d{7})', text)
+    vals=[]
+    for raw in ids:
+        n=int(raw)
+        major=n//1000000; minor=(n//10000)%100; patch=(n//100)%100; sub=n%100
+        v=f'{major}.{minor}.{patch}' + (f'.{sub}' if sub else '')
+        vals.append(v)
+    latest, reason = choose_verified(port.version, vals, port, 'sqlite-download')
+    return latest, 'sqlite-download', reason
+
+
+def npm_registry(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
+    u=urlsplit(source)
+    parts=[unquote(x) for x in u.path.split('/') if x]
+    # npm tarballs are normally /PACKAGE/-/PACKAGE-VERSION.tgz; scoped packages
+    # encode the slash in the first path component.
+    if not parts:
+        return None, 'npm', 'could not infer package name'
+    pkg=parts[0]
+    if pkg.startswith('@') and len(parts) > 1 and parts[1] != '-':
+        pkg += '/' + parts[1]
+    text=http.get('https://registry.npmjs.org/' + pkg.replace('/', '%2f'))
+    data=json.loads(text)
+    versions=(data.get('versions') or {}).keys()
+    latest, reason=choose_verified(port.version, versions, port, f'npm:{pkg}')
+    return latest, f'npm:{pkg}', reason
+
+
+def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
+    u=urlsplit(source)
+    path=unquote(u.path)
+    m=re.search(r'/projects/([^/]+)/files/(.*)', path)
+    if not m and u.netloc.lower() == 'downloads.sourceforge.net':
+        parts=[x for x in path.split('/') if x]
+        if parts:
+            project=parts[0]; rest='/'.join(parts[1:]); m=(project, rest)
+    elif m:
+        m=(m.group(1),m.group(2))
+    if not m:
+        return None, 'sourceforge', 'could not infer SourceForge project/files path'
+    project, rest=m
+    rest=rest.removesuffix('/download')
+    basename=rest.rsplit('/',1)[-1]
+    # Start at the canonical project file browser; it is stable across mirror redirects.
+    text=http.get(f'https://sourceforge.net/projects/{project}/files/')
+    # SourceForge embeds file/folder names in HTML/JSON; collect version-like strings
+    # from occurrences matching the current source filename convention and folders.
+    vals=[]
+    if port.version in basename:
+        pre,suf=basename.split(port.version,1)
+        rx=re.compile(re.escape(pre)+r'([0-9][0-9A-Za-z._+~-]*)'+re.escape(suf))
+        vals += rx.findall(text)
+    vals += re.findall(r'(?<![0-9A-Za-z])([0-9]+(?:\.[0-9]+){1,3})(?![0-9A-Za-z])', text)
+    latest, reason=choose_verified(port.version, vals, port, 'sourceforge')
+    return latest, 'sourceforge', reason
+
 def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tuple[str | None, str, str]:
     host = urlsplit(source).netloc.lower()
     path = urlsplit(source).path
+
+    if port.rel == "compat-32/db-32":
+        return port.version, "policy-pin", "pinned Berkeley DB 5.3 compatibility ABI"
+    if port.rel in {"core/sqlite", "compat-32/sqlite3-32"}:
+        return sqlite_release_page(port, http)
+    if host == "registry.npmjs.org":
+        return npm_registry(port, source, http)
+    if host in {"sourceforge.net", "downloads.sourceforge.net"} or host.endswith(".dl.sourceforge.net"):
+        return sourceforge_files(port, source, http)
+    if host == "github.com" and "/releases/download/" in path:
+        return github_published_release(port, source, http)
 
     if port.rel in PYPI_PROJECT_OVERRIDES:
         project = PYPI_PROJECT_OVERRIDES[port.rel]
@@ -849,6 +955,8 @@ def check_port(port: Port, http: HttpCache, timeout: int) -> Result:
     sources = remote_sources(port)
     if not port.name or not port.version:
         return Result(port, "ERROR", reason="missing name/version")
+    if port.rel == "compat-32/db-32":
+        return Result(port, "SKIP", provider="policy-pin", reason="pinned Berkeley DB 5.3 compatibility ABI")
     if not sources:
         return Result(port, "SKIP", reason="local/meta port: no remote source")
     source = sources[0]
