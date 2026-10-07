@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BFSOS upstream version checker v11.
+"""BFSOS upstream version checker v10.
 
 Design goals:
 - never claim an update unless the current port version can be mapped back to the
@@ -25,7 +25,7 @@ import sys
 import threading
 import time
 from typing import Iterable
-from urllib.parse import quote, unquote, urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 SKIP_WORDS = ("alpha", "beta", "rc", "pre", "dev", "snapshot", "nightly", "preview")
 BLOCKED_QUALIFIERS = (
@@ -184,7 +184,7 @@ class HttpCache:
                 [
                     "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
                     "--compressed", "--connect-timeout", "8", "--max-time",
-                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/11", url,
+                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/10", url,
                 ],
                 text=True,
                 encoding="utf-8", errors="replace",
@@ -214,7 +214,7 @@ class HttpCache:
         common = [
             "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
             "--connect-timeout", "8", "--max-time", str(self.timeout),
-            "--user-agent", "BFSOS-checkupdate/11",
+            "--user-agent", "BFSOS-checkupdate/10",
         ]
         errors: list[str] = []
         for extra in (["--head"], ["--range", "0-0", "--output", "/dev/null"]):
@@ -243,7 +243,7 @@ class HttpCache:
         cmd = [
             "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
             "--connect-timeout", "8", "--max-time", str(self.timeout),
-            "--user-agent", "BFSOS-checkupdate/11", "--range", "0-0",
+            "--user-agent", "BFSOS-checkupdate/10", "--range", "0-0",
             "--output", "/dev/null", "--write-out", "%{url_effective}", url,
         ]
         try:
@@ -875,89 +875,32 @@ def npm_registry(port: Port, source: str, http: HttpCache) -> tuple[str | None, 
 
 
 def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
-    """Discover SourceForge releases without leaking unrelated page versions.
-
-    SourceForge project pages contain many numeric strings that are not package
-    versions (download counters, timestamps, site asset versions, unrelated files,
-    etc.).  Never scrape arbitrary version-looking tokens from the project root.
-    Instead, derive the exact current archive filename convention, browse only the
-    directory that contains that archive, and accept candidates whose filenames
-    match that convention.  If the current release cannot be mapped back to that
-    listing, return UNVERIFIABLE via the normal caller rather than guessing.
-    """
-    u = urlsplit(source)
-    path = unquote(u.path)
-
-    project = ""
-    rest = ""
-    m = re.search(r"/projects/([^/]+)/files/(.*)", path)
-    if m:
-        project, rest = m.group(1), m.group(2)
-    elif u.netloc.lower() == "downloads.sourceforge.net":
-        parts = [x for x in path.split("/") if x]
+    u=urlsplit(source)
+    path=unquote(u.path)
+    m=re.search(r'/projects/([^/]+)/files/(.*)', path)
+    if not m and u.netloc.lower() == 'downloads.sourceforge.net':
+        parts=[x for x in path.split('/') if x]
         if parts:
-            project = parts[0]
-            rest = "/".join(parts[1:])
-
-    if not project or not rest:
-        return None, "sourceforge", "could not infer SourceForge project/files path"
-    if not re.fullmatch(r"[A-Za-z0-9._+-]+", project):
-        return None, "sourceforge", "invalid SourceForge project identifier"
-
-    rest = rest.removesuffix("/download").rstrip("/")
-    basename = unquote(rest.rsplit("/", 1)[-1])
-    parent = rest.rsplit("/", 1)[0] if "/" in rest else ""
-
-    # Match the same version encoding used by the current archive name.  This is
-    # deliberately the same conservative idea used by generic_directory().
-    variants: list[tuple[str, callable]] = [(port.version, lambda x: x)]
-    if "." in port.version:
-        variants.append((port.version.replace(".", "_"), lambda x: x.replace("_", ".")))
-        variants.append((port.version.replace(".", "-"), lambda x: x.replace("-", ".")))
-
-    token = ""
-    transform = lambda x: x
-    for encoded, fn in variants:
-        if encoded and encoded in basename:
-            token, transform = encoded, fn
-            break
-    if not token:
-        return None, "sourceforge", "current version is not encoded in SourceForge archive filename"
-
-    pre, suf = basename.split(token, 1)
-    rx = re.compile(
-        r"^" + re.escape(pre) + r"([0-9][0-9A-Za-z._+~-]*)" + re.escape(suf) + r"$",
-        re.I,
-    )
-
-    # Browse the exact folder containing the current archive, not the project root.
-    # SourceForge's HTML/JSON may expose the same file through encoded hrefs, so
-    # decode each candidate before matching its basename.
-    folder_url = f"https://sourceforge.net/projects/{project}/files/"
-    if parent:
-        folder_url += "/".join(quote(seg, safe="") for seg in parent.split("/")) + "/"
-    text = http.get(folder_url)
-
-    vals: list[str] = []
-    candidates = hrefs(text) + re.findall(r"[^\s<>\"']+", text)
-    for item in candidates:
-        decoded = unquote(html.unescape(item))
-        clean = decoded.split("?", 1)[0].split("#", 1)[0].rstrip("/")
-        # SourceForge hrefs commonly end in /download, so test every path
-        # component as well as bare filename tokens from embedded metadata.
-        names = [part for part in clean.split("/") if part]
-        if not names:
-            names = [clean]
-        for name in names:
-            match = rx.fullmatch(name)
-            if match:
-                vals.append(transform(match.group(1)))
-                break
-
-    latest, reason = choose_verified(port.version, vals, port, "sourceforge")
-    if latest is None and not reason:
-        reason = "no matching SourceForge archive filenames found in current folder"
-    return latest, "sourceforge", reason
+            project=parts[0]; rest='/'.join(parts[1:]); m=(project, rest)
+    elif m:
+        m=(m.group(1),m.group(2))
+    if not m:
+        return None, 'sourceforge', 'could not infer SourceForge project/files path'
+    project, rest=m
+    rest=rest.removesuffix('/download')
+    basename=rest.rsplit('/',1)[-1]
+    # Start at the canonical project file browser; it is stable across mirror redirects.
+    text=http.get(f'https://sourceforge.net/projects/{project}/files/')
+    # SourceForge embeds file/folder names in HTML/JSON; collect version-like strings
+    # from occurrences matching the current source filename convention and folders.
+    vals=[]
+    if port.version in basename:
+        pre,suf=basename.split(port.version,1)
+        rx=re.compile(re.escape(pre)+r'([0-9][0-9A-Za-z._+~-]*)'+re.escape(suf))
+        vals += rx.findall(text)
+    vals += re.findall(r'(?<![0-9A-Za-z])([0-9]+(?:\.[0-9]+){1,3})(?![0-9A-Za-z])', text)
+    latest, reason=choose_verified(port.version, vals, port, 'sourceforge')
+    return latest, 'sourceforge', reason
 
 def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tuple[str | None, str, str]:
     host = urlsplit(source).netloc.lower()
@@ -967,12 +910,13 @@ def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tu
         return port.version, "policy-pin", "pinned Berkeley DB 5.3 compatibility ABI"
     if port.rel in {"core/sqlite", "compat-32/sqlite3-32"}:
         return sqlite_release_page(port, http)
+    if host == "registry.npmjs.org":
+        return npm_registry(port, source, http)
+    if host in {"sourceforge.net", "downloads.sourceforge.net"} or host.endswith(".dl.sourceforge.net"):
+        return sourceforge_files(port, source, http)
+    if host == "github.com" and "/releases/download/" in path:
+        return github_published_release(port, source, http)
 
-    # Explicit per-port providers are stronger than whatever host happens to carry
-    # the current release tarball.  In particular, several BFSOS ports keep
-    # SourceForge download URLs while version discovery intentionally comes from
-    # PyPI or the canonical upstream Git repository.  Check these overrides before
-    # generic host dispatch so SourceForge cannot shadow them.
     if port.rel in PYPI_PROJECT_OVERRIDES:
         project = PYPI_PROJECT_OVERRIDES[port.rel]
         text = http.get(f"https://pypi.org/pypi/{project}/json")
@@ -982,13 +926,6 @@ def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tu
         return latest, f"pypi:{project}", reason
     if port.rel in GIT_REPO_OVERRIDES:
         return git_tags(port, source, timeout, GIT_REPO_OVERRIDES[port.rel])
-
-    if host == "registry.npmjs.org":
-        return npm_registry(port, source, http)
-    if host in {"sourceforge.net", "downloads.sourceforge.net"} or host.endswith(".dl.sourceforge.net"):
-        return sourceforge_files(port, source, http)
-    if host == "github.com" and "/releases/download/" in path:
-        return github_published_release(port, source, http)
     if port.rel in {"core/iptables", "core/libmnl"}:
         return netfilter_release_page(port, http)
     if port.rel == "opt/mingw-w64-gcc":
@@ -1093,17 +1030,17 @@ def print_result(r: Result, verbose: bool = False):
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v11")
+    ap = argparse.ArgumentParser(description="BFSOS verified upstream version checker v10")
     ap.add_argument("ports", nargs="*", help="port path or unique package name")
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("-n", action="store_true", help="accepted for compatibility; update overrides are not used by v2")
-    ap.add_argument("-u", "--update", action="store_true", help="disabled: v11 keeps auditing separate from updater writes")
+    ap.add_argument("-u", "--update", action="store_true", help="disabled: v10 keeps auditing separate from updater writes")
     ap.add_argument("--jobs", type=int, default=10)
     ap.add_argument("--timeout", type=int, default=10)
     ap.add_argument("--tsv", help="write complete machine-readable results to this path")
     ns = ap.parse_args()
     if ns.update:
-        print("ERROR: -u is intentionally disabled in checker v11. Use bfs-maintained-port-updater.py on reviewed UPDATE rows.", file=sys.stderr)
+        print("ERROR: -u is intentionally disabled in checker v10. Use bfs-maintained-port-updater.py on reviewed UPDATE rows.", file=sys.stderr)
         return 2
 
     root = Path(__file__).resolve().parents[1]
@@ -1121,7 +1058,7 @@ def main() -> int:
             fake = Port(p.parent, str(p.parent), p.parent.name, "?", [])
             early.append(Result(fake, "ERROR", reason=str(exc)))
 
-    print(f"BFSOS verified upstream version checker v11")
+    print(f"BFSOS verified upstream version checker v10")
     print(f"Ports: {len(pkgfiles)}   Jobs: {max(1, ns.jobs)}   Timeout: {ns.timeout}s")
     print("Policy: UPDATE is emitted only when the provider can map the current version back to the same release set.")
     print()

@@ -2,7 +2,7 @@
 
 BFSOS is an x86_64 source-built Linux distribution maintained by Brian Madonna. It uses an LFS/MLFS-style bootstrap, CRUX `pkgutils`/ports for package builds, `prt-get` for dependency-aware package management, systemd, Dracut, GRUB, and a Dialog-based installer that supports both straightforward and layered storage layouts.
 
-> **Current release:** 0.9.0. BFSOS is usable for development and testing, but the 1.0 release line is still under active validation. Keep backups when testing installer/storage changes on important systems.
+> **Current release:** 0.9.1. BFSOS is usable for development and testing, but the 1.0 release line is still under active validation. Keep backups when testing installer/storage changes on important systems.
 
 ## Highlights
 

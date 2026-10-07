@@ -1,6 +1,6 @@
-# BFSOS 0.9.0 Installation Guide
+# BFSOS 0.9.1 Installation Guide
 
-This guide documents the current BFSOS 0.9.0 live-media and installer flow. Final website screenshots should be captured again after the BFSOS branding/navigation polish pass, but the workflow below is the intended installation sequence.
+This guide documents the current BFSOS 0.9.1 live-media and installer flow. Final website screenshots should be captured again after the BFSOS branding/navigation polish pass, but the workflow below is the intended installation sequence.
 
 ## 1. Boot the live ISO
 
@@ -81,10 +81,10 @@ ZRAM is optional compressed swap in RAM. The installer offers percentage presets
 
 If a local BFSOS base archive is available, the installer can use it. Otherwise it can download the current versioned base from SourceForge.
 
-For BFSOS 0.9.0 the public base identity is:
+For BFSOS 0.9.1 the public base identity is:
 
 ```text
-BFSOS-base-0.9.0-x86_64.tar.zst
+BFSOS-base-0.9.1-x86_64.tar.zst
 ```
 
 The installer downloads the matching checksum and verifies the archive before use. The version, filename, and source are shown so the selected payload is unambiguous.
