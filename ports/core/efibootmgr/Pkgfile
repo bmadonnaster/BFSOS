@@ -1,4 +1,4 @@
-cription: Manipulate EFI boot manager variables
+# Description: Manipulate EFI boot manager variables
 # URL: https://github.com/rhboot/efibootmgr
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: efivar pciutils

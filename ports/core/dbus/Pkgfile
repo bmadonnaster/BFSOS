@@ -1,4 +1,4 @@
-cription: Message bus system for interprocess communication
+# Description: Message bus system for interprocess communication
 # URL: https://www.freedesktop.org/wiki/Software/dbus/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 

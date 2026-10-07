@@ -1,4 +1,4 @@
-cription: Pluggable Authentication Modules for Linux
+# Description: Pluggable Authentication Modules for Linux
 # URL: https://github.com/linux-pam/linux-pam
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: meson ninja

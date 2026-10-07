@@ -1,4 +1,4 @@
-cription: Tools and libraries to manipulate EFI variables
+# Description: Tools and libraries to manipulate EFI variables
 # URL: https://github.com/rhboot/efivar
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: popt
