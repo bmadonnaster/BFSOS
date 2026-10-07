@@ -16,7 +16,10 @@ pre_build() {
 }
 
 bootstrap_build() {
-FORCE_UNSAFE_CONFIGURE=1 ./configure \
+        autoreconf -fv || return 1
+        automake -af || return 1
+
+        FORCE_UNSAFE_CONFIGURE=1 ./configure \
                 --prefix=$TOOLS \
                 --enable-install-program=hostname || return 1
 
