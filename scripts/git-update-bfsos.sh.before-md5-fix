@@ -100,14 +100,14 @@ else
     # are still staged normally; only previously-untracked files are left for an
     # explicit maintainer decision.
     mapfile -d '' -t _bfs_untracked_integrity < <(
-        git -C "$REPO_ROOT" ls-files --others --exclude-standard -z --             ':(glob)ports/**/.footprint'             ':(glob)ports/**/.signature'
+        git -C "$REPO_ROOT" ls-files --others --exclude-standard -z --             ':(glob)ports/**/.footprint'             ':(glob)ports/**/.signature'             ':(glob)ports/**/.md5sum'
     )
 
     git -C "$REPO_ROOT" add --all
 
     if ((${#_bfs_untracked_integrity[@]})); then
         git -C "$REPO_ROOT" restore --staged -- "${_bfs_untracked_integrity[@]}" 2>/dev/null || true
-        warn "Untracked .footprint/.signature metadata was left unstaged for review:"
+        warn "Untracked package-integrity metadata was left unstaged for review:"
         printf '  %s\n' "${_bfs_untracked_integrity[@]}" >&2
     fi
 
