@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# BFSOS bootstrap r74 - Shadow finalization, ISO handoff, verified-base reuse, and live-ISO policy handoff
+# BFSOS bootstrap r72 - Shadow finalization, ISO handoff, and Stage-1 host-tool preflight fix
 
 # Bootstrap environments do not necessarily have generated UTF-8 locales.
 # The POSIX C locale is always available and keeps all bootstrap stages
@@ -218,7 +218,7 @@ compiler_build_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFSOS Bootstrap" \
+                    --backtitle "BFS Linux Bootstrap" \
                     --title "Compiler / Build Settings" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -245,7 +245,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFSOS Bootstrap" \
+                            --backtitle "BFS Linux Bootstrap" \
                             --title "Parallel Build Jobs" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -260,14 +260,14 @@ compiler_build_settings_menu() {
                     case "$value" in
                         auto) BFS_BUILD_JOBS=auto ;;
                         ''|*[!0-9]*)
-                            dialog --clear --backtitle "BFSOS Bootstrap" \
+                            dialog --clear --backtitle "BFS Linux Bootstrap" \
                                 --title "Invalid job count" \
                                 --msgbox "Use auto or a positive integer." 8 50 \
                                 </dev/tty >/dev/tty 2>&1 || true
                             continue
                             ;;
                         0)
-                            dialog --clear --backtitle "BFSOS Bootstrap" \
+                            dialog --clear --backtitle "BFS Linux Bootstrap" \
                                 --title "Invalid job count" \
                                 --msgbox "Job count must be greater than zero." 8 50 \
                                 </dev/tty >/dev/tty 2>&1 || true
@@ -280,7 +280,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFSOS Bootstrap" \
+                            --backtitle "BFS Linux Bootstrap" \
                             --title "Compiler Optimization" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -308,7 +308,7 @@ compiler_build_settings_menu() {
                             set +e
                             value="$(
                                 dialog --stdout --clear \
-                                    --backtitle "BFSOS Bootstrap" \
+                                    --backtitle "BFS Linux Bootstrap" \
                                     --title "Custom Compiler Flags" \
                                     --ok-label "Apply" \
                                     --cancel-label "Back" \
@@ -328,7 +328,7 @@ compiler_build_settings_menu() {
                 ccache)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFSOS Bootstrap" \
+                        --backtitle "BFS Linux Bootstrap" \
                         --title "ccache" \
                         --yes-label "Enable" \
                         --no-label "Disable" \
@@ -348,7 +348,7 @@ compiler_build_settings_menu() {
                     set +e
                     value="$(
                         dialog --stdout --clear \
-                            --backtitle "BFSOS Bootstrap" \
+                            --backtitle "BFS Linux Bootstrap" \
                             --title "ccache Size" \
                             --ok-label "Apply" \
                             --cancel-label "Back" \
@@ -366,7 +366,7 @@ compiler_build_settings_menu() {
                 source-cache)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFSOS Bootstrap" \
+                        --backtitle "BFS Linux Bootstrap" \
                         --title "Base Source Cache" \
                         --yes-label "Keep" \
                         --no-label "Exclude" \
@@ -394,7 +394,7 @@ compiler_build_settings_menu() {
                 defaults)
                     set +e
                     if dialog --clear \
-                        --backtitle "BFSOS Bootstrap" \
+                        --backtitle "BFS Linux Bootstrap" \
                         --title "Restore Build Defaults" \
                         --yes-label "Restore" \
                         --no-label "Cancel" \
@@ -493,7 +493,7 @@ integrity_verification_settings_menu() {
            [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if ! choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFSOS Bootstrap" \
+                    --backtitle "BFS Linux Bootstrap" \
                     --title "Integrity Verification" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -732,7 +732,7 @@ select_bootstrap_theme() {
         set +e
         choice="$(
             dialog --stdout --clear \
-                --backtitle "BFSOS Bootstrap" \
+                --backtitle "BFS Linux Bootstrap" \
                 --title "Interface Theme" \
                 --cancel-label "Back" \
                 --radiolist \
@@ -800,7 +800,7 @@ bootstrap_theme_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFSOS Bootstrap" \
+                    --backtitle "BFS Linux Bootstrap" \
                     --title "Bootstrap Settings - Interface Theme" \
                     --ok-label "Apply" \
                     --cancel-label "Back" \
@@ -876,7 +876,7 @@ bootstrap_settings_menu() {
             set +e
             choice="$(
                 dialog --stdout --clear \
-                    --backtitle "BFSOS Bootstrap" \
+                    --backtitle "BFS Linux Bootstrap" \
                     --title "Bootstrap Settings" \
                     --ok-label "Select" \
                     --cancel-label "Back" \
@@ -1115,20 +1115,40 @@ _latest_rootfs_archive() {
 }
 
 _find_latest_installer() {
-    local installer="$SCRIPT_DIR/scripts/install-bfs-menu-current.sh"
+    local dir="$SCRIPT_DIR/scripts" file="" candidate="" mtime=""
+    [ -d "$dir" ] || return 1
 
-    # RC2 policy: there is one authoritative runtime installer entry point.
-    # Historical revisions belong in Git and must never be selected at runtime
-    # by filename sorting or mtime.
-    [ -f "$installer" ] && [ -r "$installer" ] && [ -x "$installer" ] || {
-        printf 'ERROR: Authoritative BFSOS installer is missing or not executable: %s\n' "$installer" >&2
-        return 1
-    }
-    if ! bash -n "$installer" >/dev/null 2>&1; then
-        printf 'ERROR: Authoritative BFSOS installer has shell syntax errors: %s\n' "$installer" >&2
-        return 1
-    fi
-    printf '%s\n' "$installer"
+    # Select by actual filesystem modification time, not version-like filename
+    # sorting and not the install-bfs-menu-current.sh symlink. This makes the
+    # handoff resilient to stale/broken convenience symlinks and arbitrary
+    # descriptive revision suffixes.
+    while IFS= read -r candidate; do
+        [ -n "$candidate" ] || continue
+        file="${candidate#* }"
+        [ -f "$file" ] && [ -r "$file" ] || continue
+
+        case "$(basename "$file")" in
+            install-bfs-menu-current.sh|*backup*|*old*|*disabled*|*~)
+                continue
+                ;;
+        esac
+
+        # Never silently launch a syntactically broken newest revision. Skip it
+        # with a warning and continue to the next-newest valid real installer.
+        if ! bash -n "$file" >/dev/null 2>&1; then
+            printf 'WARNING: Skipping installer with shell syntax errors: %s\n' "$file" >&2
+            continue
+        fi
+
+        printf '%s\n' "$file"
+        return 0
+    done < <(
+        find "$dir" -maxdepth 1 -type f -name 'install-bfs-menu-v*.sh' \
+            -printf '%T@ %p\n' 2>/dev/null |
+            sort -nr -k1,1 -k2,2
+    )
+
+    return 1
 }
 
 _installer_available() {
@@ -1203,7 +1223,6 @@ _launch_iso_builder() {
                 BFS_ISO_WORK_DIR="${BFS_ISO_WORK_DIR:-}" \
                 BFS_ISO_OUTPUT_DIR="${BFS_ISO_OUTPUT_DIR:-}" \
                 BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-}" \
-                BFS_ISO_LIVE_MEDIA_WAIT="${BFS_ISO_LIVE_MEDIA_WAIT:-}" \
                 BFS_KEEP_SOURCE_ARCHIVES="${BFS_KEEP_SOURCE_ARCHIVES:-}" \
                 bash "$builder" "$@"
         return $?
@@ -1225,7 +1244,7 @@ _confirm_full_bootstrap() {
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] && [ -w /dev/tty ]; then
         if dialog --clear \
-            --backtitle "BFSOS Bootstrap" \
+            --backtitle "BFS Linux Bootstrap" \
             --title "Run Full Bootstrap" \
             --yes-label "Start" \
             --no-label "Cancel" \
@@ -1259,7 +1278,7 @@ _finish_full_bootstrap() {
         if command -v dialog >/dev/null 2>&1 &&
            [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if dialog --clear \
-                --backtitle "BFSOS Bootstrap" \
+                --backtitle "BFS Linux Bootstrap" \
                 --title "Full Bootstrap Complete" \
                 --yes-label "Launch installer" \
                 --no-label "Done" \
@@ -1293,40 +1312,6 @@ _finish_full_bootstrap() {
     _show_menu_success "Full Bootstrap Complete" \
         "Stages 1 through 5 completed successfully.\n\nBase archive:\n${archive:-<unknown>}\n\nNo usable installer is currently available, so Bootstrap will return to the main menu."
     return 0
-}
-
-_cleanup_completed_bootstrap_state() {
-    local target=""
-
-    # This function is called only after a verified Stage-5 archive exists.
-    # Preserve source/package/build caches and release artifacts; remove only
-    # the transient /tmp trees whose presence makes a later run look resumable.
-    _rootfs_archive_complete || {
-        echo "ERROR: Refusing completed-bootstrap cleanup without a verified base archive." >&2
-        return 1
-    }
-
-    case "$LFS:$TOOLS" in
-        /tmp/lfs-rootfs:/tmp/lfs-tools) ;;
-        *)
-            echo "ERROR: Refusing completed-bootstrap cleanup for unexpected paths: $LFS $TOOLS" >&2
-            return 1
-            ;;
-    esac
-
-    for target in "$LFS/dev/pts" "$LFS/dev" "$LFS/run" "$LFS/proc" "$LFS/sys" \
-                  "$LFS/$pkgmkwork" "$LFS/$pkgmkpkg" "$LFS/$pkgmksrc"; do
-        while mountpoint -q "$target" 2>/dev/null; do
-            sudo umount "$target" 2>/dev/null || sudo umount -l "$target" || return 1
-        done
-    done
-
-    echo "Bootstrap complete: removing transient resume trees $TOOLS and $LFS"
-    sudo rm -rf -- "$TOOLS" "$LFS" || return 1
-    [ ! -e "$TOOLS" ] && [ ! -L "$TOOLS" ] && [ ! -e "$LFS" ] && [ ! -L "$LFS" ] || {
-        echo "ERROR: Completed bootstrap temporary state still exists after cleanup." >&2
-        return 1
-    }
 }
 
 _run_full_bootstrap() {
@@ -1402,7 +1387,6 @@ _run_full_bootstrap() {
     done
 
     _reset_terminal_ui
-    _cleanup_completed_bootstrap_state || return 1
     _finish_full_bootstrap
 }
 
@@ -1446,7 +1430,6 @@ _run_resume_full_bootstrap() {
     fi
     if [ "$start" -gt 5 ]; then
         echo "Full Bootstrap is already complete; a base archive exists."
-        _cleanup_completed_bootstrap_state || return 1
         _finish_full_bootstrap
         return $?
     fi
@@ -1454,7 +1437,7 @@ _run_resume_full_bootstrap() {
     if [ "${BFS_FULL_BOOTSTRAP_ASSUME_YES:-no}" != yes ]; then
         if command -v dialog >/dev/null 2>&1 && [ -r /dev/tty ] && [ -w /dev/tty ]; then
             if ! dialog --clear \
-                --backtitle "BFSOS Bootstrap" \
+                --backtitle "BFS Linux Bootstrap" \
                 --title "Resume Full Bootstrap" \
                 --yes-label "Resume" --no-label "Cancel" --defaultno \
                 --yesno "Resume the existing build at Stage $start and continue automatically through Stage 5?\n\nExisting successful work will be preserved. The workflow stops on the first failure." \
@@ -1497,7 +1480,6 @@ _run_resume_full_bootstrap() {
     done
 
     _reset_terminal_ui
-    _cleanup_completed_bootstrap_state || return 1
     _finish_full_bootstrap
 }
 
@@ -1510,7 +1492,7 @@ _stage_complete_text() {
 }
 
 _toolchain_complete() {
-    { _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.zst' || _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz'; } >/dev/null 2>&1
+    _latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' >/dev/null 2>&1
 }
 
 _base_stage2_complete() {
@@ -1564,7 +1546,7 @@ _show_stage5_archive_dialog() {
     if command -v dialog >/dev/null 2>&1 &&
        [ -r /dev/tty ] && [ -w /dev/tty ]; then
         dialog --clear \
-            --backtitle "BFSOS Bootstrap" \
+            --backtitle "BFS Linux Bootstrap" \
             --title "Create base rootfs archive" \
             --msgbox \
             "BFSOS will now create and verify the base rootfs archive.\n\nThis can take several minutes depending on system speed and compression workload.\n\nPress OK to begin." \
@@ -1632,7 +1614,7 @@ _show_stage_failure_dialog() {
         # failure dialog so the same error is not presented both as raw text
         # and again inside the Dialog UI.
         _reset_terminal_ui
-        dialog --clear --backtitle "BFSOS Bootstrap" \
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
             --title "Bootstrap operation failed" --ok-label "Continue" \
             --msgbox "$message" 24 96 </dev/tty >/dev/tty 2>&1 || true
         _reset_terminal_ui
@@ -1652,7 +1634,7 @@ _show_menu_progress() {
     local title="$1" message="$2"
     if _menu_dialog_available; then
         _reset_terminal_ui
-        dialog --clear --backtitle "BFSOS Bootstrap" \
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
             --title "$title" --infobox "$message" 8 72 \
             </dev/tty >/dev/tty 2>&1 || true
     else
@@ -1664,7 +1646,7 @@ _show_menu_success() {
     local title="$1" message="$2"
     if _menu_dialog_available; then
         _reset_terminal_ui
-        dialog --clear --backtitle "BFSOS Bootstrap" \
+        dialog --clear --backtitle "BFS Linux Bootstrap" \
             --title "$title" --ok-label "Continue" --msgbox "$message" 12 82 \
             </dev/tty >/dev/tty 2>&1 || true
         _reset_terminal_ui
@@ -1785,7 +1767,7 @@ _dialog_action_status() {
 _show_bootstrap_menu() {
     clear 2>/dev/null || printf '\033[2J\033[H'
     printf '%s\n' '============================================================' \
-        '                  BFSOS Bootstrap' \
+        '                  BFS Linux Bootstrap' \
         '============================================================' ''
 
     _txt_status() { "$1" && printf '%s%s%s' "$COLOR_GREEN" "$2" "$COLOR_RESET" || printf '%sPENDING%s' "$COLOR_RED" "$COLOR_RESET"; }
@@ -1848,7 +1830,7 @@ _select_bootstrap_menu_choice() {
         set +e
         choice="$(
             dialog --clear --colors --no-collapse \
-                --backtitle "BFSOS Bootstrap" \
+                --backtitle "BFS Linux Bootstrap" \
                 --title "Bootstrap menu" \
                 --ok-label "Select" \
                 --extra-button --extra-label "Settings" \
@@ -2023,17 +2005,13 @@ esac
 CURRENT_PGID="$(ps -o pgid= -p "$$" | tr -d '[:space:]')"
 
 if [ "$$" != "$CURRENT_PGID" ]; then
-    if { : </dev/tty; } 2>/dev/null; then
-        exec setsid --ctty "$0" "$@"
-    else
-        exec setsid "$0" "$@"
-    fi
+    exec setsid "$0" "$@"
 fi
 
 printf '%s %s\n' "$$" "$CURRENT_PGID" > "$PID_FILE"
 
 _reset_terminal_ui() {
-    if { : </dev/tty; } 2>/dev/null; then
+    if [ -e /dev/tty ] && [ -w /dev/tty ]; then
         printf '\033[0m\033[?25h\033[2J\033[H' >/dev/tty 2>/dev/null || true
         if command -v clear >/dev/null 2>&1; then
             TERM="${TERM:-linux}" clear </dev/tty >/dev/tty 2>/dev/null || true
@@ -2092,7 +2070,7 @@ trap _cleanup_on_exit EXIT
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
     BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
 else
-    BFS_VERSION="0.9.1"
+    BFS_VERSION="0.9.0"
 fi
 
 BUILD_DATE="$(date +%Y%m%d)"
@@ -2150,89 +2128,6 @@ _validate_package_ports() {
     done
 }
 
-_prefetch_bootstrap_sources() {
-    local pkgmk_conf="$1"
-    shift
-    local package="" normalized="" port_dir="" attempt=0 status=0
-    local -A seen_ports=()
-    local bootstrap_pkgmk="$TOOLS/bin/pkgmk"
-
-    # Source prefetch must use the temporary-toolchain pkgmk explicitly.
-    # bfs-prefetch-curl is curl-compatible, so pkgmk must retain curl's
-    # normal -o <source>.partial download destination.
-    if [ ! -x "$bootstrap_pkgmk" ]; then
-        echo "ERROR: bootstrap pkgmk is missing: $bootstrap_pkgmk" >&2
-        return 1
-    fi
-
-    sed -i         's/case ${PKGMK_DOWNLOAD_PROG} in/case ${PKGMK_DOWNLOAD_PROG##*\/} in/'         "$bootstrap_pkgmk"
-
-    sed -i         's/^[[:space:]]*curl)/        curl|bfs-prefetch-curl)/'         "$bootstrap_pkgmk"
-
-    if ! grep -Fq 'case ${PKGMK_DOWNLOAD_PROG##*/} in' "$bootstrap_pkgmk" ||
-       ! grep -Eq '^[[:space:]]*curl\|bfs-prefetch-curl\)' "$bootstrap_pkgmk"; then
-        echo "ERROR: bootstrap pkgmk does not support bfs-prefetch-curl safely." >&2
-        return 1
-    fi
-
-    echo
-    echo "Bootstrap source prefetch"
-    echo "========================="
-    echo "Downloading/verifying all sources required by Stages 1-3 before package compilation."
-
-    rm -f "/tmp/bfsos-prefetch-unhealthy-origins.$$" 2>/dev/null || true
-
-    # pkgmk requires every configured output directory to exist even when it is
-    # being used only for source downloads (-do).  Create the temporary package
-    # directory once for the entire prefetch pass instead of per package.
-    if ! mkdir -p /tmp/lfs-pkg; then
-        echo "ERROR: Could not create temporary pkgmk package directory: /tmp/lfs-pkg" >&2
-        return 1
-    fi
-
-    for package in "$@"; do
-        normalized="${package%-pass*}"
-        port_dir="$(_find_port_dir "$package")" || {
-            rm -rf /tmp/lfs-pkg
-            return 1
-        }
-
-        # Stage aliases such as binutils-pass1/binutils-pass2 and
-        # gcc-pass1/gcc-pass2/gcc-pass3 resolve to the same canonical port.
-        # Fetch each canonical port directory only once, even when it appears in
-        # both toolchainpkg and basepkg.
-        [[ -n "${seen_ports[$port_dir]:-}" ]] && continue
-        seen_ports["$port_dir"]=1
-
-        status=1
-        for attempt in 1 2 3; do
-            printf '  %-28s (attempt %d/3) ' "$normalized" "$attempt"
-            if (
-                cd "$port_dir"
-                "$bootstrap_pkgmk" -do -cf "$pkgmk_conf"
-            ); then
-                printf 'OK\n'
-                status=0
-                break
-            fi
-            printf 'FAILED\n' >&2
-            sleep "$attempt"
-        done
-        if [ "$status" -ne 0 ]; then
-            echo "ERROR: source prefetch failed for $normalized ($port_dir)" >&2
-            echo "Bootstrap 1 will not start compiling until all required sources are available." >&2
-            rm -rf /tmp/lfs-pkg
-            return "$status"
-        fi
-    done
-
-    rm -rf /tmp/lfs-pkg
-    rm -f "/tmp/bfsos-prefetch-unhealthy-origins.$$" 2>/dev/null || true
-
-    echo
-    echo "All bootstrap sources downloaded and verified."
-}
-
 _clean_start() {
     local answer
 
@@ -2243,8 +2138,8 @@ _clean_start() {
     echo "  /tmp/lfs*"
     echo "  $packagedir/*"
     echo "  $buildworkdir/*"
-    echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.zst"
-    echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.zst"
+    echo "  $TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-*.tar.xz"
+    echo "  $BASE_ARCHIVE_DIR/bfs-rootfs-*.tar.xz"
     echo
 
     if [ "${BFS_FULL_BOOTSTRAP:-no}" = yes ]; then
@@ -2358,7 +2253,7 @@ _clean_start() {
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
-        \( -name 'bfs-toolchain-*.tar.zst' -o -name 'bfs-toolchain-*.tar.xz' \) \
+        -name 'bfs-toolchain-*.tar.xz' \
         -print \
         -delete
 
@@ -2366,7 +2261,7 @@ _clean_start() {
         -mindepth 1 \
         -maxdepth 1 \
         -type f \
-        \( -name 'bfs-rootfs-*.tar.zst' -o -name 'bfs-rootfs-*.tar.xz' \) \
+        -name 'bfs-rootfs-*.tar.xz' \
         -print \
         -delete
 
@@ -2406,20 +2301,19 @@ _clear_rootfs() {
 
 _restore_toolchain() {
     local archive
-    local status=0
     local restored_tools="${LFS}${TOOLS}"
     local listing_file
     local toolchain_member=""
 
-    archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.zst' 2>/dev/null || true)"
-    if [ -z "$archive" ]; then
-        archive="$(_latest_archive "$TOOLCHAIN_ARCHIVE_DIR" 'bfs-toolchain-*.tar.xz' 2>/dev/null || true)"
-    fi
-    if [ -z "$archive" ]; then
+    archive="$(
+        _latest_archive \
+            "$TOOLCHAIN_ARCHIVE_DIR" \
+            'bfs-toolchain-*.tar.xz'
+    )" || {
         echo "ERROR: No toolchain archive found in:" >&2
         echo "  $TOOLCHAIN_ARCHIVE_DIR" >&2
         exit 1
-    fi
+    }
 
     echo "Restoring newest toolchain archive:"
     echo "  $archive"
@@ -2438,14 +2332,8 @@ _restore_toolchain() {
     # List the archive once. Some tar versions print members with a leading
     # "./" and others do not, so stage 7 must accept either representation.
     listing_file="$(/usr/bin/mktemp /tmp/bfs-toolchain-list.XXXXXX)"
-    status=0
 
-    if [[ "$archive" == *.tar.zst ]]; then
-        /usr/bin/nice -n 19 /bin/tar --zstd -tf "$archive" > "$listing_file" || status=$?
-    else
-        /usr/bin/nice -n 19 /bin/tar -tJf "$archive" > "$listing_file" || status=$?
-    fi
-    if [ "${status:-0}" -ne 0 ]; then
+    if ! /usr/bin/nice -n 19 /bin/tar -tJf "$archive" > "$listing_file"; then
         /usr/bin/rm -f "$listing_file"
         echo "ERROR: Toolchain archive is unreadable or damaged." >&2
         exit 1
@@ -2487,14 +2375,11 @@ _restore_toolchain() {
     # Remove the host-side convenience symlink before replacing its target.
     /usr/bin/rm -f "$TOOLS"
     /usr/bin/rm -rf "$restored_tools"
-    status=0
 
-    if [[ "$archive" == *.tar.zst ]]; then
-        /usr/bin/nice -n 19 /bin/tar --zstd -xpf "$archive" -C "$LFS" "$toolchain_member" || status=$?
-    else
-        /usr/bin/nice -n 19 /bin/tar -xJpf "$archive" -C "$LFS" "$toolchain_member" || status=$?
-    fi
-    if [ "${status:-0}" -ne 0 ]; then
+    if ! /usr/bin/nice -n 19 /bin/tar -xJpf "$archive" \
+        -C "$LFS" \
+        "$toolchain_member"
+    then
         echo "ERROR: Failed to extract the temporary toolchain." >&2
         exit 1
     fi
@@ -2542,22 +2427,21 @@ _restore_toolchain() {
 
 _restore_rootfs() {
     local archive
-    local status=0
 
     if [ "$(id -u)" -ne 0 ]; then
         echo "ERROR: Stage 6 base rootfs restore must run as root." >&2
         return 1
     fi
 
-    archive="$(_latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.zst' 2>/dev/null || true)"
-    if [ -z "$archive" ]; then
-        archive="$(_latest_archive "$BASE_ARCHIVE_DIR" 'bfs-rootfs-*.tar.xz' 2>/dev/null || true)"
-    fi
-    if [ -z "$archive" ]; then
+    archive="$(
+        _latest_archive \
+            "$BASE_ARCHIVE_DIR" \
+            'bfs-rootfs-*.tar.xz'
+    )" || {
         echo "ERROR: No base rootfs archive found in:" >&2
         echo "  $BASE_ARCHIVE_DIR" >&2
         exit 1
-    fi
+    }
 
     echo "Restoring newest base rootfs archive:"
     echo "  $archive"
@@ -2565,13 +2449,7 @@ _restore_rootfs() {
     # Stage 6 destroys the current rootfs, including any temporary toolchain
     # living below it. Never use commands resolved through $TOOLS during this
     # operation; use the live system's absolute command paths throughout.
-    status=0
-    if [[ "$archive" == *.tar.zst ]]; then
-        /bin/tar --zstd -tf "$archive" >/dev/null || status=$?
-    else
-        /bin/tar -tJf "$archive" >/dev/null || status=$?
-    fi
-    if [ "${status:-0}" -ne 0 ]; then
+    if ! /bin/tar -tJf "$archive" >/dev/null; then
         echo "ERROR: Base rootfs archive is unreadable or damaged." >&2
         exit 1
     fi
@@ -2585,13 +2463,7 @@ _restore_rootfs() {
 
     _clear_rootfs
 
-    status=0
-    if [[ "$archive" == *.tar.zst ]]; then
-        /bin/tar --zstd -xpf "$archive" -C "$LFS" || status=$?
-    else
-        /bin/tar -xJpf "$archive" -C "$LFS" || status=$?
-    fi
-    if [ "$status" -ne 0 ]; then
+    if ! /bin/tar -xJpf "$archive" -C "$LFS"; then
         echo "ERROR: Failed to extract base rootfs archive." >&2
         exit 1
     fi
@@ -2773,7 +2645,7 @@ EOF_CPP
         elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
             dialog \
                 --clear \
-                --backtitle "BFSOS Bootstrap" \
+                --backtitle "BFS Linux Bootstrap" \
                 --title "Toolchain verification PASSED" \
                 --msgbox "$summary" 14 68
             clear 2>/dev/null || true
@@ -2790,7 +2662,7 @@ EOF_CPP
     elif command -v dialog >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
         dialog \
             --clear \
-            --backtitle "BFSOS Bootstrap" \
+            --backtitle "BFS Linux Bootstrap" \
             --title "Toolchain verification FAILED" \
             --msgbox "$summary" 12 72
         clear 2>/dev/null || true
@@ -2917,51 +2789,10 @@ PKGMK_SOURCE_DIR="\$PKGMK_SOURCE_ROOT/\$name"
 mkdir -p "\$PKGMK_SOURCE_DIR" || exit 1
 PKGMK_PACKAGE_DIR=/tmp/lfs-pkg
 
-# Match the installed BFSOS source-fallback policy during Stage-1 prefetch.
-PKGMK_SOURCE_MIRRORS=()
-PKGMK_SOURCE_FLAT_FALLBACKS=(
-    "https://mirror.math.princeton.edu/pub/redcorelinux/amd64/distfiles"
-)
-PKGMK_SOURCE_FALLBACKS=(
-    "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
-    "https://www.x.org/releases/|https://www.x.org/archive/"
-    "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
-    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
-    "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
-    "https://debian.netcologne.de/savannah/|https://mirror.fi.ossplanet.net/nongnu/"
-    "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
-    "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
-)
-# The prefetch download wrapper maintains a per-run transport-health cache.
-# Prefixes are derived from the authoritative mapping above rather than from a
-# second mirror table. A transport/stall failure on a primary prefix is paid
-# once per prefetch run; later matching sources fail fast into pkgmk's normal
-# configured fallback chain. HTTP errors such as 404 do not poison the prefix.
-BFS_PREFETCH_HEALTH_FILE="/tmp/bfsos-prefetch-unhealthy-origins.$$"
-BFS_PREFETCH_SOURCE_PREFIXES="\$(printf '%s\n' "\${PKGMK_SOURCE_FALLBACKS[@]}" | sed 's/|.*//' | sed '/^$/d')"
-export BFS_PREFETCH_HEALTH_FILE BFS_PREFETCH_SOURCE_PREFIXES
-PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
-
-# pkgmk only enables curl-style DOWNLOAD_OPTS when the downloader is named
-# "curl".  Our wrapper is curl-compatible, so teach the pkgmk used during
-# bootstrap prefetch to recognize it before sources are downloaded.
-if [ -n "$(PATH=$TOOLS/bin command -v pkgmk 2>/dev/null)" ]; then
-    sed -i         's/case ${PKGMK_DOWNLOAD_PROG} in/case ${PKGMK_DOWNLOAD_PROG##*\/} in/'         "$TOOLS/bin/pkgmk"
-    sed -i         's/^[[:space:]]*curl)/        curl|bfs-prefetch-curl)/'         "$TOOLS/bin/pkgmk"
-fi
-
-# Prefetch should fail over quickly.  Do not spend curl-level retries on the
-# same upstream URL before pkgmk gets a chance to try BFSOS mirrors.  The
-# outer prefetch loop retries the complete original+fallback chain up to 3x.
-PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 8 --speed-limit 1024 --speed-time 15 --retry 0"
-
 . $PWD/files/pkgmk.bootstrap
 EOF
 
-    # Existing /tmp/lfs-tools may contain a pristine CRUX pkgmk from an earlier
-    # interrupted bootstrap.  Rebuild it if BFSOS fallback support is missing.
-    if [ ! "$(PATH=$TOOLS/bin command -v pkgmk)" ] || \
-       ! grep -q 'try_source_fallbacks()' "$TOOLS/bin/pkgmk" 2>/dev/null; then
+    if [ ! "$(PATH=$TOOLS/bin command -v pkgmk)" ]; then
         # The first pkgutils build happens before pkgmk exists, so seed its
         # source into the same package namespace normal pkgmk will use later.
         mkdir -p "$sourcedir/pkgutils" || return 1
@@ -2973,19 +2804,6 @@ EOF
 
         rm -rf /tmp/pkgutils-5.40.12
         tar -xf "$sourcedir/pkgutils/pkgutils-5.40.12.tar.xz" -C /tmp || return 1
-
-        # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile,
-        # so explicitly apply BFSOS source-fallback support before installing
-        # the temporary pkgmk used by prefetch.
-        if [ ! -r "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" ]; then
-            echo "ERROR: Missing BFSOS pkgmk source-fallback patch:" >&2
-            echo "  $SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" >&2
-            return 1
-        fi
-        if ! grep -q 'try_source_fallbacks()' /tmp/pkgutils-5.40.12/pkgmk.in; then
-            patch -d /tmp/pkgutils-5.40.12 -p1 \
-                < "$SCRIPT_DIR/ports/core/pkgutils/pkgutils_source-fallbacks.patch" || return 1
-        fi
 
         # The initial pkgutils bootstrap bypasses ports/core/pkgutils/Pkgfile.
         # Prefer a UTF-8 C locale when the live host provides one (GCC 16.2
@@ -3041,20 +2859,6 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
         return 1
     fi
     echo
-
-    # Front-load source acquisition for both the temporary toolchain and the
-    # base-system stages. This turns transient mirror/network failures into an
-    # early, bounded preflight failure rather than an interruption hours later.
-    # Capture the complete prefetch transcript in the Stage-1 preflight log so
-    # the failure dialog points at the actual pkgmk/download error, not only the
-    # final summary line.
-    # shellcheck disable=SC2086
-    if ! _prefetch_bootstrap_sources /tmp/bootstrap.conf $toolchainpkg $basepkg \
-        > >(tee -a "$STAGE_PREFLIGHT_LOG") \
-        2> >(tee -a "$STAGE_PREFLIGHT_LOG" >&2); then
-        _stage_preflight_note "ERROR: Bootstrap source prefetch did not complete; Stage 1 compilation was not started."
-        return 1
-    fi
 
     for i in $toolchainpkg; do
         local port_dir=""
@@ -3117,33 +2921,29 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
 
     _ensure_archive_dirs
 
-    toolchain_archive="$TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-${BFS_VERSION}-${BUILD_DATE}.tar.zst"
+    toolchain_archive="$TOOLCHAIN_ARCHIVE_DIR/bfs-toolchain-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
 
     rm -f "$toolchain_archive"
 
     _show_menu_progress "Creating toolchain archive"         "Compressing verified temporary toolchain archive..."
 
-    command -v zstd >/dev/null 2>&1 || {
-        echo "ERROR: zstd is required to create the bootstrap toolchain archive." >&2
-        return 1
-    }
     if ! (
         cd "$LFS"
-        tar -I 'zstd -T0 -19' -cpf "$toolchain_archive" .
+        XZ_DEFAULTS='-T0' tar -cJpf "$toolchain_archive" .
     ); then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive creation failed." >&2
         return 1
     fi
 
-    if ! tar --zstd -tf "$toolchain_archive" >/dev/null; then
+    if ! tar -tJf "$toolchain_archive" >/dev/null; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive verification failed." >&2
         return 1
     fi
 
     # A readable tarball is not enough: verify the expected toolchain payload.
-    if ! tar --zstd -tf "$toolchain_archive" |
+    if ! tar -tJf "$toolchain_archive" |
         grep -Eq '^\./tmp/lfs-tools/bin/(gcc|x86_64-lfs-linux-gnu-gcc)$'
     then
         rm -f "$toolchain_archive"
@@ -3151,19 +2951,19 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' \
         return 1
     fi
 
-    if ! tar --zstd -tf "$toolchain_archive" | grep -Eq '^\./tmp/lfs-tools/bin/(ld|ld\.bfd)$'; then
+    if ! tar -tJf "$toolchain_archive" | grep -Eq '^\./tmp/lfs-tools/bin/(ld|ld\.bfd)$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing the linker." >&2
         return 1
     fi
 
-    if ! tar --zstd -tf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
+    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/bin/pkgmk$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing pkgmk." >&2
         return 1
     fi
 
-    if ! tar --zstd -tf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/lib/locale/locale-archive$'; then
+    if ! tar -tJf "$toolchain_archive" | grep -q '^\./tmp/lfs-tools/lib/locale/locale-archive$'; then
         rm -f "$toolchain_archive"
         echo "ERROR: Temporary toolchain archive is missing the UTF-8 locale archive." >&2
         return 1
@@ -3512,15 +3312,14 @@ _compressrootfs() {
 
     _ensure_archive_dirs
 
-    rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.zst"
+    rootfs_archive="$BASE_ARCHIVE_DIR/bfs-rootfs-${BFS_VERSION}-${BUILD_DATE}.tar.xz"
     rm -f "$rootfs_archive"
 
     _show_menu_progress "Creating base archive"         "Compressing verified base rootfs archive..."
 
     if ! (
         cd "$LFS"
-        command -v zstd >/dev/null 2>&1 || exit 99
-        tar -I 'zstd -T0 -19' \
+        XZ_DEFAULTS='-T0' tar \
             --exclude='./var/lib/pkg/rejected' \
             --exclude=".$TOOLS" \
             --exclude='./tmp/*' \
@@ -3529,7 +3328,7 @@ _compressrootfs() {
             --exclude='./proc/*' \
             --exclude='./run/*' \
             --exclude='./root/.cache' \
-            -cpf "$rootfs_archive" .
+            -cJpf "$rootfs_archive" .
     ); then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive creation failed." >&2
@@ -3537,7 +3336,7 @@ _compressrootfs() {
         return 1
     fi
 
-    if ! tar --zstd -tf "$rootfs_archive" >/dev/null; then
+    if ! tar -tJf "$rootfs_archive" >/dev/null; then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive verification failed." >&2
         echo "No archive was kept." >&2
@@ -3545,9 +3344,9 @@ _compressrootfs() {
     fi
 
     # Sanity-check a few files required for any usable BFSOS base system.
-    if ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./usr/bin/bash$' ||
-       ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./usr/bin/pkgmk$' ||
-       ! tar --zstd -tf "$rootfs_archive" | grep -q '^\./etc/os-release$'
+    if ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/bash$' ||
+       ! tar -tJf "$rootfs_archive" | grep -q '^\./usr/bin/pkgmk$' ||
+       ! tar -tJf "$rootfs_archive" | grep -q '^\./etc/os-release$'
     then
         rm -f "$rootfs_archive"
         echo "ERROR: Base rootfs archive is readable but missing required files." >&2
@@ -3718,12 +3517,11 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
-    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
-PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
+PKGMK_DOWNLOAD_PROG="curl"
 PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . /var/lib/pkgmk/extension
@@ -3839,12 +3637,11 @@ PKGMK_SOURCE_FALLBACKS=(
     "https://xorg.freedesktop.org/releases/|https://www.x.org/archive/"
     "https://www.x.org/releases/|https://www.x.org/archive/"
     "https://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
-    "ftp://ftp.gnu.org/gnu/|https://ftpmirror.gnu.org/"
     "https://download.savannah.gnu.org/releases/|https://mirror.fi.ossplanet.net/nongnu/"
     "https://cdn.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
     "https://www.kernel.org/pub/|https://mirrors.edge.kernel.org/pub/"
 )
-PKGMK_DOWNLOAD_PROG="$SCRIPT_DIR/files/bfs-prefetch-curl"
+PKGMK_DOWNLOAD_PROG="curl"
 PKGMK_CURL_OPTS="--fail --location --continue-at - --connect-timeout 10 --speed-limit 1024 --speed-time 30 --retry 3 --retry-delay 2 --retry-max-time 180 --retry-connrefused"
 
 . /var/lib/pkgmk/extension
@@ -4478,48 +4275,6 @@ pkgmkwork="var/cache/pkg/build-work"
 
 
 
-_run_force_full_bootstrap() {
-    local build_iso=no refresh_sources=no arg=""
-
-    shift || true
-    for arg in "$@"; do
-        case "$arg" in
-            --iso|--build-iso) build_iso=yes ;;
-            --refresh-sources) refresh_sources=yes ;;
-            --force) ;;
-            *)
-                echo "ERROR: Unknown full --force option: $arg" >&2
-                return 2
-                ;;
-        esac
-    done
-
-    if [ "$refresh_sources" = yes ]; then
-        case "$sourcedir" in
-            "$SCRIPT_DIR"/sources|"$PWD"/sources) ;;
-            *)
-                echo "ERROR: Refusing source-cache cleanup for unexpected path: $sourcedir" >&2
-                return 1
-                ;;
-        esac
-        echo "Force rebuild: refreshing downloaded source cache: $sourcedir"
-        mkdir -p "$sourcedir"
-        find "$sourcedir" -mindepth 1 -maxdepth 1 -print -exec rm -rf -- {} +
-    fi
-
-    # Full Bootstrap already enters Stage 1 through _clean_start(), which
-    # removes /tmp/lfs-rootfs, /tmp/lfs-tools, package/build-work output, and
-    # prior Bootstrap base/toolchain archives while retaining sources.  --force
-    # makes that destructive clean-start intent explicit and noninteractive.
-    BFS_FULL_BOOTSTRAP_ASSUME_YES=yes \
-    BFS_FULL_BOOTSTRAP_NO_INSTALL_PROMPT=yes \
-        _run_full_bootstrap || return $?
-
-    if [ "$build_iso" = yes ]; then
-        _launch_iso_builder
-    fi
-}
-
 case "${1:-menu}" in
     menu|"")
         _bootstrap_menu
@@ -4558,14 +4313,7 @@ case "${1:-menu}" in
         _launch_bfs_installer
         ;;
     full|full-bootstrap|all)
-        if [ "${2:-}" = "--force" ]; then
-            _run_force_full_bootstrap "${@:2}"
-        elif [ "$#" -gt 1 ]; then
-            echo "ERROR: Unknown full-bootstrap option: ${2:-}" >&2
-            exit 2
-        else
-            _run_full_bootstrap
-        fi
+        _run_full_bootstrap
         ;;
     resume-full|resume-bootstrap|continue-full)
         _run_resume_full_bootstrap
@@ -4587,15 +4335,11 @@ Usage:
   $0 restore-base|restore-toolchain
   $0 settings|build-settings
   $0 iso|build-iso|create-iso
-                  Reuse a verified base (or build one if needed) and create bootable ISO media
+                  Rebuild the BFSOS base and create bootable ISO media
   $0 8|chroot    Enter the BFS chroot
   $0 9|installer Launch the newest BFSOS installer from scripts/
   $0 full|full-bootstrap|all
                   Run the complete build, verify, and archive workflow
-  $0 full --force [--iso] [--refresh-sources]
-                  Force a clean Stage 1->5 rebuild. Sources are retained unless
-                  --refresh-sources is also supplied; --iso builds ISO media
-                  only after the new base archive completes successfully.
   $0 resume-full|continue-full
                   Resume at the first incomplete stage and continue through Stage 5
   $0 0|stop|kill Stop a running bootstrap process group
