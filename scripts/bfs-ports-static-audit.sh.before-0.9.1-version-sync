@@ -130,9 +130,9 @@ check_version() {
     [ "$got" = "$expected" ] || report "$file version is $got; expected $expected"
 }
 
-check_version ports/core/linux/Pkgfile 7.2.9
-check_version ports/core/linux-headers/Pkgfile 6.18.55
-check_version ports/core/linux-lts/Pkgfile 6.18.55
+check_version ports/core/linux/Pkgfile 7.2.8
+check_version ports/core/linux-headers/Pkgfile 6.18.54
+check_version ports/core/linux-lts/Pkgfile 6.18.54
 if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
     report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
 fi
@@ -150,7 +150,7 @@ done
 for spec in \
     libxfce4util:4.20.1 xfconf:4.20.0 libxfce4ui:4.20.2 exo:4.20.0 \
     garcon:4.20.0 libwnck:43.3 xfce4-dev-tools:4.20.0 libxfce4windowing:4.20.7 \
-    xfce4-panel:4.20.8 thunar:4.20.10 thunar-volman:4.20.0 tumbler:4.20.2 \
+    xfce4-panel:4.20.8 thunar:4.20.9 thunar-volman:4.20.0 tumbler:4.20.2 \
     xfce4-appfinder:4.20.0 xfce4-power-manager:4.20.1 xfce4-settings:4.20.5 \
     xfdesktop:4.20.2 xfwm4:4.20.0 xfce4-session:4.20.4 parole:4.20.0 \
     xfce4-terminal:1.2.0 xfburn:0.8.0 ristretto:0.14.0 xfce4-notifyd:0.9.7 \
@@ -206,9 +206,9 @@ for fallback in \
 done
 
 # Firefox rapid/ESR channels are tracked independently; binary and source rapid ports must match.
-check_version ports/opt/firefox/Pkgfile 157.0.1
-check_version ports/opt/firefox-bin/Pkgfile 157.0
-check_version ports/opt/firefox-esr/Pkgfile 153.4.0esr
+check_version ports/opt/firefox/Pkgfile 155.0.1
+check_version ports/opt/firefox-bin/Pkgfile 155.0.1
+check_version ports/opt/firefox-esr/Pkgfile 153.2.0esr
 
 # Current LXQt stable baseline (2026-04 suite plus later point releases).
 for spec in libfm-qt:2.4.0 liblxqt:2.4.0 libqtxdg:4.4.0 lxqt-about:2.4.0 lxqt-admin:2.4.0 \
@@ -254,12 +254,12 @@ if grep -Rqs --include=Pkgfile -E 'launchpad\.net/compiz|version=0\.9\.|libwnck2
     report "Compiz collection still contains 0.9/Launchpad/GTK2-era metadata"
 fi
 
-check_version ports/xorg/xscreensaver/Pkgfile 6.16
+check_version ports/xorg/xscreensaver/Pkgfile 6.15
 if ! grep -q 'bsod' ports/xorg/xscreensaver/Pkgfile; then
     report "XScreenSaver recipe does not disable the bsod fake-security saver from default random rotation"
 fi
 check_version ports/opt/avahi/Pkgfile 0.9-rc5
-check_version ports/opt/xdg-dbus-proxy/Pkgfile 0.1.9
+check_version ports/opt/xdg-dbus-proxy/Pkgfile 0.1.8
 [ -f ports/core/python3-vcs-versioning/Pkgfile ] || report "python3-vcs-versioning port missing"
 if ! grep -Eq '^# Depends on:.*(^|[[:space:]])rustc([[:space:]]|$)' ports/opt/corrosion/Pkgfile; then
     report "corrosion dependency metadata must use rustc"
