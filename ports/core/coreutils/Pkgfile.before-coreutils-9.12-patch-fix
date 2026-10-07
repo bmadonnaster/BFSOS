@@ -4,22 +4,16 @@ version=9.12
 release=1
 source=(
     https://ftpmirror.gnu.org/coreutils/coreutils-$version.tar.xz
-    https://www.linuxfromscratch.org/patches/lfs/development/coreutils-9.12-i18n-1.patch
+    https://www.linuxfromscratch.org/patches/downloads/coreutils/coreutils-9.11-i18n-1.patch
 )
 
 export FORCE_UNSAFE_CONFIGURE=1
 build_opt="--enable-no-install-program=kill,uptime"
 
 bootstrap_build() {
-        autoreconf -fv || return 1
-        automake -af || return 1
-
-        FORCE_UNSAFE_CONFIGURE=1 ./configure \
-                --prefix=$TOOLS \
-                --enable-install-program=hostname || return 1
-
-        make || return 1
-        make install || return 1
+	FORCE_UNSAFE_CONFIGURE=1 ./configure --prefix=$TOOLS --enable-install-program=hostname
+	make
+	make install
 }
 
 post_build() {
