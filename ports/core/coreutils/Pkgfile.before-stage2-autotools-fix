@@ -10,13 +10,11 @@ source=(
 export FORCE_UNSAFE_CONFIGURE=1
 build_opt="--enable-no-install-program=kill,uptime"
 
-pre_build() {
+bootstrap_build() {
         autoreconf -fv || return 1
         automake -af || return 1
-}
 
-bootstrap_build() {
-FORCE_UNSAFE_CONFIGURE=1 ./configure \
+        FORCE_UNSAFE_CONFIGURE=1 ./configure \
                 --prefix=$TOOLS \
                 --enable-install-program=hostname || return 1
 
