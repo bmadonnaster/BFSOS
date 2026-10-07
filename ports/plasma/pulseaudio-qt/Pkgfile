@@ -2,8 +2,8 @@
 # Depends on: kde-frameworks-6 pulseaudio qt6
 
 name=pulseaudio-qt
-version=1.8.1
-release=3
+version=1.9.0
+release=1
 source=(https://download.kde.org/stable/${name}/${name}-${version}.tar.xz)
 build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6 
       -DCMAKE_PREFIX_PATH=/opt/qt6;/opt/kf6        

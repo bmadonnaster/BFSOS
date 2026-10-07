@@ -4,8 +4,8 @@
 # Depends on: meson ninja
 
 name=xorgproto
-version=2025.1
-release=3
+version=2026.1
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/proto/$name-$version.tar.xz)
 
 pkg_build() {
