@@ -4,9 +4,9 @@
 # Depends on: elfutils-32 glib libffi-32 libpcre-32 libpcre2-32 util-linux-32
 
 name=glib-32
-version=2.90.0
-release=3
-source=(https://download.gnome.org/sources/glib/${version:0:4}/${name%-*}-$version.tar.xz)
+version=2.90.1
+release=1
+source=(https://download.gnome.org/sources/glib/2.90/glib-$version.tar.xz)
 
 build_opt="--libexecdir=/usr/lib32/glib -D introspection=disabled -D tests=false"
 

@@ -4,7 +4,7 @@
 # Depends on: chrpath cmake
 
 name=iniparser
-version=4.3.0
+version=4.3.2
 release=1
 source=(https://github.com/ndevilla/iniparser/archive/v$version/$name-$version.tar.gz)
 

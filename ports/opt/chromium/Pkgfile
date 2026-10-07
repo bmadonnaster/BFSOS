@@ -5,7 +5,7 @@
 # Optional: qt6 gnome-keyring kdialog
 
 name=chromium
-version=154.0.8037.97
+version=155.0.8059.39
 release=1
 build_work=disk
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$version.tar.xz)

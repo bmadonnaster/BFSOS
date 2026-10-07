@@ -4,7 +4,7 @@
 # Depends on: gtk3 vim libXt
 
 name=gvim
-version=9.2.1167
+version=9.2.1169
 release=1
 source=(https://github.com/vim/vim/archive/v${version}/vim-$version.tar.gz)
 

@@ -13,8 +13,7 @@ build_opt="--enable-extra-optimization --disable-examples --disable-nls"
 pre_build() {
         _bfs_require_compat32_extension 2 || return 0
 	export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
-	sed -i 's/sdl-config/sdl-config-32/g' configure.ac
-	autoreconf -vfi
+	export SDL_CONFIG='/usr/bin/sdl-config-32'
 }
 
 post_build() {
