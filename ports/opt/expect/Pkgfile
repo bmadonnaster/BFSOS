@@ -6,7 +6,7 @@
 name=expect
 version=5.45.4
 release=1
-source=(https://prdownloads.sourceforge.net/$name/$name$version.tar.gz
+source=(https://downloads.sourceforge.net/project/expect/Expect/$version/expect$version.tar.gz
 expect-5.45.4-gcc15-1.patch)
 
 pkg_build() {

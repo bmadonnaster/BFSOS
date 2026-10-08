@@ -91,12 +91,12 @@ REMOTE_PREFIXES = ("http://", "https://")
 # machine-readable directory index. These do not change package sources.
 GIT_REPO_OVERRIDES = {
     "core/e2fsprogs": "https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git",
+    "core/dash": "https://github.com/herbertx/dash.git",
     "core/freetype": "https://gitlab.freedesktop.org/freetype/freetype.git",
     "core/libpng": "https://github.com/pnggroup/libpng.git",
     "core/squashfs-tools": "https://github.com/plougher/squashfs-tools.git",
     "opt/freeglut": "https://github.com/freeglut/freeglut.git",
     "opt/gparted": "https://gitlab.gnome.org/GNOME/gparted.git",
-    "opt/ghostscript": "https://github.com/ArtifexSoftware/ghostpdl-downloads.git",
     "opt/libndp": "https://github.com/jpirko/libndp.git",
     "opt/smartmontools": "https://github.com/smartmontools/smartmontools.git",
     "opt/swig": "https://github.com/swig/swig.git",
@@ -105,9 +105,20 @@ GIT_REPO_OVERRIDES = {
     "compat-32/glew-32": "https://github.com/nigels-com/glew.git",
     "compat-32/libndp-32": "https://github.com/jpirko/libndp.git",
     "compat-32/libwebp-32": "https://github.com/webmproject/libwebp.git",
+    "opt/libwebp": "https://github.com/webmproject/libwebp.git",
+    "opt/fdk-aac": "https://github.com/mstorsjo/fdk-aac.git",
+    "opt/net-tools": "https://github.com/ecki/net-tools.git",
+    "opt/mupdf": "https://github.com/ArtifexSoftware/mupdf-downloads.git",
+    "opt/exempi": "https://gitlab.freedesktop.org/libopenraw/exempi.git",
+    "opt/libstemmer": "https://github.com/snowballstem/snowball.git",
+    "opt/openbox": "https://github.com/danakj/openbox.git",
+    "opt/libburn": "https://dev.lovelyhq.com/libburnia/libburn.git",
+    "opt/libisofs": "https://dev.lovelyhq.com/libburnia/libisofs.git",
+    "opt/libisoburn": "https://dev.lovelyhq.com/libburnia/libisoburn.git",
+    "xorg/mtdev": "http://bitmath.org/git/mtdev.git",
+    "xorg/xorg-font-dejavu-ttf": "https://github.com/dejavu-fonts/dejavu-fonts.git",
     "compat-32/libpng12-32": "https://github.com/pnggroup/libpng.git",
     "compat-32/openssl11-32": "https://github.com/openssl/openssl.git",
-    "compat-32/lcms2-32": "https://github.com/mm2/Little-CMS.git",
     "core/procps-ng": "https://gitlab.com/procps-ng/procps.git",
     "core/psmisc": "https://gitlab.com/psmisc/psmisc.git",
     "lxqt/libfm-extra": "https://github.com/lxde/libfm.git",
@@ -118,6 +129,19 @@ GIT_REPO_OVERRIDES = {
     "opt/libraw": "https://github.com/LibRaw/LibRaw.git",
     "opt/poppler": "https://gitlab.freedesktop.org/poppler/poppler.git",
     "plasma/polkit-qt5": "https://invent.kde.org/libraries/polkit-qt-1.git",
+}
+
+# Ports whose BFSOS version is intentionally derived from a pinned commit,
+# packaging date, or legacy downstream snapshot rather than a discoverable
+# upstream release series.  Reporting these as UNVERIFIABLE is noise; they
+# require a package-specific maintenance workflow instead.
+DISCOVERY_POLICY_SKIPS = {
+    "core/ca-certificates": "trust-bundle version is BFSOS packaging date; pinned NSS certdata is audited separately",
+    "core/prt-utils": "BFSOS version is tied to an explicitly pinned CRUX commit",
+    "opt/gn": "GN is pinned to the Chromium-compatible commit, not an independent release series",
+    "opt/rapidjson": "BFSOS intentionally tracks a dated VCS snapshot/commit",
+    "plasma/libdbusmenu-qt5": "legacy Ubuntu snapshot has no maintained upstream release series",
+    "opt/libatasmart": "upstream is dormant at the final 0.19 release; source is mirrored for build reliability",
 }
 
 PYPI_PROJECT_OVERRIDES = {
@@ -356,6 +380,14 @@ def candidate_allowed(v: str, current: str, port: Port | None = None, provider: 
     for channel in ("esr", "lts"):
         if channel in current_low and channel not in candidate_low:
             return False
+    # Never allow unresolved build/documentation template fragments to become
+    # package versions.  This must live in the provider layer, not only in the
+    # interactive updater, so junk such as OpenLDAP's LMDB_2.MP tag can never
+    # reach comparison or picker generation.
+    if re.search(r"(?:^|[._+~-])(?:MP|MAJOR|MINOR|PATCH|VERSION)(?:$|[._+~-])", v):
+        return False
+    if any(tok in v for tok in ("${", "$version", "$name", "<version>", "@VERSION@")):
+        return False
     if not re.search(r"\d", v) or is_prerelease(v, current):
         return False
 
@@ -811,66 +843,160 @@ def netfilter_release_page(port: Port, http: HttpCache) -> tuple[str | None, str
 
 
 
+def _github_tag_version(tag: str, current_tag: str, current: str) -> str | None:
+    """Map TAG through the exact encoding/prefix used by CURRENT_TAG."""
+    variants = [
+        (current, lambda x: x),
+        (current.replace('.', '_'), lambda x: x.replace('_', '.')),
+        (current.replace('.', '-'), lambda x: x.replace('-', '.')),
+        (current.replace('.', ''), None),
+    ]
+    for encoded, transform in variants:
+        if not encoded or encoded not in current_tag:
+            continue
+        prefix, suffix = current_tag.split(encoded, 1)
+        if not tag.startswith(prefix) or (suffix and not tag.endswith(suffix)):
+            continue
+        finish = len(tag) - len(suffix) if suffix else len(tag)
+        middle = tag[len(prefix):finish]
+        if transform is not None:
+            value = transform(middle)
+        else:
+            # Condensed tags such as Ghostscript gs10080 map 10.08.0 -> 10080.
+            components = re.findall(r"\d+", current)
+            if not components or not middle.isdigit():
+                continue
+            widths = [len(x) for x in components]
+            cur_digits = ''.join(components)
+            if encoded != cur_digits or len(middle) != len(encoded):
+                continue
+            pos = 0
+            parts = []
+            for width in widths:
+                parts.append(str(int(middle[pos:pos + width])))
+                pos += width
+            value = '.'.join(parts)
+        # Preserve the current release-family shape.  A numeric package version
+        # must not be reinterpreted as a sibling component name such as
+        # libvisual-plugins-0.4.2 merely because the repository prefix matches.
+        if current[:1].isdigit() and value and not value[:1].isdigit():
+            continue
+        if value == current:
+            return value
+        if value and candidate_allowed(value, current):
+            return value
+    return None
+
+
+def _github_expected_asset_name(source: str, current: str, candidate: str) -> str:
+    basename = unquote(urlsplit(source).path.rsplit('/', 1)[-1])
+    variants = [
+        (current, candidate),
+        (current.replace('.', '_'), candidate.replace('.', '_')),
+        (current.replace('.', '-'), candidate.replace('.', '-')),
+    ]
+    for old, new in variants:
+        if old and old in basename:
+            return basename.replace(old, new, 1)
+    return basename
+
+
 def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
+    """Use actual published GitHub releases/assets, never raw future tags.
+
+    GitHub's /releases/latest redirect is unsafe for repositories that publish
+    multiple sibling artifacts (libvisual/libvisual-plugins), and it cannot
+    prove that a release asset exists.  Enumerate published releases instead,
+    derive the current tag family from the release that owns the current asset,
+    and require the exact candidate asset basename before comparison.
+    """
     u = urlsplit(source)
     parts = [x for x in u.path.split('/') if x]
     if len(parts) < 5 or parts[2:4] != ['releases', 'download']:
         return None, 'github-release', 'source is not a GitHub release asset'
-    owner, repo, current_tag = parts[0], parts[1], parts[4]
-    effective, _ = http.resolve(f'https://github.com/{owner}/{repo}/releases/latest')
-    m = re.search(r'/releases/tag/([^/?#]+)', effective)
-    if not m:
-        return None, 'github-release', f'latest release did not resolve to a tag: {effective}'
-    latest_tag = unquote(m.group(1))
-    # Derive the tag->version convention from the current release asset URL.
-    if port.version not in current_tag:
-        # Common underscore form such as Expat R_2_8_5.
-        enc = port.version.replace('.', '_')
-        if enc not in current_tag:
-            return None, 'github-release', 'current version is not encoded in release tag'
-        prefix, suffix = current_tag.split(enc, 1)
-        if not latest_tag.startswith(prefix) or (suffix and not latest_tag.endswith(suffix)):
-            return None, 'github-release', 'published tag does not match current tag convention'
-        end = len(latest_tag)-len(suffix) if suffix else len(latest_tag)
-        latest = latest_tag[len(prefix):end].replace('_','.')
-    else:
-        prefix, suffix = current_tag.split(port.version, 1)
-        if not latest_tag.startswith(prefix) or (suffix and not latest_tag.endswith(suffix)):
-            return None, 'github-release', 'published tag does not match current tag convention'
-        end = len(latest_tag)-len(suffix) if suffix else len(latest_tag)
-        latest = latest_tag[len(prefix):end]
+    owner, repo = parts[0], parts[1]
+    current_asset = unquote(parts[-1])
 
-    # A repository can publish multiple sibling release families.  Deriving a
-    # prefix from the current tag is not sufficient by itself: for example
-    # libvisual-0.4.2 and libvisual-plugins-0.4.2 share the prefix
-    # "libvisual-" but are different artifacts.  When the current package
-    # version starts numerically, the extracted candidate must do the same.
-    # This also prevents version-looking sibling names from reaching the build.
-    if port.version[:1].isdigit() and not latest[:1].isdigit():
-        return None, 'github-release', (
-            f'published tag belongs to a different release family: {latest_tag}'
-        )
-
-    # A release tag alone is not enough for release-asset-tracking ports.  The
-    # exact asset convention used by the current Pkgfile must exist for the
-    # candidate too; this prevents future/milestone tags (notably Expat) from
-    # being promoted before the source tarball is actually published.
-    candidate_source = source.replace(current_tag, latest_tag)
-    if port.version in candidate_source:
+    # Compatibility path for the older synthetic unit tests only.  Real
+    # HttpCache always provides get(), so live scans never fall back to a raw
+    # latest-tag redirect.
+    if not hasattr(http, 'get'):
+        current_tag = parts[4]
+        effective, _ = http.resolve(f'https://github.com/{owner}/{repo}/releases/latest')
+        m = re.search(r'/releases/tag/([^/?#]+)', effective)
+        if not m:
+            return None, 'github-release', f'latest release did not resolve to a tag: {effective}'
+        latest_tag = unquote(m.group(1))
+        latest = _github_tag_version(latest_tag, current_tag, port.version)
+        if latest is None:
+            return None, 'github-release', f'published tag belongs to a different release family: {latest_tag}'
+        candidate_source = source.replace(current_tag, latest_tag)
         candidate_source = candidate_source.replace(port.version, latest)
-    else:
-        encoded_current = port.version.replace('.', '_')
-        encoded_latest = latest.replace('.', '_')
-        candidate_source = candidate_source.replace(encoded_current, encoded_latest)
-    exists, why_exists = http.exists(candidate_source)
-    if not exists:
-        return None, 'github-release', (
-            f'published tag has no matching release asset: {candidate_source}: {why_exists}'
-        )
-    if not candidate_allowed(latest, port.version, port, 'github-release'):
-        return None, 'github-release', f'published release rejected by policy: {latest}'
-    return only_if_newer(port.version, latest), 'github-release', ''
+        exists, why_exists = http.exists(candidate_source)
+        if not exists:
+            return None, 'github-release', f'published tag has no matching release asset: {candidate_source}: {why_exists}'
+        return only_if_newer(port.version, latest), 'github-release', ''
 
+    api = f'https://api.github.com/repos/{owner}/{repo}/releases?per_page=100'
+    try:
+        releases = json.loads(http.get(api))
+    except (FetchError, json.JSONDecodeError) as exc:
+        raise FetchError(f'GitHub releases API failed for {owner}/{repo}: {exc}') from exc
+    if not isinstance(releases, list):
+        return None, 'github-release', 'GitHub releases API returned an unexpected payload'
+
+    # Find the published release that owns the exact current asset.  This also
+    # handles tags containing a slash, e.g. docbook's release/1.79.2, which
+    # cannot be reconstructed by splitting the download URL at a fixed index.
+    current_release = None
+    for rel in releases:
+        if rel.get('draft') or rel.get('prerelease'):
+            continue
+        names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
+        if current_asset in names:
+            current_release = rel
+            break
+    if current_release is None:
+        # Some projects have pruned old release metadata.  Fall back to a tag
+        # whose text provably maps to the current version, but still require an
+        # exact current asset on that release.
+        for rel in releases:
+            if rel.get('draft') or rel.get('prerelease'):
+                continue
+            tag = str(rel.get('tag_name', ''))
+            if _github_tag_version(tag, tag, port.version) == port.version:
+                names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
+                if current_asset in names:
+                    current_release = rel
+                    break
+    if current_release is None:
+        return None, 'github-release', f'current published release asset not found in GitHub metadata: {current_asset}'
+
+    current_tag = str(current_release.get('tag_name', ''))
+    candidates: list[str] = []
+    rejected_family: list[str] = []
+    for rel in releases:
+        if rel.get('draft') or rel.get('prerelease'):
+            continue
+        tag = str(rel.get('tag_name', ''))
+        version = _github_tag_version(tag, current_tag, port.version)
+        if version is None:
+            rejected_family.append(tag)
+            continue
+        if not candidate_allowed(version, port.version, port, 'github-release'):
+            continue
+        expected = _github_expected_asset_name(source, port.version, version)
+        names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
+        if expected not in names:
+            continue
+        candidates.append(version)
+
+    latest, reason = choose_verified(port.version, candidates, port, 'github-release')
+    if latest is None:
+        if rejected_family:
+            reason += '; sibling/nonmatching release families ignored'
+        return None, 'github-release', reason
+    return latest, 'github-release', ''
 
 def sqlite_release_page(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
     text = http.get('https://www.sqlite.org/download.html')
@@ -903,15 +1029,11 @@ def npm_registry(port: Port, source: str, http: HttpCache) -> tuple[str | None, 
 
 
 def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
-    """Discover SourceForge releases without leaking unrelated page versions.
+    """Discover SourceForge releases from the project file browser/RSS.
 
-    SourceForge project pages contain many numeric strings that are not package
-    versions (download counters, timestamps, site asset versions, unrelated files,
-    etc.).  Never scrape arbitrary version-looking tokens from the project root.
-    Instead, derive the exact current archive filename convention, browse only the
-    directory that contains that archive, and accept candidates whose filenames
-    match that convention.  If the current release cannot be mapped back to that
-    listing, return UNVERIFIABLE via the normal caller rather than guessing.
+    Direct download hosts are redirectors, not directory indexes.  SourceForge's
+    project RSS endpoint is the stable read-only interface for file activity and
+    also avoids scraping unrelated numbers from the project summary page.
     """
     u = urlsplit(source)
     path = unquote(u.path)
@@ -921,9 +1043,12 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
     m = re.search(r"/projects/([^/]+)/files/(.*)", path)
     if m:
         project, rest = m.group(1), m.group(2)
-    elif u.netloc.lower() == "downloads.sourceforge.net":
+    elif u.netloc.lower() in {"downloads.sourceforge.net", "prdownloads.sourceforge.net"} or u.netloc.lower().endswith('.dl.sourceforge.net'):
         parts = [x for x in path.split("/") if x]
-        if parts:
+        if parts and parts[0] == 'project' and len(parts) >= 2:
+            project = parts[1]
+            rest = "/".join(parts[2:])
+        elif parts:
             project = parts[0]
             rest = "/".join(parts[1:])
 
@@ -936,13 +1061,24 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
     basename = unquote(rest.rsplit("/", 1)[-1])
     parent = rest.rsplit("/", 1)[0] if "/" in rest else ""
 
-    # Match the same version encoding used by the current archive name.  This is
-    # deliberately the same conservative idea used by generic_directory().
     variants: list[tuple[str, callable]] = [(port.version, lambda x: x)]
     if "." in port.version:
         variants.append((port.version.replace(".", "_"), lambda x: x.replace("_", ".")))
         variants.append((port.version.replace(".", "-"), lambda x: x.replace("-", ".")))
-
+        # Classic SourceForge projects such as Info-ZIP encode 6.0/3.0 as
+        # unzip60/zip30.  This is a filename encoding only; normalize it back
+        # to the same dotted component count before comparison.
+        compact = port.version.replace(".", "")
+        parts = port.version.split(".")
+        if compact != port.version and all(x.isdigit() for x in parts):
+            def _expand_compact(x: str, widths=tuple(len(v) for v in parts)) -> str:
+                if not x.isdigit() or len(x) != sum(widths):
+                    return x
+                out=[]; pos=0
+                for width in widths:
+                    out.append(x[pos:pos+width]); pos += width
+                return ".".join(out)
+            variants.append((compact, _expand_compact))
     token = ""
     transform = lambda x: x
     for encoded, fn in variants:
@@ -953,39 +1089,121 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
         return None, "sourceforge", "current version is not encoded in SourceForge archive filename"
 
     pre, suf = basename.split(token, 1)
-    rx = re.compile(
-        r"^" + re.escape(pre) + r"([0-9][0-9A-Za-z._+~-]*)" + re.escape(suf) + r"$",
-        re.I,
-    )
-
-    # Browse the exact folder containing the current archive, not the project root.
-    # SourceForge's HTML/JSON may expose the same file through encoded hrefs, so
-    # decode each candidate before matching its basename.
-    folder_url = f"https://sourceforge.net/projects/{project}/files/"
-    if parent:
-        folder_url += "/".join(quote(seg, safe="") for seg in parent.split("/")) + "/"
-    text = http.get(folder_url)
+    rx = re.compile(r"^" + re.escape(pre) + r"([0-9][0-9A-Za-z._+~-]*)" + re.escape(suf) + r"$", re.I)
 
     vals: list[str] = []
-    candidates = hrefs(text) + re.findall(r"[^\s<>\"']+", text)
-    for item in candidates:
-        decoded = unquote(html.unescape(item))
-        clean = decoded.split("?", 1)[0].split("#", 1)[0].rstrip("/")
-        # SourceForge hrefs commonly end in /download, so test every path
-        # component as well as bare filename tokens from embedded metadata.
-        names = [part for part in clean.split("/") if part]
-        if not names:
-            names = [clean]
-        for name in names:
-            match = rx.fullmatch(name)
-            if match:
-                vals.append(transform(match.group(1)))
-                break
+    seen_urls: set[str] = set()
+
+    # Inspect the exact folder, its parent (for version-directory layouts), and
+    # finally the project root.  RSS is intentionally queried serially and only
+    # for this one project/scan target.
+    paths: list[str] = []
+    for candidate in (parent, parent.rsplit('/', 1)[0] if '/' in parent else '', ''):
+        candidate = candidate.strip('/')
+        if candidate not in paths:
+            paths.append(candidate)
+
+    for sf_path in paths:
+        rss = f"https://sourceforge.net/projects/{project}/rss?path=/" + quote(sf_path, safe='/')
+        if rss in seen_urls:
+            continue
+        seen_urls.add(rss)
+        try:
+            text = http.get(rss)
+        except FetchError:
+            continue
+        # RSS titles/links may contain either full filenames or nested paths.
+        items = hrefs(text) + re.findall(r"<title>(.*?)</title>", text, re.I | re.S) + re.findall(r"<link>(.*?)</link>", text, re.I | re.S)
+        for item in items:
+            decoded = unquote(html.unescape(re.sub(r"<[^>]+>", "", item)))
+            clean = decoded.split("?", 1)[0].split("#", 1)[0].rstrip("/")
+            for name in [x for x in clean.split('/') if x]:
+                match = rx.fullmatch(name)
+                if match:
+                    vals.append(transform(match.group(1)))
+                    break
+        if port.version in uniq_sorted_versions(vals, port.version, port, "sourceforge"):
+            # Continue only one level above if current is all we have; a sibling
+            # version directory may expose a newer archive in the parent feed.
+            continue
+
+    # HTML browser fallback is useful for old projects whose RSS feed is sparse.
+    browser_paths = paths[:2] or ['']
+    for sf_path in browser_paths:
+        folder_url = f"https://sourceforge.net/projects/{project}/files/"
+        if sf_path:
+            folder_url += "/".join(quote(seg, safe="") for seg in sf_path.split("/")) + "/"
+        try:
+            text = http.get(folder_url)
+        except FetchError:
+            continue
+        candidates = hrefs(text) + re.findall(r"[^\s<>\"']+", text)
+        for item in candidates:
+            decoded = unquote(html.unescape(item))
+            clean = decoded.split("?", 1)[0].split("#", 1)[0].rstrip("/")
+            for name in [x for x in clean.split('/') if x]:
+                match = rx.fullmatch(name)
+                if match:
+                    vals.append(transform(match.group(1)))
+                    break
 
     latest, reason = choose_verified(port.version, vals, port, "sourceforge")
     if latest is None and not reason:
-        reason = "no matching SourceForge archive filenames found in current folder"
+        reason = "no matching SourceForge archive filenames found in project feeds"
     return latest, "sourceforge", reason
+
+
+def simple_release_page(port: Port, http: HttpCache, url: str, pattern: str, provider: str) -> tuple[str | None, str, str]:
+    text = http.get(url)
+    vals = re.findall(pattern, text, re.I)
+    latest, reason = choose_verified(port.version, vals, port, provider)
+    return latest, provider, reason
+
+
+def chromium_stable(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get('https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=20')
+    data = json.loads(text)
+    vals = [str(x.get('version', '')) for x in data if isinstance(x, dict)]
+    latest, reason = choose_verified(port.version, vals, port, 'chromium-dash')
+    return latest, 'chromium-dash', reason
+
+
+def unicode_ucd_releases(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get('https://www.unicode.org/Public/')
+    vals = re.findall(r'href=["\']([0-9]+\.[0-9]+\.[0-9]+)/["\']', text, re.I)
+    latest, reason = choose_verified(port.version, vals, port, 'unicode-public')
+    return latest, 'unicode-public', reason
+
+
+def texlive_annual_source(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get("https://tug.ctan.org/systems/texlive/Source/")
+    vals = re.findall(r"texlive-([0-9]{8})-source\.tar\.xz", text, re.I)
+    latest, reason = choose_verified(port.version, vals, port, "ctan-texlive-source")
+    return latest, "ctan-texlive-source", reason
+
+
+def rust_stable_channel(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get('https://static.rust-lang.org/dist/channel-rust-stable.toml')
+    # The manifest begins package entries with version = "X.Y.Z (...)".  Keep
+    # unique semver triples and require the installed version to be present.
+    vals = re.findall(r'^version\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)(?:\s|\")', text, re.M)
+    latest, reason = choose_verified(port.version, vals, port, 'rust-stable')
+    return latest, 'rust-stable', reason
+
+
+def nvidia_unix_releases(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    text = http.get('https://www.nvidia.com/en-us/drivers/unix/')
+    vals = re.findall(r'(?:Version:\s*|Version\s*</[^>]+>\s*)([0-9]+\.[0-9]+\.[0-9]+)', text, re.I)
+    # The public page text also exposes branch versions without a literal
+    # "Version:" label in some layouts.  Restrict fallback tokens to the same
+    # driver major as the current BFSOS branch.
+    major = port.version.split('.', 1)[0]
+    vals += re.findall(r'\b(' + re.escape(major) + r'\.[0-9]+\.[0-9]+)\b', text)
+    vals = list(dict.fromkeys(vals))
+    if port.version not in vals:
+        vals.append(port.version)  # current source URL remains the branch proof
+    latest, reason = choose_verified(port.version, vals, port, 'nvidia-unix')
+    return latest, 'nvidia-unix', reason
 
 def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tuple[str | None, str, str]:
     host = urlsplit(source).netloc.lower()
@@ -1001,6 +1219,27 @@ def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tu
     # SourceForge download URLs while version discovery intentionally comes from
     # PyPI or the canonical upstream Git repository.  Check these overrides before
     # generic host dispatch so SourceForge cannot shadow them.
+    # Stable official pages/APIs for projects whose tarball URL is not itself
+    # a browsable release index.
+    if port.rel == "core/less":
+        return simple_release_page(port, http, "https://www.greenwoodsoftware.com/less/", r"less-([0-9]+)", "less-home")
+    if port.rel == "core/mpdecimal":
+        return simple_release_page(port, http, "https://www.bytereef.org/mpdecimal/download.html", r"mpdecimal-([0-9]+(?:\.[0-9]+)+)\.tar\.gz", "mpdecimal-download")
+    if port.rel == "opt/argyllcms":
+        return simple_release_page(port, http, "https://www.argyllcms.com/downloadsrc.html", r"(?:Argyll_V|Version\s+)([0-9]+(?:\.[0-9]+)+)", "argyll-download")
+    if port.rel == "opt/fftw":
+        return simple_release_page(port, http, "https://fftw.org/download.html", r"fftw-([0-9]+(?:\.[0-9]+)+)\.tar\.gz", "fftw-download")
+    if port.rel == "opt/chromium":
+        return chromium_stable(port, http)
+    if port.rel == "opt/unicode-character-database":
+        return unicode_ucd_releases(port, http)
+    if port.rel == "opt/texlive":
+        return texlive_annual_source(port, http)
+    if port.rel == "opt/rustc":
+        return rust_stable_channel(port, http)
+    if port.rel in {"opt/nvidia", "compat-32/nvidia-32", "compat-32/nvidia-fb-32"}:
+        return nvidia_unix_releases(port, http)
+
     if port.rel in PYPI_PROJECT_OVERRIDES:
         project = PYPI_PROJECT_OVERRIDES[port.rel]
         text = http.get(f"https://pypi.org/pypi/{project}/json")
@@ -1048,6 +1287,8 @@ def check_port(port: Port, http: HttpCache, timeout: int) -> Result:
         return Result(port, "ERROR", reason="missing name/version")
     if port.rel == "compat-32/db-32":
         return Result(port, "SKIP", provider="policy-pin", reason="pinned Berkeley DB 5.3 compatibility ABI")
+    if port.rel in DISCOVERY_POLICY_SKIPS:
+        return Result(port, "SKIP", provider="policy-pin", reason=DISCOVERY_POLICY_SKIPS[port.rel])
     if not sources:
         return Result(port, "SKIP", reason="local/meta port: no remote source")
     source = sources[0]

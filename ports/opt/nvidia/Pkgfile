@@ -6,7 +6,7 @@
 name=nvidia
 version=615.71.09
 release=1
-source=(https://us.download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run \
+source=(https://download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run \
 	90-nvidia-uvm.rules 10-nvidia-drm-outputclass.conf nvidia-powerd.rc)
 
 pkg_build() {

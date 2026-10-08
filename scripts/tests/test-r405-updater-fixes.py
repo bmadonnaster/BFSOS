@@ -15,5 +15,5 @@ assert 'cleanup_successful_build_work' in up and 'BUILD-WORK CLEANUP' in up
 exp=(ROOT/'ports/compat-32/expat-32/Pkgfile').read_text()
 hb=(ROOT/'ports/compat-32/harfbuzz-32/Pkgfile').read_text()
 assert 'version=2.8.5' in exp
-assert 'version=14.5.1' in hb
+assert 'version=14.6.0' in hb
 print('PASS')

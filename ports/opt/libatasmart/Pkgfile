@@ -6,7 +6,7 @@
 name=libatasmart
 version=0.19
 release=1
-source=(https://0pointer.de/public/$name-$version.tar.xz)
+source=(${name}-${version}.tar.xz::https://deb.debian.org/debian/pool/main/liba/libatasmart/libatasmart_${version}.orig.tar.xz)
 
 pkg_build() {
 

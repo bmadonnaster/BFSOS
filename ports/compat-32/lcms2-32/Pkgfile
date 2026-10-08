@@ -6,7 +6,7 @@
 name=lcms2-32
 version=2.19.1
 release=3
-source=(https://downloads.sourceforge.net/project/lcms/lcms/$version/lcms2-$version.tar.gz)
+source=(https://github.com/mm2/Little-CMS/releases/download/lcms2.$version/lcms2-$version.tar.gz)
 
 
 post_build() {

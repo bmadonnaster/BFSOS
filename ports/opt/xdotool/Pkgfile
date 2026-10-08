@@ -4,7 +4,7 @@
 name=xdotool
 version=4.20260303.1
 release=1
-source=(https://github.com/jordansissel/${name}/releases/download/v${version}/${name}-${version}.tar.gz)
+source=(${name}-${version}.tar.gz::https://github.com/jordansissel/${name}/archive/refs/tags/v${version}.tar.gz)
 pkg_build() {
 make WITHOUT_RPATH_FIX=1
 make PREFIX=/usr INSTALLMAN=/usr/share/man DESTDIR=$PKG install
