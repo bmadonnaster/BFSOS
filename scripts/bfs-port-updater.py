@@ -228,11 +228,13 @@ VERSION_LOCK_GROUPS = {
     # runfile and must never drift to different driver versions.  nvidia-fb-32
     # is a separate fallback branch and is intentionally not part of this pair.
     "nvidia-driver": {"opt/nvidia", "compat-32/nvidia-32"},
+    "alsa-plugins": {"opt/alsa-plugins", "compat-32/alsa-plugins-32"},
 }
 
 GROUP_BUILD_ORDER = {
     "vulkan-sdk": VULKAN_BUILD_ORDER,
     "nvidia-driver": ["opt/nvidia", "compat-32/nvidia-32"],
+    "alsa-plugins": ["opt/alsa-plugins", "compat-32/alsa-plugins-32"],
 }
 
 # Only Vulkan currently requires each freshly-built predecessor to be installed

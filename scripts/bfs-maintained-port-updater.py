@@ -244,25 +244,45 @@ def rewrite_primary_source_from_handoff(text: str, before: Meta, latest: str, ta
     if len(tokens) == 1:
         chosen = tokens[0]
     else:
+        # If the handoff target is exactly what one existing $version-driven
+        # source token evaluates to at the target version, that token is the
+        # primary handoff anchor even when other version-coupled archives exist.
+        # This is the normal shape for data packages such as Unicode UCD +
+        # Unihan: changing version= advances the complete source set together.
+        dynamic_matches = []
+        for tok in tokens:
+            raw_url = tok.split("::", 1)[1] if "::" in tok else tok
+            if "$version" not in raw_url and "${version}" not in raw_url:
+                continue
+            evaluated = raw_url.replace("${version}", latest).replace("$version", latest)
+            evaluated = evaluated.replace("${name}", before.name).replace("$name", before.name)
+            if evaluated == target_url:
+                dynamic_matches.append(tok)
+        if len(dynamic_matches) == 1:
+            chosen = dynamic_matches[0]
+        else:
+            chosen = None
+
         # Prefer a unique archive visibly coupled to this package/version. This
         # keeps secondary data archives/signatures untouched; ambiguity is review.
-        scored = []
-        pkgkey = re.sub(r"[^a-z0-9]+", "", before.name.lower())
-        for tok in tokens:
-            low = tok.lower()
-            score = 0
-            if "$version" in low or "${version}" in low or before.version.lower() in low:
-                score += 3
-            if "$name" in low or "${name}" in low:
-                score += 2
-            if pkgkey and pkgkey in re.sub(r"[^a-z0-9]+", "", low):
-                score += 1
-            scored.append((score, tok))
-        best = max(score for score, _ in scored)
-        winners = [tok for score, tok in scored if score == best and score > 0]
-        if len(winners) != 1:
-            raise UpdateError("ambiguous primary remote source archive; refusing handoff rewrite")
-        chosen = winners[0]
+        if chosen is None:
+            scored = []
+            pkgkey = re.sub(r"[^a-z0-9]+", "", before.name.lower())
+            for tok in tokens:
+                low = tok.lower()
+                score = 0
+                if "$version" in low or "${version}" in low or before.version.lower() in low:
+                    score += 3
+                if "$name" in low or "${name}" in low:
+                    score += 2
+                if pkgkey and pkgkey in re.sub(r"[^a-z0-9]+", "", low):
+                    score += 1
+                scored.append((score, tok))
+            best = max(score for score, _ in scored)
+            winners = [tok for score, tok in scored if score == best and score > 0]
+            if len(winners) != 1:
+                raise UpdateError("ambiguous primary remote source archive; refusing handoff rewrite")
+            chosen = winners[0]
 
     replacement = _source_token_template_from_target(chosen, target_url, before, latest)
     if chosen not in text:

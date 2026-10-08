@@ -53,6 +53,7 @@ SERIES_LOCKS = {
     "opt/libsoup": 2,
     "opt/lua": 2,
     "opt/lua52": 2,
+    "opt/tcl": 2,
     "opt/pangomm": 2,
     "opt/spirv-llvm-translator": 1,
     "xorg/libva": 1,
@@ -84,7 +85,7 @@ EVEN_MINOR_STABLE_PORTS = {
     "opt/gobject-introspection", "opt/gtk4", "opt/gtkmm", "opt/gtkmm3",
     "opt/gtksourceview", "opt/libsoup3", "opt/pango", "opt/pangomm",
 }
-REMOTE_PREFIXES = ("http://", "https://")
+REMOTE_PREFIXES = ("http://", "https://", "ftp://")
 
 # Stable upstream repositories used only for version discovery when the
 # package tarball is hosted on a mirror/archive that does not expose a
@@ -112,6 +113,8 @@ GIT_REPO_OVERRIDES = {
     "opt/exempi": "https://gitlab.freedesktop.org/libopenraw/exempi.git",
     "opt/libstemmer": "https://github.com/snowballstem/snowball.git",
     "opt/openbox": "https://github.com/danakj/openbox.git",
+    "opt/alsa-plugins": "https://github.com/alsa-project/alsa-plugins.git",
+    "compat-32/alsa-plugins-32": "https://github.com/alsa-project/alsa-plugins.git",
     "opt/libburn": "https://dev.lovelyhq.com/libburnia/libburn.git",
     "opt/libisofs": "https://dev.lovelyhq.com/libburnia/libisofs.git",
     "opt/libisoburn": "https://dev.lovelyhq.com/libburnia/libisoburn.git",
@@ -142,6 +145,8 @@ DISCOVERY_POLICY_SKIPS = {
     "opt/rapidjson": "BFSOS intentionally tracks a dated VCS snapshot/commit",
     "plasma/libdbusmenu-qt5": "legacy Ubuntu snapshot has no maintained upstream release series",
     "opt/libatasmart": "upstream is dormant at the final 0.19 release; source is mirrored for build reliability",
+    "opt/openbox": "last formal upstream release is 3.6.1; current development tree contains unreleased 3.7 work",
+    "opt/publicsuffix-list": "date-stamped data snapshot maintained by BFSOS; refresh uses the publicsuffix/list data-snapshot workflow rather than a release series",
 }
 
 PYPI_PROJECT_OVERRIDES = {
@@ -384,7 +389,7 @@ def candidate_allowed(v: str, current: str, port: Port | None = None, provider: 
     # package versions.  This must live in the provider layer, not only in the
     # interactive updater, so junk such as OpenLDAP's LMDB_2.MP tag can never
     # reach comparison or picker generation.
-    if re.search(r"(?:^|[._+~-])(?:MP|MAJOR|MINOR|PATCH|VERSION)(?:$|[._+~-])", v):
+    if re.search(r"(?:^|[._+~-])(?:MP|BP|MAJOR|MINOR|PATCH|VERSION)(?:$|[._+~-])", v):
         return False
     if any(tok in v for tok in ("${", "$version", "$name", "<version>", "@VERSION@")):
         return False
@@ -432,6 +437,16 @@ def candidate_allowed(v: str, current: str, port: Port | None = None, provider: 
         # development series even when release tarballs are hosted elsewhere.
         if port.rel in EVEN_MINOR_STABLE_PORTS and len(cand_nums) >= 2:
             if len(cur_nums) >= 2 and cur_nums[1] % 2 == 0 and cand_nums[1] % 2 == 1:
+                return False
+
+        # SourceForge projects often expose snapshots and legacy artifact names
+        # alongside formal releases.  Keep release-tracking ports on their
+        # actual release lineage instead of comparing filename noise.
+        if port.rel == "opt/gutenprint" and provider == "sourceforge":
+            if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", v):
+                return False
+        if port.rel == "opt/lame" and provider == "sourceforge":
+            if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", v):
                 return False
 
     return True
@@ -655,6 +670,14 @@ def git_tags(port: Port, source: str, timeout: int, repo_override: str | None = 
     for line in cp.stdout.splitlines():
         if "\trefs/tags/" in line:
             tags.append(line.split("\trefs/tags/", 1)[1])
+
+    # OpenLDAP publishes many template/example tags in the same repository as
+    # LMDB.  Only concrete LMDB_<numeric-version> tags belong to this port.
+    if port.rel == "opt/lmdb":
+        vals = [m.group(1) for tag in tags if (m := re.fullmatch(r"LMDB_([0-9]+(?:\.[0-9]+)+)", tag))]
+        latest, reason = choose_verified(port.version, vals, port, "git-tags")
+        return latest, "git-tags", reason
+
     vals, reason = git_tag_versions(tags, port.version)
     if reason:
         return None, "git-tags", reason
@@ -873,7 +896,7 @@ def _github_tag_version(tag: str, current_tag: str, current: str) -> str | None:
             pos = 0
             parts = []
             for width in widths:
-                parts.append(str(int(middle[pos:pos + width])))
+                parts.append(middle[pos:pos + width])
                 pos += width
             value = '.'.join(parts)
         # Preserve the current release-family shape.  A numeric package version
@@ -901,102 +924,158 @@ def _github_expected_asset_name(source: str, current: str, candidate: str) -> st
     return basename
 
 
-def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
-    """Use actual published GitHub releases/assets, never raw future tags.
+def _github_release_url(owner: str, repo: str, tag: str, asset: str) -> str:
+    return f"https://github.com/{owner}/{repo}/releases/download/{tag}/{asset}"
 
-    GitHub's /releases/latest redirect is unsafe for repositories that publish
-    multiple sibling artifacts (libvisual/libvisual-plugins), and it cannot
-    prove that a release asset exists.  Enumerate published releases instead,
-    derive the current tag family from the release that owns the current asset,
-    and require the exact candidate asset basename before comparison.
+
+def _github_repo_tags(owner: str, repo: str, timeout: int) -> list[str]:
+    """Read public GitHub tags without consuming the GitHub REST API quota."""
+    url = f"https://github.com/{owner}/{repo}.git"
+    try:
+        cp = subprocess.run(
+            ["git", "ls-remote", "--tags", "--refs", url],
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=timeout + 4,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0", "LC_ALL": "C"},
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise FetchError(f"GitHub tag fallback timed out for {owner}/{repo}") from exc
+    if cp.returncode != 0:
+        raise FetchError(cp.stderr.strip() or f"git ls-remote exit {cp.returncode}")
+    return [
+        line.split("\trefs/tags/", 1)[1]
+        for line in cp.stdout.splitlines()
+        if "\trefs/tags/" in line
+    ]
+
+
+def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[str | None, str, str]:
+    """Discover GitHub release assets without trusting tag names alone.
+
+    The release API is preferred because it identifies drafts/prereleases, but
+    public tag discovery is used when that API is rate-limited.  In both paths
+    a candidate is accepted only when the exact source archive URL derived from
+    the BFSOS port is reachable.  This simultaneously preserves sibling-family
+    protection and avoids false UNVERIFIABLE results when GitHub metadata omits
+    or prunes an otherwise reachable release asset.
     """
     u = urlsplit(source)
-    parts = [x for x in u.path.split('/') if x]
+    path = unquote(u.path)
+    parts = [x for x in path.split('/') if x]
     if len(parts) < 5 or parts[2:4] != ['releases', 'download']:
         return None, 'github-release', 'source is not a GitHub release asset'
     owner, repo = parts[0], parts[1]
-    current_asset = unquote(parts[-1])
+    current_asset = parts[-1]
+    marker = '/releases/download/'
+    tail = path.split(marker, 1)[1]
+    if not tail.endswith('/' + current_asset):
+        return None, 'github-release', 'could not derive current GitHub release tag from source URL'
+    current_tag = tail[:-(len(current_asset) + 1)]
 
-    # Compatibility path for the older synthetic unit tests only.  Real
-    # HttpCache always provides get(), so live scans never fall back to a raw
-    # latest-tag redirect.
+    # Compatibility path for older synthetic tests which expose only resolve().
     if not hasattr(http, 'get'):
-        current_tag = parts[4]
         effective, _ = http.resolve(f'https://github.com/{owner}/{repo}/releases/latest')
-        m = re.search(r'/releases/tag/([^/?#]+)', effective)
+        m = re.search(r'/releases/tag/(.+?)(?:[?#]|$)', effective)
         if not m:
             return None, 'github-release', f'latest release did not resolve to a tag: {effective}'
         latest_tag = unquote(m.group(1))
         latest = _github_tag_version(latest_tag, current_tag, port.version)
         if latest is None:
             return None, 'github-release', f'published tag belongs to a different release family: {latest_tag}'
-        candidate_source = source.replace(current_tag, latest_tag)
-        candidate_source = candidate_source.replace(port.version, latest)
+        expected = _github_expected_asset_name(source, port.version, latest)
+        candidate_source = _github_release_url(owner, repo, latest_tag, expected)
         exists, why_exists = http.exists(candidate_source)
         if not exists:
             return None, 'github-release', f'published tag has no matching release asset: {candidate_source}: {why_exists}'
         return only_if_newer(port.version, latest), 'github-release', ''
 
     api = f'https://api.github.com/repos/{owner}/{repo}/releases?per_page=100'
+    releases = None
+    api_error = ''
     try:
-        releases = json.loads(http.get(api))
+        decoded = json.loads(http.get(api))
+        if isinstance(decoded, list):
+            releases = decoded
+        else:
+            api_error = 'GitHub releases API returned an unexpected payload'
     except (FetchError, json.JSONDecodeError) as exc:
-        raise FetchError(f'GitHub releases API failed for {owner}/{repo}: {exc}') from exc
-    if not isinstance(releases, list):
-        return None, 'github-release', 'GitHub releases API returned an unexpected payload'
+        api_error = str(exc)
 
-    # Find the published release that owns the exact current asset.  This also
-    # handles tags containing a slash, e.g. docbook's release/1.79.2, which
-    # cannot be reconstructed by splitting the download URL at a fixed index.
-    current_release = None
-    for rel in releases:
-        if rel.get('draft') or rel.get('prerelease'):
-            continue
-        names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
-        if current_asset in names:
-            current_release = rel
-            break
-    if current_release is None:
-        # Some projects have pruned old release metadata.  Fall back to a tag
-        # whose text provably maps to the current version, but still require an
-        # exact current asset on that release.
+    tag_rows: list[tuple[str, set[str]]] = []
+    provider = 'github-release'
+    if releases is not None:
         for rel in releases:
             if rel.get('draft') or rel.get('prerelease'):
                 continue
             tag = str(rel.get('tag_name', ''))
-            if _github_tag_version(tag, tag, port.version) == port.version:
-                names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
-                if current_asset in names:
-                    current_release = rel
-                    break
-    if current_release is None:
-        return None, 'github-release', f'current published release asset not found in GitHub metadata: {current_asset}'
+            if not tag:
+                continue
+            names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
+            tag_rows.append((tag, names))
+    else:
+        # API 403/rate-limit failures are provider-infrastructure failures, not
+        # package failures.  Fall back to public git tags and retain exact asset
+        # existence checks before accepting any candidate.
+        try:
+            tags = _github_repo_tags(owner, repo, getattr(http, 'timeout', 12))
+        except FetchError as exc:
+            detail = f'GitHub releases API failed: {api_error}; git-tag fallback failed: {exc}'
+            raise FetchError(detail) from exc
+        tag_rows = [(tag, set()) for tag in tags]
+        provider = 'github-release+git-tags'
 
-    current_tag = str(current_release.get('tag_name', ''))
     candidates: list[str] = []
     rejected_family: list[str] = []
-    for rel in releases:
-        if rel.get('draft') or rel.get('prerelease'):
-            continue
-        tag = str(rel.get('tag_name', ''))
+
+    # The current source URL itself is the strongest proof for the current
+    # release, even when GitHub has pruned/renamed release metadata assets.
+    metadata_current = any(
+        current_asset in names and _github_tag_version(tag, current_tag, port.version) == port.version
+        for tag, names in tag_rows
+    )
+    if metadata_current:
+        current_ok, current_why = True, ''
+    elif hasattr(http, 'exists'):
+        current_ok, current_why = http.exists(source)
+    else:
+        current_ok = False
+        current_why = 'current asset absent from supplied release metadata'
+    if current_ok:
+        candidates.append(port.version)
+
+    for tag, asset_names in tag_rows:
         version = _github_tag_version(tag, current_tag, port.version)
         if version is None:
             rejected_family.append(tag)
             continue
         if not candidate_allowed(version, port.version, port, 'github-release'):
             continue
-        expected = _github_expected_asset_name(source, port.version, version)
-        names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
-        if expected not in names:
+        if version == port.version and current_ok:
             continue
+        if version != port.version and natural_key(version) <= natural_key(port.version):
+            continue
+        expected = _github_expected_asset_name(source, port.version, version)
+        candidate_source = _github_release_url(owner, repo, tag, expected)
+        # Asset metadata is a fast positive signal, but direct URL validation is
+        # authoritative for projects whose API metadata omits/prunes old assets.
+        if expected not in asset_names:
+            if not hasattr(http, 'exists'):
+                continue
+            exists, _why = http.exists(candidate_source)
+            if not exists:
+                continue
         candidates.append(version)
 
     latest, reason = choose_verified(port.version, candidates, port, 'github-release')
     if latest is None:
+        if not current_ok:
+            reason = f'{reason}; current release source not reachable: {current_why}'
         if rejected_family:
             reason += '; sibling/nonmatching release families ignored'
-        return None, 'github-release', reason
-    return latest, 'github-release', ''
+        if api_error and releases is None:
+            reason += f'; API fallback used after: {api_error}'
+        return None, provider, reason
+    return latest, provider, ''
 
 def sqlite_release_page(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
     text = http.get('https://www.sqlite.org/download.html')
@@ -1049,8 +1128,14 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
             project = parts[1]
             rest = "/".join(parts[2:])
         elif parts:
-            project = parts[0]
-            rest = "/".join(parts[1:])
+            # Legacy download URLs use /sourceforge/PROJECT/FILE; the literal
+            # "sourceforge" path component is not the project name.
+            if parts[0].lower() == "sourceforge" and len(parts) >= 2:
+                project = parts[1]
+                rest = "/".join(parts[2:])
+            else:
+                project = parts[0]
+                rest = "/".join(parts[1:])
 
     if not project or not rest:
         return None, "sourceforge", "could not infer SourceForge project/files path"
@@ -1153,6 +1238,19 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
     return latest, "sourceforge", reason
 
 
+def rarlab_unrar_release(port: Port, http: HttpCache) -> tuple[str | None, str, str]:
+    """Discover the formal UnRAR source release from RARLAB's addons page.
+
+    Direct archive/index requests can return HTTP 403 while the human-facing
+    addons page remains available.  Parse only the official unrarsrc archive
+    link and let normal prerelease filtering reject beta-style names.
+    """
+    text = http.get("https://www.rarlab.com/rar_add.htm")
+    vals = re.findall(r"(?:href=[\"'](?:[^\"']*/)?unrarsrc-)([0-9]+(?:\.[0-9]+)+)\.tar\.gz", text, re.I)
+    latest, reason = choose_verified(port.version, vals, port, "rarlab-addons")
+    return latest, "rarlab-addons", reason
+
+
 def simple_release_page(port: Port, http: HttpCache, url: str, pattern: str, provider: str) -> tuple[str | None, str, str]:
     text = http.get(url)
     vals = re.findall(pattern, text, re.I)
@@ -1229,6 +1327,8 @@ def provider_check(port: Port, source: str, http: HttpCache, timeout: int) -> tu
         return simple_release_page(port, http, "https://www.argyllcms.com/downloadsrc.html", r"(?:Argyll_V|Version\s+)([0-9]+(?:\.[0-9]+)+)", "argyll-download")
     if port.rel == "opt/fftw":
         return simple_release_page(port, http, "https://fftw.org/download.html", r"fftw-([0-9]+(?:\.[0-9]+)+)\.tar\.gz", "fftw-download")
+    if port.rel == "opt/unrar":
+        return rarlab_unrar_release(port, http)
     if port.rel == "opt/chromium":
         return chromium_stable(port, http)
     if port.rel == "opt/unicode-character-database":
