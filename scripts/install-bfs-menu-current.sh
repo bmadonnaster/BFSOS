@@ -8129,15 +8129,6 @@ else
         log "Package transaction checkpoint already complete; skipping ports/sysup/depinst"
 fi
 
-if [[ "$INSTALL_GPM_VALUE" == yes ]]; then
-        if [[ -f /usr/lib/systemd/system/gpm.service || -f /etc/systemd/system/gpm.service ]]; then
-                offline_systemctl enable gpm.service 2>/dev/null ||
-                        echo "WARNING: gpm was installed but gpm.service could not be enabled automatically." >&2
-        else
-                echo "WARNING: gpm was selected/installed but no gpm.service unit was found." >&2
-        fi
-fi
-
 if [[ "$INSTALL_SUDO_VALUE" == yes ]]; then
         mkdir -p /etc/sudoers.d
 
@@ -8184,6 +8175,19 @@ offline_systemctl() {
 command -v ssh-keygen >/dev/null 2>&1 && ssh-keygen -A
 ldconfig
 offline_systemctl preset-all || true
+
+# GPM is an explicit BFSOS console policy choice.  Apply this after preset-all
+# so the default-disable preset cannot undo the requested installed-system
+# enablement.  The function is also defined by this point, unlike the old
+# pre-definition call site that silently failed.
+if [[ "$INSTALL_GPM_VALUE" == yes ]]; then
+        if offline_systemctl list-unit-files gpm.service >/dev/null 2>&1; then
+                offline_systemctl enable gpm.service 2>/dev/null ||
+                        echo "WARNING: gpm was installed but gpm.service could not be enabled automatically." >&2
+        else
+                echo "WARNING: gpm was selected/installed but no gpm.service unit was found." >&2
+        fi
+fi
 
 if [[ "$INSTALL_NETWORKMANAGER_VALUE" == yes ]] && offline_systemctl list-unit-files NetworkManager.service >/dev/null 2>&1; then
         log "Enabling NetworkManager and disabling systemd-networkd"

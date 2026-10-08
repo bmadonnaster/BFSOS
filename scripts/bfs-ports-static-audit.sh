@@ -207,7 +207,7 @@ done
 
 # Firefox rapid/ESR channels are tracked independently; binary and source rapid ports must match.
 check_version ports/opt/firefox/Pkgfile 157.0.1
-check_version ports/opt/firefox-bin/Pkgfile 157.0
+check_version ports/opt/firefox-bin/Pkgfile 157.0.1
 check_version ports/opt/firefox-esr/Pkgfile 153.4.0esr
 
 # Current LXQt stable baseline (2026-04 suite plus later point releases).

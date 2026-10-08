@@ -839,6 +839,34 @@ def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[
             return None, 'github-release', 'published tag does not match current tag convention'
         end = len(latest_tag)-len(suffix) if suffix else len(latest_tag)
         latest = latest_tag[len(prefix):end]
+
+    # A repository can publish multiple sibling release families.  Deriving a
+    # prefix from the current tag is not sufficient by itself: for example
+    # libvisual-0.4.2 and libvisual-plugins-0.4.2 share the prefix
+    # "libvisual-" but are different artifacts.  When the current package
+    # version starts numerically, the extracted candidate must do the same.
+    # This also prevents version-looking sibling names from reaching the build.
+    if port.version[:1].isdigit() and not latest[:1].isdigit():
+        return None, 'github-release', (
+            f'published tag belongs to a different release family: {latest_tag}'
+        )
+
+    # A release tag alone is not enough for release-asset-tracking ports.  The
+    # exact asset convention used by the current Pkgfile must exist for the
+    # candidate too; this prevents future/milestone tags (notably Expat) from
+    # being promoted before the source tarball is actually published.
+    candidate_source = source.replace(current_tag, latest_tag)
+    if port.version in candidate_source:
+        candidate_source = candidate_source.replace(port.version, latest)
+    else:
+        encoded_current = port.version.replace('.', '_')
+        encoded_latest = latest.replace('.', '_')
+        candidate_source = candidate_source.replace(encoded_current, encoded_latest)
+    exists, why_exists = http.exists(candidate_source)
+    if not exists:
+        return None, 'github-release', (
+            f'published tag has no matching release asset: {candidate_source}: {why_exists}'
+        )
     if not candidate_allowed(latest, port.version, port, 'github-release'):
         return None, 'github-release', f'published release rejected by policy: {latest}'
     return only_if_newer(port.version, latest), 'github-release', ''

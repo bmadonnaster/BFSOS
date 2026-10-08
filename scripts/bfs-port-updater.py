@@ -179,7 +179,12 @@ MLFS_DEV_MANAGED_PORTS = {
 
 # Package-specific development-book preferences may be added deliberately.
 # They are not global policy for their respective books.
-DEV_BOOK_AUTHORITIES = {"opt/rustc": "blfs-dev"}
+DEV_BOOK_AUTHORITIES = {
+    "opt/rustc": "blfs-dev",
+    # BFSOS intentionally follows the BLFS development-book xorg-server
+    # recipe/patch cadence instead of racing generic upstream releases.
+    "xorg/xorg-server": "blfs-dev",
+}
 
 REFERENCE_BOOK_POLICIES = {"lfs-dev", "blfs-dev", "glfs-dev"}
 
@@ -412,6 +417,14 @@ def newer_for_port(meta: PortMeta, candidate: str, current: str) -> bool:
     if versions_equivalent(candidate_cmp, current_cmp):
         return False
     return version_key(candidate_cmp) > version_key(current_cmp)
+
+
+def has_unresolved_version_placeholder(value: str) -> bool:
+    """Reject documentation/template tokens accidentally parsed as releases."""
+    value = (value or "").strip()
+    if not value:
+        return True
+    return bool(re.search(r"(?i)(?:^|[._+-])(?:major|minor|patch|mp)(?:$|[._+-])", value))
 
 
 def versions_comparable(candidate: str, current: str) -> bool:
@@ -914,6 +927,28 @@ def read_audit_tsv(path: Path):
         return {r.get("port", ""): r for r in csv.DictReader(f, delimiter="\t") if r.get("port")}
 
 
+def write_problem_report(path: Path, upstream: dict[str, dict[str, str]]) -> tuple[int, int]:
+    """Write one concise diagnostic index for checker hard-problem rows."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    counts = {"UNVERIFIABLE": 0, "FETCH-ERROR": 0}
+    with path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f, delimiter="\t", lineterminator="\n")
+        w.writerow(["status", "tree", "port", "current", "provider", "reason", "source"])
+        for rel in sorted(upstream):
+            row = upstream[rel]
+            status = row.get("status", "")
+            if status not in counts:
+                continue
+            counts[status] += 1
+            tree = rel.split("/", 1)[0] if "/" in rel else ""
+            w.writerow([
+                status, tree, rel, row.get("current", ""), row.get("provider", ""),
+                (row.get("reason", "") or "").replace("\r", " ").replace("\n", " "),
+                (row.get("source", "") or "").replace("\r", " ").replace("\n", " "),
+            ])
+    return counts["UNVERIFIABLE"], counts["FETCH-ERROR"]
+
+
 def run_upstream_audit(ports_root: Path, trees: list[str], jobs: int, timeout: int, out: Path, ports: list[str] | None = None):
     env = dict(os.environ); env["REPO"] = " ".join(str(ports_root / t) for t in trees)
     cmd = [sys.executable, str(ROOT / "scripts/checkupdate.py"), "--jobs", str(jobs), "--timeout", str(timeout), "--tsv", str(out)]
@@ -1129,6 +1164,11 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
     lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
     for meta in metas:
         row = upstream.get(meta.rel, {})
+        if row.get("latest") and has_unresolved_version_placeholder(row.get("latest", "")):
+            diagnostics.append(f"{meta.rel}\tupstream candidate rejected: unresolved version placeholder\t{row.get('latest','')}")
+            row = dict(row)
+            row["status"] = "UNVERIFIABLE"
+            row["latest"] = ""
         if meta.name == "linux-lts" and row.get("status") == "UPDATE" and row.get("latest"):
             lts_target = row["latest"]
             out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
@@ -1157,6 +1197,9 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
         if authoritative:
             policy, target = authoritative
             source_label = "MLFS DEV" if policy == "mlfs-dev" else next(x[1] for x in BOOKS if x[0] == policy)
+            if has_unresolved_version_placeholder(target):
+                diagnostics.append(f"{meta.rel}\t{source_label} target rejected: unresolved version placeholder\t{target}")
+                continue
             diagnostics.append(f"{meta.rel}\tdev-book-authoritative\t{source_label}\t{target}")
             row = upstream.get(meta.rel, {})
             if newer_for_port(meta, meta.version, target):
@@ -2242,7 +2285,12 @@ def scan(ports_root, trees, jobs, timeout, stamp):
         extra_audit=LOG_ROOT/f"upstream-{stamp}-coordinated.tsv"
         extra_rows=run_upstream_audit(ports_root,extra_trees,jobs,timeout,extra_audit,[m.name for m in extras])
         upstream.update(extra_rows)
-    diagnostics: list[str] = []
+    problem_report = LOG_ROOT / f"problems-{stamp}.tsv"
+    unverifiable_count, fetch_error_count = write_problem_report(problem_report, upstream)
+    print(f"Problem report: {problem_report} (UNVERIFIABLE={unverifiable_count} FETCH-ERROR={fetch_error_count})")
+    diagnostics: list[str] = [
+        f"problem-report\t{problem_report}\tUNVERIFIABLE={unverifiable_count}\tFETCH-ERROR={fetch_error_count}"
+    ]
     if extras:
         diagnostics.append("coordinated scan expanded to: " + ", ".join(m.rel for m in extras))
     fallback_refs = prefetch_fallback_references(metas,indexes,timeout,jobs,diagnostics)
@@ -2261,7 +2309,11 @@ def scan_kernel_only(ports_root, trees, jobs, timeout, stamp):
     metas=[m for m in discover_ports(ports_root,trees) if m.name in KERNEL_PORTS]
     upstream_names=[m.name for m in metas if m.name in {"linux", "linux-lts"}]
     upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit,upstream_names)
-    diagnostics=["kernel-only: generic upstream scan restricted to linux and linux-lts",
+    problem_report = LOG_ROOT / f"problems-{stamp}.tsv"
+    unverifiable_count, fetch_error_count = write_problem_report(problem_report, upstream)
+    print(f"Problem report: {problem_report} (UNVERIFIABLE={unverifiable_count} FETCH-ERROR={fetch_error_count})")
+    diagnostics=[f"problem-report\t{problem_report}\tUNVERIFIABLE={unverifiable_count}\tFETCH-ERROR={fetch_error_count}",
+                 "kernel-only: generic upstream scan restricted to linux and linux-lts",
                  "kernel-only: linux-headers target follows linux-lts only"]
     cands=make_candidates(metas,{k:{} for k,_,_ in BOOKS},[],upstream,timeout,diagnostics)
     return cands,[],diagnostics

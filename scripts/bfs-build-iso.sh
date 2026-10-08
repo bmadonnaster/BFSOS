@@ -32,8 +32,10 @@ ISO_PATH=""
 ASSUME_YES="${BFS_ISO_ASSUME_YES:-no}"
 SKIP_BOOTSTRAP="${BFS_ISO_SKIP_BOOTSTRAP:-no}"
 LIVE_MEDIA_WAIT="${BFS_ISO_LIVE_MEDIA_WAIT:-15}"
+RESUME_FINAL=no
+STATE_FILE="$WORK_DIR/.bfsos-iso-state"
 
-required_tools=(bash git sudo tar xz zstd rsync wget sha256sum find awk sed grep mount umount chroot mksquashfs xorriso grub-mkrescue mformat)
+required_tools=(bash git sudo tar xz zstd rsync wget sha256sum find findmnt df awk sed grep mount umount chroot mksquashfs xorriso grub-mkrescue mformat)
 optional_tools=(qemu-system-x86_64)
 
 declare -A tool_packages=(
@@ -55,7 +57,7 @@ die() { printf '[BFSOS ISO] ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--refresh-base] [--sourceforge-base] [--local-base PATH] [--git-ref REF]
+Usage: $(basename "$0") [--refresh-base] [--sourceforge-base] [--local-base PATH] [--git-ref REF] [--resume-final]
 
   (default)         Prefer a verified maintainer-generated base under archives/base.
                     If none exists, offer rebuild/download/cancel instead of silently downloading.
@@ -64,6 +66,7 @@ Usage: $(basename "$0") [--refresh-base] [--sourceforge-base] [--local-base PATH
                     Explicitly use the SourceForge release base/cache path.
   --refresh-base    Force a fresh SourceForge base download (implies --sourceforge-base).
   --git-ref REF     Build from this GitHub branch, tag, or commit (default: main).
+  --resume-final    Reuse a validated preserved live root and rerun only final ISO assembly.
 EOF
 }
 
@@ -88,11 +91,91 @@ parse_args() {
                 GIT_REF="$1"
                 ;;
             --git-ref=*) GIT_REF="${1#*=}" ;;
+            --resume-final|--finalize-existing) RESUME_FINAL=yes ;;
             -h|--help) usage; exit 0 ;;
             *) die "Unknown ISO builder argument: $1" ;;
         esac
         shift
     done
+}
+
+state_value() {
+    local key="$1"
+    [ -r "$STATE_FILE" ] || return 1
+    sed -n "s/^${key}=//p" "$STATE_FILE" | tail -n1
+}
+
+write_iso_state() {
+    local phase="$1" base_archive="${2:-}" base_sha=""
+    [ -n "$base_archive" ] || base_archive="$(state_value BASE_ARCHIVE 2>/dev/null || true)"
+    if [ -n "$base_archive" ] && [ -f "$base_archive" ]; then
+        base_sha="$(sha256sum "$base_archive" | awk '{print $1}')"
+    else
+        base_sha="$(state_value BASE_SHA256 2>/dev/null || true)"
+    fi
+    cat > "$STATE_FILE.tmp" <<EOF_STATE
+STATE_VERSION=1
+LAST_PHASE=$phase
+BFSOS_VERSION=$VERSION
+ARCH=$ARCH
+GIT_COMMIT=$GIT_COMMIT_FULL
+GIT_REF=$GIT_REF
+BASE_ARCHIVE=$base_archive
+BASE_SHA256=$base_sha
+BUILD_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+BUILDER_REVISION=$GIT_COMMIT_FULL
+EOF_STATE
+    mv -f "$STATE_FILE.tmp" "$STATE_FILE"
+}
+
+resume_hint_on_exit() {
+    local status=$? phase=""
+    [ "$status" -ne 0 ] || return 0
+    phase="$(state_value LAST_PHASE 2>/dev/null || true)"
+    case "$phase" in
+        live-policy-installed|cleanup-complete|squashfs-complete|iso-tree-complete)
+            printf '\n[BFSOS ISO] Preserved work tree: %s\n' "$WORK_DIR" >&2
+            printf '[BFSOS ISO] Last completed phase: %s\n' "$phase" >&2
+            printf '[BFSOS ISO] After correcting the problem, resume with:\n  %s --resume-final\n' "$0" >&2
+            ;;
+    esac
+    return 0
+}
+
+validate_resume_state() {
+    local root="$WORK_DIR/live-root" phase saved_version saved_arch saved_commit base_archive base_sha actual_sha
+    [ -r "$STATE_FILE" ] || die "No resumable ISO state exists at $STATE_FILE"
+    [ -d "$root" ] || die "Resume state exists but live root is missing: $root"
+    for required in etc/os-release usr/bin/bash boot; do
+        [ -e "$root/$required" ] || die "Preserved live root is incomplete: missing /$required"
+    done
+    phase="$(state_value LAST_PHASE || true)"
+    case "$phase" in
+        live-policy-installed|cleanup-complete|squashfs-complete|iso-tree-complete) ;;
+        iso-complete) die "Preserved state is already marked iso-complete; start a normal build for a new image" ;;
+        *) die "Preserved ISO state is not far enough along to finalize (last phase: ${phase:-unknown})" ;;
+    esac
+    saved_version="$(state_value BFSOS_VERSION || true)"
+    saved_arch="$(state_value ARCH || true)"
+    saved_commit="$(state_value GIT_COMMIT || true)"
+    [ "$saved_version" = "$VERSION" ] || die "Resume version mismatch: preserved=$saved_version current=$VERSION"
+    [ "$saved_arch" = "$ARCH" ] || die "Resume architecture mismatch: preserved=$saved_arch current=$ARCH"
+    [ "$saved_commit" = "$GIT_COMMIT_FULL" ] || die "Resume Git commit mismatch: preserved=$saved_commit current=$GIT_COMMIT_FULL"
+    base_archive="$(state_value BASE_ARCHIVE || true)"
+    [ -f "$base_archive" ] || die "Resume base archive is missing: $base_archive"
+    base_sha="$(state_value BASE_SHA256 || true)"
+    actual_sha="$(sha256sum "$base_archive" | awk '{print $1}')"
+    [ -n "$base_sha" ] && [ "$base_sha" = "$actual_sha" ] || die "Resume base archive checksum no longer matches preserved state"
+
+    # A failed chrooted build may leave pseudo-filesystems mounted.  Clean the
+    # known mounts, then refuse to continue if anything under the live root is
+    # still mounted.
+    sudo bash -c "$(declare -f umount_chroot_fs); umount_chroot_fs '$root'" || true
+    if findmnt -rn -R "$root" 2>/dev/null | grep -q .; then
+        die "Stale mounts remain under preserved live root: $root"
+    fi
+    command -v df >/dev/null 2>&1 && df -Pk "$WORK_DIR" >/dev/null || die "Cannot verify free space for resume"
+    printf '%s\n' "$base_archive"
 }
 
 load_project_metadata() {
@@ -900,6 +983,11 @@ EOS
         if [ -e /usr/lib/systemd/system/NetworkManager.service ]; then
             ln -sfn /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
         fi
+        # GPM is part of the live console accessibility policy.  The global
+        # BFSOS preset is default-deny, so enable this one service explicitly.
+        if [ -e /usr/lib/systemd/system/gpm.service ]; then
+            ln -sfn /usr/lib/systemd/system/gpm.service /etc/systemd/system/multi-user.target.wants/gpm.service
+        fi
         # Chrony is the live ISO time-sync policy. Do not run a competing
         # systemd-timesyncd instance on live media. bfs-live-init starts chrony
         # only after NetworkManager reports usable connectivity.
@@ -936,6 +1024,16 @@ EOS
                 ;;
         esac
     done
+
+    # GPM must remain explicitly enabled in the live image despite the
+    # default-disable preset.  Refuse a silently regressed live console.
+    if [ -e "$root/usr/lib/systemd/system/gpm.service" ]; then
+        state="$(systemctl --root="$root" is-enabled gpm.service 2>/dev/null || true)"
+        case "$state" in
+            enabled|enabled-runtime|linked|linked-runtime) ;;
+            *) die "Live ISO policy violation: gpm.service is installed but not enabled ($state)" ;;
+        esac
+    fi
 
     # Verify the BFSOS default-disable preset policy itself.
     # Explicit rules in earlier preset files still take precedence.
@@ -1126,6 +1224,7 @@ stage_iso() {
         "$root/var/cache/pkg/build-work" "$root/var/cache/pkg/build-work-disk"
     sudo mkdir -p "$root/var/cache/pkg/sources" "$root/var/cache/pkg/packages" "$root/var/cache/pkg/build-work"
     sudo bash -c "$(declare -f audit_live_root die log); audit_live_root '$root'"
+    write_iso_state cleanup-complete "$base_archive"
     sudo bash -c "$(declare -f write_build_info); VERSION='$VERSION'; ARCH='$ARCH'; BUILD_DATE='$BUILD_DATE'; ISO_LABEL='$ISO_LABEL'; GIT_URL='$GIT_URL'; GIT_REF='$GIT_REF'; GIT_COMMIT_FULL='$GIT_COMMIT_FULL'; BASE_URL='$BASE_URL'; BASE_SOURCE='$BASE_SOURCE'; write_build_info '$root' '$base_archive'"
 
     root_bytes="$(sudo du -sb "$root" | awk '{print $1}')"
@@ -1135,6 +1234,7 @@ stage_iso() {
     sudo mksquashfs "$root" "$stage/bfsos/rootfs.squashfs" \
         -comp xz -b 1M -Xdict-size 100% -Xbcj x86 -noappend -wildcards -e 'tmp/*'
     sudo chown -R "$(id -u):$(id -g)" "$stage"
+    write_iso_state squashfs-complete "$base_archive"
     squash_bytes="$(stat -c %s "$stage/bfsos/rootfs.squashfs")"
     base_sha="$(sha256sum "$base_archive" | awk '{print $1}')"
 
@@ -1168,6 +1268,7 @@ menuentry "BFSOS $VERSION Live / Installer" {
     initrd /bfsos/initramfs.img
 }
 EOF_GRUB
+    write_iso_state iso-tree-complete "$base_archive"
 
     mkdir -p "$OUTPUT_DIR"
     rm -f "$ISO_PATH" "$ISO_PATH.sha256" "$ISO_PATH.build-info"
@@ -1182,6 +1283,7 @@ EOF_GRUB
     log "ISO complete: $ISO_PATH"
     log "Checksum: $ISO_PATH.sha256"
     log "Build provenance: $ISO_PATH.build-info"
+    write_iso_state iso-complete "$base_archive"
 }
 
 main() {
@@ -1189,6 +1291,7 @@ main() {
 
     [ "$(id -u)" -ne 0 ] || die "Run the ISO creator as a regular user; it uses sudo when root access is required."
     parse_args "$@"
+    trap resume_hint_on_exit EXIT
     case "$LIVE_MEDIA_WAIT" in
         ''|*[!0-9]*) die "BFS_ISO_LIVE_MEDIA_WAIT must be an integer number of seconds" ;;
     esac
@@ -1196,6 +1299,18 @@ main() {
         die "BFS_ISO_LIVE_MEDIA_WAIT must be between 1 and 60 seconds"
     preflight
     sync_host_time
+
+    if [ "$RESUME_FINAL" = yes ]; then
+        [ "$BASE_MODE" = auto ] || die "--resume-final cannot be combined with base-selection options"
+        prepare_build_project
+        base_archive="$(validate_resume_state)"
+        BASE_SOURCE="preserved-resume:$base_archive"
+        log "Resuming final ISO assembly from preserved state: $WORK_DIR"
+        mapfile -t boot_files < <(sudo env WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs create_live_initramfs); create_live_initramfs '$WORK_DIR/live-root'" | tail -n2)
+        ((${#boot_files[@]} == 2)) || die "Could not determine regenerated live kernel/initramfs during resume"
+        stage_iso "$WORK_DIR/live-root" "$base_archive" "${boot_files[0]}" "${boot_files[1]}"
+        return 0
+    fi
 
     case "$BASE_MODE" in
         local-path)
@@ -1248,13 +1363,17 @@ main() {
     mkdir -p "$WORK_DIR"
 
     prepare_build_project
+    write_iso_state initialized "$base_archive"
 
     sudo mkdir -p "$WORK_DIR/live-root"
     sudo chown root:root "$WORK_DIR/live-root"
     log "Extracting verified base into isolated ISO live root"
     sudo bash -c "$(declare -f extract_archive die); extract_archive '$base_archive' '$WORK_DIR/live-root'"
+    write_iso_state base-extracted "$base_archive"
 
     sudo env BUILD_PROJECT_DIR="$BUILD_PROJECT_DIR" WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs build_iso_package_set install_live_runtime install_dracut_live_module); $(declare -p iso_packages); build_iso_package_set '$WORK_DIR/live-root'; install_live_runtime '$WORK_DIR/live-root'; install_dracut_live_module '$WORK_DIR/live-root'"
+    write_iso_state packages-installed "$base_archive"
+    write_iso_state live-policy-installed "$base_archive"
 
     mapfile -t boot_files < <(sudo env WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs create_live_initramfs); create_live_initramfs '$WORK_DIR/live-root'" | tail -n2)
     ((${#boot_files[@]} == 2)) || die "Could not determine generated live kernel/initramfs"
