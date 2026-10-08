@@ -4,8 +4,8 @@
 # Depends on: libevdev
 
 name=libevdev-32
-version=1.13.7
-release=3
+version=1.14.0
+release=1
 source=(https://www.freedesktop.org/software/libevdev/libevdev-$version.tar.xz)
 
 build_opt="-D tests=disabled -D documentation=disabled"
