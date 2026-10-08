@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import dataclasses
+import datetime as dt
 import html
 import json
 import os
@@ -1004,25 +1005,46 @@ def github_published_release(port: Port, source: str, http: HttpCache) -> tuple[
     tag_rows: list[tuple[str, set[str]]] = []
     provider = 'github-release'
     if releases is not None:
+        now = dt.datetime.now(dt.timezone.utc)
         for rel in releases:
             if rel.get('draft') or rel.get('prerelease'):
                 continue
+            # GitHub can expose scheduled/future release metadata before the
+            # release should be considered published.  Do not let such rows
+            # reach the picker merely because their asset URL already resolves.
+            published = str(rel.get('published_at') or '').strip()
+            if published:
+                try:
+                    when = dt.datetime.fromisoformat(published.replace('Z', '+00:00'))
+                    if when.tzinfo is None:
+                        when = when.replace(tzinfo=dt.timezone.utc)
+                    if when > now:
+                        continue
+                except ValueError:
+                    # Malformed publication metadata is not positive proof of a
+                    # published release.  Skip it conservatively.
+                    continue
             tag = str(rel.get('tag_name', ''))
             if not tag:
                 continue
             names = {str(a.get('name', '')) for a in (rel.get('assets') or [])}
             tag_rows.append((tag, names))
     else:
-        # API 403/rate-limit failures are provider-infrastructure failures, not
-        # package failures.  Fall back to public git tags and retain exact asset
-        # existence checks before accepting any candidate.
+        # A git tag plus a reachable asset is not enough to prove a *published*
+        # GitHub release (projects can stage tags/assets before publication).
+        # When the REST API is unavailable/rate-limited, use GitHub's public
+        # /releases/latest redirect as the publication signal.
         try:
-            tags = _github_repo_tags(owner, repo, getattr(http, 'timeout', 12))
-        except FetchError as exc:
-            detail = f'GitHub releases API failed: {api_error}; git-tag fallback failed: {exc}'
+            effective, _ = http.resolve(f'https://github.com/{owner}/{repo}/releases/latest')
+            m_latest = re.search(r'/releases/tag/(.+?)(?:[?#]|$)', effective)
+            if not m_latest:
+                raise FetchError(f'latest release did not resolve to a tag: {effective}')
+            latest_tag = unquote(m_latest.group(1))
+            tag_rows = [(latest_tag, set())]
+            provider = 'github-release+latest-redirect'
+        except Exception as exc:
+            detail = f'GitHub releases API failed: {api_error}; published-release fallback failed: {exc}'
             raise FetchError(detail) from exc
-        tag_rows = [(tag, set()) for tag in tags]
-        provider = 'github-release+git-tags'
 
     candidates: list[str] = []
     rejected_family: list[str] = []
@@ -1157,8 +1179,12 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
         parts = port.version.split(".")
         if compact != port.version and all(x.isdigit() for x in parts):
             def _expand_compact(x: str, widths=tuple(len(v) for v in parts)) -> str:
+                # A compact filename token is valid only when it has exactly
+                # the same component widths as the current release.  Returning
+                # an empty value here prevents legacy Info-ZIP names such as
+                # unzip552 from being misread as version 552 for a 6.0 port.
                 if not x.isdigit() or len(x) != sum(widths):
-                    return x
+                    return ""
                 out=[]; pos=0
                 for width in widths:
                     out.append(x[pos:pos+width]); pos += width
@@ -1205,7 +1231,13 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
             for name in [x for x in clean.split('/') if x]:
                 match = rx.fullmatch(name)
                 if match:
-                    vals.append(transform(match.group(1)))
+                    value = transform(match.group(1))
+                    if value:
+                        if port.rel == "opt/unzip":
+                            cur_major = port.version.split(".", 1)[0]
+                            if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", value) or value.split(".", 1)[0] != cur_major:
+                                break
+                        vals.append(value)
                     break
         if port.version in uniq_sorted_versions(vals, port.version, port, "sourceforge"):
             # Continue only one level above if current is all we have; a sibling
@@ -1229,7 +1261,13 @@ def sourceforge_files(port: Port, source: str, http: HttpCache) -> tuple[str | N
             for name in [x for x in clean.split('/') if x]:
                 match = rx.fullmatch(name)
                 if match:
-                    vals.append(transform(match.group(1)))
+                    value = transform(match.group(1))
+                    if value:
+                        if port.rel == "opt/unzip":
+                            cur_major = port.version.split(".", 1)[0]
+                            if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)+", value) or value.split(".", 1)[0] != cur_major:
+                                break
+                        vals.append(value)
                     break
 
     latest, reason = choose_verified(port.version, vals, port, "sourceforge")

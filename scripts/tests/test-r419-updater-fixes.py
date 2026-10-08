@@ -56,6 +56,8 @@ def test_github_api_403_uses_git_tag_fallback_and_asset_validation():
             if url.endswith("/v1.1.0/example-1.1.0.tar.xz"):
                 return True, ""
             return False, "404"
+        def resolve(self, url):
+            return "https://github.com/acme/example/releases/tag/v1.1.0", ""
 
     old = cu._github_repo_tags
     cu._github_repo_tags = lambda owner, repo, timeout: ["v1.0.0", "v1.1.0", "other-9.9.9"]
@@ -64,7 +66,7 @@ def test_github_api_403_uses_git_tag_fallback_and_asset_validation():
     finally:
         cu._github_repo_tags = old
     assert latest == "1.1.0", (latest, provider, reason)
-    assert provider == "github-release+git-tags"
+    assert provider == "github-release+latest-redirect"
 
 
 def test_github_reachable_assets_work_when_api_asset_list_is_incomplete():

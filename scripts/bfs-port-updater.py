@@ -47,26 +47,21 @@ def _replace_once(text: str, pattern: str, repl: str, label: str) -> str:
         raise RuntimeError(f"could not update {label}")
     return new
 
-def apply_distro_version(project_root: Path, new_version: str) -> list[str]:
-    """Update active BFSOS release consumers transactionally.
-
-    VERSION is authoritative, but aaa_filesystem must embed the release into the
-    installed system identity.  Active script fallbacks are kept in sync so a
-    copied/standalone helper still reports the selected release when VERSION is
-    unavailable.  aaa_filesystem's package release is bumped once whenever the
-    distro release changes, ensuring sysup sees the identity change.
-    """
+def _derive_distro_version_edits(project_root: Path, new_version: str) -> tuple[str, dict[Path, str]]:
+    """Return the complete active-consumer rewrite plan without touching disk."""
     new_version = (new_version or "").strip()
     if not DISTRO_VERSION_RX.fullmatch(new_version):
         raise ValueError("version must use only letters, digits, '.', '-', '_', or '+' and may not contain spaces/slashes")
+
     project_root = project_root.resolve()
     version_path = project_root / "VERSION"
     old_version = version_path.read_text().strip() if version_path.is_file() else ""
     if old_version == new_version:
-        return []
+        return old_version, {}
+    if not old_version:
+        raise RuntimeError("authoritative VERSION is empty or missing")
 
-    edits: dict[Path, str] = {}
-    edits[version_path] = new_version + "\n"
+    edits: dict[Path, str] = {version_path: new_version + "\n"}
 
     aaa = project_root / "ports/core/aaa_filesystem/Pkgfile"
     aaa_text = aaa.read_text()
@@ -74,46 +69,136 @@ def apply_distro_version(project_root: Path, new_version: str) -> list[str]:
     m = re.search(r"(?m)^release=(\d+)\s*$", aaa_text)
     if not m:
         raise RuntimeError("could not find aaa_filesystem release")
-    next_release = int(m.group(1)) + 1
-    aaa_text = _replace_once(aaa_text, r"^release=\d+\s*$", f"release={next_release}", "aaa_filesystem release")
+    aaa_text = _replace_once(aaa_text, r"^release=\d+\s*$", f"release={int(m.group(1)) + 1}", "aaa_filesystem release")
     edits[aaa] = aaa_text
 
+    # Active fallback consumers.  Match the authoritative *current* value, not
+    # a hard-coded historical release, so repeated bumps remain synchronized.
     replacements = [
-        (project_root / "bootstrap.sh", r'BFS_VERSION="0\.9\.0"', f'BFS_VERSION="{new_version}"', "bootstrap fallback"),
-        (project_root / "bootstrap-clean-start.sh", r'BFS_VERSION="0\.9\.0"', f'BFS_VERSION="{new_version}"', "clean-start fallback"),
-        (project_root / "scripts/bfs-build-iso.sh", r"printf '0\.9\.0'", f"printf '{new_version}'", "ISO fallback"),
-        (project_root / "scripts/install-bfs-menu-current.sh", r'\$\{release:-0\.9\.0\}', '${release:-' + new_version + '}', "installer fallback"),
+        (project_root / "bootstrap.sh", r'BFS_VERSION="' + re.escape(old_version) + r'"', f'BFS_VERSION="{new_version}"', "bootstrap fallback"),
+        (project_root / "bootstrap-clean-start.sh", r'BFS_VERSION="' + re.escape(old_version) + r'"', f'BFS_VERSION="{new_version}"', "clean-start fallback"),
+        (project_root / "scripts/bfs-build-iso.sh", r"printf '" + re.escape(old_version) + r"'", f"printf '{new_version}'", "ISO fallback"),
+        (project_root / "scripts/install-bfs-menu-current.sh", r'\$\{release:-' + re.escape(old_version) + r'\}', '${release:-' + new_version + '}', "installer fallback"),
     ]
     for path, pattern, repl, label in replacements:
         text = path.read_text()
-        new, count = re.subn(pattern, repl, text)
-        if count < 1:
-            # Fall back to the previous authoritative VERSION value when this
-            # feature is used again after the first release bump.
-            old_pat = re.escape(old_version) if old_version else None
-            if old_pat:
-                if label == "bootstrap fallback" or label == "clean-start fallback":
-                    new, count = re.subn(r'BFS_VERSION="' + old_pat + r'"', f'BFS_VERSION="{new_version}"', text)
-                elif label == "ISO fallback":
-                    new, count = re.subn(r"printf '" + old_pat + r"'", f"printf '{new_version}'", text)
-                elif label == "installer fallback":
-                    new, count = re.subn(r'\$\{release:-' + old_pat + r'\}', '${release:-' + new_version + '}', text)
+        rewritten, count = re.subn(pattern, repl, text)
         if count < 1:
             raise RuntimeError(f"could not update {label} in {path.relative_to(project_root)}")
-        edits[path] = new
+        edits[path] = rewritten
 
-    # User-facing release documentation follows the authoritative marker.
+    # User-facing current-release documentation follows VERSION.  Historical
+    # trackers/logs/release notes are deliberately excluded from this map.
     for rel in ("README.md", "docs/INSTALL.md"):
         path = project_root / rel
-        if path.is_file() and old_version:
+        if path.is_file():
             text = path.read_text()
             if old_version in text:
                 edits[path] = text.replace(old_version, new_version)
 
-    # Commit only after every planned edit has been derived successfully.
-    for path, text in edits.items():
-        path.write_text(text)
+    # The release audit intentionally contains a current-distro baseline so a
+    # newly-added active consumer cannot silently drift from VERSION.
+    release_audit = project_root / "scripts/bfs-release-static-audit.sh"
+    if release_audit.is_file():
+        text = release_audit.read_text()
+        pattern = r"(?m)^EXPECTED_BFSOS_DISTRO_VERSION=" + re.escape(old_version) + r"\s*$"
+        rewritten, count = re.subn(pattern, f"EXPECTED_BFSOS_DISTRO_VERSION={new_version}", text)
+        if count != 1:
+            raise RuntimeError("release static audit distro-version baseline is missing or stale")
+        edits[release_audit] = rewritten
+
+    # Verification scan: catch newly-added *active* fallback consumers without
+    # rewriting historical docs/logs or unrelated package versions that happen
+    # to equal the distro release.  These contextual forms are the supported
+    # active-version embedding mechanisms in BFSOS.
+    active_patterns = [
+        re.compile(r'BFS_VERSION="' + re.escape(old_version) + r'"'),
+        re.compile(r"printf '" + re.escape(old_version) + r"'"),
+        re.compile(r'\$\{release:-' + re.escape(old_version) + r'\}'),
+        re.compile(r'^EXPECTED_BFSOS_DISTRO_VERSION=' + re.escape(old_version) + r'\s*$', re.M),
+        re.compile(r'^bfs_version=' + re.escape(old_version) + r'\s*$', re.M),
+    ]
+    scan_roots = [project_root / "scripts", project_root]
+    candidates: set[Path] = set()
+    for base in scan_roots:
+        if not base.exists():
+            continue
+        iterator = base.rglob("*") if base.name == "scripts" else base.glob("bootstrap*.sh")
+        for path in iterator:
+            if path.is_file():
+                candidates.add(path)
+    aaa_candidate = project_root / "ports/core/aaa_filesystem/Pkgfile"
+    if aaa_candidate.is_file():
+        candidates.add(aaa_candidate)
+    unknown=[]
+    for path in sorted(candidates):
+        if path in edits:
+            continue
+        try:
+            text=path.read_text(errors="replace")
+        except OSError:
+            continue
+        if any(rx.search(text) for rx in active_patterns):
+            unknown.append(str(path.relative_to(project_root)))
+    if unknown:
+        raise RuntimeError("unmapped active distro-version consumer(s): " + ", ".join(unknown))
+
+    return old_version, edits
+
+
+def distro_version_plan(project_root: Path, new_version: str) -> list[str]:
+    """List files that a distro-version transaction would change."""
+    _old, edits = _derive_distro_version_edits(project_root, new_version)
+    return [str(path.relative_to(project_root.resolve())) for path in edits]
+
+
+def _validate_distro_version_transaction(project_root: Path, touched: list[Path]) -> None:
+    """Validate staged release edits before they are allowed to remain."""
+    project_root = project_root.resolve()
+    for path in touched:
+        if path.suffix == ".sh" or path.name in {"bootstrap.sh", "bootstrap-clean-start.sh"}:
+            cp = subprocess.run(["bash", "-n", str(path)], cwd=project_root, text=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if cp.returncode:
+                raise RuntimeError(f"shell syntax validation failed for {path.relative_to(project_root)}: {cp.stderr.strip()}")
+
+    for rel in ("scripts/bfs-ports-static-audit.sh", "scripts/bfs-release-static-audit.sh"):
+        audit = project_root / rel
+        if not audit.is_file():
+            continue
+        cp = subprocess.run(["bash", str(audit)], cwd=project_root, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if cp.returncode:
+            detail = cp.stdout.strip().splitlines()[-12:]
+            raise RuntimeError(f"{rel} failed after version rewrite:\n" + "\n".join(detail))
+
+
+def apply_distro_version(project_root: Path, new_version: str) -> list[str]:
+    """Atomically update every active BFSOS distro-version consumer.
+
+    All rewrites are derived before the first file is written.  The staged tree
+    must then pass shell syntax and both static audits; otherwise every touched
+    file is restored byte-for-byte.
+    """
+    project_root = project_root.resolve()
+    _old, edits = _derive_distro_version_edits(project_root, new_version)
+    if not edits:
+        return []
+
+    originals = {path: path.read_text() if path.exists() else None for path in edits}
+    try:
+        for path, text in edits.items():
+            path.write_text(text)
+        _validate_distro_version_transaction(project_root, list(edits))
+    except Exception:
+        for path, text in originals.items():
+            if text is None:
+                path.unlink(missing_ok=True)
+            else:
+                path.write_text(text)
+        raise
     return [str(path.relative_to(project_root)) for path in edits]
+
 MLFS_PACKAGES_PAGE = "https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/packages.html"
 BOOKS = (
     ("mlfs-dev", "MLFS DEV", MLFS_PACKAGES_PAGE),
@@ -229,12 +314,14 @@ VERSION_LOCK_GROUPS = {
     # is a separate fallback branch and is intentionally not part of this pair.
     "nvidia-driver": {"opt/nvidia", "compat-32/nvidia-32"},
     "alsa-plugins": {"opt/alsa-plugins", "compat-32/alsa-plugins-32"},
+    "expat": {"core/expat", "compat-32/expat-32"},
 }
 
 GROUP_BUILD_ORDER = {
     "vulkan-sdk": VULKAN_BUILD_ORDER,
     "nvidia-driver": ["opt/nvidia", "compat-32/nvidia-32"],
     "alsa-plugins": ["opt/alsa-plugins", "compat-32/alsa-plugins-32"],
+    "expat": ["core/expat", "compat-32/expat-32"],
 }
 
 # Only Vulkan currently requires each freshly-built predecessor to be installed
@@ -1391,12 +1478,13 @@ def choose_action_dialog(env, retry_count=0):
         "2", "Select port trees to check",
         "3", "Kernel / kernel-headers maintenance",
         "4", f"Set BFSOS distro version (current: {project_distro_version()})",
+        "5", "Fill missing port descriptions",
     ]
     if retry_count:
-        items += ["5", f"Retry failed updates ({retry_count})"]
-        exit_tag = "6"
+        items += ["6", f"Retry failed updates ({retry_count})"]
+        exit_tag = "7"
     else:
-        exit_tag = "5"
+        exit_tag = "6"
     items += [exit_tag, "Exit"]
     code, out = dcall(["--title", "Maintainer updater", "--menu", "Choose an update task.",
                        "20", "88", "10", *items], env)
@@ -2391,7 +2479,7 @@ def main():
         while True:
             retry_log,retry_rows=find_retryable_failures(ports_root)
             action=choose_action_dialog(env,len(retry_rows))
-            exit_tag="6" if retry_rows else "5"
+            exit_tag="7" if retry_rows else "6"
             if action==exit_tag:
                 return 0
 
@@ -2416,15 +2504,36 @@ def main():
                 if requested is None:
                     continue
                 try:
+                    planned=distro_version_plan(ROOT,requested)
+                except (OSError,RuntimeError,ValueError) as exc:
+                    dcall(["--title","BFSOS distro version","--msgbox",f"Version plan failed:\n\n{exc}","12","88"],env)
+                    continue
+                if planned:
+                    plan_body=(f"Planned atomic distro-version update to {requested}:\n\n" + "\n".join(planned) +
+                               "\n\nBoth static audits and syntax checks must pass or all files are restored.")
+                    code,_=dcall(["--title","BFSOS distro version plan","--yesno",plan_body,"28","105"],env)
+                    if code != 0:
+                        continue
+                try:
                     changed=apply_distro_version(ROOT,requested)
                 except (OSError,RuntimeError,ValueError) as exc:
-                    dcall(["--title","BFSOS distro version","--msgbox",f"Version update failed:\n\n{exc}","12","88"],env)
+                    dcall(["--title","BFSOS distro version","--msgbox",f"Version update failed and was rolled back:\n\n{exc}","14","96"],env)
                     continue
                 body=(f"BFSOS distro version is now {requested}.\n\n" +
-                      ("Updated:\n" + "\n".join(changed) if changed else "No files changed; that version was already active."))
-                dcall(["--title","BFSOS distro version","--msgbox",body,"24","100"],env)
+                      ("Updated and validated:\n" + "\n".join(changed) if changed else "No files changed; that version was already active."))
+                dcall(["--title","BFSOS distro version","--msgbox",body,"26","105"],env)
                 continue
-            elif action=="5" and retry_rows:
+            elif action=="5":
+                helper=ROOT/"scripts/bfs-fill-port-descriptions.py"
+                cp=subprocess.run([sys.executable,str(helper),"--ports-root",str(ports_root),
+                                   "--jobs",str(ns.jobs),"--timeout",str(ns.timeout)],
+                                  cwd=ROOT,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+                body=cp.stdout.strip() or "Description maintenance completed with no output."
+                if len(body) > 9000:
+                    body=body[-9000:]
+                dcall(["--title","Missing port descriptions","--msgbox",body,"24","105"],env)
+                continue
+            elif action=="6" and retry_rows:
                 picked=choose_retry_dialog(retry_rows,env)
                 if picked is None or not picked:
                     continue
