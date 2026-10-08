@@ -2098,7 +2098,7 @@ trap _cleanup_on_exit EXIT
 if [ -f "$SCRIPT_DIR/VERSION" ]; then
     BFS_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")"
 else
-    BFS_VERSION="0.9.0"
+    BFS_VERSION="0.9.1.1"
 fi
 
 BUILD_DATE="$(date +%Y%m%d)"

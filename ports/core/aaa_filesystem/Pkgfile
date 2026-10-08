@@ -4,10 +4,10 @@
 
 name=aaa_filesystem
 version=1
-release=21
+release=22
 # BFSOS distribution release. Change this value when preparing a new
 # BFSOS release; the aaa_filesystem package version remains independent.
-bfs_version=0.9.0
+bfs_version=0.9.1.1
 
 source=(
     fstab

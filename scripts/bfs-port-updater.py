@@ -125,8 +125,18 @@ def _derive_distro_version_edits(project_root: Path, new_version: str) -> tuple[
             continue
         iterator = base.rglob("*") if base.name == "scripts" else base.glob("bootstrap*.sh")
         for path in iterator:
-            if path.is_file():
-                candidates.add(path)
+            if not path.is_file():
+                continue
+
+            try:
+                rel = path.relative_to(project_root)
+            except ValueError:
+                continue
+
+            if rel.parts[:2] == ("scripts", "tests"):
+                continue
+
+            candidates.add(path)
     aaa_candidate = project_root / "ports/core/aaa_filesystem/Pkgfile"
     if aaa_candidate.is_file():
         candidates.add(aaa_candidate)

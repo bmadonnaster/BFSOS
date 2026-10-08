@@ -7,7 +7,7 @@ fail=0
 
 # Current distro-version baseline.  The maintainer updater rewrites this in the
 # same atomic transaction as VERSION and validates the audit before success.
-EXPECTED_BFSOS_DISTRO_VERSION=0.9.0
+EXPECTED_BFSOS_DISTRO_VERSION=0.9.1.1
 actual_bfsos_version="$(tr -d '[:space:]' < VERSION 2>/dev/null || true)"
 [ "$actual_bfsos_version" = "$EXPECTED_BFSOS_DISTRO_VERSION" ] || {
   echo "RELEASE-AUDIT: VERSION drift: expected $EXPECTED_BFSOS_DISTRO_VERSION, got ${actual_bfsos_version:-<missing>}" >&2
