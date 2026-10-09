@@ -1,3 +1,4 @@
+# Description: GNU compression utility (replacement for compress)
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=gzip
 version=1.14

@@ -1,3 +1,4 @@
+# Description: Library of PNG support functions with APNG support
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=libpng
 version=1.6.59

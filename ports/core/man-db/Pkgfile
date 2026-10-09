@@ -1,3 +1,4 @@
+# Description: An implementation of the standard Unix documentation system accessed using the man command
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=man-db
 version=2.13.1

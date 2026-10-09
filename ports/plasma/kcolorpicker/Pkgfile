@@ -1,3 +1,4 @@
+# Description: Qt based Color Picker with popup menu
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake qt6
 

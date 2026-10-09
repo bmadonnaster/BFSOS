@@ -1,3 +1,4 @@
+# Description: Fast Lexical Analyzer Generator
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=flex
 version=2.6.4

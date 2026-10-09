@@ -1,3 +1,4 @@
+# Description: ``keybinder`` is a library for registering global key bindings, for gtk-based applications in X11. With gir bindings.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 glib gobject-introspection
 

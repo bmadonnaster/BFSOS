@@ -1,3 +1,4 @@
+# Description: One way sync over http
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=httpup
 version=0.5.1

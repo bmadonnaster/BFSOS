@@ -1,3 +1,4 @@
+# Description: Source code to formatted text converter
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: boost lua
 

@@ -1,3 +1,4 @@
+# Description: Display manager and login screen
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: accountsservice dconf gnome-session gnome-shell json-glib libcanberra libgudev linux-pam polkit systemd upower
 

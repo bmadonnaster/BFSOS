@@ -1,3 +1,4 @@
+# Description: Next Generation Input Bus for Linux
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: unicode-character-database dconf iso-codes vala glib gobject-introspection gtk3 libnotify
 

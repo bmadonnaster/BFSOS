@@ -1,3 +1,4 @@
+# Description: Libraries for cryptographic UIs and accessing PKCS#11 modules.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib gobject-introspection libgcrypt p11-kit gtk3 libsecret libxslt vala valgrind python3-gi_docgen
 name=gcr

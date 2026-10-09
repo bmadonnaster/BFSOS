@@ -1,3 +1,4 @@
+# Description: A library that implements Perl 5-style regular expressions. 2nd version
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=pcre2
 version=10.49

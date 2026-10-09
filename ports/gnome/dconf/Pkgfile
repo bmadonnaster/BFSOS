@@ -1,3 +1,4 @@
+# Description: Configuration database system
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: dbus glib gtk3 libhandy libxml2 libxslt vala
 

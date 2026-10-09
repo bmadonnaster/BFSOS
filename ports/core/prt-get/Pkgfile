@@ -1,3 +1,4 @@
+# Description: A utility to simplify ports searching/installing
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=prt-get
 version=5.19.10

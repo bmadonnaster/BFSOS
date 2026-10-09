@@ -1,3 +1,4 @@
+# Description: legacy support library for PPD files
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libcupsfilters
 

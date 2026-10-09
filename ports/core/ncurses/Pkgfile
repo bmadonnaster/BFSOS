@@ -1,3 +1,4 @@
+# Description: A System V Release 4.0 curses emulation library
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=ncurses
 version=6.6

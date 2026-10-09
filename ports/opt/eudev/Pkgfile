@@ -1,3 +1,4 @@
+# Description: Userspace device management daemon
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=eudev
 version=3.2.15

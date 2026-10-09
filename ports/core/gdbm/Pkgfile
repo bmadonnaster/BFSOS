@@ -1,3 +1,4 @@
+# Description: GNU database library for C
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=gdbm
 version=1.26

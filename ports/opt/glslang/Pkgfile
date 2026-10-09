@@ -1,3 +1,4 @@
+# Description: OpenGL and OpenGL ES shader front end and validator
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake spirv-tools
 

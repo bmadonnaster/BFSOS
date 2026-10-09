@@ -1,3 +1,4 @@
+# Description: Native asynchronous I/O (AIO) support library
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=libaio
 version=0.3.113

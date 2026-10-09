@@ -1,3 +1,4 @@
+# Description: GNU grep, egrep and fgrep
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=grep
 version=3.12

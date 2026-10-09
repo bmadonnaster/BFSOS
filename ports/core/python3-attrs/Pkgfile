@@ -1,3 +1,4 @@
+# Description: python classes without boilerplate.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-hatch-fancy-pypi-readme python3-hatch-vcs
 

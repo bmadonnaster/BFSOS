@@ -1,3 +1,4 @@
+# Description: Python implementation of John Gruber's Markdown
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-pip
 

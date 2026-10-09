@@ -1,3 +1,4 @@
+# Description: Building blocks for modern adaptive GNOME apps
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk3 vala
 

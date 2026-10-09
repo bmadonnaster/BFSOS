@@ -1,3 +1,4 @@
+# Description: An arbitrary precision calculator language
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=bc
 version=7.1.0

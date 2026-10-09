@@ -1,3 +1,4 @@
+# Description: HTTP library with thread-safe connection pooling and file post support
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-hatchling python3-hatch-vcs
 

@@ -1,3 +1,4 @@
+# Description: GObject wrapper for libusb1
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: json-glib libusb glib gobject-introspection hwdata vala python3-gi_docgen umockdev python3-markdown python3-typogrify
 

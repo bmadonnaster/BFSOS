@@ -1,3 +1,4 @@
+# Description: Automatically generates Rust FFI bindings to C (and some C++) libraries
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: rustc llvm
 

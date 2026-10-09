@@ -1,3 +1,4 @@
+# Description: Handles managing your python package versions in scm metadata.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-vcs-versioning
 

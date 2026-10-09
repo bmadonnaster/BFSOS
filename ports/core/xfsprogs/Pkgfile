@@ -1,3 +1,4 @@
+# Description: Filesystem utilities for XFS
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=xfsprogs
 version=7.2.0

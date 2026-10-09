@@ -1,3 +1,4 @@
+# Description: A standard Unix macro processor with extensions
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=m4
 version=1.4.21

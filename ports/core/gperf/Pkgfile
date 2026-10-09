@@ -1,3 +1,4 @@
+# Description: Perfect hash function generator
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=gperf
 version=3.3

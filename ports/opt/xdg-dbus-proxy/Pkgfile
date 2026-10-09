@@ -1,3 +1,4 @@
+# Description: filtering proxy for D-Bus connections
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib
 

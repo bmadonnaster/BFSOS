@@ -1,3 +1,4 @@
+# Description: serialization and deserialization of JSON objects
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib
 

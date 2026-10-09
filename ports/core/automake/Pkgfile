@@ -1,3 +1,4 @@
+# Description: A tool for automatically generating Makefiles
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=automake
 version=1.19

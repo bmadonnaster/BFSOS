@@ -1,3 +1,4 @@
+# Description: A VNC viewer widget for GTK
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gnutls gtk3 libgcrypt glib gobject-introspection vala
 

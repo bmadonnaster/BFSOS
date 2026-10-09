@@ -1,3 +1,4 @@
+# Description: Sed - streams editor
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=sed
 version=4.10

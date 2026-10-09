@@ -1,3 +1,4 @@
+# Description: Additional GTK3 support code for colord
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: colord gtk3 glib gobject-introspection gtk4 vala
 

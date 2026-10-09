@@ -1,3 +1,4 @@
+# Description: Canonical source for classifiers on PyPI (pypi.org)
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-calver
 

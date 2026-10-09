@@ -1,3 +1,4 @@
+# Description: Kernel and system logging daemons
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=sysklogd
 version=2.7.2

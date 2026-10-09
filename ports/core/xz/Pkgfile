@@ -1,3 +1,4 @@
+# Description: Compression utility using the lzma algorithm, successor of lzma-utils
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=xz
 version=5.8.4

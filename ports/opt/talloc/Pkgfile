@@ -1,3 +1,4 @@
+# Description: Hierarchical, reference counted memory pool system with destructors
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: 
 

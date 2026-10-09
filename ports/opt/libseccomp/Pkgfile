@@ -1,3 +1,4 @@
+# Description: Library for Linux Kernel's syscall filtering mechanism
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 

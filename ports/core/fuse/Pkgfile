@@ -1,3 +1,4 @@
+# Description: Interface for userspace filesystems
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=fuse
 version=3.18.3

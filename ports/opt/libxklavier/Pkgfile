@@ -1,3 +1,4 @@
+# Description: A library providing high-level API for X Keyboard Extension known as XKB
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib gobject-introspection iso-codes libxml2 xorg-libs vala
 

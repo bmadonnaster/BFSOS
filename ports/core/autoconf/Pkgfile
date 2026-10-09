@@ -1,3 +1,4 @@
+# Description: A package of M4 macros to produce scripts to automatically configure sourcecode
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=autoconf
 version=2.73

@@ -1,3 +1,4 @@
+# Description: Gstreamer libav Plugin.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: ffmpeg gst-plugins-base yasm
 

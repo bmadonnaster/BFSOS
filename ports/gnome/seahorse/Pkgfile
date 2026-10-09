@@ -1,3 +1,4 @@
+# Description: Seahorse is a GNOME application for managing encryption keys and passwords in the GNOME Keyring
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gcr4 gnupg gpgme itstool libhandy libpwquality libsecret vala libsoup3 p11-kit openssh avahi gnome-keyring 
 

@@ -1,3 +1,4 @@
+# Description: APR-util provides a number of helpful abstractions on top of APR
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: apr
 

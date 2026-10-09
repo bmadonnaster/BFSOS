@@ -1,3 +1,4 @@
+# Description: Plugin and hook calling mechanisms for python
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools-scm
 

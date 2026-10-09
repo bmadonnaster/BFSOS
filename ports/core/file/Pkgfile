@@ -1,3 +1,4 @@
+# Description: File type identification utility
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=file
 version=5.48

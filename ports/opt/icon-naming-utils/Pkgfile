@@ -1,3 +1,4 @@
+# Description: A shim to maintain compatibility between current desktop icon themes and the icon naming specification
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: perl-xml-simple
 

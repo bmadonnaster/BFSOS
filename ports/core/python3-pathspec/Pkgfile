@@ -1,3 +1,4 @@
+# Description: Utility library for gitignore style pattern matching of file paths
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: 
 

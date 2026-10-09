@@ -1,3 +1,4 @@
+# Description: Poppler encoding data
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=poppler-data
 version=0.4.12

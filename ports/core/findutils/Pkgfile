@@ -1,3 +1,4 @@
+# Description: Basic directory searching utilities
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=findutils
 version=4.11.0

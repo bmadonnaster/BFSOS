@@ -1,3 +1,4 @@
+# Description: Kernel module utilities and library
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=kmod
 version=34.2

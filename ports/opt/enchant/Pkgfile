@@ -1,3 +1,4 @@
+# Description: A wrapper library for generic spell checking.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: glib aspell
 

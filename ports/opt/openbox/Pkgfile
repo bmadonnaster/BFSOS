@@ -1,3 +1,4 @@
+# Description: Fast, lightweight, standards-compliant window manager
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: pango dbus imlib2 imagemagick python3-pyxdg startup-notification librsvg
 

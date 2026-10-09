@@ -1,3 +1,4 @@
+# Description: Ruby interpreter
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libyaml graphviz rustc valgrind
 

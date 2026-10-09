@@ -1,3 +1,4 @@
+# Description: libclc is an implementation of the library requirements of the OpenCL C programming language
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: llvm ninja spirv-llvm-translator
 

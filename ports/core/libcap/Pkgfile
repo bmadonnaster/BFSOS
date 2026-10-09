@@ -1,3 +1,4 @@
+# Description: POSIX.1e capabilities library
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on:
 name=libcap

@@ -1,3 +1,4 @@
+# Description: Open Source H265/HEVC video encoder
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake nasm
 

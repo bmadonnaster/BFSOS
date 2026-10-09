@@ -1,3 +1,4 @@
+# Description: Protocol Buffers are a way of encoding structured data in an efficient yet extensible format.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cmake abseil-cpp
 

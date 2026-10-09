@@ -1,3 +1,4 @@
+# Description: Small utilities that use the /proc filesystem
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=psmisc
 version=23.7

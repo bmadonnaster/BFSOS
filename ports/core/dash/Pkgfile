@@ -1,3 +1,4 @@
+# Description: The Almquist shell, a POSIX-compliant /bin/sh implementation
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=dash
 version=0.5.13.5

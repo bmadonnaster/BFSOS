@@ -1,3 +1,4 @@
+# Description: Sudo (superuser do)
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=sudo
 version=1.9.17p2

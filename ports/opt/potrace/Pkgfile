@@ -1,3 +1,4 @@
+# Description: Utility for tracing a bitmap (input: PBM,PGM,PPM,BMP; output: EPS,PS,PDF,SVG,DXF,PGM,Gimppath,XFig)
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: llvm
 

@@ -1,3 +1,4 @@
+# Description: A collection of tools for internationalizing Python applications
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=python3-babel
 version=2.18.0

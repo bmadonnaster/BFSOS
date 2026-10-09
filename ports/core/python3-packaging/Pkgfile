@@ -1,3 +1,4 @@
+# Description: Core utilities for Python packages.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-flit-core
 

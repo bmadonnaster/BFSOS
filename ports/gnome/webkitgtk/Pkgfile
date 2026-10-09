@@ -1,3 +1,4 @@
+# Description: Small, efficient and fast rendering engine for Web Browsers
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairo cmake gst-plugins-base gst-plugins-bad gtk3 gtk4 icu lcms2 libgudev libsecret libsoup3 libtasn1 libwebp mesa openjpeg2 ruby sqlite unifdef which bubblewrap enchant geoclue glib gobject-introspection hicolor-icon-theme libavif libjxl libseccomp xdg-dbus-proxy hyphen woff2 libXcomposite flite
 

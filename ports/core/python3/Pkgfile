@@ -1,3 +1,4 @@
+# Description: Python interpreter, version 3.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=python3
 version=3.14.7

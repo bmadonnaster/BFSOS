@@ -1,3 +1,4 @@
+# Description: A text widget adding syntax highlighting.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: gtk4 pcre2 glib gobject-introspection libxml2 vala valgrind vulkan-loader
 

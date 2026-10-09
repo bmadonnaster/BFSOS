@@ -1,3 +1,4 @@
+# Description: Secure PinEntry Dialog
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: libassuan libgpg-error
 

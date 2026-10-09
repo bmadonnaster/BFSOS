@@ -1,3 +1,4 @@
+# Description: C++ Interfaces for GTK4 and GNOME
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cairomm glibmm-2.68 gtk4 libsigc++ pangomm-2.48 vulkan-loader
 

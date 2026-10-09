@@ -1,3 +1,4 @@
+# Description: Web Open Font Format 2 reference implementation
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: brotli cmake
 

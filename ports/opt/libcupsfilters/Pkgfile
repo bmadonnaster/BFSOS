@@ -1,3 +1,4 @@
+# Description: Code of the filters of the former cups-filters package as library functions
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: cups glib ghostscript lcms2 poppler qpdf libexif libjpeg-turbo libpng libtiff mupdf
 
