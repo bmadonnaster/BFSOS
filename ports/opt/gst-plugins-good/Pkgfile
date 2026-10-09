@@ -5,8 +5,8 @@
 # Optional: aalib alsa-oss gtk3 libdv qt5 speex taglib valgrind v4l-utils wayland hotdoc jack libcaca libavc1394 libiec61883 libraw1394 libshout orc twolame wavpack
 
 name=gst-plugins-good
-version=1.28.7
-release=2
+version=1.28.8
+release=1
 source=(https://gstreamer.freedesktop.org/src/$name/$name-$version.tar.xz
         gst-plugins-good-1.28.7-qt611-qquickwindow.patch)
 
