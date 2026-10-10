@@ -1,0 +1,15 @@
+# Description: Brother HL-L8250CDN proprietary LPR driver (vendor payload, verification required)
+# URL: https://support.brother.com/g/b/downloadlist.aspx?c=us&lang=en&os=128&prod=hll8250cdn_all
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cups
+# NOTE: Upstream 1.1.2-1. Download the official .deb from Brother and
+# verify its redistribution terms, checksum and 32-bit runtime dependencies.
+# NOTE: This port intentionally fails closed until the package has been verified.
+name=brother-hll8250cdn-lpr
+version=1.1.2
+release=1
+source=()
+pkg_build() {
+    echo 'Brother LPR: upstream payload URL/licensing/architecture verification required; not installable yet.' >&2
+    return 1
+}

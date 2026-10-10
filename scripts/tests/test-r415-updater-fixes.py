@@ -123,8 +123,8 @@ def test_texlive_annual_snapshot_provider_normalizes_source_suffix():
 def test_repaired_source_templates_present():
     expected = {
         "ports/compat-32/icu-32/Pkgfile": "icu4c-${version}-sources.tgz",
-        "ports/opt/lcms2/Pkgfile": "releases/download/lcms2.$version/lcms2-$version.tar.gz",
-        "ports/compat-32/lcms2-32/Pkgfile": "releases/download/lcms2.$version/lcms2-$version.tar.gz",
+        "ports/opt/lcms2/Pkgfile": "releases/download/lcms${version}/lcms2-$version.tar.gz",
+        "ports/compat-32/lcms2-32/Pkgfile": "releases/download/lcms${version}/lcms2-$version.tar.gz",
         "ports/core/dash/Pkgfile": "cdn.netbsd.org/pub/pkgsrc/distfiles/dash-$version.tar.gz",
         "ports/opt/xdotool/Pkgfile": "archive/refs/tags/v${version}.tar.gz",
     }

@@ -1,0 +1,35 @@
+# Description: LibreOffice official precompiled RPM bundle repackaged for BFSOS
+# URL: https://www.libreoffice.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cups dbus fontconfig freetype glib gtk3 libX11 libXext libXrender mesa
+
+name=libreoffice-bin
+version=26.8.1
+release=1
+source=(https://download.documentfoundation.org/libreoffice/stable/$version/rpm/x86_64/LibreOffice_${version}_Linux_x86-64_rpm.tar.gz)
+
+pkg_build() {
+    command -v rpm2cpio >/dev/null || { echo 'libreoffice-bin requires rpm2cpio' >&2; return 1; }
+    command -v cpio >/dev/null || { echo 'libreoffice-bin requires cpio' >&2; return 1; }
+    local rpm count=0
+    mkdir -p "$PKG" || return 1
+    # Extract into the package staging root only. Never invoke RPM install scripts.
+    while IFS= read -r -d '' rpm; do
+        case "$rpm" in *-desktop-integration-*|*-debian-menus-*) continue;; esac
+        (cd "$PKG" && rpm2cpio "$rpm" | cpio -idmu --quiet) || return 1
+        count=$((count+1))
+    done < <(find "$SRC" -type f -name '*.rpm' -print0)
+    [ "$count" -gt 0 ] || { echo 'libreoffice-bin: no suite RPM payloads found' >&2; return 1; }
+    # Upstream RPMs install under /opt/libreoffice<major.minor>, avoiding system lib trees.
+    local desktop
+    for desktop in "$PKG"/opt/libreoffice*/share/xdg/*.desktop; do
+        [ -f "$desktop" ] || continue
+        install -Dm644 "$desktop" "$PKG/usr/share/applications/libreoffice-bin-$(basename "$desktop")" || return 1
+    done
+    local soffice
+    soffice=$(find "$PKG/opt" -type f -path '*/program/soffice' -print -quit 2>/dev/null)
+    [ -n "$soffice" ] || { echo 'libreoffice-bin: suite executable missing' >&2; return 1; }
+    printf '#!/bin/sh\nexec "%s" "$@"\n' "${soffice#"$PKG"}" > "$PKG/usr-bin-wrapper.tmp" || return 1
+    install -Dm755 "$PKG/usr-bin-wrapper.tmp" "$PKG/usr/bin/libreoffice-bin" || return 1
+    rm -f "$PKG/usr-bin-wrapper.tmp"
+}

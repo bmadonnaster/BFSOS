@@ -900,6 +900,16 @@ def candidate_source_url(meta: PortMeta, target: str) -> str:
     if meta.rel == "opt/nodejs":
         return f"https://nodejs.org/dist/v{target}/node-v{target}.tar.xz"
 
+    # KDE Frameworks release directories track MAJOR.MINOR, not the old
+    # installed series. Rebuild both the release directory and archive name.
+    for url in _remote_source_urls(meta):
+        parsed = urlsplit(url)
+        if parsed.netloc.lower() == "download.kde.org" and "/stable/frameworks/" in parsed.path:
+            filename = parsed.path.rsplit("/", 1)[-1]
+            if meta.version in filename:
+                series = ".".join(target.split(".")[:2])
+                return f"https://download.kde.org/stable/frameworks/{series}/{filename.replace(meta.version, target)}"
+
     # GNOME-protected ports always use the official release service for exact
     # target validation rather than trusting whichever generic provider won.
     if meta.rel in GNOME_CACHE_VALIDATED_BOOK_PORTS:
@@ -2428,7 +2438,7 @@ def main():
     ap.add_argument("--apply",action="store_true",help="apply safe policy-approved candidates (noninteractive)")
     ap.add_argument("--build",action="store_true",help="with --apply, build selected ports using sudo pkgmk -d -kw")
     ap.add_argument("--install",action="store_true",help="with --apply --build, install through prt-get after build")
-    ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS","10")))
+    ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS", str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)))))
     ap.add_argument("--timeout",type=int,default=int(os.environ.get("BFS_AUDIT_TIMEOUT","15")))
     ap.add_argument("--set-distro-version", metavar="VERSION", help="set BFSOS distro release across active consumers and exit")
     ns=ap.parse_args()

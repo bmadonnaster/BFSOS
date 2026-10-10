@@ -213,7 +213,7 @@ def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--ports-root",type=Path,default=DEFAULT_PORTS)
     ap.add_argument("--timeout",type=int,default=8)
-    ap.add_argument("--jobs",type=int,default=8)
+    ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS", str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)))))
     ap.add_argument("--apply-all",action="store_true",help="apply every resolved description without dialog")
     ap.add_argument("--tsv",type=Path)
     ns=ap.parse_args()

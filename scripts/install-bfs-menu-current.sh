@@ -8010,7 +8010,7 @@ URL=https://github.com/bmadonnaster/BFSOS.git
 NAME=bfsos
 BRANCH=main
 LOCAL_REPOSITORY=/var/cache/ports-git/bfsos
-COLLECTIONS="compat-32:ports/compat-32 compiz:ports/compiz contrib:ports/contrib core:ports/core gnome:ports/gnome iso:ports/iso lxqt:ports/lxqt opt:ports/opt plasma:ports/plasma xfce:ports/xfce xorg:ports/xorg"
+COLLECTIONS="compat-32:ports/compat-32 compiz:ports/compiz contrib:ports/contrib core:ports/core gnome:ports/gnome iso:ports/iso lxqt:ports/lxqt opt:ports/opt office:ports/office plasma:ports/plasma xfce:ports/xfce xorg:ports/xorg"
 EOF_BFSOS_GIT
 
         # Retire only BFSOS-owned legacy HttpUp definitions. Third-party *.httpup

@@ -1,0 +1,21 @@
+# Description: LibreOffice free office suite built from source
+# URL: https://www.libreoffice.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cups dbus fontconfig freetype glib gtk3 icu libpng libxml2 libxslt mesa nss python3 zlib
+# Optional: java-runtime hunspell
+
+name=libreoffice
+version=26.8.1
+release=1
+# Upstream source archive has a fourth (build) component.
+source=(https://download.documentfoundation.org/libreoffice/src/$version/libreoffice-${version}.1.tar.xz)
+
+pkg_build() {
+    # Do not overlap the binary variant: installation owns the same soffice files.
+    [ -f ./autogen.sh ] || { echo 'libreoffice: missing upstream autogen.sh' >&2; return 1; }
+    ./autogen.sh --prefix=/usr --sysconfdir=/etc \
+        --with-system-curl --with-system-nss --with-system-zlib \
+        --disable-ccache --without-java || return 1
+    make -j "${JOBS:-1}" || return 1
+    make DESTDIR="$PKG" install || return 1
+}

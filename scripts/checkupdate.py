@@ -1108,6 +1108,12 @@ def sqlite_release_page(port: Port, http: HttpCache) -> tuple[str | None, str, s
         major=n//1000000; minor=(n//10000)%100; patch=(n//100)%100; sub=n%100
         v=f'{major}.{minor}.{patch}' + (f'.{sub}' if sub else '')
         vals.append(v)
+    # SQLite's download page only lists recent releases. Older BFSOS source
+    # archives may still be valid even after disappearing from this index.
+    # Confirm the existing archive independently before anchoring comparison.
+    if port.version not in vals and port.sources and hasattr(http, 'exists'):
+        if any(http.exists(src)[0] for src in port.sources if src.startswith(('http://', 'https://'))):
+            vals.append(port.version)
     latest, reason = choose_verified(port.version, vals, port, 'sqlite-download')
     return latest, 'sqlite-download', reason
 
@@ -1505,7 +1511,7 @@ def main() -> int:
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("-n", action="store_true", help="accepted for compatibility; update overrides are not used by v2")
     ap.add_argument("-u", "--update", action="store_true", help="disabled: v11 keeps auditing separate from updater writes")
-    ap.add_argument("--jobs", type=int, default=10)
+    ap.add_argument("--jobs", type=int, default=int(os.environ.get("BFS_AUDIT_JOBS", str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)))))
     ap.add_argument("--timeout", type=int, default=10)
     ap.add_argument("--tsv", help="write complete machine-readable results to this path")
     ns = ap.parse_args()

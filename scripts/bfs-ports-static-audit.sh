@@ -81,7 +81,7 @@ fi
 while IFS=: read -r file line text; do
     report "legacy build() recipe remains in maintained 64-bit tree: $file:$line: $text"
 done < <(grep -RnsE --include=Pkgfile '^[[:space:]]*build[[:space:]]*\([[:space:]]*\)[[:space:]]*\{' \
-    ports/core ports/opt ports/xorg ports/plasma ports/contrib ports/gnome \
+    ports/core ports/opt ports/office ports/xorg ports/plasma ports/contrib ports/gnome \
     ports/lxqt ports/xfce ports/compiz || true)
 
 # Qt5 must not silently drag QtWebEngine; it is packaged separately.
