@@ -4,7 +4,7 @@
 # Depends on: python3-setuptools
 
 name=python3-pycparser
-version=3.1
+version=3.11
 release=1
 source=(https://pypi.org/packages/source/p/pycparser/pycparser-$version.tar.gz)
 

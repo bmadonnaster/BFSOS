@@ -2,9 +2,9 @@
 # Depends on: libical libsecret nss sqlite gnome-online-accounts  glib gobject-introspection gtk3 gtk4 icu libcanberra libgweather vala webkitgtk webkitgtk-41
 
 name=evolution-data-server
-version=3.62.0
+version=3.62.1
 release=1
-source=(https://download.gnome.org/sources/${name}/${version%.*}/${name}-${version}.tar.xz)
+source=(https://download.gnome.org/sources/${name}/3.62/${name}-${version}.tar.xz)
 build_opt="-DSYSCONF_INSTALL_DIR=/etc
 -DENABLE_VALA_BINDINGS=ON
 -DENABLE_INSTALLED_TESTS=OFF
