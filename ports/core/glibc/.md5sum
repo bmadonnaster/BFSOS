@@ -1,0 +1,6 @@
+cabf312a0adc98de9d52a411b2c14baa  genlocales
+5d589fb5bf76f3efaa19dcd12d4484a4  glibc-2.44-upstream_fix-1.patch
+7677da43ef759c68e005f5d4c37986a6  glibc-2.44.tar.xz
+9a5997c3452909b1769918c759eff8a2  glibc-fhs-1.patch
+f87bc003e02b07545914e38ffd7eede4  ld.so.conf
+6f52a13d662ef21b1084ab486f196d7c  nsswitch.conf

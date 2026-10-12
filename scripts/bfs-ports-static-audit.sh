@@ -130,9 +130,12 @@ check_version() {
     [ "$got" = "$expected" ] || report "$file version is $got; expected $expected"
 }
 
-check_version ports/core/linux/Pkgfile 7.2.9
-check_version ports/core/linux-headers/Pkgfile 6.18.55
-check_version ports/core/linux-lts/Pkgfile 6.18.55
+# Kernel point releases move independently of static-audit revisions.
+# Validate the source is tied to version= instead of pinning a stale release.
+for p in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile ports/core/linux-headers/Pkgfile; do
+    grep -Eq 'linux-\$\{?version\}?\.tar\.xz' "$p" || report "$p source archive is not version-driven"
+done
+
 if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
     report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
 fi

@@ -723,7 +723,11 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         # The primary updater may have derived a canonical target source whose
         # host/path layout cannot be obtained by changing version= alone. Apply
         # that handoff before evaluating and validating the staged Pkgfile.
-        new_text = rewrite_primary_source_from_handoff(new_text, before, row.latest, row.source)
+        # Kernel sources are governed by the selected BFSOS version/series.
+        # Provider handoff metadata may point at the *old* kernel tarball;
+        # never overwrite an already version-templated kernel source with it.
+        if row.port not in {"core/linux", "core/linux-lts", "core/linux-headers"}:
+            new_text = rewrite_primary_source_from_handoff(new_text, before, row.latest, row.source)
         required_patches = parse_patch_specs(row.patches_json)
         obsolete_patches = parse_obsolete_patches(row.obsolete_patches_json)
         if required_patches or obsolete_patches:
@@ -733,6 +737,13 @@ def update_one(row: AuditRow, apply: bool, timeout: int, validate_patches: bool)
         staged_pkg.write_text(new_text)
 
         proposed = eval_meta(staged_pkg)
+        if row.port in {"core/linux", "core/linux-lts", "core/linux-headers"}:
+            expected = f"linux-{row.latest}.tar.xz"
+            actual = [source_filename(src) for src in proposed.sources
+                      if source_filename(src).startswith("linux-") and
+                      source_filename(src).endswith(".tar.xz")]
+            if actual != [expected]:
+                raise UpdateError(f"kernel source/version mismatch: expected {expected}, found {actual}")
         problems = inventory_local_companions(proposed, staged, row.current)
         if problems:
             raise UpdateError("; ".join(problems))

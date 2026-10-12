@@ -673,6 +673,10 @@ def _build_rank(port: str) -> tuple[int, str]:
         order = GROUP_BUILD_ORDER.get(group, [])
         if port in order:
             return group_index * 1000 + order.index(port), port
+    if port == "core/linux-lts":
+        return 9_000, port
+    if port == "core/linux-headers":
+        return 9_001, port
     return 10_000, port
 
 
@@ -1079,6 +1083,7 @@ def crux_reference_version(meta: PortMeta, timeout: int = 10) -> str:
     names = [meta.name, meta.path.name]
     if meta.name.startswith("python3-"):
         names.append(meta.name)
+    # These are CRUX reference collections, not BFSOS port trees.
     collections = ("core", "opt", "xorg", "compat-32", "contrib")
 
     # Cap the entire CRUX lookup for one BFSOS port. The old implementation
@@ -1285,8 +1290,8 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
                                  "BFSOS 6.18 LTS point-release policy", True, row.get("provider", ""), row.get("source", "")))
         elif meta.name == "linux" and row.get("status") == "UPDATE" and row.get("latest"):
             out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
-                                 "kernel-bfsos-current", "kernel.org current series", "REVIEW",
-                                 "optional current kernel; review separately from default LTS", False,
+                                 "kernel-bfsos-current", "kernel.org current series", "UPDATE",
+                                 "optional current kernel; update when selected", True,
                                  row.get("provider", ""), row.get("source", "")))
 
     for meta in metas:
@@ -1709,7 +1714,7 @@ def write_retry_state_log(rows, results, ports_root: Path):
             f.write("\t".join(x.replace("\t"," ").replace("\n"," ") for x in vals)+"\n")
     return path
 
-def apply_selected(cands, selected, ports_root: Path, timeout: int):
+def apply_selected(cands, selected, ports_root: Path, timeout: int, defer_glibc: bool = False):
     # Interactive REVIEW items start OFF, but an explicitly checked REVIEW item
     # is a maintainer override and should be applied. Noninteractive --apply
     # remains conservative because main() only auto-selects UPDATE candidates.
@@ -1790,7 +1795,7 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
         if cp.returncode: print(combined,file=sys.stderr)
 
     # Header changes require glibc to be rebuilt against the new userspace headers.
-    if any(c.name == "linux-headers" and results.get(c.port)=="UPDATED" for c in chosen):
+    if not defer_glibc and any(c.name == "linux-headers" and results.get(c.port)=="UPDATED" for c in chosen):
         gp = ports_root/"core"/"glibc"/"Pkgfile"
         if gp.exists():
             text = gp.read_text(); m = re.search(r"(?m)^release=(\d+)\s*$",text)
@@ -1800,6 +1805,30 @@ def apply_selected(cands, selected, ports_root: Path, timeout: int):
                 results["core/glibc"] = f"RELEASE BUMP {old}->{old+1} (linux-headers)"
             else: results["core/glibc"] = "NEEDS REVIEW: non-numeric release"
     return results
+
+
+
+def bump_glibc_after_validated_headers(ports_root: Path, selected: set[str], results: dict[str, str]) -> None:
+    """Defer the glibc release change until the selected headers build succeeds."""
+    if "core/linux-headers" not in selected:
+        return
+    if not str(results.get("core/linux-headers", "")).startswith("BUILT"):
+        results["core/glibc"] = "DEFERRED: linux-headers build did not succeed"
+        return
+    gp = ports_root / "core/glibc/Pkgfile"
+    if not gp.is_file():
+        results["core/glibc"] = "NEEDS REVIEW: glibc Pkgfile missing"
+        return
+    content = gp.read_text()
+    match = re.search(r"(?m)^release=(\d+)\s*$", content)
+    if not match:
+        results["core/glibc"] = "NEEDS REVIEW: non-numeric glibc release"
+        return
+    old = int(match.group(1))
+    tmp = gp.with_name("Pkgfile.bfs-update-tmp")
+    tmp.write_text(content[:match.start()] + f"release={old + 1}" + content[match.end():])
+    os.replace(tmp, gp)
+    results["core/glibc"] = f"RELEASE BUMP {old}->{old + 1} (validated linux-headers)"
 
 
 def snapshot_selected_ports(selected: set[str], ports_root: Path) -> Path | None:
@@ -2249,6 +2278,12 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             results[c.port] = f"BLOCKED: {group} updated prerequisite built but not installed/staged"
             continue
 
+        if c.port == "core/linux-headers" and "core/linux-lts" in selected:
+            lts_result = str(results.get("core/linux-lts", ""))
+            if not lts_result.startswith(("BUILT", "FOOTPRINT UPDATED")) or "FAILED" in lts_result:
+                results[c.port] = "BUILD FAILED: LTS kernel not validated; headers deferred"
+                continue
+
         port_dir = ports_root/c.port
 
         # In build-only mode, never test a dependent against an older installed
@@ -2280,6 +2315,32 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         if not preflight["ok"]:
             results[c.port] = f"BLOCKED: build workspace preflight failed: effectively full; {diag}"
             continue
+
+        if c.port in {"core/linux", "core/linux-lts", "core/linux-headers"}:
+            # The port metadata, not the scan result or a preexisting cache,
+            # is the build authority. Fail closed on stale kernel source URLs.
+            try:
+                live = eval_pkgfile(port_dir / "Pkgfile", ports_root)
+                expected = f"linux-{live.version}.tar.xz"
+                archives = [source_filename(src) for src in live.sources
+                            if source_filename(src).startswith("linux-") and
+                            source_filename(src).endswith(".tar.xz")]
+                if archives != [expected] or live.version != c.new:
+                    results[c.port] = ("BUILD FAILED: kernel source/version mismatch: "
+                                       f"expected {expected}; found {archives}; "
+                                       f"Pkgfile version={live.version}, target={c.new}")
+                    continue
+            except Exception as exc:
+                results[c.port] = f"BUILD FAILED: kernel metadata preflight: {exc}"
+                continue
+            # pkgmk -kw preserves failed work for inspection. For an update,
+            # an older extracted source in a reused workspace is not valid.
+            old_workspace = Path(root) / f"pkgmk-{c.name}"
+            if old_workspace.exists():
+                clean, why = cleanup_successful_build_work(root, c.name)
+                if not clean:
+                    results[c.port] = f"BUILD FAILED: cannot reset stale kernel workspace: {why}"
+                    continue
 
         logical = logical_cpu_count()
         jobs, jobs_source = read_build_jobs(port_dir, logical)
@@ -2481,10 +2542,11 @@ def main():
         print_report(cands)
         selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
         build_backup = snapshot_selected_ports(selected, ports_root) if ns.apply and ns.build else None
-        results=apply_selected(cands,selected,ports_root,ns.timeout) if ns.apply else {}
+        results=apply_selected(cands,selected,ports_root,ns.timeout, defer_glibc=ns.build) if ns.apply else {}
         if ns.apply and ns.build:
             build_selected(cands,selected,ports_root,ns.install,results)
             rollback_failed_build_ports(selected, ports_root, results, build_backup)
+            bump_glibc_after_validated_headers(ports_root, selected, results)
         log=LOG_ROOT/f"scan-{stamp}.tsv"
         write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
         print(f"Report: {log}")
@@ -2606,10 +2668,11 @@ def main():
             if code:
                 continue
             build_backup = snapshot_selected_ports(selected, ports_root) if mode in {"2","3"} else None
-            results=apply_selected(cands,selected,ports_root,ns.timeout)
+            results=apply_selected(cands,selected,ports_root,ns.timeout, defer_glibc=mode in {"2","3"})
             if mode in {"2","3"}:
                 build_selected(cands,selected,ports_root,mode=="3",results)
                 rollback_failed_build_ports(selected, ports_root, results, build_backup)
+                bump_glibc_after_validated_headers(ports_root, selected, results)
             log=LOG_ROOT/f"scan-{stamp}.tsv"
             write_scan_log(log,cands,selected,results,warnings,diagnostics,ports_root)
             text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."

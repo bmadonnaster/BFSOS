@@ -5,10 +5,10 @@
 # Optional: pahole
 
 name=linux
-version=7.2.9
+version=7.2.10
 release=1
 source=(
-    https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz
+    https://www.kernel.org/pub/linux/kernel/v7.x/linux-${version}.tar.xz
     config
 )
 
