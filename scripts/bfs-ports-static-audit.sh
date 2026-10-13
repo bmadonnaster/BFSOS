@@ -208,10 +208,8 @@ for fallback in \
     grep -Fq "$fallback" bootstrap.sh || report "bootstrap pkgmk fallback missing $fallback"
 done
 
-# Firefox rapid/ESR channels are tracked independently; binary and source rapid ports must match.
-check_version ports/opt/firefox/Pkgfile 157.0.1
-check_version ports/opt/firefox-bin/Pkgfile 157.0.1
-check_version ports/opt/firefox-esr/Pkgfile 153.4.0esr
+# Firefox versions are updated independently by their respective release channels.
+# Do not pin normal upstream releases to old static audit versions.
 
 # Current LXQt stable baseline (2026-04 suite plus later point releases).
 for spec in libfm-qt:2.4.0 liblxqt:2.4.0 libqtxdg:4.4.0 lxqt-about:2.4.0 lxqt-admin:2.4.0 \
@@ -257,7 +255,6 @@ if grep -Rqs --include=Pkgfile -E 'launchpad\.net/compiz|version=0\.9\.|libwnck2
     report "Compiz collection still contains 0.9/Launchpad/GTK2-era metadata"
 fi
 
-check_version ports/xorg/xscreensaver/Pkgfile 6.16
 if ! grep -q 'bsod' ports/xorg/xscreensaver/Pkgfile; then
     report "XScreenSaver recipe does not disable the bsod fake-security saver from default random rotation"
 fi
