@@ -1,0 +1,9 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/bin/
+-rwxr-xr-x	root/root	usr/bin/gdk-pixbuf-query-loaders-32
+drwxr-xr-x	root/root	usr/lib32/
+lrwxrwxrwx	root/root	usr/lib32/libgdk_pixbuf-2.0.so -> libgdk_pixbuf-2.0.so.0
+lrwxrwxrwx	root/root	usr/lib32/libgdk_pixbuf-2.0.so.0 -> libgdk_pixbuf-2.0.so.0.4400.8
+-rwxr-xr-x	root/root	usr/lib32/libgdk_pixbuf-2.0.so.0.4400.8
+drwxr-xr-x	root/root	usr/lib32/pkgconfig/
+-rw-r--r--	root/root	usr/lib32/pkgconfig/gdk-pixbuf-2.0.pc

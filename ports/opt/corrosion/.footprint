@@ -1,0 +1,11 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/lib/
+drwxr-xr-x	root/root	usr/lib/cmake/
+drwxr-xr-x	root/root	usr/lib/cmake/Corrosion/
+-rw-r--r--	root/root	usr/lib/cmake/Corrosion/CorrosionConfig.cmake
+-rw-r--r--	root/root	usr/lib/cmake/Corrosion/CorrosionConfigVersion.cmake
+drwxr-xr-x	root/root	usr/share/
+drwxr-xr-x	root/root	usr/share/cmake/
+-rw-r--r--	root/root	usr/share/cmake/Corrosion.cmake
+-rw-r--r--	root/root	usr/share/cmake/CorrosionGenerator.cmake
+-rw-r--r--	root/root	usr/share/cmake/FindRust.cmake

@@ -1,0 +1,19 @@
+drwxr-xr-x	root/root	opt/
+drwxr-xr-x	root/root	opt/kf6/
+drwxr-xr-x	root/root	opt/kf6/include/
+drwxr-xr-x	root/root	opt/kf6/include/qt6keychain/
+-rw-r--r--	root/root	opt/kf6/include/qt6keychain/keychain.h
+-rw-r--r--	root/root	opt/kf6/include/qt6keychain/qkeychain_export.h
+drwxr-xr-x	root/root	opt/kf6/lib/
+drwxr-xr-x	root/root	opt/kf6/lib/cmake/
+drwxr-xr-x	root/root	opt/kf6/lib/cmake/Qt6Keychain/
+-rw-r--r--	root/root	opt/kf6/lib/cmake/Qt6Keychain/Qt6KeychainConfig.cmake
+-rw-r--r--	root/root	opt/kf6/lib/cmake/Qt6Keychain/Qt6KeychainConfigVersion.cmake
+-rw-r--r--	root/root	opt/kf6/lib/cmake/Qt6Keychain/Qt6KeychainLibraryDepends-release.cmake
+-rw-r--r--	root/root	opt/kf6/lib/cmake/Qt6Keychain/Qt6KeychainLibraryDepends.cmake
+lrwxrwxrwx	root/root	opt/kf6/lib/libqt6keychain.so -> libqt6keychain.so.1
+-rwxr-xr-x	root/root	opt/kf6/lib/libqt6keychain.so.0.17.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libqt6keychain.so.1 -> libqt6keychain.so.0.17.0
+drwxr-xr-x	root/root	opt/kf6/mkspecs/
+drwxr-xr-x	root/root	opt/kf6/mkspecs/modules/
+-rw-r--r--	root/root	opt/kf6/mkspecs/modules/qt_Qt6Keychain.pri

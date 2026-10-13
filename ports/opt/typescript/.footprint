@@ -1,0 +1,16 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/bin/
+lrwxrwxrwx	root/root	usr/bin/tsc -> ../lib/node_modules/typescript/bin/tsc
+lrwxrwxrwx	root/root	usr/bin/tsserver -> ../lib/node_modules/typescript/bin/tsserver
+drwxr-xr-x	root/root	usr/lib/
+drwxr-xr-x	root/root	usr/lib/node_modules/
+drwxr-xr-x	root/root	usr/lib/node_modules/typescript/
+drwxr-xr-x	root/root	usr/lib/node_modules/typescript/bin/
+-rwxr-xr-x	root/root	usr/lib/node_modules/typescript/bin/tsc
+drwxr-xr-x	root/root	usr/lib/node_modules/typescript/lib/
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/lib/getExePath.d.ts
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/lib/getExePath.js
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/lib/tsc.js
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/lib/version.cjs
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/lib/version.d.cts
+-rw-r--r--	root/root	usr/lib/node_modules/typescript/package.json

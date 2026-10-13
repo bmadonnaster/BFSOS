@@ -1,0 +1,9 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/share/
+drwxr-xr-x	root/root	usr/share/edk2/
+drwxr-xr-x	root/root	usr/share/edk2/ovmf/
+-rw-r--r--	root/root	usr/share/edk2/ovmf/OVMF_CODE.fd
+-rw-r--r--	root/root	usr/share/edk2/ovmf/OVMF_VARS.fd
+drwxr-xr-x	root/root	usr/share/qemu/
+drwxr-xr-x	root/root	usr/share/qemu/firmware/
+-rw-r--r--	root/root	usr/share/qemu/firmware/70-bfsos-ovmf-x86_64.json

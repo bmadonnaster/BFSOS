@@ -1,0 +1,12 @@
+drwxr-xr-x	root/root	lib32/
+lrwxrwxrwx	root/root	lib32/libhistory.so.8 -> libhistory.so.8.3
+-rwxr-xr-x	root/root	lib32/libhistory.so.8.3
+lrwxrwxrwx	root/root	lib32/libreadline.so.8 -> libreadline.so.8.3
+-rwxr-xr-x	root/root	lib32/libreadline.so.8.3
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/lib32/
+lrwxrwxrwx	root/root	usr/lib32/libhistory.so -> ../../lib32/libhistory.so.8.3
+lrwxrwxrwx	root/root	usr/lib32/libreadline.so -> ../../lib32/libreadline.so.8.3
+drwxr-xr-x	root/root	usr/lib32/pkgconfig/
+-rw-r--r--	root/root	usr/lib32/pkgconfig/history.pc
+-rw-r--r--	root/root	usr/lib32/pkgconfig/readline.pc

@@ -1,0 +1,5 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/share/
+drwxr-xr-x	root/root	usr/share/myspell/
+drwxr-xr-x	root/root	usr/share/myspell/dicts/
+lrwxrwxrwx	root/root	usr/share/myspell/dicts/* -> /usr/share/hyphen/*

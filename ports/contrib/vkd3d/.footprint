@@ -1,0 +1,38 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/bin/
+-rwxr-xr-x	root/root	usr/bin/vkd3d-compiler
+-rwxr-xr-x	root/root	usr/bin/vkd3d-dxbc
+drwxr-xr-x	root/root	usr/include/
+drwxr-xr-x	root/root	usr/include/vkd3d/
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d10_1shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d10shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d11shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d12.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d12sdklayers.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d12shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3d9types.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3dcommon.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3dcompiler.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3dcompiler_types.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_d3dx9shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_dxgibase.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_dxgiformat.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_shader.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_types.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_utils.h
+-rw-r--r--	root/root	usr/include/vkd3d/vkd3d_windows.h
+drwxr-xr-x	root/root	usr/lib/
+lrwxrwxrwx	root/root	usr/lib/libvkd3d-shader.so -> libvkd3d-shader.so.1.19.0
+lrwxrwxrwx	root/root	usr/lib/libvkd3d-shader.so.1 -> libvkd3d-shader.so.1.19.0
+-rwxr-xr-x	root/root	usr/lib/libvkd3d-shader.so.1.19.0
+lrwxrwxrwx	root/root	usr/lib/libvkd3d-utils.so -> libvkd3d-utils.so.1.7.0
+lrwxrwxrwx	root/root	usr/lib/libvkd3d-utils.so.1 -> libvkd3d-utils.so.1.7.0
+-rwxr-xr-x	root/root	usr/lib/libvkd3d-utils.so.1.7.0
+lrwxrwxrwx	root/root	usr/lib/libvkd3d.so -> libvkd3d.so.1.21.0
+lrwxrwxrwx	root/root	usr/lib/libvkd3d.so.1 -> libvkd3d.so.1.21.0
+-rwxr-xr-x	root/root	usr/lib/libvkd3d.so.1.21.0
+drwxr-xr-x	root/root	usr/lib/pkgconfig/
+-rw-r--r--	root/root	usr/lib/pkgconfig/libvkd3d-shader.pc
+-rw-r--r--	root/root	usr/lib/pkgconfig/libvkd3d-utils.pc
+-rw-r--r--	root/root	usr/lib/pkgconfig/libvkd3d.pc

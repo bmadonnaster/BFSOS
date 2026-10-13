@@ -1,0 +1,19 @@
+drwxr-xr-x	root/root	var/
+drwxr-xr-x	root/root	var/cache/
+drwxr-xr-x	root/root	var/cache/pkg/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/GL/
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/GL/eglew.h
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/GL/glew.h
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/GL/glxew.h
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/include/GL/wglew.h
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/
+lrwxrwxrwx	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/libGLEW.so -> libGLEW.so.2.3.1
+lrwxrwxrwx	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/libGLEW.so.2.3 -> libGLEW.so.2.3.1
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/libGLEW.so.2.3.1
+drwxr-xr-x	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/pkgconfig/
+-rw-r--r--	root/root	var/cache/pkg/build-work/pkgmk-glew/pkg/usr/lib/pkgconfig/glew.pc

@@ -1,0 +1,16 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/include/
+drwxr-xr-x	root/root	usr/include/ministream/
+-rw-r--r--	root/root	usr/include/ministream/ministream-version.h
+-rw-r--r--	root/root	usr/include/ministream/ministream.h
+drwxr-xr-x	root/root	usr/lib/
+drwxr-xr-x	root/root	usr/lib/girepository-1.0/
+-rw-r--r--	root/root	usr/lib/girepository-1.0/Ministream-1.typelib
+lrwxrwxrwx	root/root	usr/lib/libministream.so -> libministream.so.1
+-rwxr-xr-x	root/root	usr/lib/libministream.so.0.99.1
+lrwxrwxrwx	root/root	usr/lib/libministream.so.1 -> libministream.so.0.99.1
+drwxr-xr-x	root/root	usr/lib/pkgconfig/
+-rw-r--r--	root/root	usr/lib/pkgconfig/ministream.pc
+drwxr-xr-x	root/root	usr/share/
+drwxr-xr-x	root/root	usr/share/gir-1.0/
+-rw-r--r--	root/root	usr/share/gir-1.0/Ministream-1.gir

@@ -1,0 +1,24 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/bin/
+-rwxr-xr-x	root/root	usr/bin/SvtAv1EncApp
+drwxr-xr-x	root/root	usr/include/
+drwxr-xr-x	root/root	usr/include/svt-av1/
+-rw-r--r--	root/root	usr/include/svt-av1/EbConfigMacros.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbDebugMacros.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbSvtAv1.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbSvtAv1Enc.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbSvtAv1ErrorCodes.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbSvtAv1Formats.h
+-rw-r--r--	root/root	usr/include/svt-av1/EbSvtAv1Metadata.h
+drwxr-xr-x	root/root	usr/lib/
+drwxr-xr-x	root/root	usr/lib/cmake/
+drwxr-xr-x	root/root	usr/lib/cmake/SVT-AV1/
+-rw-r--r--	root/root	usr/lib/cmake/SVT-AV1/SVT-AV1-sharedTargets-release.cmake
+-rw-r--r--	root/root	usr/lib/cmake/SVT-AV1/SVT-AV1-sharedTargets.cmake
+-rw-r--r--	root/root	usr/lib/cmake/SVT-AV1/SVT-AV1Config.cmake
+-rw-r--r--	root/root	usr/lib/cmake/SVT-AV1/SVT-AV1ConfigVersion.cmake
+lrwxrwxrwx	root/root	usr/lib/libSvtAv1Enc.so -> libSvtAv1Enc.so.4
+lrwxrwxrwx	root/root	usr/lib/libSvtAv1Enc.so.4 -> libSvtAv1Enc.so.4.2.0
+-rwxr-xr-x	root/root	usr/lib/libSvtAv1Enc.so.4.2.0
+drwxr-xr-x	root/root	usr/lib/pkgconfig/
+-rw-r--r--	root/root	usr/lib/pkgconfig/SvtAv1Enc.pc

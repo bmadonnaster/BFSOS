@@ -1,0 +1,11 @@
+drwxr-xr-x	root/root	usr/
+drwxr-xr-x	root/root	usr/lib32/
+lrwxrwxrwx	root/root	usr/lib32/libhogweed.so -> libhogweed.so.7.0
+lrwxrwxrwx	root/root	usr/lib32/libhogweed.so.7 -> libhogweed.so.7.0
+-rw-r--r--	root/root	usr/lib32/libhogweed.so.7.0
+lrwxrwxrwx	root/root	usr/lib32/libnettle.so -> libnettle.so.9.0
+lrwxrwxrwx	root/root	usr/lib32/libnettle.so.9 -> libnettle.so.9.0
+-rw-r--r--	root/root	usr/lib32/libnettle.so.9.0
+drwxr-xr-x	root/root	usr/lib32/pkgconfig/
+-rw-r--r--	root/root	usr/lib32/pkgconfig/hogweed.pc
+-rw-r--r--	root/root	usr/lib32/pkgconfig/nettle.pc
