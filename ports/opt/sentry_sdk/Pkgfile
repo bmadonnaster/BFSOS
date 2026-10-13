@@ -3,6 +3,6 @@
 # Depends on: python3-certifi python3-urllib3
 
 name=sentry_sdk
-version=2.71.0
+version=2.72.0
 release=1
 source=(https://github.com/getsentry/sentry-python/releases/download/${version}/${name}-${version}.tar.gz)

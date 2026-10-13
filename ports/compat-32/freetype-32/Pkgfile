@@ -4,8 +4,8 @@
 # Depends on: bzip2-32 freetype libpng-32
 
 name=freetype-32
-version=2.14.3
-release=3
+version=2.15.0
+release=1
 source=(https://sourceforge.net/projects/freetype/files/freetype2/$version/freetype-$version.tar.xz)
 
 build_opt="-D default_library=shared"

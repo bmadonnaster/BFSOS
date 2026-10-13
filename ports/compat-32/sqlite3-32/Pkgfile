@@ -4,8 +4,8 @@
 # Depends on: readline-32 sqlite
 
 name=sqlite3-32
-version=3.53.4
-release=3
+version=3.54.0
+release=1
 _version=$(printf "%i%.2i%.2i%.2i" ${version//./ })
 
 source=(https://www.sqlite.org/2026/sqlite-autoconf-${_version}.tar.gz)
