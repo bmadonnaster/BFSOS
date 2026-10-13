@@ -1,0 +1,6 @@
+82e5568bccd61aed1cecba82a91867b3  0001-Glib.Timeout-fix.patch
+32196d39df7c1f3b9550167bb457e07d  0002-Fix-mono-nunit-pkgconfig-name.patch
+81af83069fa963044a6bb7f023b1b171  0003-Fix-Mono-assemblies-directory.patch
+528f5aaabbc3c3cdd9abe35e40686596  badfunction.patch
+ae30a7c8490db4a23aa2517f46638caf  improved-plasma-support.patch
+2cccb0a65a8d6ffcb66b199fddc3ecd4  libappindicator_12.10.1+20.10.20200706.1.orig.tar.gz
