@@ -9002,6 +9002,34 @@ EOF_ZRAM_SERVICE
         log "Configured ZRAM swap for boot"
 }
 
+# Reconcile the dedicated unprivileged builder's persistent work and cache
+# paths. Older pre-runuser BFSOS builds could leave root-owned child directories
+# even when the parent cache had the right owner. This is an installer/upgrade
+# operation; the package build itself must never run as root.
+ensure_pkgmk_build_ownership() {
+        if ! getent passwd pkgmk >/dev/null || ! getent group pkgmk >/dev/null; then
+                echo "ERROR: pkgmk user/group missing; cannot provision package caches" >&2
+                return 1
+        fi
+        local path
+        install -d -m 0755 /var/cache/pkg
+        for path in /var/cache/pkg/sources /var/cache/pkg/packages \
+                    /var/cache/pkg/build-work /var/cache/pkg/build-work-disk \
+                    /var/cache/ccache; do
+                install -d -m 0775 -o pkgmk -g pkgmk "$path" || return 1
+                # Repair old root-owned per-port children without touching
+                # a developer Git checkout or the root-owned cache parent.
+                chown -R pkgmk:pkgmk "$path" || return 1
+        done
+        # The trusted /usr/ports recipe tree is maintained by the ports-sync
+        # path. Do not recursively take ownership of package recipes here:
+        # that privilege-boundary policy is tracked separately.
+        if [[ -d /usr/ports ]] && [[ ! -w /usr/ports ]]; then
+                log "Ports tree is not writable by the current installer user; verify pkgmk footprint permissions after synchronization"
+        fi
+        log "Verified pkgmk ownership of managed package caches"
+}
+
 configure_pkgmk_tmpfs() {
         local mountpoint=/var/cache/pkg/build-work size="$BUILD_TMPFS_SIZE_VALUE"
         local kb=0 gib=0 recommended="" fstab_line=""
@@ -9125,6 +9153,7 @@ configure_pkgmk_integrity_settings() {
         fi
 }
 
+ensure_pkgmk_build_ownership || exit 1
 configure_pkgmk_tmpfs
 configure_pkgmk_build_settings
 configure_pkgmk_integrity_settings

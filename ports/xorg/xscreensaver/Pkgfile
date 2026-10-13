@@ -4,8 +4,8 @@
 # Depends on: gettext intltool gtk3 xorg-apps glu linux-pam ffmpeg kerberos
 
 name=xscreensaver
-version=6.16
-release=2
+version=6.17
+release=1
 source=(https://ftp.ludd.ltu.se/pub/blfs/conglomeration/xscreensaver/${name}-${version}.tar.gz)
 
 pkg_build() {

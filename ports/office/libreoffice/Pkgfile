@@ -6,16 +6,58 @@
 
 name=libreoffice
 version=26.8.1
-release=1
+release=2
+
+# LibreOffice requires a persistent, generously sized build workspace.
+build_work=disk
+build_jobs=16
 # Upstream source archive has a fourth (build) component.
 source=(https://download.documentfoundation.org/libreoffice/src/$version/libreoffice-${version}.1.tar.xz)
+
+# pkgmk runs as the unprivileged pkgmk account under fakeroot. LibreOffice's
+# make-time root check sees fakeroot's simulated UID 0, so remove the fakeroot
+# preload *only for build/configure commands*. pkgmk's package staging still
+# retains its normal fakeroot environment.
+# BFSOS also exports several staging paths globally; these must not influence
+# LibreOffice's internal build or its install-gdb-printers target.
+lo_unprivileged_build() {
+    env -u LD_PRELOAD -u FAKEROOTKEY \
+        -u DESTDIR -u DEST_DIR -u INSTALLROOT \
+        -u install_root -u INSTALL_ROOT "$@"
+}
 
 pkg_build() {
     # Do not overlap the binary variant: installation owns the same soffice files.
     [ -f ./autogen.sh ] || { echo 'libreoffice: missing upstream autogen.sh' >&2; return 1; }
-    ./autogen.sh --prefix=/usr --sysconfdir=/etc \
+    lo_unprivileged_build ./autogen.sh --prefix=/usr --sysconfdir=/etc \
         --with-system-curl --with-system-nss --with-system-zlib \
         --disable-ccache --without-java || return 1
-    make -j "${JOBS:-1}" || return 1
-    make DESTDIR="$PKG" install || return 1
+    lo_unprivileged_build make -j "${JOBS:-1}" || return 1
+    # Install the complete distribution integration:
+    # application launchers, desktop files, icons, MIME types, and wrappers.
+    lo_unprivileged_build make DESTDIR="$PKG" distro-pack-install || return 1
+
+    # Normalize development branding in desktop launchers.
+    # The installed application uses the unversioned LibreOffice command.
+    local desktop_dir="$PKG/usr/lib/libreoffice/share/xdg"
+
+    if [ -d "$desktop_dir" ]; then
+        local file
+        for file in "$desktop_dir"/*.desktop; do
+            [ -f "$file" ] || continue
+
+            sed -i \
+                -e 's/libreofficedev26\.8/libreoffice/g' \
+                -e 's/LibreOfficeDev/LibreOffice/g' \
+                "$file"
+        done
+    fi
+
+    # Verify that desktop integration was staged successfully.
+    [ -L "$PKG/usr/bin/libreoffice" ] || return 1
+    [ -L "$PKG/usr/share/applications/libreoffice-writer.desktop" ] || return 1
+    [ -f "$PKG/usr/lib/libreoffice/share/xdg/writer.desktop" ] || return 1
+    grep -q '^Exec=libreoffice --writer' \
+        "$PKG/usr/lib/libreoffice/share/xdg/writer.desktop" || return 1
+    [ -f "$PKG/usr/share/icons/hicolor/128x128/apps/libreoffice-writer.png" ] || return 1
 }

@@ -1,0 +1,5 @@
+# BFSOS runuser PAM configuration
+auth       sufficient   pam_rootok.so
+account    include      system-account
+session    required     pam_env.so
+session    include      system-session

@@ -4,7 +4,7 @@
 # Depends on: luit xorg-libs xorg-fonts
 
 name=xterm
-version=411
+version=412
 release=1
 source=(https://invisible-mirror.net/archives/xterm/$name-$version.tgz)
 

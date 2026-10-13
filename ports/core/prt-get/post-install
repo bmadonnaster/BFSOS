@@ -26,6 +26,13 @@ if [ -f "$config" ]; then
     esac
 fi
 
+# Preserve local collection customizations while registering the Office tree.
+# An existing installation may retain its previous /etc/ports/bfsos.git.
+if [ -f "$config" ] && ! grep -Eq '(^|[[:space:]])office:ports/office([[:space:]"]|$)' "$config"; then
+    # Append to the quoted list, preserving customized collection order.
+    sed -i '/^COLLECTIONS=/ s/"$/ office:ports\/office"/' "$config"
+fi
+
 # Also migrate an existing cached Git checkout so the next ports -u
 # does not continue using Codeberg.
 if [ -d "$cache/.git" ]; then

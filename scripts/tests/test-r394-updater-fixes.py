@@ -142,7 +142,11 @@ with tempfile.TemporaryDirectory() as td_s:
     assert u._build_rank("opt/nvidia") < u._build_rank("compat-32/nvidia-32")
 
     old_stream = u.run_build_streaming
+    old_which = u.shutil.which
     try:
+        # The updater intentionally fails closed without its installed wrapper.
+        # These synthetic tests replace the build subprocess and wrapper lookup.
+        u.shutil.which = lambda name: '/usr/bin/bfs-pkgmk' if name == 'bfs-pkgmk' else old_which(name)
         class CP:
             returncode = 0
             stdout = ""
@@ -159,6 +163,7 @@ with tempfile.TemporaryDirectory() as td_s:
         assert len(calls) == 2
     finally:
         u.run_build_streaming = old_stream
+        u.shutil.which = old_which
 
 # Primary updater must retain the helper's actual NEEDS-REVIEW reason.
 with tempfile.TemporaryDirectory() as td_s:

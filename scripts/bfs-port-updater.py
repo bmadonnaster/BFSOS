@@ -1226,7 +1226,7 @@ def prefetch_fallback_references(
     if not targets:
         return {}
 
-    workers = max(1, min(int(jobs or 1), 12, len(targets)))
+    workers = max(1, min(int(jobs or 1), len(targets)))
     crux_timeout = max(1, min(int(timeout), 5))
     arch_timeout = max(1, min(int(timeout), 5))
     results: dict[str, tuple[str, ArchReference]] = {}
@@ -1534,16 +1534,37 @@ def choose_trees_dialog(trees, env):
     return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
 
 
+def default_update_checked(c):
+    """Preselect routine maintainer updates; keep uncertain candidates opt-in.
+
+    REVIEW still means the maintainer must explicitly confirm the apply plan.
+    The selection UI is a convenience, not a change to discovery authority.
+    """
+    if c.status == "UPDATE":
+        return True
+    if c.status != "REVIEW":
+        return False
+    # A generic book lead or source that could not be verified is not an
+    # ordinary update. Nor is a version-specific patch needing manual review.
+    reason = (c.reason or "").lower()
+    if c.policy == "book-reference" or any(s in reason for s in (
+        "version-specific", "patch requires", "unavailable",
+        "unverified", "ambiguous", "cannot verify", "not verified",
+    )):
+        return False
+    # CRUX and identity-verified Arch are routine maintainer references;
+    # independent upstream/browser candidates remain opt-in unless validated.
+    return c.source_label in {"CRUX reference", "Arch reference"}
+
+
 def choose_updates_dialog(cands, env):
     items = []
     for c in cands:
         desc = f"{c.old} -> {c.new} r{c.old_release}->{c.new_release} [{c.source_label}; {c.status}]"
-        # Only policy-approved UPDATE candidates may start checked.
-        # REVIEW/held/unknown items always start unchecked.
-        state = "on" if (c.status == "UPDATE" and c.selected) else "off"
+        state = "on" if default_update_checked(c) else "off"
         items += [c.port, desc, state]
     code, out = dcall(["--title", "Updates found", "--separate-output", "--checklist",
-                       "ON = update. OFF = do not update. REVIEW items always start OFF.", "29", "125", "21", *items], env)
+                       "Routine UPDATE and verified CRUX/Arch REVIEW start ON; uncertain REVIEW starts OFF. Space toggles.", "29", "125", "21", *items], env)
     return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
 
 
@@ -1650,20 +1671,46 @@ def retry_failed_updates(rows, selected, ports_root: Path):
             results[rel] = "SKIPPED: tree changed since failed run"
             continue
 
-        cp = run(["sudo", "pkgmk", "-d", "-kw"], cwd=port_dir)
+        try:
+            backend, backend_reason, preflight = select_build_work_backend(port_dir, rel)
+            if not preflight["ok"]:
+                raise OSError(f"{backend} workspace insufficient space or inodes")
+            logical = logical_cpu_count()
+            jobs, jobs_source = read_build_jobs(port_dir, logical)
+            cmd = pkgmk_build_command(backend, jobs)
+        except (OSError, ValueError, RuntimeError) as exc:
+            results[rel] = f"BUILD RETRY BLOCKED: {exc}"
+            continue
+        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        retry_log = LOG_ROOT / f"retry-{stamp}-{rel.replace('/', '-')}.log"
+        header = (f"# BFSOS retry-work: backend={backend} reason={backend_reason} root={preflight['root']}\n"
+                  f"# BFSOS retry-cpu: logical_cpus={logical} jobs={jobs} source={jobs_source}\n")
+        cp = run_build_streaming(cmd, port_dir, retry_log, header)
         if cp.returncode:
-            results[rel] = f"BUILD RETRY FAILED ({cp.returncode})"
+            results[rel] = f"BUILD RETRY FAILED ({cp.returncode}); log={retry_log}"
             continue
 
         if "INSTALL FAILED" in row.get("result", ""):
-            name = eval_pkgfile(port_dir / "Pkgfile", ports_root).name
-            cp2 = run(["sudo", "prt-get", "-fr", "depinst", name])
+            meta = eval_pkgfile(port_dir / "Pkgfile", ports_root)
+            package_dir = Path(_pkgmk_conf_path_value("PKGMK_PACKAGE_DIR", "/var/cache/pkg/packages"))
+            archives = sorted(package_dir.glob(f"{meta.name}#{meta.version}-{meta.release}.pkg.tar.*"))
+            if len(archives) != 1:
+                results[rel] = f"BUILT; INSTALL RETRY FAILED: expected one archive, got {len(archives)}"
+                continue
+            installed = run(["pkginfo", "-i"], capture=True)
+            if installed.returncode or installed.stdout is None:
+                results[rel] = "BUILT; INSTALL RETRY FAILED: pkginfo -i failed"
+                continue
+            found = any(line.split()[:1] == [meta.name] for line in installed.stdout.splitlines())
+            install_cmd = ["sudo", "pkgadd"] + (["-u"] if found else []) + [str(archives[0])]
+            cp2 = run(install_cmd)
             if cp2.returncode:
                 results[rel] = f"BUILT; INSTALL RETRY FAILED ({cp2.returncode})"
                 continue
             results[rel] = "BUILT+INSTALLED ON RETRY"
         else:
             results[rel] = "BUILT ON RETRY"
+        cleanup_successful_build_work(preflight["root"], meta.name if "INSTALL FAILED" in row.get("result", "") else eval_pkgfile(port_dir / "Pkgfile", ports_root).name)
     return results
 
 
@@ -2048,9 +2095,10 @@ def read_build_jobs(port_dir: Path, logical_cpus: int | None = None) -> tuple[in
 
 
 def pkgmk_build_command(backend: str, jobs: int) -> list[str]:
-    """Use bfs-pkgmk and carry effective build policy across sudo's env reset."""
-    wrapper = shutil.which("bfs-pkgmk")
-    tool = wrapper if wrapper else "pkgmk"
+    """Require bfs-pkgmk and carry build policy through sudo without root-build fallback."""
+    tool = shutil.which("bfs-pkgmk")
+    if not tool:
+        raise RuntimeError("bfs-pkgmk wrapper unavailable: refusing root-run pkgmk fallback")
     return [
         "sudo", "env",
         f"BFS_PKG_BUILD_WORK={backend}",
@@ -2058,7 +2106,7 @@ def pkgmk_build_command(backend: str, jobs: int) -> list[str]:
         f"JOBS={jobs}",
         f"MAKEFLAGS=-j{jobs}",
         f"CMAKE_BUILD_PARALLEL_LEVEL={jobs}",
-        tool, "-d", "-kw",
+        tool, "-d", "-kw", "-f",
     ]
 
 
@@ -2081,6 +2129,33 @@ def run_build_streaming(cmd: list[str], cwd: Path, log_path: Path, header: str) 
             chunks.append(line)
         rc = proc.wait()
     return subprocess.CompletedProcess(cmd, rc, "".join(chunks), "")
+
+
+def kf6_prerequisite_mismatch(text: str) -> str:
+    """Identify a *confirmed* KF6 installed-version mismatch, not generic CMake failures.
+
+    KDE Frameworks release builds require matching KF6Config packages; when
+    the older installed prefix is found, the failure is a prerequisite boundary
+    and should remain retryable rather than being blamed on upstream sources.
+    """
+    if "CMake Error" not in text:
+        return ""
+    matches = re.findall(
+        r'Could not find a configuration file for package "(KF6[^"\n]+)"'
+        r'\s+that is\s+compatible with requested version "([^"\n]+)"',
+        text, flags=re.I,
+    )
+    if not matches:
+        return ""
+    detail = []
+    for package, required in dict.fromkeys(matches):
+        # Version text appears in the considered-file section. We only
+        # classify if the log explicitly names both desired and old version.
+        hit = re.search(r'\bversion:\s*([0-9][\w.+-]*)', text)
+        if not hit:
+            continue
+        detail.append(f"{package} requires {required}, installed {hit.group(1)}")
+    return "; ".join(detail)
 
 
 def is_enospc_output(text: str) -> bool:
@@ -2167,19 +2242,19 @@ def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
     cmd = pkgmk_build_command(backend, jobs)
     # The initial build stopped at footprint verification, so no package archive
     # exists yet.  Create one while ignoring only the already-reviewed footprint.
-    return cmd[:-2] + ["-d", "-if", "-kw"]
+    return cmd[:-3] + ["-d", "-if", "-kw"]
 
 
 def pkgmk_footprint_update_command(backend: str, jobs: int) -> list[str]:
     cmd = pkgmk_build_command(backend, jobs)
     # Once the reviewed package exists, regenerate .footprint from that archive.
-    return cmd[:-2] + ["-d", "-uf", "-kw"]
+    return cmd[:-3] + ["-d", "-uf", "-kw"]
 
 
 def cleanup_successful_build_work(root: str | Path, package_name: str) -> tuple[bool, str]:
     """Remove exactly one successful pkgmk workspace, including root-owned trees.
 
-    Builds run through sudo, so their work directories are normally root-owned.
+    Earlier root-run builds may have left root-owned work directories.
     Cleanup therefore crosses the same privilege boundary, but only after strict
     validation that the target is an immediate pkgmk-$name child of one of the
     configured build-work roots. Cleanup failure is non-fatal to the updater.
@@ -2356,7 +2431,14 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         safe_port = c.port.replace("/", "-")
         build_log = LOG_ROOT / f"build-{log_stamp}-{safe_port}.log"
         header = f"# BFSOS build-work: {diag}\n# BFSOS build-cpu: {cpu_diag}\n"
-        cp = run_build_streaming(pkgmk_build_command(backend, jobs), port_dir, build_log, header)
+        try:
+            build_cmd = pkgmk_build_command(backend, jobs)
+        except RuntimeError as exc:
+            results[c.port] = f"INFRASTRUCTURE FAILED: {exc}"
+            if group:
+                failed_groups.add(group)
+            continue
+        cp = run_build_streaming(build_cmd, port_dir, build_log, header)
         combined = cp.stdout or ""
         if cp.returncode and "ERROR: Footprint mismatch found:" in combined:
             safe_fp, fp_lines = safe_versioned_library_footprint_change(combined)
@@ -2397,7 +2479,11 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                 )
                 enospc_abort = True
             else:
-                results[c.port] = f"BUILD FAILED ({cp.returncode}); log={build_log}{suffix}"
+                unmet = kf6_prerequisite_mismatch(combined)
+                if unmet:
+                    results[c.port] = f"BLOCKED: DEPENDENCY NOT READY: {unmet}; log={build_log}"
+                else:
+                    results[c.port] = f"BUILD FAILED ({cp.returncode}); log={build_log}{suffix}"
                 if group:
                     failed_groups.add(group)
             continue
@@ -2405,14 +2491,34 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         if not str(results.get(c.port, "")).startswith("BUILT; FOOTPRINT UPDATED"):
             results[c.port] = "BUILT"
         if install:
-            cp2 = run(["sudo","prt-get","-fr","depinst",c.name])
-            if cp2.returncode:
-                suffix = "; obsolete patches retained" if c.obsolete_patches else ""
-                results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}){suffix}"
+            # Install the verified artifact just built; prt-get depinst would
+            # invoke pkgmk again and may rebuild it or install an older cache.
+            package_dir = Path(_pkgmk_conf_path_value("PKGMK_PACKAGE_DIR", "/var/cache/pkg/packages"))
+            archive_matches = sorted(package_dir.glob(f"{c.name}#{c.new}-{c.new_release}.pkg.tar.*"))
+            if len(archive_matches) != 1:
+                results[c.port] = f"BUILT; INSTALL FAILED: expected exactly one archive, found {len(archive_matches)}"
                 if group:
                     failed_groups.add(group)
                 continue
-            results[c.port] = "BUILT+INSTALLED" + ("; FOOTPRINT UPDATED" if "FOOTPRINT UPDATED" in str(results.get(c.port, "")) else "")
+            archive = archive_matches[0]
+            # Use pkgadd -u only for an installed package. pkgadd without -u
+            # is the correct operation for a previously uninstalled package.
+            installed = run(["pkginfo", "-i"], capture=True)
+            if installed.returncode != 0 or installed.stdout is None:
+                results[c.port] = "BUILT; INSTALL FAILED: cannot query installed packages"
+                if group:
+                    failed_groups.add(group)
+                continue
+            already_installed = any(line.split()[:1] == [c.name] for line in installed.stdout.splitlines())
+            install_cmd = ["sudo", "pkgadd"] + (["-u"] if already_installed else []) + [str(archive)]
+            cp2 = run(install_cmd)
+            if cp2.returncode:
+                suffix = "; obsolete patches retained" if c.obsolete_patches else ""
+                results[c.port] = f"BUILT; INSTALL FAILED ({cp2.returncode}) archive={archive}{suffix}"
+                if group:
+                    failed_groups.add(group)
+                continue
+            results[c.port] = f"BUILT+INSTALLED archive={archive}" + ("; FOOTPRINT UPDATED" if "FOOTPRINT UPDATED" in str(results.get(c.port, "")) else "")
         elif group and group in GROUP_BUILD_REQUIRES_INSTALLED_PREREQ:
             members = selected_group_members.get(group, [])
             try:
@@ -2497,7 +2603,7 @@ def main():
     ap.add_argument("--kernel-only",action="store_true",help="scan only the tree containing BFSOS kernel ports, then show kernel candidates")
     ap.add_argument("--report-only",action="store_true")
     ap.add_argument("--apply",action="store_true",help="apply safe policy-approved candidates (noninteractive)")
-    ap.add_argument("--build",action="store_true",help="with --apply, build selected ports using sudo pkgmk -d -kw")
+    ap.add_argument("--build",action="store_true",help="with --apply, force-build selected ports using bfs-pkgmk -d -kw -f")
     ap.add_argument("--install",action="store_true",help="with --apply --build, install through prt-get after build")
     ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS", str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)))))
     ap.add_argument("--timeout",type=int,default=int(os.environ.get("BFS_AUDIT_TIMEOUT","15")))
@@ -2658,19 +2764,22 @@ def main():
             dcall(["--title","Update plan","--msgbox",detail_text(cands,selected),"31","125"],env)
             headers=any(c.name=="linux-headers" and c.port in selected for c in cands)
             summary=f"Updates found: {len(cands)}\nSelected: {len(selected)}\nSkipped: {len(cands)-len(selected)}\nReview items: {sum(c.status=='REVIEW' for c in cands)}\nDependent glibc release bump: {'yes' if headers else 'no'}"
-            code,mode=dcall(["--title","Apply mode","--menu",summary+"\n\nChoose how far to continue.","20","82","4",
-                             "1","Update files only","2","Update + build selected","3","Update + build + install selected","4","Cancel"],env)
+            code,mode=dcall(["--title","Apply mode","--default-item","2","--menu",summary+"\n\nChoose how far to continue.","20","92","4",
+                             "1","Update files only","2","Update + build + auto-install ON (default)","3","Update + build only (auto-install OFF)","4","Cancel"],env)
             if code or mode=="4":
                 write_scan_log(LOG_ROOT/f"scan-{stamp}.tsv",cands,selected,{},warnings,diagnostics,ports_root)
                 continue
+            auto_install_mode = mode == "2"
+            mode_explanation = ("Auto-install ON: newly built packages WILL upgrade/install on the live system."
+                                if auto_install_mode else "Auto-install OFF: packages will NOT be installed.")
             code,_=dcall(["--title","Final confirmation","--yes-label","Apply Selected","--no-label","Cancel","--defaultno","--yesno",
-                          summary+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","17","88"],env)
+                          summary+"\n\n"+mode_explanation+"\n\nOnly checked items will be modified. Checked REVIEW items are explicit maintainer overrides. Continue?","19","96"],env)
             if code:
                 continue
             build_backup = snapshot_selected_ports(selected, ports_root) if mode in {"2","3"} else None
             results=apply_selected(cands,selected,ports_root,ns.timeout, defer_glibc=mode in {"2","3"})
             if mode in {"2","3"}:
-                build_selected(cands,selected,ports_root,mode=="3",results)
+                build_selected(cands,selected,ports_root,auto_install_mode,results)
                 rollback_failed_build_ports(selected, ports_root, results, build_backup)
                 bump_glibc_after_validated_headers(ports_root, selected, results)
             log=LOG_ROOT/f"scan-{stamp}.tsv"
@@ -2678,4 +2787,21 @@ def main():
             text="\n".join(f"{k}: {v}" for k,v in sorted(results.items())) or "No updates applied."
             dcall(["--title","Update results","--msgbox",text+f"\n\nLog: {log}\n\nReturning to the main menu.","29","110"],env)
 
-if __name__=="__main__": raise SystemExit(main())
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except Exception:
+        # Retain the full traceback even when dialog clears the terminal.
+        import traceback
+        detail = traceback.format_exc()
+        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        try:
+            LOG_ROOT.mkdir(parents=True, exist_ok=True)
+            crash_log = LOG_ROOT / f"crash-{stamp}-{os.getpid()}.log"
+            crash_log.write_text(detail, encoding="utf-8")
+            print(f"BFSOS updater crashed; traceback saved to {crash_log}", file=sys.stderr)
+        except OSError as exc:
+            print(f"BFSOS updater could not save crash log: {exc}", file=sys.stderr)
+        print(detail, file=sys.stderr)
+        raise SystemExit(1)
+

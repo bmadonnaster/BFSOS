@@ -89,7 +89,7 @@ def test_version_plan_rejects_unknown_active_consumer_but_ignores_history():
         hist=tmp/'docs/history-old.md'; hist.write_text('Historical BFSOS 0.9.0 release notes\n')
         # Historical text alone must not be treated as an active consumer.
         pu.distro_version_plan(tmp,'0.9.9-test')
-        helper=tmp/'scripts/new-release-helper.sh'; helper.write_text('BFS_VERSION="0.9.0"\n')
+        helper=tmp/'scripts/new-release-helper.sh'; helper.write_text('BFS_VERSION="' + (tmp/'VERSION').read_text().strip() + '"\n')
         try: pu.distro_version_plan(tmp,'0.9.9-test')
         except RuntimeError as exc: assert 'unmapped active distro-version consumer' in str(exc)
         else: raise AssertionError('unknown active consumer was silently omitted')

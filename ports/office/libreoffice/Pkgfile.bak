@@ -1,0 +1,37 @@
+# Description: LibreOffice free office suite built from source
+# URL: https://www.libreoffice.org/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cups dbus fontconfig freetype glib gtk3 icu libpng libxml2 libxslt mesa nss python3 zlib
+# Optional: java-runtime hunspell
+
+name=libreoffice
+version=26.8.1
+release=1
+
+# LibreOffice requires a persistent, generously sized build workspace.
+build_work=disk
+build_jobs=16
+# Upstream source archive has a fourth (build) component.
+source=(https://download.documentfoundation.org/libreoffice/src/$version/libreoffice-${version}.1.tar.xz)
+
+# pkgmk runs as the unprivileged pkgmk account under fakeroot. LibreOffice's
+# make-time root check sees fakeroot's simulated UID 0, so remove the fakeroot
+# preload *only for build/configure commands*. pkgmk's package staging still
+# retains its normal fakeroot environment.
+# BFSOS also exports several staging paths globally; these must not influence
+# LibreOffice's internal build or its install-gdb-printers target.
+lo_unprivileged_build() {
+    env -u LD_PRELOAD -u FAKEROOTKEY \
+        -u DESTDIR -u DEST_DIR -u INSTALLROOT \
+        -u install_root -u INSTALL_ROOT "$@"
+}
+
+pkg_build() {
+    # Do not overlap the binary variant: installation owns the same soffice files.
+    [ -f ./autogen.sh ] || { echo 'libreoffice: missing upstream autogen.sh' >&2; return 1; }
+    lo_unprivileged_build ./autogen.sh --prefix=/usr --sysconfdir=/etc \
+        --with-system-curl --with-system-nss --with-system-zlib \
+        --disable-ccache --without-java || return 1
+    lo_unprivileged_build make -j "${JOBS:-1}" || return 1
+    make DESTDIR="$PKG" install || return 1
+}

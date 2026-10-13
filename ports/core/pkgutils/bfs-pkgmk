@@ -46,7 +46,7 @@ fi
 bfs_pkg_name="$(sed -n 's/^[[:space:]]*name[[:space:]]*=[[:space:]]*["'"'"']\{0,1\}\([^"'"'"'[:space:]#]*\).*/\1/p' ./Pkgfile 2>/dev/null | head -n1)"
 bfs_large=0
 case "$bfs_pkg_name" in
-    llvm|llvm-32|clang|clang-32|mesa|mesa-32|rustc|gcc|chromium|firefox|firefox-esr|webkitgtk*|qtwebengine*) bfs_large=1 ;;
+    libreoffice|llvm|llvm-32|clang|clang-32|mesa|mesa-32|rustc|gcc|chromium|firefox|firefox-esr|webkitgtk*|qtwebengine*) bfs_large=1 ;;
 esac
 
 bfs_tmpfs_root="/var/cache/pkg/build-work"
@@ -131,6 +131,60 @@ if ! mkdir -p "$history_dir" 2>/dev/null; then
     history_file="/tmp/bfs-pkgmk-build-times.log"
 fi
 
+# pkgmk writes .md5sum/.footprint/.signature in its working port directory.
+# Developer checkouts must remain developer-owned, while the actual build
+# continues under the unprivileged pkgmk account. Stage a private copy when
+# the invoking root process cannot give pkgmk write access to this directory.
+bfs_port_dir="$PWD"
+bfs_stage=""
+if [ "$(id -u)" -eq 0 ] && command -v runuser >/dev/null 2>&1 && id pkgmk >/dev/null 2>&1; then
+    if ! runuser -u pkgmk -- test -w "$bfs_port_dir"; then
+        bfs_stage_parent="${PKGMK_DISK_WORK_ROOT:-/var/cache/pkg/build-work-disk}"
+        if [ ! -d "$bfs_stage_parent" ]; then
+            printf 'BFSOS pkgmk: missing staging root: %s\n' "$bfs_stage_parent" >&2
+            exit 126
+        fi
+        bfs_stage="$(mktemp -d "$bfs_stage_parent/bfs-port-stage.XXXXXXXX")"
+        chmod 700 "$bfs_stage"
+        # Only the individual port, not the entire Git checkout, is copied.
+        cp -a "$bfs_port_dir/." "$bfs_stage/"
+        chown -R pkgmk:pkgmk "$bfs_stage"
+        printf 'BFSOS pkgmk: building from pkgmk-owned staging copy; original=%s\n' "$bfs_port_dir" >&2
+    fi
+fi
+
+bfs_cleanup_stage() {
+    if [ -n "$bfs_stage" ]; then
+        rm -rf -- "$bfs_stage"
+    fi
+}
+trap bfs_cleanup_stage EXIT HUP INT TERM
+
+bfs_sync_metadata() {
+    [ -n "$bfs_stage" ] || return 0
+    # Metadata only, never copy the package recipe or arbitrary build output
+    # into a developer-owned checkout. Use rename to avoid following symlinks.
+    bfs_uid="$(stat -c %u "$bfs_port_dir")"
+    bfs_gid="$(stat -c %g "$bfs_port_dir")"
+    for bfs_meta in .md5sum .footprint .signature; do
+        [ -e "$bfs_stage/$bfs_meta" ] || continue
+        if [ ! -f "$bfs_stage/$bfs_meta" ] || [ -L "$bfs_stage/$bfs_meta" ] || [ -L "$bfs_port_dir/$bfs_meta" ]; then
+            printf 'BFSOS pkgmk: unsafe metadata path: %s\n' "$bfs_meta" >&2
+            return 1
+        fi
+        bfs_tmp="$bfs_port_dir/.$${bfs_meta}.bfs-new"
+        if ! install -m 644 -o "$bfs_uid" -g "$bfs_gid" "$bfs_stage/$bfs_meta" "$bfs_tmp"; then
+            rm -f -- "$bfs_tmp"
+            return 1
+        fi
+        if ! mv -f -- "$bfs_tmp" "$bfs_port_dir/$bfs_meta"; then
+            rm -f -- "$bfs_tmp"
+            return 1
+        fi
+        printf 'BFSOS pkgmk: metadata updated: %s\n' "$bfs_port_dir/$bfs_meta"
+    done
+}
+
 run_pkgmk() {
     if [ "$(id -u)" -eq 0 ] \
        && command -v runuser >/dev/null 2>&1 \
@@ -138,15 +192,30 @@ run_pkgmk() {
        && id pkgmk >/dev/null 2>&1; then
         runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
             CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@"
+    elif [ "$(id -u)" -eq 0 ]; then
+        printf '%s\n' 'BFSOS pkgmk: refusing to build as root: runuser, fakeroot and pkgmk account are required' >&2
+        exit 126
     else
+        # An unprivileged caller may build from a developer checkout when
+        # its workspace is writable. Never silently become root.
         pkgmk "$@"
     fi
 }
 
 set +e
-run_pkgmk "$@"
+if [ -n "$bfs_stage" ]; then
+    (cd "$bfs_stage" && run_pkgmk "$@")
+else
+    run_pkgmk "$@"
+fi
 status=$?
 set -e
+if [ "$status" -eq 0 ]; then
+    if ! bfs_sync_metadata; then
+        printf 'BFSOS pkgmk: metadata synchronization failed\n' >&2
+        status=1
+    fi
+fi
 
 # Resolve package identity immediately so a failed build can never leave a
 # reusable archive behind. This also lets us validate successful-looking
