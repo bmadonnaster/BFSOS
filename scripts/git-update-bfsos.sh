@@ -91,27 +91,19 @@ else
     git -C "$REPO_ROOT" pull --ff-only || die "git pull --ff-only failed"
 fi
 
-if ((delete_metadata)); then
-    # With the explicit delete switch, tracked metadata deletions should be staged.
-    git -C "$REPO_ROOT" add --all
-else
-    # Default behavior: stage normal project changes, but do not automatically add
-    # newly generated package-integrity metadata. Tracked/reviewed metadata updates
-    # are still staged normally; only previously-untracked files are left for an
-    # explicit maintainer decision.
-    mapfile -d '' -t _bfs_untracked_integrity < <(
-        git -C "$REPO_ROOT" ls-files --others --exclude-standard -z --             ':(glob)ports/**/.footprint'             ':(glob)ports/**/.signature'
+# Stage normal edits, including tracked metadata changes and deletions.
+git -C "$REPO_ROOT" add --all
+
+if ((!delete_metadata)) && [[ -d "$REPO_ROOT/ports" ]]; then
+    # New port metadata must be committed as well, even if a historical
+    # .gitignore rule excludes dotfiles or generated package metadata.
+    # -D/--delete-metadata intentionally removes these files instead.
+    while IFS= read -r -d '' file; do
+        git -C "$REPO_ROOT" add -f -- "${file#"$REPO_ROOT"/}"
+    done < <(
+        find "$REPO_ROOT/ports" -type f \
+            \( -name '.footprint' -o -name '.signature' \) -print0
     )
-
-    git -C "$REPO_ROOT" add --all
-
-    if ((${#_bfs_untracked_integrity[@]})); then
-        git -C "$REPO_ROOT" restore --staged -- "${_bfs_untracked_integrity[@]}" 2>/dev/null || true
-        warn "Untracked .footprint/.signature metadata was left unstaged for review:"
-        printf '  %s\n' "${_bfs_untracked_integrity[@]}" >&2
-    fi
-
-    unset _bfs_untracked_integrity
 fi
 
 if git -C "$REPO_ROOT" diff --cached --quiet; then

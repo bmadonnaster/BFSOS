@@ -325,6 +325,13 @@ VERSION_LOCK_GROUPS = {
     "nvidia-driver": {"opt/nvidia", "compat-32/nvidia-32"},
     "alsa-plugins": {"opt/alsa-plugins", "compat-32/alsa-plugins-32"},
     "expat": {"core/expat", "compat-32/expat-32"},
+    "sqlite": {"core/sqlite", "compat-32/sqlite3-32"},
+    "gstreamer": {
+        "opt/gstreamer", "compat-32/gstreamer-32",
+        "opt/gst-plugins-base", "compat-32/gst-plugins-base-32",
+        "opt/gst-plugins-good", "opt/gst-plugins-bad",
+        "opt/gst-plugins-ugly", "opt/gst-libav",
+    },
 }
 
 GROUP_BUILD_ORDER = {
@@ -332,6 +339,13 @@ GROUP_BUILD_ORDER = {
     "nvidia-driver": ["opt/nvidia", "compat-32/nvidia-32"],
     "alsa-plugins": ["opt/alsa-plugins", "compat-32/alsa-plugins-32"],
     "expat": ["core/expat", "compat-32/expat-32"],
+    "sqlite": ["core/sqlite", "compat-32/sqlite3-32"],
+    "gstreamer": [
+        "opt/gstreamer", "compat-32/gstreamer-32",
+        "opt/gst-plugins-base", "compat-32/gst-plugins-base-32",
+        "opt/gst-plugins-good", "opt/gst-plugins-bad",
+        "opt/gst-plugins-ugly", "opt/gst-libav",
+    ],
 }
 
 # Only Vulkan currently requires each freshly-built predecessor to be installed
@@ -628,6 +642,12 @@ def enforce_version_lock_groups(cands: list[Candidate], metas: list[PortMeta]) -
         # member that actually needs a version change. Members already at target
         # need no redundant rebuild merely to satisfy the transaction guard.
         for c in proposed:
+            if group in {"sqlite", "gstreamer"}:
+                c.status = "REVIEW"
+                c.selected = False
+                c.policy = group
+                c.reason = f"{c.reason}; complete {group} target {target_display} available; coordinated review required"
+                continue
             c.status = "UPDATE"
             c.selected = True
             c.policy = group
@@ -1305,8 +1325,8 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             continue
 
         # Development-book authority is explicit per BFSOS port.
-        mlfs = lookup_mlfs_authoritative(meta, indexes)
-        explicit_dev = lookup_explicit_dev_authority(meta, indexes)
+        mlfs = None if meta.rel in {"core/sqlite", "compat-32/sqlite3-32"} else lookup_mlfs_authoritative(meta, indexes)
+        explicit_dev = None if meta.rel in {"core/sqlite", "compat-32/sqlite3-32"} else lookup_explicit_dev_authority(meta, indexes)
         authoritative = mlfs or explicit_dev
         if authoritative:
             policy, target = authoritative
@@ -1380,6 +1400,19 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             diagnostics.append(f"{meta.rel}\tbook-reference-only\t{blabel}\t{btarget}")
         else:
             bpolicy = btarget = blabel = ""
+
+        if meta.rel in {"core/sqlite", "compat-32/sqlite3-32"}:
+            row = upstream.get(meta.rel, {})
+            target = row.get("latest", "")
+            if row.get("status") == "UPDATE" and target and newer_for_port(meta, target, meta.version):
+                diagnostics.append(f"{meta.rel}\tSQLite upstream exception\t{meta.version} -> {target}")
+                out.append(Candidate(meta.rel, meta.name, meta.version, target, meta.release, "1",
+                                     "review", "SQLite upstream", "REVIEW",
+                                     "SQLite tracks upstream; verify matching native/compat-32 source archives",
+                                     False, source=candidate_source_url(meta, target)))
+            else:
+                diagnostics.append(f"{meta.rel}\tSQLite upstream exception: no verified newer candidate")
+            continue
 
         diagnostics.append(f"{meta.rel}\tnot MLFS-authoritative; checking CRUX")
         if meta.rel in fallback_refs:
@@ -1546,8 +1579,8 @@ def default_update_checked(c):
         return False
     # A generic book lead or source that could not be verified is not an
     # ordinary update. Nor is a version-specific patch needing manual review.
-    reason = (c.reason or "").lower()
-    if c.policy == "book-reference" or any(s in reason for s in (
+    reason = (getattr(c, "reason", "") or "").lower()
+    if getattr(c, "policy", "") == "book-reference" or any(s in reason for s in (
         "version-specific", "patch requires", "unavailable",
         "unverified", "ambiguous", "cannot verify", "not verified",
     )):

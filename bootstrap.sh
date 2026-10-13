@@ -4321,6 +4321,8 @@ curl
 libarchive
 util-linux
 "
+# Final util-linux enables setpriv, which needs libcap-ng in the base before util-linux.
+# Temporary Stage-1 util-linux is library-only and does not need libcap-ng.
 # pkgconf 3.x builds with Meson, and Meson requires Ninja.
 # Keep Ninja before pkgconf in Stage 2.  Do not place comments inside the
 # quoted basepkg list because they become package names during word splitting.
@@ -4439,6 +4441,7 @@ python3-tomli
 python3-pytz
 python3-babel
 python3-jinja2
+libcap-ng
 systemd
 util-linux
 dbus
