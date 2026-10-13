@@ -602,6 +602,35 @@ umount_chroot_fs() {
     umount -l "$root/dev" 2>/dev/null || true
 }
 
+# The release base may have root-owned package caches. Prepare only this
+# isolated root before any prt-get operation; never alter host caches.
+prepare_iso_pkgmk_cache() {
+    local root="$1" uid gid rel
+    uid="$(chroot "$root" /usr/bin/id -u pkgmk)" || die "ISO root lacks pkgmk account"
+    gid="$(chroot "$root" /usr/bin/id -g pkgmk)" || die "ISO root lacks pkgmk group"
+    case "$uid:$gid" in *[!0-9:]*|:|*:) die "Invalid ISO root pkgmk identity" ;; esac
+    install -d -m 0755 "$root/var/cache/pkg"
+    for rel in sources packages build-work build-work-disk; do
+        install -d -m 0775 -o "$uid" -g "$gid" "$root/var/cache/pkg/$rel" ||
+            die "Failed preparing isolated pkgmk cache: $rel"
+    done
+    install -d -m 0775 -o "$uid" -g "$gid" "$root/var/cache/ccache" ||
+        die "Failed preparing isolated ccache"
+    # Existing per-package source directories may come from older base images.
+    # Fix only pkgutils here, not an unbounded recursive build-work tree.
+    if [ -d "$root/var/cache/pkg/sources/pkgutils" ]; then
+        chown -R "$uid:$gid" "$root/var/cache/pkg/sources/pkgutils" ||
+            die "Failed repairing pkgutils source namespace in isolated root"
+    fi
+    local path
+    for path in /var/cache/pkg/sources /var/cache/pkg/packages \
+                /var/cache/pkg/build-work /var/cache/pkg/build-work-disk /var/cache/ccache; do
+        chroot "$root" /usr/bin/runuser -u pkgmk -- test -w "$path" ||
+            die "ISO root pkgmk cannot write $path (uid=$uid gid=$gid)"
+    done
+    log "ISO pkgmk cache ready (isolated uid=$uid gid=$gid)"
+}
+
 build_iso_package_set() {
     local root="$1"
     local kernel_flavor="${BFS_ISO_KERNEL:-lts}"
@@ -627,6 +656,8 @@ build_iso_package_set() {
     cp -a "$BUILD_PROJECT_DIR/ports/." "$root/usr/ports/"
     grep -Fqx 'prtdir /usr/ports/iso' "$root/etc/prt-get.conf" || echo 'prtdir /usr/ports/iso' >> "$root/etc/prt-get.conf"
     cp -a /etc/resolv.conf "$root/etc/resolv.conf" 2>/dev/null || true
+
+    prepare_iso_pkgmk_cache "$root"
 
     mount_chroot_fs "$root"
     trap 'umount_chroot_fs "$root"' RETURN
@@ -1371,7 +1402,7 @@ main() {
     sudo bash -c "$(declare -f extract_archive die); extract_archive '$base_archive' '$WORK_DIR/live-root'"
     write_iso_state base-extracted "$base_archive"
 
-    sudo env BUILD_PROJECT_DIR="$BUILD_PROJECT_DIR" WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs build_iso_package_set install_live_runtime install_dracut_live_module); $(declare -p iso_packages); build_iso_package_set '$WORK_DIR/live-root'; install_live_runtime '$WORK_DIR/live-root'; install_dracut_live_module '$WORK_DIR/live-root'"
+    sudo env BUILD_PROJECT_DIR="$BUILD_PROJECT_DIR" WORK_DIR="$WORK_DIR" BFS_ISO_KERNEL="${BFS_ISO_KERNEL:-lts}" bash -c "$(declare -f log die mount_chroot_fs umount_chroot_fs prepare_iso_pkgmk_cache build_iso_package_set install_live_runtime install_dracut_live_module); $(declare -p iso_packages); build_iso_package_set '$WORK_DIR/live-root'; install_live_runtime '$WORK_DIR/live-root'; install_dracut_live_module '$WORK_DIR/live-root'"
     write_iso_state packages-installed "$base_archive"
     write_iso_state live-policy-installed "$base_archive"
 
