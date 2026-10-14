@@ -1,27 +1,38 @@
+
 # Description: A library to handle keyboard descriptions.
 # URL: https://xkbcommon.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: xkeyboard-config
-# Optional: libxcb wayland wayland-protocols doxygen
+# Depends on: xkeyboard-config libxcb
+# Optional: wayland wayland-protocols doxygen
 
 name=libxkbcommon
 version=1.13.2
-release=8
-source=(https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz)
+release=9
+
+source=(
+    https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz
+)
 
 pkg_build() {
-	prt-get isinst wayland-protocols || PKGMK_XKBCOMMON+=' -Denable-wayland=false'
-	prt-get isinst xkeyboard-config || PKGMK_XKBCOMMON+=' -Denable-x11=false'
+    local wayland_opt="-Denable-wayland=false"
 
+    # Enable Wayland support when build dependencies exist.
+    if prt-get isinst wayland >/dev/null 2>&1 &&
+       prt-get isinst wayland-protocols >/dev/null 2>&1; then
+        wayland_opt="-Denable-wayland=true"
+    fi
 
-	mkdir build &&
-cd    build &&
+    # Configure using Meson.
+    meson setup build \
+        --prefix=/usr \
+        --buildtype=release \
+        -Denable-docs=false \
+        -Denable-x11=true \
+        "$wayland_opt" || return 1
 
-meson setup ..            \
-      --prefix=/usr       \
-      --buildtype=release \
-      -Denable-docs=false \
-     $PKGMK_XKBCOMMON &&
-ninja
-DESTDIR=$PKG ninja install
+    # Compile using the configured processor count.
+    ninja -C build -j "${JOBS:-$(nproc)}" || return 1
+
+    # Stage installation into the package directory.
+    DESTDIR="$PKG" ninja -C build install || return 1
 }
