@@ -2,33 +2,25 @@
 # Description: A library to handle keyboard descriptions.
 # URL: https://xkbcommon.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: xkeyboard-config libxcb
-# Optional: wayland wayland-protocols doxygen
+# Depends on: xkeyboard-config libxcb wayland wayland-protocols
+# Optional: doxygen
 
 name=libxkbcommon
 version=1.13.2
-release=9
+release=10
 
 source=(
     https://github.com/xkbcommon/libxkbcommon/archive/xkbcommon-$version.tar.gz
 )
 
 pkg_build() {
-    local wayland_opt="-Denable-wayland=false"
-
-    # Enable Wayland support when build dependencies exist.
-    if prt-get isinst wayland >/dev/null 2>&1 &&
-       prt-get isinst wayland-protocols >/dev/null 2>&1; then
-        wayland_opt="-Denable-wayland=true"
-    fi
-
     # Configure using Meson.
     meson setup build \
         --prefix=/usr \
         --buildtype=release \
         -Denable-docs=false \
         -Denable-x11=true \
-        "$wayland_opt" || return 1
+        -Denable-wayland=true || return 1
 
     # Compile using the configured processor count.
     ninja -C build -j "${JOBS:-$(nproc)}" || return 1

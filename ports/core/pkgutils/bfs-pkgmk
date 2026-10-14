@@ -18,6 +18,14 @@ if [ ! -r /var/lib/pkgmk/extension ] \
         'BFSOS pkgmk: restored missing /var/lib/pkgmk/extension from the core port' >&2
 fi
 
+# Fail early with a truthful diagnostic rather than treating alias::URL as a
+# missing local file. Current BFSOS pkgmk does not implement URL aliases.
+if [ -r ./Pkgfile ] && grep -Ev '^[[:space:]]*#' ./Pkgfile \
+    | grep -Eq '[^[:space:]"()]+::https?://'; then
+    printf '%s\n' 'BFSOS pkgmk: unsupported source alias filename::URL in Pkgfile; use a tested plain URL or repair the port' >&2
+    exit 4
+fi
+
 # Determine ABI from the active ports collection.
 # A compat-32 build must use PKGMK_ARCH=32, while native collections must
 # never inherit that setting from an earlier dependency build.
@@ -158,7 +166,38 @@ bfs_cleanup_stage() {
         rm -rf -- "$bfs_stage"
     fi
 }
-trap bfs_cleanup_stage EXIT HUP INT TERM
+# EXIT is for staging cleanup. Signals are handled separately so a cancelled
+# pkgmk cannot leave an entire configure/make/fakeroot process tree behind.
+# Never blindly kill by name, and never delete active SysV IPC objects.
+bfs_active_pid=""
+bfs_interrupt() {
+    sig="$1"
+    trap - HUP INT TERM
+    if [ -n "$bfs_active_pid" ]; then
+        # setsid creates a unique process group, whose leader is our child.
+        # Confirm the PGID before targeting it to avoid touching other builds.
+        pgid="$(ps -o pgid= -p "$bfs_active_pid" 2>/dev/null | tr -d ' ' || true)"
+        if [ "$pgid" = "$bfs_active_pid" ]; then
+            kill -TERM -- "-$bfs_active_pid" 2>/dev/null || true
+            # Allow children to unwind cleanly; never block forever here.
+            count=0
+            while [ "$count" -lt 5 ] && kill -0 "$bfs_active_pid" 2>/dev/null; do
+                sleep 1
+                count=$((count + 1))
+            done
+            pgid="$(ps -o pgid= -p "$bfs_active_pid" 2>/dev/null | tr -d ' ' || true)"
+            if [ "$pgid" = "$bfs_active_pid" ]; then
+                kill -KILL -- "-$bfs_active_pid" 2>/dev/null || true
+            fi
+        fi
+        wait "$bfs_active_pid" 2>/dev/null || true
+    fi
+    case "$sig" in INT) exit 130 ;; HUP) exit 129 ;; TERM) exit 143 ;; esac
+}
+trap bfs_cleanup_stage EXIT
+trap 'bfs_interrupt HUP' HUP
+trap 'bfs_interrupt INT' INT
+trap 'bfs_interrupt TERM' TERM
 
 bfs_sync_metadata() {
     [ -n "$bfs_stage" ] || return 0
@@ -190,8 +229,21 @@ run_pkgmk() {
        && command -v runuser >/dev/null 2>&1 \
        && command -v fakeroot >/dev/null 2>&1 \
        && id pkgmk >/dev/null 2>&1; then
-        runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
-            CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@"
+        # Detached session for reliable Ctrl+C / TERM process-tree cleanup.
+        # This keeps UID 82 and the existing fakeroot packaging semantics.
+        command -v setsid >/dev/null 2>&1 || {
+            printf '%s\n' 'BFSOS pkgmk: setsid required for isolated build cleanup' >&2
+            return 126
+        }
+        setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
+            CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@" &
+        bfs_active_pid=$!
+        # wait is interrupted by a trapped signal; bfs_interrupt handles the
+        # session group. Under normal completion wait returns pkgmk's status.
+        wait "$bfs_active_pid"
+        rc=$?
+        bfs_active_pid=""
+        return "$rc"
     elif [ "$(id -u)" -eq 0 ]; then
         printf '%s\n' 'BFSOS pkgmk: refusing to build as root: runuser, fakeroot and pkgmk account are required' >&2
         exit 126
@@ -202,14 +254,17 @@ run_pkgmk() {
     fi
 }
 
-set +e
+# Keep the launcher in the parent shell: the signal handler must know the
+# active process-group leader even for builds using a private staging copy.
+bfs_original_workdir="$PWD"
 if [ -n "$bfs_stage" ]; then
-    (cd "$bfs_stage" && run_pkgmk "$@")
-else
-    run_pkgmk "$@"
+    cd "$bfs_stage"
 fi
+set +e
+run_pkgmk "$@"
 status=$?
 set -e
+cd "$bfs_original_workdir"
 if [ "$status" -eq 0 ]; then
     if ! bfs_sync_metadata; then
         printf 'BFSOS pkgmk: metadata synchronization failed\n' >&2

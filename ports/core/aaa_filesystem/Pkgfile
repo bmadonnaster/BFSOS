@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=22
+release=23
 # BFSOS distribution release. Change this value when preparing a new
 # BFSOS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.1.1
@@ -35,6 +35,7 @@ source=(
     kf6.sudoers
     xorg.sudoers
     xorg.sh
+    bfsos-fastfetch.sh
     bashrc
     .bash_profile
     .profile
@@ -202,7 +203,8 @@ pkg_build() {
         bfs-opt.sh \
         readline.sh \
         umask.sh \
-        xorg.sh
+        xorg.sh \
+        bfsos-fastfetch.sh
     do
         install -m 0644 "$file" "$PKG/etc/profile.d/$file"
     done

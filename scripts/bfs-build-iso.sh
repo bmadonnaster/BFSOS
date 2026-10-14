@@ -48,7 +48,7 @@ declare -A tool_packages=(
 iso_packages=(
     linux-firmware dracut
     networkmanager-iso openssh git sudo wget wpa_supplicant wireless-regdb gpm lynx-iso chrony kbd
-    cryptsetup lvm2 mdadm snapper pciutils parted
+    cryptsetup lvm2 mdadm snapper pciutils parted fastfetch
     dialog squashfs-tools grub grub-efi dosfstools mtools efibootmgr libisoburn syslinux
 )
 
@@ -1227,13 +1227,14 @@ create_live_initramfs() {
 
 audit_live_root() {
     local root="$1" bad=""
-    # gettext ships this compressed development archive as package data.
-    # It is not needed by the BFSOS live environment and would trip the
-    # no-source-archives ISO audit.
-    rm -f "$root/usr/share/gettext/archive.dir.tar.xz"
+    # gettext's archive.dir.tar.xz is installed runtime infrastructure used by
+    # autopoint. Never delete a package-owned file just to satisfy this audit.
+    [ -f "$root/usr/share/gettext/archive.dir.tar.xz" ] || \
+        die "Missing gettext autopoint archive in live root (package payload was stripped)"
 
     log "Auditing live root for forbidden source/package archives"
-    bad="$(find "$root" -xdev -type f \( \
+    bad="$(find "$root" -xdev -type f \
+        ! -path "$root/usr/share/gettext/archive.dir.tar.xz" \( \
         -name '*.tar' -o -name '*.tar.gz' -o -name '*.tar.bz2' -o -name '*.tar.xz' -o -name '*.tar.zst' -o \
         -name '*.tgz' -o -name '*.tbz2' -o -name '*.txz' -o -name '*.pkg.tar.*' \
         \) -print 2>/dev/null | head -n 50)"
@@ -1274,6 +1275,11 @@ stage_iso() {
     log "Removing all package/source/build archives and caches from live root"
     sudo rm -rf "$root/var/cache/pkg/sources" "$root/var/cache/pkg/packages" \
         "$root/var/cache/pkg/build-work" "$root/var/cache/pkg/build-work-disk"
+    # Preserve ccache directory ownership/mode for UID 82, but not its cache.
+    if [ -d "$root/var/cache/ccache" ]; then
+        sudo find "$root/var/cache/ccache" -mindepth 1 -maxdepth 1 \
+            -exec rm -rf -- {} +
+    fi
     sudo mkdir -p "$root/var/cache/pkg/sources" "$root/var/cache/pkg/packages" "$root/var/cache/pkg/build-work"
     sudo bash -c "$(declare -f audit_live_root die log); audit_live_root '$root'"
     write_iso_state cleanup-complete "$base_archive"

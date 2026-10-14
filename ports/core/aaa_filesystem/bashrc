@@ -33,3 +33,8 @@ fi
 unset RED GREEN NORMAL
 
 # End /etc/bashrc
+
+# Show BFSOS Fastfetch on interactive terminal startup only.
+if [ -r /etc/profile.d/bfsos-fastfetch.sh ]; then
+    . /etc/profile.d/bfsos-fastfetch.sh
+fi
