@@ -625,7 +625,7 @@ prepare_iso_pkgmk_cache() {
     local path
     for path in /var/cache/pkg/sources /var/cache/pkg/packages \
                 /var/cache/pkg/build-work /var/cache/pkg/build-work-disk /var/cache/ccache; do
-        chroot "$root" /usr/bin/runuser -u pkgmk -- test -w "$path" ||
+        chroot --userspec="$uid:$gid" "$root" /usr/bin/test -w "$path" ||
             die "ISO root pkgmk cannot write $path (uid=$uid gid=$gid)"
     done
     log "ISO pkgmk cache ready (isolated uid=$uid gid=$gid)"

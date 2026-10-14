@@ -13,7 +13,7 @@ prepare = iso[iso.index('prepare_iso_pkgmk_cache() {'):iso.index('build_iso_pack
 assert 'chroot "$root" /usr/bin/id -u pkgmk' in prepare
 assert 'chroot "$root" /usr/bin/id -g pkgmk' in prepare
 assert '"$root/var/cache/pkg/$rel"' in prepare
-assert 'chroot "$root" /usr/bin/runuser -u pkgmk -- test -w "$path"' in prepare
+assert 'chroot --userspec="$uid:$gid" "$root" /usr/bin/test -w "$path"' in prepare
 assert 'chown -R "$root/var/cache/pkg' not in prepare
 assert 'chown -R "$uid:$gid" "$root/var/cache/pkg/sources/pkgutils"' in prepare
 assert 'chown -R pkgmk:pkgmk /var/cache/pkg' not in iso
