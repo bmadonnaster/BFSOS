@@ -1,5 +1,5 @@
 # Description: Newt is a programming library for color text mode, widget based user interfaces.
-# URL: https://releases.pagure.org/newt/
+# URL: https://ftp.kaist.ac.kr/macports/distfiles/libnewt/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: popt slang
 # Optional: gpm
