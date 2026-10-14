@@ -1,11 +1,11 @@
-# Description: A stream oriented C library for parsing XML
-# URL:
+# Description: Tool for automating interactive applications using Tcl
+# URL: https://core.tcl-lang.org/expect/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on:  tcl
+# Depends on: tcl patchelf
 
 name=expect
 version=5.45.4
-release=1
+release=3
 source=(https://downloads.sourceforge.net/project/expect/Expect/$version/expect$version.tar.gz
 expect-5.45.4-gcc15-1.patch)
 
@@ -22,10 +22,10 @@ pkg_build() {
 	./configure --prefix=/usr           \
             --with-tcl=/usr/lib     \
             --enable-shared         \
-            --disable-rpath         \
             --mandir=/usr/share/man \
             --with-tclinclude=/usr/include \
 	            $tkflags
 	make
 	make DESTDIR=$PKG install
+        patchelf --set-rpath /usr/lib/expect5.45.4 "$PKG/usr/bin/expect"
 }

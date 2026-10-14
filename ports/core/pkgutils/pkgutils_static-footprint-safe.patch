@@ -1,0 +1,85 @@
+--- a/pkgutil.cc
++++ b/pkgutil.cc
+@@ -569,9 +569,11 @@
+ 
+ 		// User
+ 		uid_t uid = archive_entry_uid(entry);
+-		struct passwd* pw = getpwuid(uid);
+-		if (pw)
+-			cout << pw->pw_name;
++		// Use archived ownership names; do not call glibc NSS lookups
++		// from the statically linked pkginfo binary.
++		const char* uname = archive_entry_uname(entry);
++		if (uname && *uname)
++			cout << uname;
+ 		else
+ 			cout << uid;
+ 
+@@ -579,9 +581,9 @@
+ 
+ 		// Group
+ 		gid_t gid = archive_entry_gid(entry);
+-		struct group* gr = getgrgid(gid);
+-		if (gr)
+-			cout << gr->gr_name;
++		const char* gname = archive_entry_gname(entry);
++		if (gname && *gname)
++			cout << gname;
+ 		else
+ 			cout << gid;
+ 
+
+--- a/pkgmk.in
++++ b/pkgmk.in
+@@ -251,9 +251,12 @@
+ }
+ 
+ make_footprint() {
+-	pkginfo --footprint $TARGET | \
++	# Propagate pkginfo failures through the pipeline (including SIGSEGV).
++	( set -o pipefail
++	  pkginfo --footprint "$TARGET" | \
+ 		sed "s|\tlib/modules/`uname -r`/|\tlib/modules/<kernel-version>/|g" | \
+ 		sort -k 3
++	)
+ }
+ 
+ check_md5sum() {
+@@ -503,7 +506,12 @@
+ 	cd $PKGMK_ROOT
+ 
+ 	if [ -f $TARGET ]; then
+-		make_footprint > $FILE.footprint
++		if ! make_footprint > "$FILE.footprint" || [ ! -s "$FILE.footprint" ]; then
++			error "Unable to generate package footprint; preserving existing metadata."
++			rm -f "$FILE.footprint"
++			BUILD_SUCCESSFUL="no"
++			return 1
++		fi
+ 		if [ -f $PKGMK_FOOTPRINT ]; then
+ 			sort -k 3 $PKGMK_FOOTPRINT > $FILE.footprint.orig
+ 			diff -w -t -U 0 $FILE.footprint.orig $FILE.footprint | \
+@@ -689,9 +697,20 @@
+ 		exit 1
+ 	fi
+ 
+-	check_file "$PKGMK_FOOTPRINT"
+-	make_footprint > $PKGMK_FOOTPRINT
+-	touch $TARGET
++	# Generate to a temporary file; never truncate the existing footprint
++	# when pkginfo crashes, fails, or returns an empty listing.
++	local FOOTPRINT_TMP="${PKGMK_FOOTPRINT}.bfsos-tmp.$$"
++	if ! make_footprint > "$FOOTPRINT_TMP" || [ ! -s "$FOOTPRINT_TMP" ]; then
++		rm -f "$FOOTPRINT_TMP"
++		error "Unable to generate package footprint; existing footprint unchanged."
++		exit 1
++	fi
++	if ! mv -f -- "$FOOTPRINT_TMP" "$PKGMK_FOOTPRINT"; then
++		rm -f "$FOOTPRINT_TMP"
++		error "Unable to replace package footprint."
++		exit 1
++	fi
++	touch "$TARGET"
+ 
+ 	info "Footprint updated."
+ }

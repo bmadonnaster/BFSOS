@@ -1,0 +1,31 @@
+# Description: Tool for automating interactive applications using Tcl
+# URL: https://core.tcl-lang.org/expect/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on:  tcl
+
+name=expect
+version=5.45.4
+release=2
+source=(https://downloads.sourceforge.net/project/expect/Expect/$version/expect$version.tar.gz
+expect-5.45.4-gcc15-1.patch)
+
+pkg_build() {
+	local tkflags=''
+
+	prt-get isinst tk && tkflags='
+		--with-tk=/usr/lib
+		--with-tkinclude=/usr/include
+	'
+
+
+
+	./configure --prefix=/usr           \
+            --with-tcl=/usr/lib     \
+            --enable-shared         \
+            --mandir=/usr/share/man \
+            --with-tclinclude=/usr/include \
+	            $tkflags
+        export LDFLAGS="${LDFLAGS:+$LDFLAGS }-Wl,-rpath,/usr/lib/expect5.45.4"
+	make
+	make DESTDIR=$PKG install
+}

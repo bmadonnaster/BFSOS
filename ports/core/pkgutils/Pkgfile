@@ -5,14 +5,15 @@
 
 name=pkgutils
 version=5.40.12
-release=42
+release=43
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
         extension
         bfs-pkgmk
         pkgutils_source-fallbacks.patch
-        pkgutils_numeric-owner-extract.patch)
+        pkgutils_numeric-owner-extract.patch
+        pkgutils_static-footprint-safe.patch)
 
 # CRUX pkgmk normally removes PKGMK_WORK_DIR itself.  BFSOS can place that
 # path directly on tmpfs, so preserve an active mountpoint and clean only its
@@ -139,9 +140,6 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
         fix_pkgmk_cli_precedence pkgmk.in
         fix_pkgmk_curl_compatible_downloader pkgmk.in
-
-        sed -i -e 's/ --static//' \
-               -e 's/ -static//' Makefile
 
         make BINDIR=$TOOLS/bin MANDIR=$TOOLS/man ETCDIR=$TOOLS/etc install
         harden_pkgmk_work_cleanup "$TOOLS/bin/pkgmk"
