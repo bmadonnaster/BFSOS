@@ -687,7 +687,7 @@ build_iso_package_set() {
     log "Updating pkgutils before system upgrade"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get update pkgutils" ||
+        /bin/bash -lc "prt-get -if -is update pkgutils" ||
         die "Failed to update pkgutils in ISO root"
 
     chroot "$root" /usr/bin/env -i \
@@ -701,7 +701,7 @@ build_iso_package_set() {
     log "Running full system upgrade in isolated root"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get sysup" ||
+        /bin/bash -lc "prt-get -if -is sysup" ||
         die "Failed to complete ISO root system upgrade"
 
     set_iso_build_footprint_policy "$root"
@@ -709,7 +709,7 @@ build_iso_package_set() {
     log "Ensuring gobject-introspection is installed"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get depinst gobject-introspection" ||
+        /bin/bash -lc "prt-get -if -is depinst gobject-introspection" ||
         die "Failed to install gobject-introspection in ISO root"
 
     log "Ensuring GLib introspection support required by ISO dependencies"
@@ -721,7 +721,7 @@ build_iso_package_set() {
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.zst
                 rm -rf /var/cache/pkg/build-work/pkgmk-glib
                 cd /usr/ports/opt/glib || exit 1
-                pkgmk -d -if || exit 1
+                pkgmk -d -if -is || exit 1
                 glib_pkg="$(ls -1t /var/cache/pkg/packages/glib#*.pkg.tar.zst 2>/dev/null | head -n1)"
                 [ -n "$glib_pkg" ] || exit 1
                 pkgadd -u "$glib_pkg" || exit 1
@@ -735,7 +735,7 @@ build_iso_package_set() {
     log "Building/installing selected ISO kernel: $kernel_pkg"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get depinst $kernel_pkg" ||
+        /bin/bash -lc "prt-get -if -is depinst $kernel_pkg" ||
         die "Failed to build/install selected ISO kernel package set: $kernel_pkg"
 
     if ! find "$root/boot" -maxdepth 1 -type f -name "$kernel_pattern" -print -quit | grep -q .; then
@@ -751,7 +751,7 @@ build_iso_package_set() {
     log "Building/installing remaining ISO live + installer packages"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc "prt-get depinst ${iso_packages[*]}" ||
+        /bin/bash -lc "prt-get -if -is depinst ${iso_packages[*]}" ||
         die "Failed to build/install remaining ISO package set"
 
     umount_chroot_fs "$root"

@@ -8034,7 +8034,7 @@ ensure_bfsos_git_ports() {
 
         if ! command -v git >/dev/null 2>&1; then
                 log "Git is required by BFSOS ports; installing it from the existing base ports tree before ports -u"
-                run_package_operation "required Git installation for ports synchronization" prt-get depinst git
+                run_package_operation "required Git installation for ports synchronization" prt-get -if -is depinst git
         fi
         command -v git >/dev/null 2>&1 || { echo "Git installation completed but git is still unavailable." >&2; return 1; }
 
@@ -8068,7 +8068,7 @@ run_package_operation "ports synchronization (ports -u)" ports -u
 # the installer's temporary footprint policy. Otherwise pkgutils can replace
 # /etc/pkgmk.conf partway through sysup and re-enable stale footprint checks.
 if prt-get quickdiff 2>/dev/null | grep -Fxq pkgutils; then
-        run_package_operation "pkgutils upgrade before installer package builds" prt-get update pkgutils
+        run_package_operation "pkgutils upgrade before installer package builds" prt-get -if -is update pkgutils
         configure_pkgmk_integrity_settings_early
 fi
 
@@ -8091,7 +8091,7 @@ ensure_glib_introspection_ready() {
                 log "Preparing GObject Introspection before Polkit"
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
                 run_package_operation "gobject-introspection bootstrap installation" \
-                        prt-get depinst gobject-introspection
+                        prt-get -if -is depinst gobject-introspection
         fi
 
         if [[ ! -r /usr/share/gir-1.0/Gio-2.0.gir || \
@@ -8100,7 +8100,7 @@ ensure_glib_introspection_ready() {
                 log "Rebuilding GLib once with introspection enabled"
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
                 run_package_operation "GLib introspection rebuild" \
-                        prt-get -fr update glib
+                        prt-get -fr -if -is update glib
         fi
 
         for gir in GLib-2.0.gir GObject-2.0.gir Gio-2.0.gir GioUnix-2.0.gir GModule-2.0.gir GLibUnix-2.0.gir; do
@@ -8127,15 +8127,15 @@ if [[ -n "$outdated_packages" ]]; then
                 if [[ -n "$missing_dependencies" ]]; then
                         read -r -a missing_dependency_array <<< "$missing_dependencies"
                         run_package_operation "new dependencies required by system upgrade" \
-                                prt-get depinst "${missing_dependency_array[@]}"
+                                prt-get -if -is depinst "${missing_dependency_array[@]}"
                 fi
         fi
 fi
 
-run_package_operation "mandatory package upgrade (prt-get sysup)" prt-get sysup
+run_package_operation "mandatory package upgrade (prt-get -if -is sysup)" prt-get -if -is sysup
 
 log "Ensuring BFSOS package-build safety/cache tooling is installed"
-run_package_operation "mandatory build tooling (fakeroot/ccache)" prt-get depinst fakeroot fmt xxhash ccache
+run_package_operation "mandatory build tooling (fakeroot/ccache)" prt-get -if -is depinst fakeroot fmt xxhash ccache
 
 
 if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
@@ -8159,7 +8159,7 @@ if [[ -n "$PACKAGE_LIST_VALUE" ]]; then
                 ensure_glib_introspection_ready "$dependency_closure" || exit 1
 
                 log "Installing missing packages: ${MISSING_PACKAGES[*]}"
-                run_package_operation "optional package installation (${MISSING_PACKAGES[*]})" prt-get depinst "${MISSING_PACKAGES[@]}"
+                run_package_operation "optional package installation (${MISSING_PACKAGES[*]})" prt-get -if -is depinst "${MISSING_PACKAGES[@]}"
         else
                 log "All selected packages are already installed"
         fi
