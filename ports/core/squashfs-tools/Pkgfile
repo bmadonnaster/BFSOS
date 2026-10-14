@@ -22,5 +22,6 @@ pkg_build() {
                 LZMA_XZ_SUPPORT=1 \
                 LZ4_SUPPORT=1 \
                 ZSTD_SUPPORT=0 \
-                INSTALL_DIR="$PKG/usr/bin"
+                INSTALL_DIR="$PKG/usr/bin" \
+                INSTALL_MANPAGES_DIR="$PKG/usr/share/man/man1"
 }
