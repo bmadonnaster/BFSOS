@@ -8012,7 +8012,10 @@ configure_pkgmk_integrity_settings_early() {
 
         [[ "$VERIFY_MD5_VALUE" == yes ]] || md5_ignore=yes
         [[ "$VERIFY_SIGNATURE_VALUE" == yes ]] || signature_ignore=yes
-        [[ "$VERIFY_FOOTPRINT_VALUE" == yes ]] || footprint_ignore=yes
+        # The installer package transaction can include multiple legitimate
+        # build passes (GLib before and after GObject Introspection).
+        # Do not impose the final target's footprint policy on these builds.
+        footprint_ignore=yes
 
         sed -i \
                 -e "s|^PKGMK_IGNORE_MD5SUM=.*|PKGMK_IGNORE_MD5SUM=\"$md5_ignore\"|" \
@@ -8061,6 +8064,14 @@ ensure_bfsos_git_ports || exit 1
 log "Synchronizing BFSOS ports tree through Git"
 run_package_operation "ports synchronization (ports -u)" ports -u
 
+# Upgrade the package-build tool before the broader transaction, then restore
+# the installer's temporary footprint policy. Otherwise pkgutils can replace
+# /etc/pkgmk.conf partway through sysup and re-enable stale footprint checks.
+if prt-get quickdiff 2>/dev/null | grep -Fxq pkgutils; then
+        run_package_operation "pkgutils upgrade before installer package builds" prt-get update pkgutils
+        configure_pkgmk_integrity_settings_early
+fi
+
 # GLib/GObject-Introspection bootstrap ordering.
 #
 # A bootstrap GLib without introspection is valid before gobject-introspection
@@ -8069,7 +8080,6 @@ run_package_operation "ports synchronization (ports -u)" ports -u
 ensure_glib_introspection_ready() {
         local closure="${1:-}"
         local glib_port="/usr/ports/opt/glib"
-        local glib_footprint="$glib_port/.footprint"
         local gir=""
 
         case " $closure " in
@@ -8079,7 +8089,6 @@ ensure_glib_introspection_ready() {
 
         if ! prt-get isinst gobject-introspection >/dev/null 2>&1; then
                 log "Preparing GObject Introspection before Polkit"
-                rm -f "$glib_footprint"
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
                 run_package_operation "gobject-introspection bootstrap installation" \
                         prt-get depinst gobject-introspection
@@ -8089,7 +8098,6 @@ ensure_glib_introspection_ready() {
               ! -r /usr/share/gir-1.0/GLib-2.0.gir || \
               ! -r /usr/share/gir-1.0/GObject-2.0.gir ]]; then
                 log "Rebuilding GLib once with introspection enabled"
-                rm -f "$glib_footprint"
                 rm -f /var/cache/pkg/packages/glib#*.pkg.tar.*
                 run_package_operation "GLib introspection rebuild" \
                         prt-get -fr update glib
@@ -8159,6 +8167,8 @@ else
         log "No optional packages were selected"
 fi
 
+# Keep construction-time footprint bypass until final system configuration;
+# configure_pkgmk_integrity_settings restores the selected policy below.
 touch "$STATE_DIR/packages_complete"
 rm -f "$STATE_DIR/last_failure" /run/bfs-install-failure /root/.bfsos-git-driver
 else

@@ -631,6 +631,20 @@ prepare_iso_pkgmk_cache() {
     log "ISO pkgmk cache ready (isolated uid=$uid gid=$gid)"
 }
 
+# Only the disposable ISO build root bypasses package footprint comparison.
+# Keep source MD5 checks and the ordinary installed-system defaults intact.
+set_iso_build_footprint_policy() {
+    local root="$1" conf="$1/etc/pkgmk.conf"
+    [ -f "$conf" ] || die "Missing ISO root pkgmk configuration: $conf"
+    if grep -q '^PKGMK_IGNORE_FOOTPRINT=' "$conf"; then
+        sed -i 's/^PKGMK_IGNORE_FOOTPRINT=.*/PKGMK_IGNORE_FOOTPRINT="yes"/' "$conf"
+    else
+        printf '\nPKGMK_IGNORE_FOOTPRINT="yes"\n' >> "$conf"
+    fi
+    grep -q '^PKGMK_IGNORE_FOOTPRINT="yes"$' "$conf" ||
+        die "Failed to disable footprint comparison in ISO build root"
+}
+
 build_iso_package_set() {
     local root="$1"
     local kernel_flavor="${BFS_ISO_KERNEL:-lts}"
@@ -668,6 +682,8 @@ build_iso_package_set() {
         /bin/bash -lc "ports -u" ||
         die "Failed to refresh ports in ISO root"
 
+    set_iso_build_footprint_policy "$root"
+
     log "Updating pkgutils before system upgrade"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
@@ -679,11 +695,16 @@ build_iso_package_set() {
         /bin/bash -lc 'grep -Fq "# BFSOS: command-line options override Pkgfile/pkgmk.conf." /usr/bin/pkgmk' ||
         die "Updated pkgutils does not contain CLI precedence fix"
 
+    # pkgutils upgrade may replace /etc/pkgmk.conf; apply isolated policy again.
+    set_iso_build_footprint_policy "$root"
+
     log "Running full system upgrade in isolated root"
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
         /bin/bash -lc "prt-get sysup" ||
         die "Failed to complete ISO root system upgrade"
+
+    set_iso_build_footprint_policy "$root"
 
     log "Ensuring gobject-introspection is installed"
     chroot "$root" /usr/bin/env -i \

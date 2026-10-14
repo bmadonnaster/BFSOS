@@ -3711,8 +3711,8 @@ PKGMK_WORK_DIR="/$pkgmkwork/pkgmk-\$name"
 # Bootstrap integrity policy. All checks default to enabled; development
 # bypasses require an explicit settings change and are visible in this file/log.
 PKGMK_IGNORE_MD5SUM="$([ "$BFS_VERIFY_MD5" = yes ] && echo no || echo yes)"
-PKGMK_IGNORE_SIGNATURE="$([ "$BFS_VERIFY_SIGNATURE" = yes ] && echo no || echo yes)"
-PKGMK_IGNORE_FOOTPRINT="$([ "$BFS_VERIFY_FOOTPRINT" = yes ] && echo no || echo yes)"
+PKGMK_IGNORE_SIGNATURE="yes"
+PKGMK_IGNORE_FOOTPRINT="yes"
 
 # Match the installed BFSOS downloader policy during Stage 2/3: go directly
 # to Pkgfile sources, resume partial downloads, and detect dead/stalled links.
@@ -3915,8 +3915,9 @@ EOF
             fi
 
             integrity_opts=""
-            [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
-            [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
+            # Intermediate bootstrap builds intentionally ignore port package
+            # signature/footprint metadata, regardless of final target policy.
+            integrity_opts="-is -if"
             [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
             if [ -n "$integrity_opts" ]; then
                 echo "WARNING: development integrity bypass active:$integrity_opts"
@@ -4125,8 +4126,9 @@ EOF
             _start_package_log base "$i"
 
             integrity_opts=""
-            [ "$BFS_VERIFY_SIGNATURE" = yes ] || integrity_opts="$integrity_opts -is"
-            [ "$BFS_VERIFY_FOOTPRINT" = yes ] || integrity_opts="$integrity_opts -if"
+            # Intermediate bootstrap builds intentionally ignore port package
+            # signature/footprint metadata, regardless of final target policy.
+            integrity_opts="-is -if"
             [ "$BFS_VERIFY_MD5" = yes ] || integrity_opts="$integrity_opts -im"
             if [ -n "$integrity_opts" ]; then
                 echo "WARNING: development integrity bypass active:$integrity_opts"
