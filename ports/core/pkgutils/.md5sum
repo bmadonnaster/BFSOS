@@ -5,3 +5,4 @@ e4a57218de4338b71c9e0f3f4a2f4ac6  pkgmk.conf
 6cb267fada9ee7c8e3eb90f989451aae  pkgutils-5.40.12.tar.xz
 c77fd2227a2f7828edfc5ac8144ec3b2  pkgutils_numeric-owner-extract.patch
 3c324f19a81b55f468951222fb29851d  pkgutils_source-fallbacks.patch
+61c4597795df5a9ad0bd6343c636ba94  pkgutils_static-footprint-safe.patch
