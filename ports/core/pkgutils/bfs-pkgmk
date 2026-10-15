@@ -254,6 +254,44 @@ run_pkgmk() {
     fi
 }
 
+# BFSOS ports are unsigned by default.  If a port has a .signature, let
+# pkgmk verify it normally; never suppress an invalid existing signature.
+# CRUX pkgmk expects -is for unsigned ports when signature checking is on.
+# Apply that flag only to normal unsigned builds, not explicit signature
+# operations (-cs/-us/-rs) or a repository opting into mandatory signatures.
+# The opt-in policy is BFS_REQUIRE_SIGNATURES=yes in /etc/pkgmk.conf (or the
+# environment).  Read the literal config setting without evaluating shell.
+bfs_signature_required="${BFS_REQUIRE_SIGNATURES:-}"
+if [ -z "$bfs_signature_required" ] && [ -r /etc/pkgmk.conf ]; then
+    bfs_signature_required="$(
+        sed -n 's/^[[:space:]]*BFS_REQUIRE_SIGNATURES[[:space:]]*=[[:space:]]*//p' \
+            /etc/pkgmk.conf | tail -n1 | sed 's/[[:space:]#].*$//' | tr -d '\"' 
+    )"
+fi
+case "$bfs_signature_required" in
+    ''|no|yes) ;;
+    *) printf 'BFSOS pkgmk: invalid BFS_REQUIRE_SIGNATURES=%s (expected yes or no)\n' \
+           "$bfs_signature_required" >&2; exit 2 ;;
+esac
+
+bfs_signature_operation=0
+bfs_signature_override=0
+for bfs_option do
+    case "$bfs_option" in
+        -cs|--check-signature|-us|--update-signature|-rs|--refresh-signature)
+            bfs_signature_operation=1 ;;
+        -is|--ignore-signature) bfs_signature_override=1 ;;
+    esac
+done
+if [ ! -e .signature ] && [ ! -L .signature ] \
+   && [ "$bfs_signature_required" != yes ] \
+   && [ "$bfs_signature_operation" -eq 0 ] \
+   && [ "$bfs_signature_override" -eq 0 ]; then
+    # -is only bypasses signature checking. MD5 and footprint stay enabled.
+    set -- -is "$@"
+fi
+unset bfs_signature_operation bfs_signature_required bfs_signature_override bfs_option
+
 # Keep the launcher in the parent shell: the signal handler must know the
 # active process-group leader even for builds using a private staging copy.
 bfs_original_workdir="$PWD"
