@@ -1,18 +1,20 @@
 # Description: BFSOS safe kernel upgrade, rollback retention, and boot finalization helper
 # URL: https://github.com/bmadonnaster/BFSOS
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: coreutils findutils gawk grep sed systemd
+# Depends on: coreutils findutils gawk grep sed systemd python3
 
 name=bfs-kernel-maintenance
 version=1.0
-release=4
-source=(bfs-kernel-maintenance bfs-kernel-finalize.service README)
+release=5
+source=(bfs-kernel-maintenance bfs-kernel-finalize.service bfs-kernel-migrate.py bfs-kernel-migrate.sh README)
 
 pkg_build() {
     install -Dm0755 "$SRC/bfs-kernel-maintenance" \
         "$PKG/usr/libexec/bfs-kernel-maintenance" || return 1
     install -Dm0644 "$SRC/bfs-kernel-finalize.service" \
         "$PKG/usr/lib/systemd/system/bfs-kernel-finalize.service" || return 1
+    install -Dm0755 "$SRC/bfs-kernel-migrate.py" "$PKG/usr/libexec/bfs-kernel-migrate.py" || return 1
+    install -Dm0755 "$SRC/bfs-kernel-migrate.sh" "$PKG/usr/sbin/bfs-kernel-migrate" || return 1
     install -Dm0644 "$SRC/README" \
         "$PKG/usr/share/doc/$name/README" || return 1
 }

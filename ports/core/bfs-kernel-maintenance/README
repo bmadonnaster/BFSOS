@@ -13,3 +13,29 @@ Kernel packages use a two-phase update policy:
 A second update of the same kernel flavor is refused while an earlier update is
 still pending boot verification. This prevents an unbooted kernel from evicting
 the last known-good rollback entry.
+
+
+Legacy kernel naming migration (r484)
+-----------------------------------
+Install bfs-kernel-maintenance 1.0-5 first. A migration does NOT uninstall
+legacy packages or touch the currently booted kernel. Run, on a disposable
+VM with verified disk/UEFI-variable backups:
+
+  sudo bfs-kernel-migrate status lts
+  sudo bfs-kernel-migrate prepare lts --yes
+
+For an old 7.x package named linux, prepare **mainline first** so that the
+new LTS can take the linux package name:
+
+  sudo bfs-kernel-migrate prepare mainline --yes
+
+The old 7.x pkgutils record is relabelled linux-legacy-mainline, retaining
+ownership of its old boot/module files. New mainline is separate. For LTS,
+only the shared boot/vmlinuz-lts alias is disowned in the old pkg record.
+No files are deleted. Preserve the old kernel until the newly named kernel
+has booted and passed an independent recovery/rollback test. Inspect the
+backup path printed by the helper. Do NOT use pkgrm on the old package until
+legacy ownership of shared paths and bootability have been reviewed.
+
+The helper is intentionally a *prepare-only* operation. It does not claim
+boot verification, GRUB validity, or automatically delete a legacy package.

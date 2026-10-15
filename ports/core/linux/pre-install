@@ -3,8 +3,10 @@ set -eu
 # Existing installations must migrate the old linux-lts identity explicitly.
 # A normal update is not an atomic rename of two kernel packages.
 if pkginfo -i 2>/dev/null | awk '$1 == "linux-lts" {found=1} END {exit !found}'; then
-    echo "BFSOS kernel rename: legacy linux-lts is installed; refusing automatic replacement. Follow the r482 migration plan." >&2
-    exit 1
+    if [ ! -s /var/lib/bfsos/kernel-migrations/ready-linux ]; then
+        echo "BFSOS kernel rename: legacy linux-lts is installed. Run bfs-kernel-migrate prepare lts --yes first." >&2
+        exit 1
+    fi
 fi
 # Before this rename, linux meant 7.x mainline. Never overwrite it as LTS.
 if pkginfo -i 2>/dev/null | awk '$1 == "linux" && $2 ~ /^7[.]/ {found=1} END {exit !found}'; then

@@ -1,3 +1,5 @@
-648167cdf45232b9f8301cd3e56503dc  README
+7df3bbfffaf8421194d70e7949fe318d  bfs-kernel-maintenance
 d1d4eab12506f25de4242225804b9626  bfs-kernel-finalize.service
-6cbfd70b92675abd09a581bdfa41ce45  bfs-kernel-maintenance
+fc1172a26bf9b4eb9ae691aff24cc4a4  bfs-kernel-migrate.py
+d3c1965a449fde872361eb2f1d1f6da8  bfs-kernel-migrate.sh
+8ada213be8ebde34e0a815280fb08706  README

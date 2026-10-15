@@ -5,4 +5,10 @@ drwxr-xr-x	root/root	usr/lib/systemd/system/
 -rw-r--r--	root/root	usr/lib/systemd/system/bfs-kernel-finalize.service
 drwxr-xr-x	root/root	usr/libexec/
 -rwxr-xr-x	root/root	usr/libexec/bfs-kernel-maintenance
+-rwxr-xr-x	root/root	usr/libexec/bfs-kernel-migrate.py
+drwxr-xr-x	root/root	usr/sbin/
+-rwxr-xr-x	root/root	usr/sbin/bfs-kernel-migrate
 drwxr-xr-x	root/root	usr/share/
+drwxr-xr-x	root/root	usr/share/doc/
+drwxr-xr-x	root/root	usr/share/doc/bfs-kernel-maintenance/
+-rw-r--r--	root/root	usr/share/doc/bfs-kernel-maintenance/README
