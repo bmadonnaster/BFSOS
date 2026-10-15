@@ -158,6 +158,7 @@ INSTALL_WIRELESS_TOOLS="${BFS_INSTALL_WIRELESS_TOOLS:-no}"
 INSTALL_GPM="${BFS_INSTALL_GPM:-no}"
 INSTALL_LYNX="${BFS_INSTALL_LYNX:-no}"
 INSTALL_LINKS="${BFS_INSTALL_LINKS:-no}"
+INSTALL_PARTED="${BFS_INSTALL_PARTED:-no}"
 INSTALL_NETWORKMANAGER="${BFS_INSTALL_NETWORKMANAGER:-no}"
 # cryptsetup is installer-managed. It is installed automatically when the
 # final selected storage topology contains a LUKS/crypt layer.
@@ -859,7 +860,7 @@ save_installer_profile() {
         capture_recovery_storage_topology
         {
                 echo '# BFSOS installer profile v3 - no passwords or LUKS passphrases are stored.'
-                for name in HOSTNAME TIMEZONE LOCALE USERNAME ROOT_PASSWORD_POLICY BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_LYNX INSTALL_LINKS INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE SERIAL_CONSOLE ZRAM_SIZE_SPEC BUILD_JOBS BUILD_OPT BUILD_CCACHE BUILD_CCACHE_SIZE BUILD_TMPFS BUILD_TMPFS_SIZE ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
+                for name in HOSTNAME TIMEZONE LOCALE USERNAME ROOT_PASSWORD_POLICY BOOT_MODE BOOT_DISK NETWORK_IFACE NETWORK_MAC NETWORK_TARGET_NAME KERNEL_PACKAGE INSTALL_GRUB GRUB_FALLBACK SAVE_BASE_ARCHIVE BASE_ARCHIVE_DIR ENABLE_OPENSSH INSTALL_GIT INSTALL_SUDO SUDO_MODE INSTALL_WGET INSTALL_WPA_SUPPLICANT INSTALL_WIRELESS_TOOLS INSTALL_GPM INSTALL_LYNX INSTALL_LINKS INSTALL_PARTED INSTALL_NETWORKMANAGER CONSOLE_VIDEO_MODE SERIAL_CONSOLE ZRAM_SIZE_SPEC BUILD_JOBS BUILD_OPT BUILD_CCACHE BUILD_CCACHE_SIZE BUILD_TMPFS BUILD_TMPFS_SIZE ARCHIVE ROOT_DEV ROOT_FORMAT BOOT_DEV BOOT_FORMAT EFI_DEV EFI_FORMAT SWAP_DEV SWAP_FORMAT HOME_DEV HOME_FORMAT ZRAM_SWAP; do
                         printf '%s=' "$name"; profile_quote "${!name:-}"; printf '\n'
                 done
                 for ((i=0;i<${#ADDITIONAL_USERS[@]};i++)); do
@@ -1228,7 +1229,7 @@ load_installer_profile() {
                 [[ "$raw" != *'$('* && "$raw" != *'`'* ]] || continue
                 eval "value=$raw"
                 case "$key" in
-                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|ROOT_PASSWORD_POLICY|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_GPM|INSTALL_LYNX|INSTALL_LINKS|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|SERIAL_CONSOLE|ZRAM_SIZE_SPEC|BUILD_JOBS|BUILD_OPT|BUILD_CCACHE|BUILD_CCACHE_SIZE|BUILD_TMPFS|BUILD_TMPFS_SIZE|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP)
+                        HOSTNAME|TIMEZONE|LOCALE|USERNAME|ROOT_PASSWORD_POLICY|BOOT_MODE|BOOT_DISK|NETWORK_IFACE|NETWORK_MAC|NETWORK_TARGET_NAME|KERNEL_PACKAGE|INSTALL_GRUB|GRUB_FALLBACK|SAVE_BASE_ARCHIVE|BASE_ARCHIVE_DIR|ENABLE_OPENSSH|INSTALL_GIT|INSTALL_SUDO|SUDO_MODE|INSTALL_WGET|INSTALL_WPA_SUPPLICANT|INSTALL_GPM|INSTALL_LYNX|INSTALL_LINKS|INSTALL_PARTED|INSTALL_NETWORKMANAGER|CONSOLE_VIDEO_MODE|SERIAL_CONSOLE|ZRAM_SIZE_SPEC|BUILD_JOBS|BUILD_OPT|BUILD_CCACHE|BUILD_CCACHE_SIZE|BUILD_TMPFS|BUILD_TMPFS_SIZE|ARCHIVE|ROOT_DEV|ROOT_FORMAT|BOOT_DEV|BOOT_FORMAT|EFI_DEV|EFI_FORMAT|SWAP_DEV|SWAP_FORMAT|HOME_DEV|HOME_FORMAT|ZRAM_SWAP)
                                 printf -v "$key" '%s' "$value"
                                 ;;
                         ADDITIONAL_USER)
@@ -5600,6 +5601,7 @@ configure_packages() {
                                         gpm "Console mouse support" "$([[ "$INSTALL_GPM" == yes ]] && echo on || echo off)" \
                                         lynx "Lynx text-mode web browser" "$([[ "$INSTALL_LYNX" == yes ]] && echo on || echo off)" \
                                         links "Links text-mode web browser" "$([[ "$INSTALL_LINKS" == yes ]] && echo on || echo off)" \
+                                        parted "Parted disk partitioning utility" "$([[ "$INSTALL_PARTED" == yes ]] && echo on || echo off)" \
                                         </dev/tty
                         )"; then
                                 status=0
@@ -5614,6 +5616,7 @@ configure_packages() {
                         INSTALL_GPM=no
                         INSTALL_LYNX=no
                         INSTALL_LINKS=no
+                        INSTALL_PARTED=no
 
                         [[ " $choice " == *' "wget" '* || " $choice " == *' wget '* ]] &&
                                 INSTALL_WGET=yes
@@ -5627,6 +5630,8 @@ configure_packages() {
                                 INSTALL_LYNX=yes
                         [[ " $choice " == *' "links" '* || " $choice " == *' links '* ]] &&
                                 INSTALL_LINKS=yes
+                        [[ " $choice " == *' "parted" '* || " $choice " == *' parted '* ]] &&
+                                INSTALL_PARTED=yes
 
                         PACKAGES_CONFIGURED=yes
                         return 0
@@ -5646,10 +5651,11 @@ when the selected storage layout requires them.
   4) $(selection_mark "$INSTALL_GPM") gpm
   5) $(selection_mark "$INSTALL_LYNX") lynx
   6) $(selection_mark "$INSTALL_LINKS") links
-  7) Done
+  7) $(selection_mark "$INSTALL_PARTED") parted — disk partitioning utility
+  8) Done
 
 EOF_PACKAGES
-                read -r -p "Choose [1-7]: " choice
+                read -r -p "Choose [1-8]: " choice
 
                 case "$choice" in
                         1) toggle_setting INSTALL_WGET ;;
@@ -5658,8 +5664,9 @@ EOF_PACKAGES
                         4) toggle_setting INSTALL_GPM ;;
                         5) toggle_setting INSTALL_LYNX ;;
                         6) toggle_setting INSTALL_LINKS ;;
-                        7) PACKAGES_CONFIGURED=yes; return 0 ;;
-                        *) warn "Choose a number from 1 through 7."; sleep 1 ;;
+                        7) toggle_setting INSTALL_PARTED ;;
+                        8) PACKAGES_CONFIGURED=yes; return 0 ;;
+                        *) warn "Choose a number from 1 through 8."; sleep 1 ;;
                 esac
         done
 }
@@ -6559,6 +6566,7 @@ Packages
 Kernel package:       $KERNEL_PACKAGE
 Git / ports sync:     required infrastructure (auto-installed if missing)
 Wget:                 $INSTALL_WGET
+Parted (optional):     $INSTALL_PARTED
 Sudo:                 $INSTALL_SUDO
 Sudo mode:            $SUDO_MODE
 Cryptsetup:           $(if [[ "$AUTO_CRYPTSETUP" == yes ]]; then printf '%s' "AUTO (required by LUKS)"; else printf '%s' "not required"; fi)
@@ -7349,6 +7357,7 @@ build_package_list() {
         [[ "$INSTALL_GPM" == yes ]] && packages+=(gpm)
         [[ "$INSTALL_LYNX" == yes ]] && packages+=(lynx)
         [[ "$INSTALL_LINKS" == yes ]] && packages+=(links)
+        [[ "$INSTALL_PARTED" == yes ]] && packages+=(parted)
         if ((${#BTRFS_DEVICES[@]} > 0)); then
                 packages+=(snapper)
         fi
