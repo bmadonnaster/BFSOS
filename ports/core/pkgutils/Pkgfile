@@ -11,7 +11,7 @@ source=(https://crux.nu/files/$name-$version.tar.xz
         pkgmk.conf
         extension
         bfs-pkgmk
-        bfs-pkgmk-split-phases.patch
+        bfs-pkgmk-split-phases.patch.txt
         pkgutils_source-fallbacks.patch
         pkgutils_numeric-owner-extract.patch
         pkgutils_static-footprint-safe.patch)
@@ -148,7 +148,7 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 
 post_build() {
         # Phase separation is opt-in; legacy builds keep their original path.
-        patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-split-phases.patch" || return 1
+        patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-split-phases.patch.txt" || return 1
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
         fix_pkgmk_cli_precedence "$PKG/usr/bin/pkgmk"
         fix_pkgmk_curl_compatible_downloader "$PKG/usr/bin/pkgmk"
