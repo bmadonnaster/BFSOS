@@ -1504,7 +1504,7 @@ operation_restore() {
 
 show_menu() {
     echo
-    echo "BFS-Linux Home Migration Utility"
+    echo "BFSOS-Mainline Home Migration Utility"
     echo "================================"
     echo "1) Remove /etc/skel files from home folder(s)"
     echo "2) Back up home folder(s)"

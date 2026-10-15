@@ -21,5 +21,5 @@ assert re.search(r'^release=2$',h,re.M)
 assert '-Ddocs=disabled' in h and '-Ddocs=disabled' in h32
 assert 'usr/share/gtk-doc' not in f
 assert 'usr/lib/libharfbuzz' in f
-assert 'scripts/config --set-str LOCALVERSION "-BFS-Linux"' in (root/'ports/core/linux/Pkgfile').read_text(), 'non-LTS suffix change remains deferred'
+assert 'scripts/config --set-str LOCALVERSION "-BFSOS-Mainline"' in (root/'ports/core/linux/Pkgfile').read_text(), 'non-LTS suffix change remains deferred'
 print('r477 installer/harfbuzz static regressions: PASS')

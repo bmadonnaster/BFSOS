@@ -6,7 +6,7 @@
 
 name=linux
 version=6.18.56
-release=1
+release=2
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
 # mix a months-old Debian patch snapshot from another 6.18.y point release into
@@ -39,7 +39,7 @@ pkg_build() {
     # olddefconfig below reconciles version-specific symbols for Linux 6.18.
     cp "$SRC/config" .config
 
-    scripts/config --set-str CONFIG_LOCALVERSION "-BFS-LTS"
+    scripts/config --set-str CONFIG_LOCALVERSION "-BFSOS-LTS"
     scripts/config --disable CONFIG_LOCALVERSION_AUTO
     scripts/config --disable WERROR
     scripts/config --disable DEBUG_INFO
@@ -264,7 +264,7 @@ pkg_build() {
     done
 
     kernver="$(make -s kernelrelease)"
-    if [ "$kernver" != "$version-BFS-LTS" ]; then
+    if [ "$kernver" != "$version-BFSOS-LTS" ]; then
         echo "Unexpected LTS kernel release: $kernver" >&2
         return 1
     fi

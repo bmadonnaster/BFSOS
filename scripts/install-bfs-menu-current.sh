@@ -7155,8 +7155,8 @@ fix_installed_bfsos_branding() {
         for file in "$TARGET/etc/os-release" "$TARGET/usr/lib/os-release"; do
                 [[ -f "$file" ]] || continue
                 sed -i \
-                        -e 's|https://codeberg.org/bmadonnaster/BFS-Linux/issues|https://github.com/bmadonnaster/BFSOS/issues|g' \
-                        -e 's|https://codeberg.org/bmadonnaster/BFS-Linux|https://github.com/bmadonnaster/BFSOS|g' \
+                        -e 's|https://codeberg.org/bmadonnaster/BFSOS-Mainline/issues|https://github.com/bmadonnaster/BFSOS/issues|g' \
+                        -e 's|https://codeberg.org/bmadonnaster/BFSOS-Mainline|https://github.com/bmadonnaster/BFSOS|g' \
                         "$file"
         done
 }
@@ -8766,7 +8766,7 @@ apply_md_618_compat_to_grub_config() {
         grep -q '^uuid=' "$state_file" || return 0
         tmp="$cfg.mdcompat.$$"
         awk '
-                /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ {
+                /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)/ {
                         if ($0 !~ /(^|[[:space:]])md_mod\.check_new_feature=/)
                                 $0=$0 " md_mod.check_new_feature=0"
                 }
@@ -8880,7 +8880,7 @@ verify_grub_storage_cmdline() {
         done < <(discover_required_md_preload_drivers)
 
         if [[ -s /etc/bfsos/md-compat.conf ]] && grep -q '^uuid=' /etc/bfsos/md-compat.conf; then
-                lts618_lines="$(grep -E '^[[:space:]]*linux[[:space:]].*vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS' "$cfg" || true)"
+                lts618_lines="$(grep -E '^[[:space:]]*linux[[:space:]].*vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)' "$cfg" || true)"
                 [[ -n "$lts618_lines" ]] || {
                         echo "GRUB verification failed: MD compatibility state exists but no Linux 6.18 LTS entry was generated." >&2
                         return 1
@@ -8896,7 +8896,7 @@ verify_grub_storage_cmdline() {
                         echo "GRUB verification failed: affected 6.18 LTS entry is missing md_mod.check_new_feature=0." >&2
                         return 1
                 }
-                other_linux_lines="$(grep -E '^[[:space:]]*linux[[:space:]]' "$cfg" | grep -Ev 'vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS' || true)"
+                other_linux_lines="$(grep -E '^[[:space:]]*linux[[:space:]]' "$cfg" | grep -Ev 'vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)' || true)"
                 if [[ -n "$other_linux_lines" ]] && grep -qF 'md_mod.check_new_feature=0' <<<"$other_linux_lines"; then
                         echo "GRUB verification failed: 6.18 MD compatibility token leaked into a non-6.18-LTS entry." >&2
                         return 1
@@ -9312,8 +9312,8 @@ selected_kernel_release() {
 
         [[ "$KERNEL_PACKAGE_VALUE" != none ]] || return 1
         case "$KERNEL_PACKAGE_VALUE" in
-                linux-mainline) suffix="BFS-Linux" ;;
-                linux) suffix="BFS-LTS" ;;
+                linux-mainline) suffix="BFSOS-Mainline" ;;
+                linux) suffix="BFSOS-LTS" ;;
                 *) return 1 ;;
         esac
 
@@ -9327,11 +9327,11 @@ selected_kernel_release() {
         # Legacy/fallback path: select by semantic version, never file mtime.
         case "$KERNEL_PACKAGE_VALUE" in
                 linux-mainline)
-                        find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f\n' 2>/dev/null |
+                        find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFSOS-Mainline' -printf '%f\n' 2>/dev/null |
                                 sed 's/^vmlinuz-//' | sort -V | tail -n1
                         ;;
                 linux)
-                        find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f\n' 2>/dev/null |
+                        find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFSOS-LTS' -printf '%f\n' 2>/dev/null |
                                 sed 's/^vmlinuz-//' | sort -V | tail -n1
                         ;;
         esac

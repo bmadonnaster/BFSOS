@@ -6,7 +6,7 @@
 
 name=linux-mainline
 version=7.2.10
-release=2
+release=3
 bfs_build_phases=split
 build_work=disk
 source=(
@@ -23,7 +23,7 @@ pkg_compile() {
     make olddefconfig
 
     # BFS kernel identity.
-    scripts/config --set-str LOCALVERSION "-BFS-Linux"
+    scripts/config --set-str LOCALVERSION "-BFSOS-Mainline"
     scripts/config --disable LOCALVERSION_AUTO
 
     # LFS-required and recommended settings.
@@ -197,7 +197,7 @@ pkg_compile() {
     kernver="$(make -s kernelrelease)"
 
     case "$kernver" in
-        *-BFS-Linux) ;;
+        *-BFSOS-Mainline) ;;
         *)
             echo "Unexpected kernel release: $kernver" >&2
             return 1
@@ -211,7 +211,7 @@ pkg_compile() {
 
 pkg_stage() {
     local kernver="$(make -s kernelrelease)"
-    [ "$kernver" = "$version-BFS-Linux" ] || {
+    [ "$kernver" = "$version-BFSOS-Mainline" ] || {
         echo "Kernel stage version mismatch: $kernver" >&2
         return 1
     }

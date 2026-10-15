@@ -3,7 +3,7 @@ set -eu
 
 RAID_DRIVERS="linear raid0 raid1 raid10 raid456"
 FLAVOR="linux"
-SUFFIX="BFS-LTS"
+SUFFIX="BFSOS-LTS"
 MAINT=/usr/libexec/bfs-kernel-maintenance
 
 installed_pkg_version() {
@@ -19,7 +19,7 @@ version="${pkgver%-*}"
 kver="${version}-${SUFFIX}"
 
 if [ -z "$version" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
-    kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f\n' 2>/dev/null | sed 's/^vmlinuz-//' | sort -V | tail -n1)"
+    kver="$(find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFSOS-LTS' -printf '%f\n' 2>/dev/null | sed 's/^vmlinuz-//' | sort -V | tail -n1)"
 fi
 
 if [ -z "$kver" ] || [ ! -f "/boot/vmlinuz-$kver" ] || [ ! -d "/lib/modules/$kver" ]; then
@@ -114,7 +114,7 @@ fi
 mv -f "$tmp_initramfs" "$initramfs_image"
 trap - EXIT HUP INT TERM
 "$MAINT" mark-pending "$FLAVOR" "$kver"
-rm -f /boot/vmlinuz-BFS-LTS /boot/initramfs-BFS-LTS.img
+rm -f /boot/vmlinuz-BFSOS-LTS /boot/initramfs-BFSOS-LTS.img
 
 "$MAINT" regenerate-grub
 

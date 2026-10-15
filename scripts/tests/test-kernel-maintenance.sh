@@ -96,54 +96,54 @@ run_family() {
     [ ! -e "$T/state/$flavor/pending" ]
 }
 
-run_family linux 7.2.1-BFS-Linux 7.2.2-BFS-Linux 7.2.3-BFS-Linux
+run_family linux-mainline 7.2.1-BFSOS-Mainline 7.2.2-BFSOS-Mainline 7.2.3-BFSOS-Mainline
 # Reset roots for an independent LTS sequence.
 rm -rf "$T"/{boot,modules,src,state,rollback,etc}
 mkdir -p "$T"/{boot/grub,modules,src,etc/bfsos,etc/default,state,rollback}
-run_family linux-lts 6.18.47-BFS-LTS 6.18.48-BFS-LTS 6.18.49-BFS-LTS
+run_family linux 6.18.47-BFSOS-LTS 6.18.48-BFSOS-LTS 6.18.49-BFSOS-LTS
 [ -L "$T/boot/vmlinuz-lts" ]
-[ "$(readlink "$T/boot/vmlinuz-lts")" = "vmlinuz-6.18.49-BFS-LTS" ]
+[ "$(readlink "$T/boot/vmlinuz-lts")" = "vmlinuz-6.18.49-BFSOS-LTS" ]
 
 # Failed-boot path: pending state and rollback files must survive.
-env_for 6.18.49-BFS-LTS
-"$HELPER" pre-upgrade linux-lts
-install_fake linux-lts 6.18.50-BFS-LTS
-"$HELPER" mark-pending linux-lts 6.18.50-BFS-LTS
+env_for 6.18.49-BFSOS-LTS
+"$HELPER" pre-upgrade linux
+install_fake linux 6.18.50-BFSOS-LTS
+"$HELPER" mark-pending linux 6.18.50-BFSOS-LTS
 "$HELPER" finalize-boot
-assert_file "$T/boot/vmlinuz-6.18.49-BFS-LTS"
-assert_file "$T/boot/vmlinuz-6.18.50-BFS-LTS"
-[ "$(cat "$T/state/linux-lts/pending")" = 6.18.50-BFS-LTS ]
+assert_file "$T/boot/vmlinuz-6.18.49-BFSOS-LTS"
+assert_file "$T/boot/vmlinuz-6.18.50-BFSOS-LTS"
+[ "$(cat "$T/state/linux/pending")" = 6.18.50-BFSOS-LTS ]
 
 echo "kernel-maintenance regression: PASS"
 
 # Per-kernel Linux 6.18 MD metadata compatibility policy: append the bypass
-# only to matching BFS-LTS entries and only when the installed kernel exposes
+# only to matching BFSOS-LTS entries and only when the installed kernel exposes
 # the backported parameter.
 rm -rf "$T"/{boot,modules,src,state,rollback,etc}
 mkdir -p "$T"/{boot/grub,modules,src,etc/bfsos,etc/default,state,rollback}
-env_for 6.18.50-BFS-LTS
+env_for 6.18.50-BFSOS-LTS
 cat > "$T/bin/grub-mkconfig" <<'MOCK_GRUB'
 #!/bin/sh
 [ "${1:-}" = -o ] || exit 2
 cat > "$2" <<EOF
 menuentry 'BFS mainline' {
-  linux /vmlinuz-7.2.4-BFS-Linux root=/dev/mapper/root ro rd.md.uuid=1111:2222
-  initrd /initramfs-7.2.4-BFS-Linux.img
+  linux /vmlinuz-7.2.4-BFSOS-Mainline root=/dev/mapper/root ro rd.md.uuid=1111:2222
+  initrd /initramfs-7.2.4-BFSOS-Mainline.img
 }
 menuentry 'BFS LTS' {
-  linux /vmlinuz-6.18.50-BFS-LTS root=/dev/mapper/root ro rd.md.uuid=1111:2222 rd.driver.pre=raid10
-  initrd /initramfs-6.18.50-BFS-LTS.img
+  linux /vmlinuz-6.18.50-BFSOS-LTS root=/dev/mapper/root ro rd.md.uuid=1111:2222 rd.driver.pre=raid10
+  initrd /initramfs-6.18.50-BFSOS-LTS.img
 }
 EOF
 MOCK_GRUB
 chmod +x "$T/bin/grub-mkconfig"
-printf kernel > "$T/boot/vmlinuz-6.18.50-BFS-LTS"
-mkdir -p "$T/modules/6.18.50-BFS-LTS"
-printf '%s\n' 'md_mod.parm=check_new_feature:bool' > "$T/modules/6.18.50-BFS-LTS/modules.builtin.modinfo"
+printf kernel > "$T/boot/vmlinuz-6.18.50-BFSOS-LTS"
+mkdir -p "$T/modules/6.18.50-BFSOS-LTS"
+printf '%s\n' 'md_mod.parm=check_new_feature:bool' > "$T/modules/6.18.50-BFSOS-LTS/modules.builtin.modinfo"
 printf '%s\n' 'reason=md-v1.2-nonzero-reserved-padding' 'uuid=1111:2222' > "$T/etc/bfsos/md-compat.conf"
 "$HELPER" regenerate-grub
-grep -E 'vmlinuz-6\.18\.50-BFS-LTS.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null
-if grep -E 'vmlinuz-7\.2\.4-BFS-Linux.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null; then
+grep -E 'vmlinuz-6\.18\.50-BFSOS-LTS.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null
+if grep -E 'vmlinuz-7\.2\.4-BFSOS-Mainline.*md_mod\.check_new_feature=0' "$T/boot/grub/grub.cfg" >/dev/null; then
     echo "6.18 MD compatibility token leaked into mainline kernel" >&2
     exit 1
 fi
@@ -151,7 +151,7 @@ fi
 # If the matching LTS build does not expose the parameter, regeneration must
 # fail and preserve the previous known-good grub.cfg atomically.
 printf '%s\n' 'known-good-config' > "$T/boot/grub/grub.cfg"
-: > "$T/modules/6.18.50-BFS-LTS/modules.builtin.modinfo"
+: > "$T/modules/6.18.50-BFSOS-LTS/modules.builtin.modinfo"
 if "$HELPER" regenerate-grub >/dev/null 2>&1; then
     echo "MD compatibility generation unexpectedly accepted a kernel without the parameter" >&2
     exit 1

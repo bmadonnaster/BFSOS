@@ -105,7 +105,7 @@ force_bfs_identity() {
 
     cat >> "$config" <<'EOF'
 
-CONFIG_LOCALVERSION="-BFS-Linux"
+CONFIG_LOCALVERSION="-BFSOS-Mainline"
 # CONFIG_LOCALVERSION_AUTO is not set
 EOF
 }
@@ -143,7 +143,7 @@ main() {
     copy_host_config "$host_config" "$CONFIG_FILE"
     force_bfs_identity "$CONFIG_FILE"
 
-    grep -q '^CONFIG_LOCALVERSION="-BFS-Linux"$' "$CONFIG_FILE" ||
+    grep -q '^CONFIG_LOCALVERSION="-BFSOS-Mainline"$' "$CONFIG_FILE" ||
         die "Failed to set CONFIG_LOCALVERSION."
 
     grep -q '^# CONFIG_LOCALVERSION_AUTO is not set$' "$CONFIG_FILE" ||

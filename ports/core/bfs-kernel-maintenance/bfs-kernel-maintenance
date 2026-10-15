@@ -11,8 +11,8 @@ GRUB_BOOT_PREFIX=${BFS_KERNEL_GRUB_BOOT_PREFIX:-/boot}
 
 flavor_suffix() (
     case "$1" in
-        linux-mainline) printf '%s' 'BFS-Linux' ;;
-        linux) printf '%s' 'BFS-LTS' ;;
+        linux-mainline) printf '%s' 'BFSOS-Mainline' ;;
+        linux) printf '%s' 'BFSOS-LTS' ;;
         *) echo "Unknown BFSOS kernel flavor: $1" >&2; return 2 ;;
     esac
 )
@@ -152,7 +152,7 @@ apply_md_compat_policy() (
     [ -s "$state" ] || return 0
     grep -q '^uuid=' "$state" || return 0
 
-    kvers=$(sed -nE 's@^[[:space:]]*linux[[:space:]]+[^[:space:]]*vmlinuz-(6\.18\.[^[:space:]]*-BFS-LTS)([[:space:]].*)?$@\1@p' "$cfg" | sort -u)
+    kvers=$(sed -nE 's@^[[:space:]]*linux[[:space:]]+[^[:space:]]*vmlinuz-(6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS))([[:space:]].*)?$@\1@p' "$cfg" | sort -u)
     [ -n "$kvers" ] || {
         echo "BFSOS kernel maintenance: MD compatibility state exists but no Linux 6.18 LTS GRUB entry was generated." >&2
         return 1
@@ -171,7 +171,7 @@ apply_md_compat_policy() (
     while IFS= read -r uuid; do
         [ -n "$uuid" ] || continue
         awk -v uuid="$uuid" '
-            /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ {
+            /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)/ {
                 found=1
                 if (index($0, "rd.md.uuid=" uuid) == 0) bad=1
             }
@@ -186,7 +186,7 @@ EOF_UUIDS
 
     tmp="$cfg.mdcompat.$$"
     awk '
-        /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ {
+        /^[[:space:]]*linux[[:space:]]/ && /vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)/ {
             if ($0 !~ /(^|[[:space:]])md_mod\.check_new_feature=/)
                 $0=$0 " md_mod.check_new_feature=0"
         }
@@ -197,7 +197,7 @@ EOF_UUIDS
     # The bypass is deliberately kernel-specific.  A leak into mainline or a
     # future LTS series is a hard error, not something to silently tolerate.
     if awk '
-        /^[[:space:]]*linux[[:space:]]/ && $0 !~ /vmlinuz-6\.18\.[^[:space:]]*-BFS-LTS/ && /md_mod\.check_new_feature=0/ { bad=1 }
+        /^[[:space:]]*linux[[:space:]]/ && $0 !~ /vmlinuz-6\.18\.[^[:space:]]*-(BFSOS-LTS|BFS-LTS)/ && /md_mod\.check_new_feature=0/ { bad=1 }
         END { exit bad ? 0 : 1 }
     ' "$cfg"; then
         echo "BFSOS kernel maintenance: MD compatibility token leaked into a non-6.18-LTS GRUB entry." >&2
@@ -208,8 +208,8 @@ EOF_UUIDS
 set_grub_top_level() (
     selected=$(cat "$ETC_ROOT/bfsos/kernel-flavor" 2>/dev/null || true)
     case "$selected" in
-        linux-mainline) suffix=BFS-Linux ;;
-        linux) suffix=BFS-LTS ;;
+        linux-mainline) suffix=BFSOS-Mainline ;;
+        linux) suffix=BFSOS-LTS ;;
         *) return 0 ;;
     esac
 
@@ -256,7 +256,7 @@ regenerate_grub() (
 
     # /boot/vmlinuz-lts is a convenience alias, not a distinct installed
     # kernel. Hide it only while GRUB scans /boot so 10_linux cannot emit a
-    # duplicate menu entry for the same versioned BFS-LTS image.
+    # duplicate menu entry for the same versioned BFSOS-LTS image.
     if [ -L "$lts_alias" ]; then
         rm -f -- "$alias_tmp"
         mv -Tf -- "$lts_alias" "$alias_tmp"
@@ -378,8 +378,8 @@ mark_pending() (
 finalize_boot() (
     running=$(uname -r 2>/dev/null || true)
     case "$running" in
-        *-BFS-Linux) flavor=linux-mainline ;;
-        *-BFS-LTS) flavor=linux ;;
+        *-BFSOS-Mainline|*-BFS-Linux) flavor=linux-mainline ;;
+        *-BFSOS-LTS|*-BFS-LTS) flavor=linux ;;
         *)
             # This service may run on a rescue/non-BFS kernel; leave pending
             # state untouched rather than falsely declaring success.

@@ -653,11 +653,11 @@ build_iso_package_set() {
     case "$kernel_flavor" in
         lts)
             kernel_pkg="linux"
-            kernel_pattern="vmlinuz-*-BFS-LTS"
+            kernel_pattern="vmlinuz-*-BFSOS-LTS"
             ;;
         mainline)
             kernel_pkg="linux-mainline"
-            kernel_pattern="vmlinuz-*-BFS-Linux"
+            kernel_pattern="vmlinuz-*-BFSOS-Mainline"
             ;;
         *)
             die "Unknown BFS_ISO_KERNEL='$kernel_flavor' (expected: lts or mainline)"
@@ -1201,11 +1201,11 @@ create_live_initramfs() {
 
     case "$kernel_flavor" in
         lts)
-            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f\n' | sort -V | tail -n1)"
+            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFSOS-LTS' -printf '%f\n' | sort -V | tail -n1)"
             [ -n "$kernel" ] || die "No BFSOS LTS kernel found in live root"
             ;;
         mainline)
-            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f\n' | sort -V | tail -n1)"
+            kernel="$(find "$root/boot" -maxdepth 1 -type f -name 'vmlinuz-*-BFSOS-Mainline' -printf '%f\n' | sort -V | tail -n1)"
             [ -n "$kernel" ] || die "No BFSOS mainline kernel found in live root"
             ;;
         *)
