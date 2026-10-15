@@ -1,7 +1,7 @@
 # Description: LibreOffice official precompiled RPM bundle repackaged for BFSOS
 # URL: https://www.libreoffice.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cups dbus fontconfig freetype glib gtk3 libX11 libXext libXrender mesa
+# Depends on: cups dbus fontconfig freetype glib gtk3 libX11 libXext libXrender mesa rpm2cpio
 
 name=libreoffice-bin
 version=26.8.1
