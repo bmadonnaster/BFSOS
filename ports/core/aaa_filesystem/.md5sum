@@ -5,8 +5,9 @@ f70bbec388eac3b99a99718b96b6d4c6  .bash_logout
 b3ab812ec55780f8da4ebc66a798de7b  .vimrc
 338310254e85d77c3ff2fdbe5d0189f7  60-bfsos-opt.conf
 3bfe4e082140e7d47c06f279e2de68d8  99-bfsos.preset
-aa3b01968fe25e4b942a7ad3e3d47c51  bashrc
+4514cd2057a91596b61674e142e4e4f6  bashrc
 9b9e7fc953ac051f33bfe64cd6ed1baf  bfs-opt.sh
+4041bc0bd8b116c3ca92cac34ab0ce15  bfsos-fastfetch.sh
 c374459fd914c975b41e68902a40c9e1  dircolors.sh
 3efa20695418cb235cef08ca534387d3  extrapaths.sh
 c9aa956753dd0a546e13c967275d24fb  fstab
