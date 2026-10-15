@@ -41,11 +41,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KDecoration3/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDecoration3/KDecoration3Targets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDecoration3/KDecoration3Targets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so -> libkdecorations3.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so.6 -> libkdecorations3.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3.so.6 -> libkdecorations3.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so -> libkdecorations3private.so.2
-lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so.2 -> libkdecorations3private.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3private.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libkdecorations3private.so.2 -> libkdecorations3private.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkdecorations3private.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/locale/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/
@@ -180,6 +180,18 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kdecoration.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kdecoration.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kdecoration.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kdecoration.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kdecoration.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kdecoration.mo
@@ -189,6 +201,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kdecoration.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kdecoration.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kdecoration.mo

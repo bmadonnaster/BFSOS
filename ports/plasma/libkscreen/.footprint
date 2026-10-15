@@ -11,7 +11,6 @@ drwxr-xr-x	root/root	opt/kf6/include/KF6/KScreen/KScreen/
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/ConfigOperation
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/EDID
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/GetConfigOperation
--rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/Log
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/Mode
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/Output
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/KScreen/Screen
@@ -27,7 +26,6 @@ drwxr-xr-x	root/root	opt/kf6/include/KF6/KScreen/kscreen/
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/edid.h
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/getconfigoperation.h
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/kscreen_export.h
--rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/log.h
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/mode.h
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/output.h
 -rw-r--r--	root/root	opt/kf6/include/KF6/KScreen/kscreen/screen.h
@@ -45,26 +43,14 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KF6Screen/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6Screen/KF6ScreenTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KF6Screen/KF6ScreenTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Screen.so -> libKF6Screen.so.8
--rwxr-xr-x	root/root	opt/kf6/lib/libKF6Screen.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Screen.so.8 -> libKF6Screen.so.6.7.5
+-rwxr-xr-x	root/root	opt/kf6/lib/libKF6Screen.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Screen.so.8 -> libKF6Screen.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6ScreenDpms.so -> libKF6ScreenDpms.so.8
--rwxr-xr-x	root/root	opt/kf6/lib/libKF6ScreenDpms.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libKF6ScreenDpms.so.8 -> libKF6ScreenDpms.so.6.7.5
+-rwxr-xr-x	root/root	opt/kf6/lib/libKF6ScreenDpms.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKF6ScreenDpms.so.8 -> libKF6ScreenDpms.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/pkgconfig/
 -rw-r--r--	root/root	opt/kf6/lib/pkgconfig/KF6Screen.pc
-drwxr-xr-x	root/root	opt/kf6/lib/plugins/
-drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
-drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kscreen/
--rwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kscreen/KSC_Fake.so
--rwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kscreen/KSC_KWayland.so
--rwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kscreen/KSC_XRandR.so
-drwxr-xr-x	root/root	opt/kf6/libexec/
-drwxr-xr-x	root/root	opt/kf6/libexec/kf6/
--rwxr-xr-x	root/root	opt/kf6/libexec/kf6/kscreen_backend_launcher
 drwxr-xr-x	root/root	opt/kf6/share/
-drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
-drwxr-xr-x	root/root	opt/kf6/share/dbus-1/services/
--rw-r--r--	root/root	opt/kf6/share/dbus-1/services/org.kde.kscreen.service
 drwxr-xr-x	root/root	opt/kf6/share/locale/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
@@ -186,6 +172,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/libkscreen6_qt.qm
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libkscreen6_qt.qm
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/libkscreen6_qt.qm
@@ -200,8 +189,3 @@ drwxr-xr-x	root/root	opt/kf6/share/qlogging-categories6/
 drwxr-xr-x	root/root	opt/kf6/share/zsh/
 drwxr-xr-x	root/root	opt/kf6/share/zsh/site-functions/
 -rw-r--r--	root/root	opt/kf6/share/zsh/site-functions/_kscreen-doctor
-drwxr-xr-x	root/root	usr/
-drwxr-xr-x	root/root	usr/lib/
-drwxr-xr-x	root/root	usr/lib/systemd/
-drwxr-xr-x	root/root	usr/lib/systemd/user/
--rw-r--r--	root/root	usr/lib/systemd/user/plasma-kscreen.service

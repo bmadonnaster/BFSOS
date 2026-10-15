@@ -28,8 +28,8 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/PlasmaActivities/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaActivities/PlasmaActivitiesLibraryTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaActivities/PlasmaActivitiesLibraryTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaActivities.so -> libPlasmaActivities.so.7
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaActivities.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaActivities.so.7 -> libPlasmaActivities.so.6.7.5
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaActivities.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaActivities.so.7 -> libPlasmaActivities.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/pkgconfig/
 -rw-r--r--	root/root	opt/kf6/lib/pkgconfig/PlasmaActivities.pc
 drwxr-xr-x	root/root	opt/kf6/lib/qml/

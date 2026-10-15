@@ -12,8 +12,6 @@ drwxr-xr-x	root/root	opt/
 drwxr-xr-x	root/root	opt/kf6/
 drwxr-xr-x	root/root	opt/kf6/bin/
 -rwxr-xr-x	root/root	opt/kf6/bin/gmenudbusmenuproxy
--rwxr-xr-x	root/root	opt/kf6/bin/kcminit
-lrwxrwxrwx	root/root	opt/kf6/bin/kcminit_startup -> kcminit
 -rwxr-xr-x	root/root	opt/kf6/bin/kcolorschemeeditor
 -rwxr-xr-x	root/root	opt/kf6/bin/kde-systemd-start-condition
 -rwxr-xr-x	root/root	opt/kf6/bin/kfontinst
@@ -35,7 +33,6 @@ lrwxrwxrwx	root/root	opt/kf6/bin/lookandfeeltool -> /opt/kf6/bin/plasma-apply-lo
 -rwxr-xr-x	root/root	opt/kf6/bin/plasmashell
 -rwxr-xr-x	root/root	opt/kf6/bin/plasmawindowed
 -rwxr-xr-x	root/root	opt/kf6/bin/startplasma-wayland
--rwxr-xr-x	root/root	opt/kf6/bin/startplasma-x11
 -rwxr-xr-x	root/root	opt/kf6/bin/xembedsniproxy
 drwxr-xr-x	root/root	opt/kf6/include/
 drwxr-xr-x	root/root	opt/kf6/include/klookandfeel/
@@ -43,9 +40,6 @@ drwxr-xr-x	root/root	opt/kf6/include/klookandfeel/
 -rw-r--r--	root/root	opt/kf6/include/klookandfeel/klookandfeel_export.h
 -rw-r--r--	root/root	opt/kf6/include/klookandfeel/klookandfeelmanager.h
 -rw-r--r--	root/root	opt/kf6/include/klookandfeel/klookandfeelmanifest.h
-drwxr-xr-x	root/root	opt/kf6/include/krdb/
--rw-r--r--	root/root	opt/kf6/include/krdb/krdb.h
--rw-r--r--	root/root	opt/kf6/include/krdb/krdb_export.h
 drwxr-xr-x	root/root	opt/kf6/include/kworkspace6/
 -rw-r--r--	root/root	opt/kf6/include/kworkspace6/autostartscriptdesktopfile.h
 -rw-r--r--	root/root	opt/kf6/include/kworkspace6/config-libkworkspace.h
@@ -87,19 +81,12 @@ drwxr-xr-x	root/root	opt/kf6/include/taskmanager/
 -rw-r--r--	root/root	opt/kf6/include/taskmanager/waylandstartuptasksmodel.h
 -rw-r--r--	root/root	opt/kf6/include/taskmanager/waylandtasksmodel.h
 -rw-r--r--	root/root	opt/kf6/include/taskmanager/windowtasksmodel.h
--rw-r--r--	root/root	opt/kf6/include/taskmanager/xstartuptasksmodel.h
--rw-r--r--	root/root	opt/kf6/include/taskmanager/xwindowtasksmodel.h
 drwxr-xr-x	root/root	opt/kf6/lib/
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/KRunnerAppDBusInterface/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KRunnerAppDBusInterface/KRunnerAppDBusInterfaceConfig.cmake
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/KSMServerDBusInterface/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KSMServerDBusInterface/KSMServerDBusInterfaceConfig.cmake
-drwxr-xr-x	root/root	opt/kf6/lib/cmake/Krdb/
--rw-r--r--	root/root	opt/kf6/lib/cmake/Krdb/KrdbConfig.cmake
--rw-r--r--	root/root	opt/kf6/lib/cmake/Krdb/KrdbConfigVersion.cmake
--rw-r--r--	root/root	opt/kf6/lib/cmake/Krdb/krdbLibraryTargets-release.cmake
--rw-r--r--	root/root	opt/kf6/lib/cmake/Krdb/krdbLibraryTargets.cmake
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/LibKLookAndFeel/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/LibKLookAndFeel/LibKLookAndFeelConfig.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/LibKLookAndFeel/LibKLookAndFeelConfigVersion.cmake
@@ -125,36 +112,36 @@ drwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasma6.0-remove-old-shortcuts
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasma6.3-update-clipboard-database-2-to-3
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasma6.4-migrate-fullscreen-notifications-to-dnd
+-rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasma6.8-remove-action-menu-shortcut
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasmashell-6.0-keep-custom-position-of-panels
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasmashell-6.0-keep-default-floating-setting-for-plasma-5-panels
 -rwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/plasmashell-6.5-remove-stop-activity-shortcut
 lrwxrwxrwx	root/root	opt/kf6/lib/libbatterycontrol.so -> libbatterycontrol.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libbatterycontrol.so.6 -> libbatterycontrol.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libbatterycontrol.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libbatterycontrol.so.6 -> libbatterycontrol.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libbatterycontrol.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinst.so -> libkfontinst.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinst.so.6 -> libkfontinst.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkfontinst.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinst.so.6 -> libkfontinst.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkfontinst.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinstui.so -> libkfontinstui.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinstui.so.6 -> libkfontinstui.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkfontinstui.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libkfontinstui.so.6 -> libkfontinstui.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkfontinstui.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libklipper.so -> libklipper.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libklipper.so.6 -> libklipper.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libklipper.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libklipper.so.6 -> libklipper.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libklipper.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libklookandfeel.so -> libklookandfeel.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libklookandfeel.so.6 -> libklookandfeel.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libklookandfeel.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libkmpris.so.6 -> libkmpris.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkmpris.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkrdb.so
+lrwxrwxrwx	root/root	opt/kf6/lib/libklookandfeel.so.6 -> libklookandfeel.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libklookandfeel.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libkmpris.so.6 -> libkmpris.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkmpris.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libkworkspace6.so -> libkworkspace6.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libkworkspace6.so.6 -> libkworkspace6.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libkworkspace6.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libkworkspace6.so.6 -> libkworkspace6.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libkworkspace6.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libnotificationmanager.so -> libnotificationmanager.so.1
-lrwxrwxrwx	root/root	opt/kf6/lib/libnotificationmanager.so.1 -> libnotificationmanager.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libnotificationmanager.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libnotificationmanager.so.1 -> libnotificationmanager.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libnotificationmanager.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libtaskmanager.so -> libtaskmanager.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libtaskmanager.so.6 -> libtaskmanager.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libtaskmanager.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libtaskmanager.so.6 -> libtaskmanager.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libtaskmanager.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kded/
@@ -226,9 +213,6 @@ drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/containmentactions/
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/containmentactions/org.kde.switchdesktop.so
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/containmentactions/switchactivity.so
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/containmentactions/switchwindow.so
-drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcminit/
-lrwxrwxrwx	root/root	opt/kf6/lib/plugins/plasma/kcminit/kcm_fonts_init.so -> ../kcms/systemsettings/kcm_fonts.so
-lrwxrwxrwx	root/root	opt/kf6/lib/plugins/plasma/kcminit/kcm_style_init.so -> ../kcms/systemsettings/kcm_style.so
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/systemsettings/
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/systemsettings/kcm_autostart.so
@@ -267,9 +251,6 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/breeze/components/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/SessionManagementScreen.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/UserDelegate.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/UserList.qml
--rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/VirtualKeyboard.qml
--rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/VirtualKeyboardLoader.qml
--rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/VirtualKeyboard_wayland.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/WallpaperFader.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/components.qmltypes
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/breeze/components/kde-qmlmodule.version
@@ -292,6 +273,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/lookandfeel/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/lookandfeel/lookandfeelqmlplugin.qmltypes
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/lookandfeel/qmldir
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/accessibility/
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/accessibility/accessibilityprivateplugin.qmltypes
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/accessibility/kde-qmlmodule.version
+-rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/accessibility/libaccessibilityprivateplugin.so
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/accessibility/qmldir
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/battery/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/battery/batterycontrol.qmltypes
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/battery/kde-qmlmodule.version
@@ -303,6 +289,7 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/ClipboardMenu.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/DelegateToolButtons.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/EditPage.qml
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/HoverBlocker.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/ImageItemDelegate.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/KlipperPopup.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/clipboard/TextItemDelegate.qml
@@ -360,6 +347,9 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/systemtray/
 -rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/systemtray/libsystemtrayplugin.so
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/systemtray/qmldir
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/private/systemtray/systemtrayplugin.qmltypes
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/shell/
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/shell/plasmashell.qmltypes
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/shell/qmldir
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/wallpapers/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/wallpapers/image/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/wallpapers/image/kde-qmlmodule.version
@@ -395,6 +385,12 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/keyboardlayout/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/keyboardlayout/keyboardlayoutplugin.qmltypes
 -rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/keyboardlayout/libkeyboardlayoutplugin.so
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/keyboardlayout/qmldir
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/Footer.qml
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/kde-qmlmodule.version
+-rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/libloginlockscreen.so
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/loginlockscreen.qmltypes
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/loginlockscreen/qmldir
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/osd/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/osd/Osd.qml
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/workspace/osd/OsdItem.qml
@@ -433,6 +429,7 @@ drwxr-xr-x	root/root	opt/kf6/libexec/kf6/kauth/
 -rwxr-xr-x	root/root	opt/kf6/libexec/plasma-dbus-run-session-if-needed
 -rwxr-xr-x	root/root	opt/kf6/libexec/plasma-fallback-session-restore
 -rwxr-xr-x	root/root	opt/kf6/libexec/plasma-fallback-session-save
+-rwxr-xr-x	root/root	opt/kf6/libexec/plasma-setup-xwayland
 -rwxr-xr-x	root/root	opt/kf6/libexec/plasma-sourceenv.sh
 -rwxr-xr-x	root/root	opt/kf6/libexec/plasma-startup-sound
 drwxr-xr-x	root/root	opt/kf6/share/
@@ -468,13 +465,26 @@ drwxr-xr-x	root/root	opt/kf6/share/applications/
 drwxr-xr-x	root/root	opt/kf6/share/config.kcfg/
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/colorssettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/cursorthemesettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/desktopthemesettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/feedbacksettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/fontssettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/freespacenotifier.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/iconssettingsbase.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/klipper.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/launchfeedbacksettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/lookandfeelsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/nighttimesettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notifications_badgesettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notifications_behaviorsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notifications_donotdisturbsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notifications_eventsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notifications_jobsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/notificationsettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/regionandlangsettingsbase.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/smserversettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/soundthemesettings.kcfg
 -rw-r--r--	root/root	opt/kf6/share/config.kcfg/stylesettings.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/terminal_settings.kcfg
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/interfaces/
 -rw-r--r--	root/root	opt/kf6/share/dbus-1/interfaces/com.canonical.AppMenu.Registrar.xml
@@ -1293,6 +1303,7 @@ drwxr-xr-x	root/root	opt/kf6/share/kconf_update/
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasma6.0-remove-old-shortcuts.upd
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasma6.3-update-clipboard-database-2-to-3.upd
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasma6.4-migrate-fullscreen-notifications-to-dnd.upd
+-rw-r--r--	root/root	opt/kf6/share/kconf_update/plasma6.8-remove-action-menu-shortcut.upd
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasmashell-6.0-keep-custom-position-of-panels.upd
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasmashell-6.0-keep-default-floating-setting-for-plasma-5-panels.upd
 -rw-r--r--	root/root	opt/kf6/share/kconf_update/plasmashell-6.5-remove-stop-activity-shortcut.upd
@@ -1369,7 +1380,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/af/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/af/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/af/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/af/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/af/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/af/LC_MESSAGES/ksmserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
@@ -1391,7 +1401,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kded_geotimezoned.mo
@@ -1399,7 +1408,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/ksmserver.mo
@@ -1465,13 +1473,11 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ast/LC_MESSAGES/libkicker.mo
@@ -1537,7 +1543,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/az/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kded_geotimezoned.mo
@@ -1545,7 +1550,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/az/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/az/LC_MESSAGES/libkicker.mo
@@ -1610,14 +1614,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/be/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be/LC_MESSAGES/libkicker.mo
@@ -1669,10 +1671,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/kcm_autostart.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/kcm_colors.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/kcm_icons.mo
--rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/be@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
@@ -1698,7 +1698,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kded_geotimezoned.mo
@@ -1706,7 +1705,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/ksmserver.mo
@@ -1770,11 +1768,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kcm_desktoptheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bn_IN/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -1810,11 +1806,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bs/LC_MESSAGES/libkicker.mo
@@ -1867,7 +1861,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kded_geotimezoned.mo
@@ -1875,7 +1868,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/ksmserver.mo
@@ -1943,7 +1935,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kded_geotimezoned.mo
@@ -1951,7 +1942,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/ksmserver.mo
@@ -2019,7 +2009,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kded_geotimezoned.mo
@@ -2027,7 +2016,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cs/LC_MESSAGES/ksmserver.mo
@@ -2082,11 +2070,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/csb/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -2113,7 +2099,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/cy/LC_MESSAGES/ksmserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/da/
 drwxr-xr-x	root/root	opt/kf6/share/locale/da/LC_MESSAGES/
@@ -2134,7 +2119,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/da/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kded_geotimezoned.mo
@@ -2142,7 +2126,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/da/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/da/LC_MESSAGES/libkicker.mo
@@ -2208,7 +2191,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/de/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kded_geotimezoned.mo
@@ -2216,7 +2198,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/de/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/ksmserver.mo
@@ -2282,14 +2263,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/el/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/el/LC_MESSAGES/libkicker.mo
@@ -2353,14 +2332,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/en_GB/LC_MESSAGES/libkicker.mo
@@ -2425,13 +2402,11 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eo/LC_MESSAGES/libkicker.mo
@@ -2497,7 +2472,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/es/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kded_geotimezoned.mo
@@ -2505,7 +2479,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/es/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/ksmserver.mo
@@ -2570,12 +2543,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/et/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/et/LC_MESSAGES/libkicker.mo
@@ -2634,7 +2605,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kded_geotimezoned.mo
@@ -2642,7 +2612,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/ksmserver.mo
@@ -2701,11 +2670,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fa/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -2735,7 +2702,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kded_geotimezoned.mo
@@ -2743,7 +2709,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/ksmserver.mo
@@ -2811,7 +2776,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kded_geotimezoned.mo
@@ -2819,7 +2783,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/ksmserver.mo
@@ -2877,11 +2840,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fy/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -2918,7 +2879,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kded_geotimezoned.mo
@@ -2926,7 +2886,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ga/LC_MESSAGES/ksmserver.mo
@@ -2992,7 +2951,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kded_geotimezoned.mo
@@ -3000,7 +2958,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gl/LC_MESSAGES/libkicker.mo
@@ -3058,11 +3015,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/gu/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -3103,7 +3058,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/he/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kded_geotimezoned.mo
@@ -3111,7 +3065,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/he/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/ksmserver.mo
@@ -3177,14 +3130,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/libkicker.mo
@@ -3240,10 +3191,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/kio_applications.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hne/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -3264,11 +3213,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/libkworkspace.mo
@@ -3301,11 +3248,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/libkicker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hsb/LC_MESSAGES/libkworkspace.mo
@@ -3345,7 +3290,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kded_geotimezoned.mo
@@ -3353,7 +3297,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/ksmserver.mo
@@ -3403,7 +3346,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/hy/
 drwxr-xr-x	root/root	opt/kf6/share/locale/hy/LC_MESSAGES/
--rw-r--r--	root/root	opt/kf6/share/locale/hy/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hy/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hy/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/hy/LC_MESSAGES/plasma_runner_locations.mo
@@ -3427,7 +3369,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kded_geotimezoned.mo
@@ -3435,7 +3376,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/ksmserver.mo
@@ -3501,7 +3441,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/id/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kded_geotimezoned.mo
@@ -3509,7 +3448,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/id/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/id/LC_MESSAGES/libkicker.mo
@@ -3561,7 +3499,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/kio_desktop.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/libkicker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ie/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
@@ -3592,7 +3529,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/is/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kded_geotimezoned.mo
@@ -3600,7 +3536,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/is/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/is/LC_MESSAGES/ksmserver.mo
@@ -3668,7 +3603,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/it/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kded_geotimezoned.mo
@@ -3676,7 +3610,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/it/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/ksmserver.mo
@@ -3744,14 +3677,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ja/LC_MESSAGES/libkicker.mo
@@ -3816,7 +3747,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kded_geotimezoned.mo
@@ -3824,7 +3754,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/ksmserver.mo
@@ -3883,11 +3812,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kk/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -3920,11 +3847,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/km/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/km/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -3956,11 +3881,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/kn/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -3999,7 +3922,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kded_geotimezoned.mo
@@ -4007,7 +3929,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/ksmserver.mo
@@ -4065,11 +3986,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ku/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4104,7 +4023,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kded_geotimezoned.mo
@@ -4112,8 +4030,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/libkicker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/libkmpris.mo
@@ -4179,7 +4097,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kded_geotimezoned.mo
@@ -4187,7 +4104,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/ksmserver.mo
@@ -4246,11 +4162,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mai/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4281,11 +4195,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mk/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4313,12 +4225,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kcm_nightlight.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kcm_notifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ml/LC_MESSAGES/libkicker.mo
@@ -4367,11 +4277,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/libkicker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/mr/LC_MESSAGES/libkworkspace.mo
@@ -4405,11 +4313,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ms/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4450,7 +4356,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kded_geotimezoned.mo
@@ -4458,7 +4363,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nb/LC_MESSAGES/ksmserver.mo
@@ -4518,11 +4422,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nds/LC_MESSAGES/libkicker.mo
@@ -4563,11 +4465,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ne/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4593,7 +4493,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kded_geotimezoned.mo
@@ -4601,7 +4500,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/ksmserver.mo
@@ -4669,7 +4567,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kded_geotimezoned.mo
@@ -4677,7 +4574,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/ksmserver.mo
@@ -4733,11 +4629,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/oc/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4753,11 +4647,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/or/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/or/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -4787,14 +4679,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pa/LC_MESSAGES/libkicker.mo
@@ -4860,7 +4750,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kded_geotimezoned.mo
@@ -4868,7 +4757,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/ksmserver.mo
@@ -4933,12 +4821,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt/LC_MESSAGES/libkicker.mo
@@ -4999,7 +4885,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kded_geotimezoned.mo
@@ -5007,7 +4892,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/ksmserver.mo
@@ -5075,7 +4959,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kded_geotimezoned.mo
@@ -5083,7 +4966,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ro/LC_MESSAGES/ksmserver.mo
@@ -5151,7 +5033,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kded_geotimezoned.mo
@@ -5159,7 +5040,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ru/LC_MESSAGES/libkicker.mo
@@ -5224,14 +5104,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sa/LC_MESSAGES/libkicker.mo
@@ -5286,11 +5164,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/se/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/se/LC_MESSAGES/libkworkspace.mo
@@ -5307,11 +5183,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/si/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/si/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -5349,7 +5223,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kded_geotimezoned.mo
@@ -5357,7 +5230,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/ksmserver.mo
@@ -5425,7 +5297,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kded_geotimezoned.mo
@@ -5433,7 +5304,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/ksmserver.mo
@@ -5491,11 +5361,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -5524,36 +5392,54 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_componentchooser.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_cursortheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_desktoptheme.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_feedback.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_nightlight.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_nighttime.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_regionandlang.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_users.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_wallpaper.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/libkicker.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/libkworkspace.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/oom_notifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.calendar.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.cameraindicator.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.clipboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.digitalclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.icon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.lock_logout.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.manageinputmethod.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.mediacontroller.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.systemmonitor.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.systemtray.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_containmentactions_applauncher.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_containmentactions_contextmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_containmentactions_switchwindow.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_interactiveconsole.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_runner_appstream.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_runner_baloosearch.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_runner_bookmarksrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_runner_calculatorrunner.mo
@@ -5569,6 +5455,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_wallpaper_org.kde.image.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmashell.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmashellprivateplugin.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmawindowed.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/session-shortcuts-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
@@ -5578,36 +5466,54 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_componentchooser.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_cursortheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_desktoptheme.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_feedback.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_nightlight.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_nighttime.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_regionandlang.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_users.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_wallpaper.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/libkicker.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/libkworkspace.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/oom_notifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.calendar.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.cameraindicator.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.clipboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.digitalclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.icon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.lock_logout.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.manageinputmethod.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.mediacontroller.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.systemmonitor.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.systemtray.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_containmentactions_applauncher.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_containmentactions_contextmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_containmentactions_switchwindow.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_interactiveconsole.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_runner_appstream.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_runner_baloosearch.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_runner_bookmarksrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_runner_calculatorrunner.mo
@@ -5623,6 +5529,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_wallpaper_org.kde.image.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmashell.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmashellprivateplugin.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmawindowed.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/session-shortcuts-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
@@ -5632,36 +5540,54 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_componentchooser.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_cursortheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_desktoptheme.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_feedback.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_nightlight.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_nighttime.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_regionandlang.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_users.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_wallpaper.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/libkicker.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/libkworkspace.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/oom_notifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.calendar.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.cameraindicator.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.clipboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.digitalclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.icon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.lock_logout.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.manageinputmethod.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.mediacontroller.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.systemmonitor.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.systemtray.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_containmentactions_applauncher.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_containmentactions_contextmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_containmentactions_switchwindow.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_interactiveconsole.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_runner_appstream.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_runner_baloosearch.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_runner_bookmarksrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_runner_calculatorrunner.mo
@@ -5677,6 +5603,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_wallpaper_org.kde.image.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmashell.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmashellprivateplugin.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmawindowed.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/session-shortcuts-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
@@ -5686,36 +5614,54 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_componentchooser.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_cursortheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_desktoptheme.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_feedback.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_lookandfeel.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_nightlight.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_nighttime.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_regionandlang.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_users.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_wallpaper.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/libkicker.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/libkworkspace.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/oom_notifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.calendar.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.cameraindicator.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.clipboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.digitalclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.icon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.lock_logout.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.manageinputmethod.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.mediacontroller.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.systemmonitor.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.systemtray.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_containmentactions_applauncher.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_containmentactions_contextmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_containmentactions_switchwindow.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_interactiveconsole.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_runner_appstream.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_runner_baloosearch.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_runner_bookmarksrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_runner_calculatorrunner.mo
@@ -5731,6 +5677,8 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_wallpaper_org.kde.image.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmashell.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmashellprivateplugin.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmawindowed.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/session-shortcuts-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
@@ -5752,7 +5700,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kded_geotimezoned.mo
@@ -5760,7 +5707,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/libkicker.mo
@@ -5826,19 +5772,22 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_wallpaper.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/libkicker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/oom_notifier.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
@@ -5888,11 +5837,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/te/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/te/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -5918,12 +5865,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kcm_notifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/libkicker.mo
@@ -5969,14 +5914,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/th/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/th/LC_MESSAGES/oom_notifier.mo
@@ -6026,12 +5969,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tok/LC_MESSAGES/libkicker.mo
@@ -6092,7 +6033,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kded_geotimezoned.mo
@@ -6100,7 +6040,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/ksmserver.mo
@@ -6156,23 +6095,55 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_componentchooser.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_cursortheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_desktoptheme.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_feedback.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_icons.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_nightlight.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_nighttime.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_regionandlang.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_soundtheme.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcminit.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_users.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_wallpaper.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kded_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kded_donationmessage.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kded_geotimezoned.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kio_applications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/krdb.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/krunner.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libkicker.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libkmpris.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libkworkspace.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libnotificationmanager.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/oom_notifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.activitybar.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.appmenu.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.calendar.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.cameraindicator.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.clipboard.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.devicenotifier.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.digitalclock.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.icon.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.lock_logout.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.manageinputmethod.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.mediacontroller.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.notifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.systemmonitor.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.systemtray.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_containmentactions_applauncher.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_containmentactions_contextmenu.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_containmentactions_switchwindow.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_interactiveconsole.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_lookandfeel_org.kde.lookandfeel.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_appstream.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_baloosearch.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_bookmarksrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_calculatorrunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_kill.mo
@@ -6183,7 +6154,12 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_sessions.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_shell.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_webshortcuts.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_wallpaper_org.kde.color.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_wallpaper_org.kde.image.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmashell.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmashellprivateplugin.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmawindowed.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/session-shortcuts-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/soliduiserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
@@ -6205,7 +6181,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kded_geotimezoned.mo
@@ -6213,7 +6188,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/ksmserver.mo
@@ -6303,12 +6277,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kcm_regionandlang.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kcm_users.mo
--rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/vi/LC_MESSAGES/libkicker.mo
@@ -6360,11 +6332,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kcm_fonts.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kcm_icons.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kcm_style.mo
--rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/ksmserver.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/libkworkspace.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/wa/LC_MESSAGES/plasma_applet_org.kde.plasma.analogclock.mo
@@ -6395,7 +6365,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/kfontinst.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/xh/LC_MESSAGES/ksmserver.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/zh_CN/
 drwxr-xr-x	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/
@@ -6417,7 +6386,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kded_geotimezoned.mo
@@ -6425,7 +6393,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/ksmserver.mo
@@ -6493,7 +6460,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcm_style.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcm_users.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcm_wallpaper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcminit.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kded_devicenotifications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kded_donationmessage.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kded_geotimezoned.mo
@@ -6501,7 +6467,6 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kio_applications.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kio_desktop.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/klipper.mo
--rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/krdb.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/krunner.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/ksecretprompter.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/ksmserver.mo
@@ -6615,10 +6580,6 @@ drwxr-xr-x	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/c
 -rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/defaults
 drwxr-xr-x	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/layouts/
 -rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/layouts/org.kde.plasma.desktop-layout.js
-drwxr-xr-x	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout/
--rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout/Logout.qml
--rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout/LogoutButton.qml
--rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout/timer.js
 drwxr-xr-x	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/previews/
 -rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/previews/fullscreenpreview.jpg
 -rw-r--r--	root/root	opt/kf6/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/previews/lockscreen.png
@@ -6766,8 +6727,6 @@ drwxr-xr-x	root/root	opt/kf6/share/xdg-desktop-portal/
 -rw-r--r--	root/root	opt/kf6/share/xdg-desktop-portal/kde-portals.conf
 drwxr-xr-x	root/root	opt/kf6/share/xdg-desktop-portal/portals/
 -rw-r--r--	root/root	opt/kf6/share/xdg-desktop-portal/portals/plasmanotify.portal
-drwxr-xr-x	root/root	opt/kf6/share/xsessions/
--rw-r--r--	root/root	opt/kf6/share/xsessions/plasmax11.desktop
 drwxr-xr-x	root/root	opt/kf6/share/zsh/
 drwxr-xr-x	root/root	opt/kf6/share/zsh/site-functions/
 -rw-r--r--	root/root	opt/kf6/share/zsh/site-functions/_krunner
@@ -6779,8 +6738,6 @@ drwxr-xr-x	root/root	usr/lib/systemd/user/
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-baloorunner.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-core.target
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-gmenudbusmenuproxy.service
--rw-r--r--	root/root	usr/lib/systemd/user/plasma-kcminit-phase1.service
--rw-r--r--	root/root	usr/lib/systemd/user/plasma-kcminit.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-krunner.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-ksmserver.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-ksplash.service
@@ -6788,6 +6745,5 @@ drwxr-xr-x	root/root	usr/lib/systemd/user/
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-restoresession.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-startupsound.service
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-workspace-wayland.target
--rw-r--r--	root/root	usr/lib/systemd/user/plasma-workspace-x11.target
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-workspace.target
 -rw-r--r--	root/root	usr/lib/systemd/user/plasma-xembedsniproxy.service

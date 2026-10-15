@@ -1,0 +1,20 @@
+# Description: C++ library for parsing CSS using Rust
+# URL: https://invent.kde.org/libraries/cxx-rust-cssparser
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: corrosion rustc extra-cmake-modules
+
+name=cxx-rust-cssparser
+version=1.1.0
+release=1
+
+source=(
+    https://download.kde.org/stable/cxx-rust-cssparser/$name-$version.tar.xz
+)
+
+build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6
+           -DCMAKE_PREFIX_PATH=/opt/qt6;/opt/kf6
+           -DCMAKE_INSTALL_LIBEXECDIR=libexec
+           -DCMAKE_INSTALL_LIBDIR=lib
+           -DCMAKE_BUILD_TYPE=Release
+           -DBUILD_TESTING=OFF
+           -Wno-author"

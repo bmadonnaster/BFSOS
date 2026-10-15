@@ -38,11 +38,11 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/Plasma5Support/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/Plasma5Support/Plasma5SupportTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/Plasma5Support/Plasma5SupportTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so -> libPlasma5Support.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so.6 -> libPlasma5Support.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasma5Support.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma5Support.so.6 -> libPlasma5Support.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasma5Support.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so -> libplasma-geolocation-interface.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6 -> libplasma-geolocation-interface.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6 -> libplasma-geolocation-interface.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libplasma-geolocation-interface.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libweather_ion.so -> libweather_ion.so.7
 lrwxrwxrwx	root/root	opt/kf6/lib/libweather_ion.so.7 -> libweather_ion.so.7.0.0
 -rwxr-xr-x	root/root	opt/kf6/lib/libweather_ion.so.7.0.0
@@ -603,6 +603,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sq/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/libplasma5support.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_hotplug.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_keystate.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_powermanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_soliddevice.mo
@@ -610,6 +613,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/libplasma5support.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_hotplug.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_keystate.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_powermanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_soliddevice.mo
@@ -617,6 +623,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/libplasma5support.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_hotplug.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_keystate.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_powermanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_soliddevice.mo
@@ -624,6 +633,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/libplasma5support.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_engine_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_engine_hotplug.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_engine_keystate.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_engine_powermanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_engine_soliddevice.mo
@@ -680,8 +692,13 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/libplasma5support.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_devicenotifications.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_hotplug.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_keystate.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_powermanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_soliddevice.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_time.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_engine_weather.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/

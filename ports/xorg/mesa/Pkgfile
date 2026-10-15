@@ -5,7 +5,7 @@
 # Optional: libdisplay-info libunwind libvdpau lm_sensors valgrind
 
 name=mesa
-version=26.2.4
+version=26.2.5
 release=1
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz)
 

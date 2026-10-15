@@ -4,7 +4,7 @@
 # Depends on: kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kglobalaccel kguiaddons ki18n kio kirigami kjobwidgets knotifications kpipewire kquickimageeditor kservice kstatusnotifieritem kwidgetsaddons kwindowsystem kxmlgui layer-shell-qt opencv prison purpose qt6 plasma-wayland-protocols tesseract wayland xcb-util xcb-util-cursor xcb-util-image
 
 name=spectacle
-version=6.7.5
+version=6.8.0
 release=2
 source=(https://download.kde.org/stable/plasma/$version/$name-$version.tar.xz)
 

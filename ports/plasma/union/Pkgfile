@@ -1,0 +1,21 @@
+# Description: KDE Plasma Union styling system for Qt Quick and Qt Widgets
+# URL: https://invent.kde.org/plasma/union
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: cxx-rust-cssparser qt6 extra-cmake-modules
+
+name=union
+version=6.8.0
+release=1
+
+source=(
+    https://download.kde.org/stable/plasma/$version/$name-$version.tar.xz
+)
+
+build_opt="-DCMAKE_INSTALL_PREFIX=/opt/kf6
+           -DCMAKE_PREFIX_PATH=/opt/qt6;/opt/kf6
+           -DCMAKE_INSTALL_LIBEXECDIR=libexec
+           -DCMAKE_BUILD_TYPE=Release
+           -DCMAKE_QT6=ON
+           -DBUILD_QT5=OFF
+           -DBUILD_TESTING=OFF
+           -Wno-author"
