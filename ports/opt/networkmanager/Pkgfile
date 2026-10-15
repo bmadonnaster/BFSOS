@@ -1,12 +1,12 @@
 # Description: Core NetworkManager daemon, nmcli, nm-online and nmtui
 # URL: https://networkmanager.dev/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: curl iptables libndp libpsl newt nss polkit systemd wpa_supplicant
+# Depends on: curl iptables libndp libpsl newt nss polkit systemd wpa_supplicant gobject-introspection
 # Optional: bluez dbus-python gnutls gtk-doc jansson libaudit libbpf libnvme libteam modemmanager upower valgrind dnsmasq firewalld
 
 name=networkmanager
 version=1.58.1
-release=2
+release=3
 source=(https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/releases/$version/downloads/NetworkManager-$version.tar.xz)
 
 pkg_build() {
@@ -27,7 +27,7 @@ pkg_build() {
         -Dnm_cloud_setup=false \
         -Dclat=false \
         -Dmodem_manager=false \
-        -Dintrospection=false \
+        -Dintrospection=true \
         -Dvapi=false \
         -Ddocs=false || return 1
 

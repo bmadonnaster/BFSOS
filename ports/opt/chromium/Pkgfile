@@ -5,7 +5,7 @@
 # Optional: qt6 gnome-keyring kdialog
 
 name=chromium
-version=155.0.8059.39
+version=155.0.8059.79
 release=1
 build_work=disk
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$version.tar.xz)
@@ -44,6 +44,12 @@ build_opt=(
 
 pkg_build() {
     local gn_args f d size
+
+    # Chromium's Dawn/Tint generators use Go.
+    # Provide a writable cache inside the package build directory.
+    export GOCACHE="$PWD/.go-build-cache"
+    export GOPATH="$PWD/.go-path"
+    mkdir -p "$GOCACHE" "$GOPATH" || return 1
 
     # Fail early with a useful message instead of discovering a missing host
     # tool hours into a Chromium build.

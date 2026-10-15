@@ -4,7 +4,7 @@
 # Depends on: ca-certificates openssl
 
 name=curl
-version=8.22.0
+version=8.23.0
 release=1
 source=(https://$name.se/download/$name-$version.tar.xz)
 build_opt="

@@ -3,6 +3,6 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=fdk-aac
-version=2.0.3
+version=3.0.0
 release=2
 source=(https://downloads.sourceforge.net/project/opencore-amr/fdk-aac/fdk-aac-$version.tar.gz)

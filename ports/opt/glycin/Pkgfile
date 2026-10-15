@@ -5,7 +5,7 @@
 # Optional: libheif vala python3-gi_docgen gtk4
 
 name=glycin
-version=2.2.2
+version=2.2.3
 release=1
 source=(https://download.gnome.org/sources/$name/2.2/$name-$version.tar.xz)
 

@@ -5,9 +5,9 @@
 # Optional:
 
 name=curl-32
-version=8.22.0
-release=3
-source=(https://curl.se/download/${name%-*}-$version.tar.xz)
+version=8.23.0
+release=1
+source=(https://curl.se/download/curl-$version.tar.xz)
 
 build_opt="--enable-ipv6 --without-libidn2 --with-openssl --enable-threaded-resolver --without-libpsl --with-ca-bundle=/etc/ssl/cert.pem"
 

@@ -162,6 +162,8 @@ drwxr-xr-x	root/root	usr/lib/NetworkManager/system-connections/
 drwxr-xr-x	root/root	usr/lib/firewalld/
 drwxr-xr-x	root/root	usr/lib/firewalld/zones/
 -rw-r--r--	root/root	usr/lib/firewalld/zones/nm-shared.xml
+drwxr-xr-x	root/root	usr/lib/girepository-1.0/
+-rw-r--r--	root/root	usr/lib/girepository-1.0/NM-1.0.typelib
 lrwxrwxrwx	root/root	usr/lib/libnm.so -> libnm.so.0
 lrwxrwxrwx	root/root	usr/lib/libnm.so.0 -> libnm.so.0.1.0
 -rwxr-xr-x	root/root	usr/lib/libnm.so.0.1.0
@@ -258,6 +260,8 @@ drwxr-xr-x	root/root	usr/share/dbus-1/system.d/
 -rw-r--r--	root/root	usr/share/dbus-1/system.d/nm-dispatcher.conf
 -rw-r--r--	root/root	usr/share/dbus-1/system.d/nm-priv-helper.conf
 -rw-r--r--	root/root	usr/share/dbus-1/system.d/org.freedesktop.NetworkManager.conf
+drwxr-xr-x	root/root	usr/share/gir-1.0/
+-rw-r--r--	root/root	usr/share/gir-1.0/NM-1.0.gir
 drwxr-xr-x	root/root	usr/share/man/
 drwxr-xr-x	root/root	usr/share/man/man1/
 -rw-r--r--	root/root	usr/share/man/man1/nm-online.1.gz
