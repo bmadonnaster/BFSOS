@@ -144,7 +144,7 @@ EFI_FORMAT="keep"
 SWAP_FORMAT="keep"
 HOME_FORMAT="keep"
 
-KERNEL_PACKAGE="${BFS_KERNEL_PACKAGE:-linux-lts}"
+KERNEL_PACKAGE="${BFS_KERNEL_PACKAGE:-linux}"
 INSTALL_GRUB="${BFS_INSTALL_GRUB:-yes}"
 SAVE_BASE_ARCHIVE="${BFS_SAVE_BASE_ARCHIVE:-yes}"
 BASE_ARCHIVE_DIR="${BFS_BASE_ARCHIVE_DIR:-/var/cache/bfs/archives/base}"
@@ -2050,7 +2050,7 @@ show_installer_help() {
                         text="ZRAM creates compressed swap in RAM. A percentage is the virtual ZRAM device size relative to physical RAM, not an immediate allocation of that amount of memory. Compression means values above 100% can be useful, but workloads and RAM size differ. ZRAM is optional and can be disabled."
                         ;;
                 kernel)
-                        text="linux-lts is the BFSOS default and prioritizes long-term stability. linux is the newer current kernel and may contain newer hardware support. Do not install a kernel only when you deliberately plan to provide and configure a kernel yourself."
+                        text="linux is the BFSOS default LTS kernel and prioritizes long-term stability. linux-mainline is the newer current kernel and may contain newer hardware support. Do not install a kernel only when you deliberately plan to provide and configure a kernel yourself."
                         ;;
                 sudo)
                         text="Sudo lets authorized wheel-group users run administrative commands. Password mode requires the user's password and is the normal safer default. Passwordless wheel sudo is convenient but grants immediate root-level command access to wheel users. You may also choose not to install sudo."
@@ -5533,23 +5533,23 @@ kernel_pkgfile_version() {
 
 configure_kernel() {
         local choice="" linux_version="" lts_version=""
-        linux_version="$(kernel_pkgfile_version linux)"
-        lts_version="$(kernel_pkgfile_version linux-lts)"
+        linux_version="$(kernel_pkgfile_version linux-mainline)"
+        lts_version="$(kernel_pkgfile_version linux)"
 
         while true; do
                 themed_menu choice \
                         "Kernel selection" \
                         "Choose the kernel package for the installed system." \
                         18 82 9 \
-                        1 "linux-lts $lts_version — BFSOS default LTS kernel" \
-                        2 "linux $linux_version — optional current kernel" \
+                        1 "linux $lts_version — BFSOS default LTS kernel" \
+                        2 "linux-mainline $linux_version — optional current kernel" \
                         3 "Do not install a kernel" \
                         4 "Help"
 
                 [[ -n "$choice" ]] || return 0
                 case "$choice" in
-                        1) KERNEL_PACKAGE=linux-lts; KERNEL_CONFIGURED=yes; return 0 ;;
-                        2) KERNEL_PACKAGE=linux; KERNEL_CONFIGURED=yes; return 0 ;;
+                        1) KERNEL_PACKAGE=linux; KERNEL_CONFIGURED=yes; return 0 ;;
+                        2) KERNEL_PACKAGE=linux-mainline; KERNEL_CONFIGURED=yes; return 0 ;;
                         3) KERNEL_PACKAGE=none; KERNEL_CONFIGURED=yes; return 0 ;;
                         4) show_installer_help kernel ;;
                         *) return 0 ;;
@@ -9312,8 +9312,8 @@ selected_kernel_release() {
 
         [[ "$KERNEL_PACKAGE_VALUE" != none ]] || return 1
         case "$KERNEL_PACKAGE_VALUE" in
-                linux) suffix="BFS-Linux" ;;
-                linux-lts) suffix="BFS-LTS" ;;
+                linux-mainline) suffix="BFS-Linux" ;;
+                linux) suffix="BFS-LTS" ;;
                 *) return 1 ;;
         esac
 
@@ -9326,11 +9326,11 @@ selected_kernel_release() {
 
         # Legacy/fallback path: select by semantic version, never file mtime.
         case "$KERNEL_PACKAGE_VALUE" in
-                linux)
+                linux-mainline)
                         find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-Linux' -printf '%f\n' 2>/dev/null |
                                 sed 's/^vmlinuz-//' | sort -V | tail -n1
                         ;;
-                linux-lts)
+                linux)
                         find /boot -maxdepth 1 -type f -name 'vmlinuz-*-BFS-LTS' -printf '%f\n' 2>/dev/null |
                                 sed 's/^vmlinuz-//' | sort -V | tail -n1
                         ;;
@@ -9401,7 +9401,7 @@ configure_kernel_source_policy() {
         printf '%s\n' "$KERNEL_PACKAGE_VALUE" > /etc/bfsos/kernel-flavor
         atomic_kernel_symlink "$src" /usr/src/linux || return 1
 
-        if [[ "$KERNEL_PACKAGE_VALUE" == linux-lts ]]; then
+        if [[ "$KERNEL_PACKAGE_VALUE" == linux ]]; then
                 atomic_kernel_symlink "$src" /usr/src/linux-lts || return 1
                 [[ -s "/boot/vmlinuz-$kernel_release" ]] || return 1
                 atomic_kernel_symlink "vmlinuz-$kernel_release" /boot/vmlinuz-lts || return 1

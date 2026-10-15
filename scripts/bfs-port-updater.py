@@ -217,7 +217,7 @@ BOOKS = (
     ("glfs-dev", "GLFS DEV", "https://www.linuxfromscratch.org/glfs/view/dev/longindex.html"),
 )
 MLFS_PATCH_PAGE = "https://www.linuxfromscratch.org/mlfs/view/dev/chapter03/patches.html"
-KERNEL_PORTS = {"linux", "linux-lts", "linux-headers"}
+KERNEL_PORTS = {"linux-mainline", "linux", "linux-headers"}
 ALIASES = {
     "dbus": {"dbus", "d-bus"}, "pkgconf": {"pkgconf", "pkg-config"},
     "python3": {"python", "python3"}, "procps-ng": {"procps-ng", "procps"},
@@ -693,7 +693,7 @@ def _build_rank(port: str) -> tuple[int, str]:
         order = GROUP_BUILD_ORDER.get(group, [])
         if port in order:
             return group_index * 1000 + order.index(port), port
-    if port == "core/linux-lts":
+    if port == "core/linux":
         return 9_000, port
     if port == "core/linux-headers":
         return 9_001, port
@@ -1295,7 +1295,7 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
     fallback_refs = fallback_refs or {}
 
     # Kernel candidates first so headers can track the proposed LTS point release.
-    lts_target = by_name.get("linux-lts").version if by_name.get("linux-lts") else ""
+    lts_target = by_name.get("linux").version if by_name.get("linux") else ""
     for meta in metas:
         row = upstream.get(meta.rel, {})
         if row.get("latest") and has_unresolved_version_placeholder(row.get("latest", "")):
@@ -1303,25 +1303,25 @@ def make_candidates(metas: list[PortMeta], indexes, mlfs_patches: list[PatchSpec
             row = dict(row)
             row["status"] = "UNVERIFIABLE"
             row["latest"] = ""
-        if meta.name == "linux-lts" and row.get("status") == "UPDATE" and row.get("latest"):
+        if meta.name == "linux" and row.get("status") == "UPDATE" and row.get("latest"):
             lts_target = row["latest"]
             out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
                                  "kernel-bfsos-lts", "kernel.org LTS series", "UPDATE",
                                  "BFSOS 6.18 LTS point-release policy", True, row.get("provider", ""), row.get("source", "")))
-        elif meta.name == "linux" and row.get("status") == "UPDATE" and row.get("latest"):
+        elif meta.name == "linux-mainline" and row.get("status") == "UPDATE" and row.get("latest"):
             out.append(Candidate(meta.rel, meta.name, meta.version, row["latest"], meta.release, "1",
                                  "kernel-bfsos-current", "kernel.org current series", "UPDATE",
                                  "optional current kernel; update when selected", True,
                                  row.get("provider", ""), row.get("source", "")))
 
     for meta in metas:
-        if meta.name in {"linux", "linux-lts"}:
+        if meta.name in {"linux-mainline", "linux"}:
             continue
         if meta.name == "linux-headers":
             if lts_target and lts_target != meta.version:
                 out.append(Candidate(meta.rel, meta.name, meta.version, lts_target, meta.release, "1",
                                      "kernel-bfsos-lts", "BFSOS LTS kernel", "UPDATE",
-                                     "userspace kernel headers track linux-lts; glibc release bump required", True))
+                                     "userspace kernel headers track linux; glibc release bump required", True))
             continue
 
         # Development-book authority is explicit per BFSOS port.
@@ -1537,6 +1537,8 @@ def choose_action_dialog(env, retry_count=0):
         "3", "Kernel / kernel-headers maintenance",
         "4", f"Set BFSOS distro version (current: {project_distro_version()})",
         "5", "Fill missing port descriptions",
+        "8", "Find and check a single port",
+        "9", "Retry failed upstream checks from last report",
     ]
     if retry_count:
         items += ["6", f"Retry failed updates ({retry_count})"]
@@ -1567,12 +1569,49 @@ def choose_trees_dialog(trees, env):
     return None if code else [x.strip('"') for x in out.splitlines() if x.strip()]
 
 
+def failed_ports_from_report(report: Path, ports_root: Path, include_unverifiable=False) -> list[str]:
+    """Retry only still-existing failed version checks from a saved problems TSV."""
+    if not report.is_file():
+        raise FileNotFoundError(report)
+    allowed = {"FETCH-ERROR", "UNVERIFIABLE"} if include_unverifiable else {"FETCH-ERROR"}
+    with report.open(encoding="utf-8", newline="") as f:
+        records = csv.DictReader(f, delimiter="\t")
+        if not {"status", "port"}.issubset(records.fieldnames or []):
+            raise ValueError("expected problems TSV with status and port columns")
+        return sorted({rel for row in records if row["status"] in allowed
+                       if (rel := row["port"]) and (ports_root / rel / "Pkgfile").is_file()
+                       and len(Path(rel).parts) == 2 and ".." not in Path(rel).parts})
+
+
+def find_named_ports(ports_root: Path, query: str) -> list[str]:
+    """Return exact port names, not fuzzy or regex matches."""
+    if not query or query.startswith("/") or ".." in query.split("/") or query.count("/") > 1:
+        return []
+    if any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9+_.-]*", part) for part in query.split("/")):
+        return []
+    if "/" in query:
+        return [query] if (ports_root / query / "Pkgfile").is_file() else []
+    return sorted(p.parent.relative_to(ports_root).as_posix()
+                  for p in ports_root.glob(f"*/{query}/Pkgfile") if p.is_file())
+
+
+def protect_kernel_candidates(cands):
+    """Keep kernel discoveries visible but prohibit routine automatic application."""
+    for c in cands:
+        if c.port in {"core/linux-mainline", "core/linux", "core/linux-headers"}:
+            c.selected = False
+            c.status = "REVIEW"
+            c.reason += "; PROTECTED-KERNEL: explicit maintainer selection required"
+
+
 def default_update_checked(c):
     """Preselect routine maintainer updates; keep uncertain candidates opt-in.
 
     REVIEW still means the maintainer must explicitly confirm the apply plan.
     The selection UI is a convenience, not a change to discovery authority.
     """
+    if c.port in {"core/linux-mainline", "core/linux", "core/linux-headers"}:
+        return False
     if c.status == "UPDATE":
         return True
     if c.status != "REVIEW":
@@ -1794,17 +1833,33 @@ def write_retry_state_log(rows, results, ports_root: Path):
             f.write("\t".join(x.replace("\t"," ").replace("\n"," ") for x in vals)+"\n")
     return path
 
+def isolate_blocked_update_groups(cands, selected: set[str], ports_root: Path) -> tuple[set[str], dict[str, str]]:
+    """Remove invalid coordinated subsets, preserving independent port updates."""
+    selected = set(selected)
+    blocked: dict[str, str] = {}
+    while (group_error := _selection_group_error(cands, selected, ports_root)):
+        offending = set()
+        for members in VERSION_LOCK_GROUPS.values():
+            touched = selected & members
+            if touched and _selection_group_error(cands, touched, ports_root):
+                offending |= touched
+        if not offending:
+            # Fail closed rather than looping or writing an inconsistent batch.
+            offending = selected.copy()
+        for rel in offending:
+            blocked[rel] = "BLOCKED: " + group_error
+        selected -= offending
+    return selected, blocked
+
+
 def apply_selected(cands, selected, ports_root: Path, timeout: int, defer_glibc: bool = False):
     # Interactive REVIEW items start OFF, but an explicitly checked REVIEW item
     # is a maintainer override and should be applied. Noninteractive --apply
     # remains conservative because main() only auto-selects UPDATE candidates.
     results = {}
-    group_error = _selection_group_error(cands, set(selected), ports_root)
-    if group_error:
-        for c in cands:
-            if c.port in selected and any(c.port in members for members in VERSION_LOCK_GROUPS.values()):
-                results[c.port] = "BLOCKED: " + group_error
-        return results
+    # Do not let an incomplete version-locked family block unrelated updates.
+    selected, blocked = isolate_blocked_update_groups(cands, set(selected), ports_root)
+    results.update(blocked)
     chosen = [c for c in cands if c.port in selected and c.status in {"UPDATE", "REVIEW"}]
     chosen.sort(key=lambda c: _build_rank(c.port))
     if not chosen: return results
@@ -1963,7 +2018,7 @@ def is_known_large_build(port_dir: Path, port_rel: str = "") -> bool:
     if any(base.startswith(prefix) for prefix in LARGE_BUILD_PREFIXES):
         return True
     # Kernel compilation is large even though the package names vary.
-    return port_rel in {"core/linux", "core/linux-lts"}
+    return port_rel in {"core/linux-mainline", "core/linux"}
 
 
 def _pkgmk_conf_path_value(var: str, fallback: str) -> str:
@@ -2386,8 +2441,8 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             results[c.port] = f"BLOCKED: {group} updated prerequisite built but not installed/staged"
             continue
 
-        if c.port == "core/linux-headers" and "core/linux-lts" in selected:
-            lts_result = str(results.get("core/linux-lts", ""))
+        if c.port == "core/linux-headers" and "core/linux" in selected:
+            lts_result = str(results.get("core/linux", ""))
             if not lts_result.startswith(("BUILT", "FOOTPRINT UPDATED")) or "FAILED" in lts_result:
                 results[c.port] = "BUILD FAILED: LTS kernel not validated; headers deferred"
                 continue
@@ -2424,7 +2479,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             results[c.port] = f"BLOCKED: build workspace preflight failed: effectively full; {diag}"
             continue
 
-        if c.port in {"core/linux", "core/linux-lts", "core/linux-headers"}:
+        if c.port in {"core/linux-mainline", "core/linux", "core/linux-headers"}:
             # The port metadata, not the scan result or a preexisting cache,
             # is the build authority. Fail closed on stale kernel source URLs.
             try:
@@ -2584,12 +2639,14 @@ def print_report(cands):
         if c.obsolete_patches: print("  obsolete after verification: "+", ".join(c.obsolete_patches))
 
 
-def scan(ports_root, trees, jobs, timeout, stamp):
+def scan(ports_root, trees, jobs, timeout, stamp, only_ports=None):
     LOG_ROOT.mkdir(parents=True,exist_ok=True); audit=LOG_ROOT/f"upstream-{stamp}.tsv"
     base_metas=discover_ports(ports_root,trees)
+    if only_ports is not None:
+        base_metas=[m for m in base_metas if m.rel in set(only_ports)]
     metas, extras = expand_coordinated_metas(ports_root, base_metas)
     indexes,patches,warnings=load_references(timeout)
-    upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit)
+    upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit, [m.name for m in base_metas] if only_ports is not None else None)
     if extras:
         extra_trees=sorted({m.rel.split("/",1)[0] for m in extras})
         extra_audit=LOG_ROOT/f"upstream-{stamp}-coordinated.tsv"
@@ -2611,20 +2668,20 @@ def scan(ports_root, trees, jobs, timeout, stamp):
 def scan_kernel_only(ports_root, trees, jobs, timeout, stamp):
     """Fast BFSOS kernel-policy scan.
 
-    Only linux/linux-lts are queried upstream. linux-headers is deliberately not
+    Only linux-mainline/linux are queried upstream. linux-headers is deliberately not
     passed to generic discovery: its target is derived exclusively from the
-    selected BFSOS linux-lts target in make_candidates().
+    selected BFSOS linux target in make_candidates().
     """
     LOG_ROOT.mkdir(parents=True,exist_ok=True); audit=LOG_ROOT/f"upstream-{stamp}.tsv"
     metas=[m for m in discover_ports(ports_root,trees) if m.name in KERNEL_PORTS]
-    upstream_names=[m.name for m in metas if m.name in {"linux", "linux-lts"}]
+    upstream_names=[m.name for m in metas if m.name in {"linux-mainline", "linux"}]
     upstream=run_upstream_audit(ports_root,trees,jobs,timeout,audit,upstream_names)
     problem_report = LOG_ROOT / f"problems-{stamp}.tsv"
     unverifiable_count, fetch_error_count = write_problem_report(problem_report, upstream)
     print(f"Problem report: {problem_report} (UNVERIFIABLE={unverifiable_count} FETCH-ERROR={fetch_error_count})")
     diagnostics=[f"problem-report\t{problem_report}\tUNVERIFIABLE={unverifiable_count}\tFETCH-ERROR={fetch_error_count}",
-                 "kernel-only: generic upstream scan restricted to linux and linux-lts",
-                 "kernel-only: linux-headers target follows linux-lts only"]
+                 "kernel-only: generic upstream scan restricted to linux-mainline and linux",
+                 "kernel-only: linux-headers target follows linux only"]
     cands=make_candidates(metas,{k:{} for k,_,_ in BOOKS},[],upstream,timeout,diagnostics)
     return cands,[],diagnostics
 
@@ -2633,6 +2690,10 @@ def main():
     ap.add_argument("--ports-root",type=Path,default=DEFAULT_PORTS_ROOT)
     ap.add_argument("--trees",nargs="*",help="collections to scan")
     ap.add_argument("--list-trees",action="store_true")
+    ap.add_argument("--port", help="check a single port by name or tree/name (exact matching)")
+    ap.add_argument("--retry-problems", type=Path, metavar="TSV", help="retry FETCH-ERROR checks from an existing problems TSV")
+    ap.add_argument("--include-unverifiable", action="store_true", help="also retry UNVERIFIABLE results with --retry-problems")
+    ap.add_argument("--allow-kernel-updates", action="store_true", help="explicitly authorize kernel updates during this invocation")
     ap.add_argument("--kernel-only",action="store_true",help="scan only the tree containing BFSOS kernel ports, then show kernel candidates")
     ap.add_argument("--report-only",action="store_true")
     ap.add_argument("--apply",action="store_true",help="apply safe policy-approved candidates (noninteractive)")
@@ -2660,13 +2721,33 @@ def main():
         return 0
 
     available={t.name for t in trees}
-    interactive=not(ns.report_only or ns.apply or ns.trees or ns.kernel_only) and dialog_available()
+    if ns.port and ns.retry_problems:
+        die("--port and --retry-problems are mutually exclusive")
+    if ns.retry_problems:
+        try:
+            found = failed_ports_from_report(ns.retry_problems, ports_root, ns.include_unverifiable)
+        except (OSError, ValueError) as exc:
+            die(f"retry report invalid: {exc}")
+        if not found:
+            print("No retryable ports in report.")
+            return 0
+    if ns.port:
+        found = find_named_ports(ports_root, ns.port)
+        if not found:
+            print(f"Port not found: {ns.port}", file=sys.stderr)
+            return 2
+        if len(found) != 1:
+            print(f"Ambiguous port {ns.port}; specify tree/name: " + ", ".join(found), file=sys.stderr)
+            return 2
+    interactive=not(ns.report_only or ns.apply or ns.trees or ns.kernel_only or ns.port or ns.retry_problems) and dialog_available()
 
     # Non-interactive path remains one-shot and script-friendly.
     if not interactive:
         chosen=ns.trees[:] if ns.trees else []
         if ns.kernel_only:
             chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
+        elif ns.port or ns.retry_problems:
+            chosen=sorted({rel.split("/",1)[0] for rel in found})
         elif not chosen:
             chosen=sorted(available)
         bad=sorted(set(chosen)-available)
@@ -2676,7 +2757,9 @@ def main():
         if ns.kernel_only:
             cands,warnings,diagnostics=scan_kernel_only(ports_root,chosen,ns.jobs,ns.timeout,stamp)
         else:
-            cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
+            cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp, only_ports=found if (ns.port or ns.retry_problems) else None)
+        if not ns.allow_kernel_updates:
+            protect_kernel_candidates(cands)
         for w in warnings: print(f"WARN: {w}",file=sys.stderr)
         print_report(cands)
         selected={c.port for c in cands if ns.apply and c.selected and c.status=="UPDATE"}
@@ -2706,6 +2789,7 @@ def main():
 
             chosen=[]
             kernel_only=False
+            only_ports=None
             if action=="1":
                 chosen=sorted(available)
             elif action=="2":
@@ -2717,6 +2801,35 @@ def main():
                            "No port trees selected. Nothing was scanned.","8","58"],env)
                     continue
                 chosen=picked
+            elif action=="9":
+                reports = sorted(LOG_ROOT.glob("problems-*.tsv"), reverse=True)
+                if not reports:
+                    dcall(["--title", "Retry upstream checks", "--msgbox", "No saved problem reports.", "9", "70"], env)
+                    continue
+                only_ports = failed_ports_from_report(reports[0], ports_root, include_unverifiable=True)
+                if not only_ports:
+                    dcall(["--title", "Retry upstream checks", "--msgbox", "No retryable failures in latest report.", "9", "75"], env)
+                    continue
+                chosen = sorted({p.split("/", 1)[0] for p in only_ports})
+            elif action=="8":
+                code, name = dcall(["--title", "Find port", "--inputbox",
+                                    "Enter an exact port name, or tree/name:", "10", "75"], env)
+                if code or not name.strip():
+                    continue
+                matches = find_named_ports(ports_root, name.strip())
+                if not matches:
+                    dcall(["--title", "Find port", "--msgbox", f"Port not found: {name}", "9", "75"], env)
+                    continue
+                if len(matches) > 1:
+                    entries = [item for path in matches for item in (path, "Port path")]
+                    rc, chosen_port = dcall(["--title", "Choose port", "--menu",
+                                             "Select a specific port", "20", "90", "12", *entries], env)
+                    if rc:
+                        continue
+                else:
+                    chosen_port = matches[0]
+                only_ports=[chosen_port]
+                chosen=[chosen_port.split("/", 1)[0]]
             elif action=="3":
                 chosen=[t.name for t in trees if any((t/p/"Pkgfile").is_file() for p in KERNEL_PORTS)]
                 kernel_only=True
@@ -2781,7 +2894,9 @@ def main():
             if kernel_only:
                 cands,warnings,diagnostics=scan_kernel_only(ports_root,chosen,ns.jobs,ns.timeout,stamp)
             else:
-                cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp)
+                cands,warnings,diagnostics=scan(ports_root,chosen,ns.jobs,ns.timeout,stamp,only_ports=only_ports)
+            if not kernel_only:
+                protect_kernel_candidates(cands)
             for w in warnings: print(f"WARN: {w}",file=sys.stderr)
             if not cands:
                 # Critical UI rule: zero results is completion, not Exit.

@@ -21,6 +21,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import threading
@@ -37,7 +38,7 @@ BLOCKED_QUALIFIERS = (
 # Compatibility/API branches that are intentionally maintained separately in BFSOS.
 # The integer is the number of leading numeric components that must match current.
 SERIES_LOCKS = {
-    "core/linux-lts": 2,
+    "core/linux": 2,
     "gnome/gcr": 2,
     "gnome/libwnck2": 2,
     "gnome/libgweather": 1,
@@ -179,12 +180,83 @@ class FetchError(RuntimeError):
     pass
 
 
+def configured_source_mirrors(conf: Path | None = None) -> tuple[list[tuple[str, str]], list[str]]:
+    """Read only literal URL arrays from pkgmk.conf; never source executable shell."""
+    if conf is None:
+        installed = Path("/etc/pkgmk.conf")
+        conf = installed if installed.is_file() else Path(__file__).resolve().parents[1] / "ports/core/pkgutils/pkgmk.conf"
+    if not conf.is_file():
+        return [], []
+    data = conf.read_text(encoding="utf-8", errors="replace")
+    groups = {}
+    for key in ("PKGMK_SOURCE_FALLBACKS", "PKGMK_SOURCE_FLAT_FALLBACKS", "PKGMK_SOURCE_MIRRORS"):
+        m = re.search(r"(?ms)^" + key + r"=\(\s*(.*?)\)", data)
+        if not m:
+            groups[key] = []
+            continue
+        try:
+            vals = shlex.split(m.group(1), comments=True)
+        except ValueError:
+            vals = []
+        groups[key] = [v for v in vals if "$" not in v and "`" not in v]
+    mapped = []
+    for entry in groups["PKGMK_SOURCE_FALLBACKS"]:
+        if entry.count("|") != 1:
+            continue
+        source, dest = entry.split("|", 1)
+        if source.startswith("https://") and dest.startswith("https://"):
+            mapped.append((source, dest))
+    flat = [u.rstrip("/") for u in groups["PKGMK_SOURCE_FLAT_FALLBACKS"] + groups["PKGMK_SOURCE_MIRRORS"]
+            if u.startswith("https://")]
+    return mapped, flat
+
+
+def source_mirror_candidates(url: str, conf: Path | None = None) -> list[str]:
+    """Return literal fallback archive URLs, never possible upstream versions."""
+    if not url.startswith("https://"):
+        return []
+    maps, flats = configured_source_mirrors(conf)
+    out = []
+    for prefix, replacement in maps:
+        if url.startswith(prefix):
+            out.append(replacement + url[len(prefix):])
+    name = urlsplit(url).path.rsplit("/", 1)[-1]
+    if name and "." in name:
+        out.extend(u + "/" + name for u in flats)
+    return list(dict.fromkeys(u for u in out if u != url))
+
+
 class HttpCache:
     def __init__(self, timeout: int):
         self.timeout = timeout
         self._lock = threading.Lock()
         self._cache: dict[str, tuple[bool, str]] = {}
         self._events: dict[str, threading.Event] = {}
+        self._host_limits: dict[str, threading.BoundedSemaphore] = {}
+
+    def _fetch(self, cmd: list[str], **kwargs):
+        """Bound requests by effective X.Org origin and try TLS 1.2 after curl 35.
+
+        Source mirrors are deliberately not treated as version authorities.
+        """
+        host = (urlsplit(cmd[-1]).hostname or "").lower()
+        origin = "xorg" if host in {"xorg.freedesktop.org", "www.x.org"} else host
+        with self._lock:
+            limiter = self._host_limits.setdefault(origin, threading.BoundedSemaphore(3))
+        with limiter:
+            cp = subprocess.run(cmd, **kwargs)
+            if (origin == "xorg" and cp.returncode == 35 and
+                    "--tls-max" not in cmd and "--tlsv1.2" not in cmd):
+                # A transient TLS failure must not disable certificate verification.
+                retry = cmd[:-1] + ["--tlsv1.2", "--tls-max", "1.2", cmd[-1]]
+                alternate = subprocess.run(retry, **kwargs)
+                if alternate.returncode == 0:
+                    return alternate
+                # Preserve both failures for diagnostics.
+                if isinstance(alternate.stderr, str):
+                    alternate.stderr = ((cp.stderr or "") + " [TLS1.2 retry] " + (alternate.stderr or ""))
+                cp = alternate
+            return cp
 
     def get(self, url: str) -> str:
         with self._lock:
@@ -210,17 +282,17 @@ class HttpCache:
             raise FetchError(value)
 
         try:
-            cp = subprocess.run(
+            cp = self._fetch(
                 [
                     "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
-                    "--compressed", "--connect-timeout", "8", "--max-time",
-                    str(self.timeout), "--user-agent", "BFSOS-checkupdate/11", url,
+                    "--compressed", "--connect-timeout", "15", "--max-time",
+                    str(max(self.timeout, 30)), "--user-agent", "BFSOS-checkupdate/11", url,
                 ],
                 text=True,
                 encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                timeout=self.timeout + 12,
+                timeout=max(self.timeout, 30) * 3 + 15,
                 env={**os.environ, "LC_ALL": "C"},
             )
             if cp.returncode != 0:
@@ -243,17 +315,17 @@ class HttpCache:
     def exists(self, url: str) -> tuple[bool, str]:
         common = [
             "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
-            "--connect-timeout", "8", "--max-time", str(self.timeout),
+            "--connect-timeout", "15", "--max-time", str(max(self.timeout, 30)),
             "--user-agent", "BFSOS-checkupdate/11",
         ]
         errors: list[str] = []
         for extra in (["--head"], ["--range", "0-0", "--output", "/dev/null"]):
             try:
-                cp = subprocess.run(
+                cp = self._fetch(
                     common + extra + [url],
                     text=True, encoding="utf-8", errors="replace",
                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
+                    timeout=max(self.timeout, 30) * 3 + 15, env={**os.environ, "LC_ALL": "C"},
                 )
                 if cp.returncode == 0:
                     return True, ""
@@ -265,6 +337,19 @@ class HttpCache:
                 errors.append(err)
             except subprocess.TimeoutExpired:
                 errors.append("timeout")
+        # This probes exact source availability, NOT upstream version discovery.
+        # Actual package downloads and checksums remain pkgmk's responsibility.
+        for mirror in source_mirror_candidates(url):
+            try:
+                cp = self._fetch(common + ["--head", mirror],
+                                 text=True, encoding="utf-8", errors="replace",
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                 timeout=max(self.timeout, 30) * 3 + 15,
+                                 env={**os.environ, "LC_ALL": "C"})
+                if cp.returncode == 0:
+                    return True, "exact source available via configured mirror: " + mirror
+            except subprocess.TimeoutExpired:
+                errors.append("mirror timeout: " + mirror)
         return False, errors[-1] if errors else "source check failed"
 
 
@@ -272,15 +357,15 @@ class HttpCache:
         """Resolve redirects without keeping the response body."""
         cmd = [
             "curl", "--fail", "--location", "--silent", "--show-error", "--retry", "2", "--retry-all-errors", "--retry-delay", "1",
-            "--connect-timeout", "8", "--max-time", str(self.timeout),
+            "--connect-timeout", "15", "--max-time", str(max(self.timeout, 30)),
             "--user-agent", "BFSOS-checkupdate/11", "--range", "0-0",
             "--output", "/dev/null", "--write-out", "%{url_effective}", url,
         ]
         try:
-            cp = subprocess.run(
+            cp = self._fetch(
                 cmd, text=True, encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
+                timeout=max(self.timeout, 30) * 3 + 15, env={**os.environ, "LC_ALL": "C"},
             )
         except subprocess.TimeoutExpired as exc:
             raise FetchError("timeout") from exc
@@ -290,10 +375,10 @@ class HttpCache:
             range_i = head.index("--range")
             del head[range_i:range_i + 2]
             head.insert(range_i, "--head")
-            cp = subprocess.run(
+            cp = self._fetch(
                 head, text=True, encoding="utf-8", errors="replace",
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                timeout=self.timeout + 12, env={**os.environ, "LC_ALL": "C"},
+                timeout=max(self.timeout, 30) * 3 + 15, env={**os.environ, "LC_ALL": "C"},
             )
             if cp.returncode != 0:
                 raise FetchError(cp.stderr.strip() or msg)

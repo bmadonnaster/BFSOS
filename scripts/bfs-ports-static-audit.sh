@@ -132,15 +132,15 @@ check_version() {
 
 # Kernel point releases move independently of static-audit revisions.
 # Validate the source is tied to version= instead of pinning a stale release.
-for p in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile ports/core/linux-headers/Pkgfile; do
+for p in ports/core/linux-mainline/Pkgfile ports/core/linux/Pkgfile ports/core/linux-headers/Pkgfile; do
     grep -Eq 'linux-\$\{?version\}?\.tar\.xz' "$p" || report "$p source archive is not version-driven"
 done
 
-if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux/6.18.9' ports/core/linux-lts/Pkgfile; then
-    report "linux-lts still carries the obsolete cross-version Debian 6.18.9 patch bundle"
+if grep -q 'debian_patch_base\|sources.debian.org/data/main/l/linux-mainline/6.18.9' ports/core/linux/Pkgfile; then
+    report "linux still carries the obsolete cross-version Debian 6.18.9 patch bundle"
 fi
 
-for kpkg in linux linux-lts; do
+for kpkg in linux-mainline linux; do
     kfile="ports/core/$kpkg/Pkgfile"
     kcfg="ports/core/$kpkg/config"
     grep -q 'scripts/config --enable MODULE_COMPRESS_ALL' "$kfile" || report "$kpkg does not force CONFIG_MODULE_COMPRESS_ALL"

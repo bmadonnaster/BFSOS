@@ -652,11 +652,11 @@ build_iso_package_set() {
 
     case "$kernel_flavor" in
         lts)
-            kernel_pkg="linux-lts"
+            kernel_pkg="linux"
             kernel_pattern="vmlinuz-*-BFS-LTS"
             ;;
         mainline)
-            kernel_pkg="linux"
+            kernel_pkg="linux-mainline"
             kernel_pattern="vmlinuz-*-BFS-Linux"
             ;;
         *)

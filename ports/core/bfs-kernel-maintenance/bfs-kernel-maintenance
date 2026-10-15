@@ -11,8 +11,8 @@ GRUB_BOOT_PREFIX=${BFS_KERNEL_GRUB_BOOT_PREFIX:-/boot}
 
 flavor_suffix() (
     case "$1" in
-        linux) printf '%s' 'BFS-Linux' ;;
-        linux-lts) printf '%s' 'BFS-LTS' ;;
+        linux-mainline) printf '%s' 'BFS-Linux' ;;
+        linux) printf '%s' 'BFS-LTS' ;;
         *) echo "Unknown BFSOS kernel flavor: $1" >&2; return 2 ;;
     esac
 )
@@ -119,16 +119,15 @@ set_selected_aliases() (
     selected=$(cat "$ETC_ROOT/bfsos/kernel-flavor" 2>/dev/null || true)
 
     case "$flavor" in
-        linux)
-            if [ "$selected" = linux ]; then
+        linux-mainline)
+            if [ "$selected" = linux-mainline ]; then
                 atomic_symlink "linux-$kver" "$SOURCE_ROOT/linux"
             fi
             ;;
-        linux-lts)
+        linux)
             atomic_symlink "vmlinuz-$kver" "$BOOT_ROOT/vmlinuz-lts"
             if [ -d "$SOURCE_ROOT/linux-$kver" ]; then
-                atomic_symlink "linux-$kver" "$SOURCE_ROOT/linux-lts"
-                if [ "$selected" = linux-lts ]; then
+                if [ "$selected" = linux ]; then
                     atomic_symlink "linux-$kver" "$SOURCE_ROOT/linux"
                 fi
             fi
@@ -209,8 +208,8 @@ EOF_UUIDS
 set_grub_top_level() (
     selected=$(cat "$ETC_ROOT/bfsos/kernel-flavor" 2>/dev/null || true)
     case "$selected" in
-        linux) suffix=BFS-Linux ;;
-        linux-lts) suffix=BFS-LTS ;;
+        linux-mainline) suffix=BFS-Linux ;;
+        linux) suffix=BFS-LTS ;;
         *) return 0 ;;
     esac
 
@@ -379,8 +378,8 @@ mark_pending() (
 finalize_boot() (
     running=$(uname -r 2>/dev/null || true)
     case "$running" in
-        *-BFS-Linux) flavor=linux ;;
-        *-BFS-LTS) flavor=linux-lts ;;
+        *-BFS-Linux) flavor=linux-mainline ;;
+        *-BFS-LTS) flavor=linux ;;
         *)
             # This service may run on a rescue/non-BFS kernel; leave pending
             # state untouched rather than falsely declaring success.

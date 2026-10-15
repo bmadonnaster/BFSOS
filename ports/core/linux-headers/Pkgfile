@@ -5,7 +5,7 @@ name=linux-headers
 version=6.18.56
 release=1
 # Keep libc/userspace headers aligned with the BFSOS default kernel line.
-# The optional current/mainline kernel remains separately available as `linux`.
+# The optional current/mainline kernel remains separately available as `linux-mainline`.
 source=(https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$version.tar.xz)
 
 bootstrap_build() {

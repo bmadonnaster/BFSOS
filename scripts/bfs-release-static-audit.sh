@@ -127,7 +127,7 @@ done
 grep -q 'bfs_refresh_new_deps' ports/core/prt-get/Pkgfile || say_fail "prt-get missing new-dependency refresh"
 
 # Mainline/LTS MD policy must agree: core built in, personalities modular.
-for f in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile; do
+for f in ports/core/linux-mainline/Pkgfile ports/core/linux/Pkgfile; do
   grep -q 'scripts/config --enable MD' "$f" || say_fail "$f does not enable MD core"
   for sym in MD_LINEAR MD_RAID0 MD_RAID1 MD_RAID10 MD_RAID456; do
     grep -q "scripts/config --module $sym" "$f" || say_fail "$f does not make $sym modular"
@@ -137,7 +137,7 @@ done
 # Mainline/LTS kernel package policy: Zstd kernel image and every installed
 # loadable module must be compressed as .ko.zst. Keep both the recipe and the
 # saved baseline config aligned so this cannot be silently skipped again.
-for f in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile; do
+for f in ports/core/linux-mainline/Pkgfile ports/core/linux/Pkgfile; do
   grep -q 'scripts/config --enable KERNEL_ZSTD' "$f" || say_fail "$f does not enable KERNEL_ZSTD"
   grep -q 'scripts/config --disable KERNEL_GZIP' "$f" || say_fail "$f does not disable KERNEL_GZIP"
   grep -q 'scripts/config --enable MODULE_COMPRESS_ZSTD' "$f" || say_fail "$f does not select Zstd module compression"
@@ -145,7 +145,7 @@ for f in ports/core/linux/Pkgfile ports/core/linux-lts/Pkgfile; do
   grep -Fq -- "-name '*.ko.zst'" "$f" || say_fail "$f lacks post-install .ko.zst verification"
   grep -Eq '^# Depends on:.*(^|[[:space:]])zstd([[:space:]]|$)' "$f" || say_fail "$f does not depend on zstd"
 done
-for cfg in ports/core/linux/config ports/core/linux-lts/config; do
+for cfg in ports/core/linux-mainline/config ports/core/linux/config; do
   grep -q '^CONFIG_KERNEL_ZSTD=y$' "$cfg" || say_fail "$cfg does not select KERNEL_ZSTD"
   grep -q '^# CONFIG_KERNEL_GZIP is not set$' "$cfg" || say_fail "$cfg still selects kernel Gzip"
   grep -q '^CONFIG_MODULE_COMPRESS=y$' "$cfg" || say_fail "$cfg does not enable module compression"

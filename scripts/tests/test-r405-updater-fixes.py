@@ -9,7 +9,7 @@ assert 'sqlite_release_page' in check and '3530400' not in check  # decoded gene
 assert 'npm_registry' in check
 assert 'sourceforge_files' in check
 assert 'pinned Berkeley DB 5.3 compatibility ABI' in check
-assert '--retry-all-errors' in check and '--connect-timeout", "8"' in check
+assert '--retry-all-errors' in check and '--connect-timeout", "15"' in check  # r480 timeout hardening
 assert 'pkgmk_footprint_package_command' in up and '"-if"' in up and '"-uf"' in up
 assert 'cleanup_successful_build_work' in up and 'BUILD-WORK CLEANUP' in up
 exp=(ROOT/'ports/compat-32/expat-32/Pkgfile').read_text()

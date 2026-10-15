@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+# A legacy 7.x package named linux must be migrated explicitly rather than
+# coinstalled under a second identity with overlapping boot/module files.
+if pkginfo -i 2>/dev/null | awk '$1 == "linux" && $2 ~ /^7[.]/ {found=1} END {exit !found}'; then
+    echo "BFSOS kernel rename: old linux mainline package is installed; perform a verified migration first." >&2
+    exit 1
+fi
+command -v /usr/libexec/bfs-kernel-maintenance >/dev/null 2>&1 || {
+    echo "linux-mainline pre-install: bfs-kernel-maintenance is required" >&2
+    exit 1
+}
+exec /usr/libexec/bfs-kernel-maintenance pre-upgrade linux-mainline
