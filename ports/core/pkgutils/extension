@@ -445,10 +445,24 @@ if [ ! "$(command -v build)" ]; then
 			if [ -n "$srcdir" ] && [ -d "$srcdir" ]; then
 				cd "$srcdir" || return 1
 			fi
-			_patch || return $?
+			# Patches are applied once in the unprivileged compile phase.
+			if [ "${BFS_PKG_PHASE:-}" != stage ]; then
+				_patch || return $?
+			fi
 		fi
 
-		if command -v pkg_build >/dev/null 2>&1; then
+		if [ "${BFS_PKG_SPLIT_BUILD:-no}" = yes ]; then
+			case "${BFS_PKG_PHASE:-}" in
+				compile)
+					if command -v pre_build >/dev/null 2>&1; then pre_build || return $?; fi
+					pkg_compile || return $?
+					return 0 ;;
+				stage)
+					pkg_stage || return $?
+					if command -v post_build >/dev/null 2>&1; then post_build || return $?; fi ;;
+				*) echo 'pkgmk: invalid BFSOS build phase' >&2; return 1 ;;
+			esac
+		elif command -v pkg_build >/dev/null 2>&1; then
 			# Custom recipes participate in the standard hooks whether or not
 			# they have downloadable/extracted source files.
 			if command -v pre_build >/dev/null 2>&1; then

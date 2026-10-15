@@ -6,13 +6,15 @@
 
 name=linux
 version=7.2.10
-release=1
+release=2
+bfs_build_phases=split
+build_work=disk
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-${version}.tar.xz
     config
 )
 
-pkg_build() {
+pkg_compile() {
     local kernver=""
 
     make mrproper
@@ -205,6 +207,14 @@ pkg_build() {
     echo "Building kernel release: $kernver"
 
     make bzImage modules
+}
+
+pkg_stage() {
+    local kernver="$(make -s kernelrelease)"
+    [ "$kernver" = "$version-BFS-Linux" ] || {
+        echo "Kernel stage version mismatch: $kernver" >&2
+        return 1
+    }
     make INSTALL_MOD_PATH="$PKG" modules_install
 
     if [ ! -d "$PKG/lib/modules/$kernver" ]; then

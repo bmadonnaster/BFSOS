@@ -1,0 +1,94 @@
+--- pkgmk.orig
++++ pkgmk
+@@ -637,8 +637,42 @@
+ 	local BUILD_SUCCESSFUL="no"
+ 	local COMPRESSION
+ 
+-	check_file "$TARGET"
+-	make_work_dir
++	# BFSOS split phases: normal unprivileged compilation first, then a
++	# fresh fakeroot process for staging AND archive creation. Legacy ports
++	# stay on the original single-phase path.
++	if [ "${BFS_PKG_SPLIT_BUILD:-no}" = yes ] && [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then
++		check_file "$TARGET"
++		make_work_dir
++		info "BFSOS: compiling outside fakeroot: $name"
++		unpack_source
++		cd "$SRC"
++		if ! (set -e -x; BFS_PKG_PHASE=compile; export BFS_PKG_PHASE; build); then
++			error "BFSOS compile phase failed: $name"
++			exit 1
++		fi
++		cd "$PKGMK_ROOT"
++		info "BFSOS: staging and archiving under fakeroot: $name"
++		# Re-enter pkgmk with the SAME prepared work directory; no second
++		# extraction, compilation, or source/MD5/signature verification.
++		local stage_opts=(-f -kw -cf "$PKGMK_CONFFILE")
++		[ "$PKGMK_IGNORE_FOOTPRINT" = yes ] && stage_opts+=(-if)
++		[ "$PKGMK_IGNORE_NEW" = yes ] && stage_opts+=(-in)
++		[ "$PKGMK_NO_STRIP" = yes ] && stage_opts+=(-ns)
++		if ! BFS_PKG_STAGE_ONLY=yes fakeroot -- "$PKGMK_COMMAND" "${stage_opts[@]}"; then
++			error "BFSOS fakeroot staging failed: $name"
++			exit 1
++		fi
++		if [ "$PKGMK_KEEP_WORK" = no ]; then remove_work_dir; fi
++		return 0
++	fi
++
++	if [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then
++		check_file "$TARGET"
++		make_work_dir
++	else
++		PKG="$PKGMK_WORK_DIR/pkg"
++		SRC="$PKGMK_WORK_DIR/src"
++	fi
+ 
+ 	if [ "$UID" != "0" ]; then
+ 		warning "Packages should be built as root."
+@@ -646,10 +680,14 @@
+ 
+ 	info "Building '$TARGET'."
+ 
+-	unpack_source
++	if [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then unpack_source; fi
+ 
+ 	cd $SRC
+-	(set -e -x ; build)
++	if [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
++		(set -e -x; BFS_PKG_PHASE=stage; export BFS_PKG_PHASE; build)
++	else
++		(set -e -x; build)
++	fi
+ 
+ 	if [ $? = 0 ]; then
+ 		if [ "$PKGMK_NO_STRIP" = "no" ]; then
+@@ -967,6 +1005,14 @@
+ 	check_directory "`dirname $PKGMK_WORK_DIR`"
+ 
+ 	check_pkgfile
++	if [ "${BFS_PKG_SPLIT_BUILD:-no}" = yes ]; then
++		if [ "${bfs_build_phases:-}" != split ] ||
++		   ! declare -F pkg_compile >/dev/null ||
++		   ! declare -F pkg_stage >/dev/null; then
++			error 'BFSOS split mode requires bfs_build_phases=split and pkg_compile/pkg_stage functions'
++		exit 1
++		fi
++	fi
+ 
+ 	case $PKGMK_COMPRESSION_MODE in
+ 		gz|bz2|xz|lz|zst)
+@@ -977,6 +1023,14 @@
+ 			exit 1
+ 			;;
+ 	esac
++
++	if [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
++		[ "${BFS_PKG_SPLIT_BUILD:-no}" = yes ] || exit 1
++		[ -d "$PKGMK_WORK_DIR/src" ] || { error 'BFSOS split stage missing prepared source'; exit 1; }
++		[ -d "$PKGMK_WORK_DIR/pkg" ] || { error 'BFSOS split stage missing package root'; exit 1; }
++		build_package
++		exit $?
++	fi
+ 
+ 	if [ "$PKGMK_CLEAN" = "yes" ]; then
+ 		clean

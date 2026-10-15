@@ -224,6 +224,14 @@ bfs_sync_metadata() {
     done
 }
 
+# Only ports explicitly migrated to two functions opt into the new flow.
+# A regular CRUX recipe still uses the legacy fakeroot invocation.
+bfs_split=0
+if [ -r ./Pkgfile ] && grep -Eq '^[[:space:]]*bfs_build_phases=split([[:space:]]|$)' ./Pkgfile; then
+    bfs_split=1
+    export BFS_PKG_SPLIT_BUILD=yes
+fi
+
 run_pkgmk() {
     if [ "$(id -u)" -eq 0 ] \
        && command -v runuser >/dev/null 2>&1 \
@@ -235,8 +243,14 @@ run_pkgmk() {
             printf '%s\n' 'BFSOS pkgmk: setsid required for isolated build cleanup' >&2
             return 126
         }
-        setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
-            CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@" &
+        if [ "$bfs_split" -eq 1 ]; then
+            printf 'BFSOS pkgmk: split build, compilation outside fakeroot\n' >&2
+            setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
+                CCACHE_DIR=/var/cache/ccache BFS_PKG_SPLIT_BUILD=yes pkgmk "$@" &
+        else
+            setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
+                CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@" &
+        fi
         bfs_active_pid=$!
         # wait is interrupted by a trapped signal; bfs_interrupt handles the
         # session group. Under normal completion wait returns pkgmk's status.

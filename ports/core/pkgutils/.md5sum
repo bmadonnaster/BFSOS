@@ -1,8 +1,9 @@
-888a1ec592c446a569c1f3ed927305de  bfs-pkgmk
-8b58420c8d76642357684c60c62e829a  extension
+0d224711b3858f56706377c97aec9ae9  bfs-pkgmk
+1c35321c2510f63cfe430640a779cc9d  extension
 ad5f0f9bec107692c465ce17d5d5af5c  pkgadd.conf
 e4a57218de4338b71c9e0f3f4a2f4ac6  pkgmk.conf
 6cb267fada9ee7c8e3eb90f989451aae  pkgutils-5.40.12.tar.xz
 c77fd2227a2f7828edfc5ac8144ec3b2  pkgutils_numeric-owner-extract.patch
 3c324f19a81b55f468951222fb29851d  pkgutils_source-fallbacks.patch
 61c4597795df5a9ad0bd6343c636ba94  pkgutils_static-footprint-safe.patch
+ed726ef5c72af2fd04fb1278944b052d  bfs-pkgmk-split-phases.patch
