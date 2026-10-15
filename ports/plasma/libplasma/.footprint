@@ -28,11 +28,10 @@ drwxr-xr-x	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/ConfigView
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/ContainmentView
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/Dialog
+-rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/PlasmaQuick
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/PlasmaShellWaylandIntegration
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/PlasmaWindow
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/PopupPlasmaWindow
--rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/QuickViewSharedEngine
--rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/PlasmaQuick/SharedQmlEngine
 drwxr-xr-x	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/appletpopup.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/appletquickitem.h
@@ -40,12 +39,11 @@ drwxr-xr-x	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/configview.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/containmentview.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/dialog.h
+-rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/plasmaquick.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/plasmaquick_export.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/plasmashellwaylandintegration.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/plasmawindow.h
 -rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/popupplasmawindow.h
--rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/quickviewsharedengine.h
--rw-r--r--	root/root	opt/kf6/include/PlasmaQuick/plasmaquick/sharedqmlengine.h
 drwxr-xr-x	root/root	opt/kf6/lib/
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/Plasma/
@@ -59,12 +57,12 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/PlasmaQuick/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaQuick/PlasmaQuickConfigVersion.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaQuick/PlasmaQuickTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/PlasmaQuick/PlasmaQuickTargets.cmake
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so -> libPlasma.so.7
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasma.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so.7 -> libPlasma.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so -> libPlasmaQuick.so.7
--rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaQuick.so.6.7.5
-lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so.7 -> libPlasmaQuick.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so -> libPlasma.so.8
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasma.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasma.so.8 -> libPlasma.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so -> libPlasmaQuick.so.8
+-rwxr-xr-x	root/root	opt/kf6/lib/libPlasmaQuick.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libPlasmaQuick.so.8 -> libPlasmaQuick.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kirigami/
@@ -199,6 +197,9 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/plasmoid/
 -rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/plasmoid/libplasmoidplugin.so
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/plasmoid/plasmoidplugin.qmltypes
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/plasma/plasmoid/qmldir
+drwxr-xr-x	root/root	opt/kf6/metatypes/
+-rw-r--r--	root/root	opt/kf6/metatypes/qt6plasma_metatypes.json
+-rw-r--r--	root/root	opt/kf6/metatypes/qt6plasmaquick_metatypes.json
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/kdevappwizard/
 drwxr-xr-x	root/root	opt/kf6/share/kdevappwizard/templates/
@@ -279,6 +280,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/he/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/hi/
 drwxr-xr-x	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hi/LC_MESSAGES/libplasma6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/hr/
+drwxr-xr-x	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/hr/LC_MESSAGES/libplasma6.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/hu/
 drwxr-xr-x	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/hu/LC_MESSAGES/libplasma6.mo

@@ -3,6 +3,7 @@ drwxr-xr-x	root/root	opt/kf6/
 drwxr-xr-x	root/root	opt/kf6/include/
 drwxr-xr-x	root/root	opt/kf6/include/KPipeWire/
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/DmaBufHandler
+-rw-r--r--	root/root	opt/kf6/include/KPipeWire/MediaMonitor
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/PipeWireBaseEncodedStream
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/PipeWireEncodedStream
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/PipeWireRecord
@@ -12,6 +13,8 @@ drwxr-xr-x	root/root	opt/kf6/include/KPipeWire/
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/kpipewire_export.h
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/kpipewire_version.h
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/kpipewiredmabuf_export.h
+-rw-r--r--	root/root	opt/kf6/include/KPipeWire/kpipewiremonitor_export.h
+-rw-r--r--	root/root	opt/kf6/include/KPipeWire/mediamonitor.h
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/pipewirebaseencodedstream.h
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/pipewireencodedstream.h
 -rw-r--r--	root/root	opt/kf6/include/KPipeWire/pipewirerecord.h
@@ -25,14 +28,17 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KPipeWire/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KPipeWire/KPipeWireTargets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KPipeWire/KPipeWireTargets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWire.so -> libKPipeWire.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWire.so.6 -> libKPipeWire.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWire.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWire.so.6 -> libKPipeWire.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWire.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireDmaBuf.so -> libKPipeWireDmaBuf.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireDmaBuf.so.6 -> libKPipeWireDmaBuf.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWireDmaBuf.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireDmaBuf.so.6 -> libKPipeWireDmaBuf.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWireDmaBuf.so.6.8.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireMonitor.so -> libKPipeWireMonitor.so.6
+lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireMonitor.so.6 -> libKPipeWireMonitor.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWireMonitor.so.6.8.0
 lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireRecord.so -> libKPipeWireRecord.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireRecord.so.6 -> libKPipeWireRecord.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWireRecord.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libKPipeWireRecord.so.6 -> libKPipeWireRecord.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKPipeWireRecord.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/qml/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/
@@ -41,9 +47,9 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/kde-qmlmodule.version
 -rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/libKPipeWireplugin.so
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/
--rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/KPipeWireMonitorDeclarative.qmltypes
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/KPipeWireMonitor.qmltypes
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/kde-qmlmodule.version
--rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/libKPipeWireMonitorDeclarative.so
+-rwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/libKPipeWireMonitorplugin.so
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/monitor/qmldir
 -rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/pipewire/qmldir
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/pipewire/record/
@@ -167,6 +173,18 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kpipewire6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kpipewire6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kpipewire6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kpipewire6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kpipewire6.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/kpipewire6.mo
@@ -176,6 +194,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kpipewire6.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kpipewire6.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kpipewire6.mo
