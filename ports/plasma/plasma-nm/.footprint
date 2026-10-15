@@ -71,6 +71,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -149,6 +150,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/bg/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -182,6 +184,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -203,6 +206,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ca@valencia/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -264,6 +268,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/de/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/de/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -341,6 +346,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/es/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/es/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -381,6 +387,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/eu/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -405,6 +412,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fi/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -426,6 +434,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/fr/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -488,6 +497,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/he/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/he/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -558,6 +568,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ia/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -620,6 +631,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/it/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/it/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -661,6 +673,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ka/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -685,6 +698,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ko/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -706,6 +720,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lt/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -727,6 +742,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/lv/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -802,6 +818,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nl/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -823,6 +840,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/nn/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -861,6 +879,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pl/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -902,6 +921,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/pt_BR/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -984,6 +1004,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1005,6 +1026,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1022,6 +1044,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1039,6 +1062,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1056,6 +1080,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1073,6 +1098,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1110,11 +1136,14 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ta/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_cellular_network.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_mobile_hotspot.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_mobile_wifi.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasmanetworkmanagement-libs.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasmanetworkmanagement_openconnectui.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/plasmanetworkmanagement_openvpnui.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/tg/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/kcm_mobile_wifi.mo
@@ -1131,6 +1160,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1147,14 +1177,24 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmanetworkmanagement_vpncui.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_cellular_network.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_mobile_hotspot.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_mobile_wifi.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement-libs.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_fortisslvpnui.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_iodineui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_l2tpui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_libreswanui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_openconnectui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_openvpnui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_pptpui.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_sshui.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_sstpui.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_strongswanui.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmanetworkmanagement_vpncui.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
@@ -1163,6 +1203,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1184,6 +1225,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_CN/LC_MESSAGES/plasmanetworkmanagement-libs.mo
@@ -1205,6 +1247,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcm_mobile_wifi.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/kcm_mobile_wired.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/plasmanetworkmanagement-kcm-qml.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/plasmanetworkmanagement-kcm.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/plasmanetworkmanagement-kded.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/zh_TW/LC_MESSAGES/plasmanetworkmanagement-libs.mo

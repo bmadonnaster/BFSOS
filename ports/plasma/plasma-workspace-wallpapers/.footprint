@@ -394,6 +394,17 @@ drwxr-xr-x	root/root	opt/kf6/share/wallpapers/Volna/contents/images/
 -rw-r--r--	root/root	opt/kf6/share/wallpapers/Volna/contents/images/5120x2880.jpg
 -rw-r--r--	root/root	opt/kf6/share/wallpapers/Volna/contents/screenshot.png
 -rw-r--r--	root/root	opt/kf6/share/wallpapers/Volna/metadata.json
+drwxr-xr-x	root/root	opt/kf6/share/wallpapers/Waterfall/
+drwxr-xr-x	root/root	opt/kf6/share/wallpapers/Waterfall/contents/
+drwxr-xr-x	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images/
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images/1440x2960.png
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images/5120x2880.png
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images/7680x2160.png
+drwxr-xr-x	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images_dark/
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images_dark/1440x2960.png
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images_dark/5120x2880.png
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/contents/images_dark/7680x2160.png
+-rw-r--r--	root/root	opt/kf6/share/wallpapers/Waterfall/metadata.json
 drwxr-xr-x	root/root	opt/kf6/share/wallpapers/summer_1am/
 drwxr-xr-x	root/root	opt/kf6/share/wallpapers/summer_1am/contents/
 drwxr-xr-x	root/root	opt/kf6/share/wallpapers/summer_1am/contents/images/

@@ -165,6 +165,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tg/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasmavault-kde.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasmavault-kde.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/plasmavault-kde.mo

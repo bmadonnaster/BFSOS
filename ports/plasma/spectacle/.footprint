@@ -12,6 +12,8 @@ drwxr-xr-x	root/root	opt/kf6/lib/kconf_update_bin/
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/applications/
 -rwxr-xr-x	root/root	opt/kf6/share/applications/org.kde.spectacle.desktop
+drwxr-xr-x	root/root	opt/kf6/share/config.kcfg/
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/spectacle.kcfg
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/interfaces/
 -rw-r--r--	root/root	opt/kf6/share/dbus-1/interfaces/org.kde.Spectacle.xml
@@ -258,6 +260,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/spectacle.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/spectacle.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/spectacle.mo
@@ -288,6 +293,9 @@ drwxr-xr-x	root/root	opt/kf6/share/man/nl/man1/
 drwxr-xr-x	root/root	opt/kf6/share/man/pt_BR/
 drwxr-xr-x	root/root	opt/kf6/share/man/pt_BR/man1/
 -rw-r--r--	root/root	opt/kf6/share/man/pt_BR/man1/spectacle.1
+drwxr-xr-x	root/root	opt/kf6/share/man/ru/
+drwxr-xr-x	root/root	opt/kf6/share/man/ru/man1/
+-rw-r--r--	root/root	opt/kf6/share/man/ru/man1/spectacle.1
 drwxr-xr-x	root/root	opt/kf6/share/man/sl/
 drwxr-xr-x	root/root	opt/kf6/share/man/sl/man1/
 -rw-r--r--	root/root	opt/kf6/share/man/sl/man1/spectacle.1

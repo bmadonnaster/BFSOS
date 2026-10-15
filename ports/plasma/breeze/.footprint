@@ -27,6 +27,9 @@ drwxr-xr-x	root/root	opt/kf6/share/color-schemes/
 -rw-r--r--	root/root	opt/kf6/share/color-schemes/BreezeClassic.colors
 -rw-r--r--	root/root	opt/kf6/share/color-schemes/BreezeDark.colors
 -rw-r--r--	root/root	opt/kf6/share/color-schemes/BreezeLight.colors
+drwxr-xr-x	root/root	opt/kf6/share/config.kcfg/
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/breeze-decoration.kcfg
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/breeze.kcfg
 drwxr-xr-x	root/root	opt/kf6/share/icons/
 drwxr-xr-x	root/root	opt/kf6/share/icons/Breeze_Light/
 drwxr-xr-x	root/root	opt/kf6/share/icons/Breeze_Light/cursors/
@@ -1002,6 +1005,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/breeze_kwin_deco.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/breeze_style_config.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/breeze_kwin_deco.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/breeze_style_config.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/breeze_kwin_deco.mo

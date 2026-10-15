@@ -16,28 +16,33 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KScreenLocker/
 drwxr-xr-x	root/root	opt/kf6/lib/cmake/ScreenSaverDBusInterface/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/ScreenSaverDBusInterface/ScreenSaverDBusInterfaceConfig.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libKScreenLocker.so -> libKScreenLocker.so.6
-lrwxrwxrwx	root/root	opt/kf6/lib/libKScreenLocker.so.6 -> libKScreenLocker.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libKScreenLocker.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libKScreenLocker.so.6 -> libKScreenLocker.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libKScreenLocker.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/systemsettings/
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/plasma/kcms/systemsettings/kcm_screenlocker.so
+drwxr-xr-x	root/root	opt/kf6/lib/qml/
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/
+drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/kscreenlocker/
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/kscreenlocker/kscreenlocker_greet.qmltypes
+-rw-r--r--	root/root	opt/kf6/lib/qml/org/kde/kscreenlocker/qmldir
 drwxr-xr-x	root/root	opt/kf6/libexec/
 -rwxr-xr-x	root/root	opt/kf6/libexec/kscreenlocker_greet
+-rwxr-xr-x	root/root	opt/kf6/libexec/kscreenlocker_worker
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/applications/
 -rw-r--r--	root/root	opt/kf6/share/applications/kcm_screenlocker.desktop
+drwxr-xr-x	root/root	opt/kf6/share/config.kcfg/
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/kscreenlockersettings.kcfg
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/interfaces/
 -rw-r--r--	root/root	opt/kf6/share/dbus-1/interfaces/kf6_org.freedesktop.ScreenSaver.xml
 -rw-r--r--	root/root	opt/kf6/share/dbus-1/interfaces/org.kde.screensaver.xml
 drwxr-xr-x	root/root	opt/kf6/share/knotifications6/
 -rw-r--r--	root/root	opt/kf6/share/knotifications6/ksmserver.notifyrc
-drwxr-xr-x	root/root	opt/kf6/share/ksmserver/
-drwxr-xr-x	root/root	opt/kf6/share/ksmserver/screenlocker/
-drwxr-xr-x	root/root	opt/kf6/share/ksmserver/screenlocker/org.kde.passworddialog/
--rw-r--r--	root/root	opt/kf6/share/ksmserver/screenlocker/org.kde.passworddialog/metadata.desktop
 drwxr-xr-x	root/root	opt/kf6/share/locale/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ar/LC_MESSAGES/
@@ -318,6 +323,7 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kscreenlocker_greet.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_screenlocker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kscreenlocker.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kscreenlocker_greet.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/

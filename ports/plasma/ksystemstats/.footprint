@@ -17,6 +17,7 @@ drwxr-xr-x	root/root	opt/kf6/lib/plugins/ksystemstats/
 -rwxr-xr-x	root/root	opt/kf6/lib/plugins/ksystemstats/ksystemstats_plugin_pressure.so
 drwxr-xr-x	root/root	opt/kf6/libexec/
 -rwxr-xr-x	root/root	opt/kf6/libexec/ksystemstats_intel_helper
+-rwxr-xr-x	root/root	opt/kf6/libexec/ksystemstats_xe_helper
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/services/
@@ -142,6 +143,18 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sk/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sl/LC_MESSAGES/ksystemstats_plugins.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/ksystemstats_plugins.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/ksystemstats_plugins.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/ksystemstats_plugins.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
+drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/ksystemstats_plugins.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sv/LC_MESSAGES/ksystemstats_plugins.mo
@@ -151,6 +164,9 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/ta/LC_MESSAGES/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/ksystemstats_plugins.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/ksystemstats_plugins.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/ksystemstats_plugins.mo

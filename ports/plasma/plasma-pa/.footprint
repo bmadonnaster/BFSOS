@@ -1,8 +1,8 @@
 drwxr-xr-x	root/root	opt/
 drwxr-xr-x	root/root	opt/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/
-lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-volume.so.6 -> libplasma-volume.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libplasma-volume.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libplasma-volume.so.6 -> libplasma-volume.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libplasma-volume.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/kded/
@@ -27,6 +27,8 @@ drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/plasma/private/volume/
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/applications/
 -rw-r--r--	root/root	opt/kf6/share/applications/kcm_pulseaudio.desktop
+drwxr-xr-x	root/root	opt/kf6/share/config.kcfg/
+-rw-r--r--	root/root	opt/kf6/share/config.kcfg/plasmapa.kcfg
 drwxr-xr-x	root/root	opt/kf6/share/doc/
 drwxr-xr-x	root/root	opt/kf6/share/doc/HTML/
 drwxr-xr-x	root/root	opt/kf6/share/doc/HTML/ca/
@@ -307,6 +309,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/kcm_pulseaudio.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/plasma_applet_org.kde.plasma.volume.mo
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
+drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_pulseaudio.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.volume.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/uk/LC_MESSAGES/kcm_pulseaudio.mo

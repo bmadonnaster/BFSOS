@@ -6,8 +6,8 @@ drwxr-xr-x	root/root	opt/
 drwxr-xr-x	root/root	opt/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/
 lrwxrwxrwx	root/root	opt/kf6/lib/libpowerdevilcore.so -> libpowerdevilcore.so.2
-lrwxrwxrwx	root/root	opt/kf6/lib/libpowerdevilcore.so.2 -> libpowerdevilcore.so.6.7.5
--rwxr-xr-x	root/root	opt/kf6/lib/libpowerdevilcore.so.6.7.5
+lrwxrwxrwx	root/root	opt/kf6/lib/libpowerdevilcore.so.2 -> libpowerdevilcore.so.6.8.0
+-rwxr-xr-x	root/root	opt/kf6/lib/libpowerdevilcore.so.6.8.0
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/
 drwxr-xr-x	root/root	opt/kf6/lib/plugins/kf6/krunner/
@@ -636,24 +636,28 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/sr/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/kcm_powerdevilprofilesconfig.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.battery.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_applet_org.kde.plasma.brightness.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/plasma_runner_powerdevil.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/kcm_powerdevilprofilesconfig.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.battery.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_applet_org.kde.plasma.brightness.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/plasma_runner_powerdevil.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavian/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/kcm_powerdevilprofilesconfig.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.battery.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_applet_org.kde.plasma.brightness.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/plasma_runner_powerdevil.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@ijekavianlatin/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/
 drwxr-xr-x	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/kcm_powerdevilprofilesconfig.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.battery.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_applet_org.kde.plasma.brightness.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/plasma_runner_powerdevil.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/sr@latin/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/sv/
@@ -703,8 +707,10 @@ drwxr-xr-x	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/
 -rw-r--r--	root/root	opt/kf6/share/locale/tr/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/
 drwxr-xr-x	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_mobile_power.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/kcm_powerdevilprofilesconfig.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.battery.mo
+-rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_applet_org.kde.plasma.brightness.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/plasma_runner_powerdevil.mo
 -rw-r--r--	root/root	opt/kf6/share/locale/ug/LC_MESSAGES/powerdevil.mo
 drwxr-xr-x	root/root	opt/kf6/share/locale/uk/
