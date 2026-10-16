@@ -259,9 +259,20 @@ pkg_stage() {
     make clean
     make prepare scripts
 
-    install -d "$PKG/usr/src"
-    mv "$SRC/$name-$version" \
-        "$PKG/usr/src/linux-$kernver"
+    # Stage the prepared source tree from the current kernel build directory.
+    # Do not assume the upstream directory uses the BFSOS package name.
+    # A missing tree must fail packaging rather than leave dangling module links.
+    source_dest="$PKG/usr/src/linux-$kernver"
+    [ -f Makefile ] && [ -f .config ] || {
+        echo "Kernel packaging error: prepared source tree is unavailable." >&2
+        return 1
+    }
+    install -d "$source_dest"
+    cp -a . "$source_dest/" || return 1
+    [ -s "$source_dest/Makefile" ] && [ -s "$source_dest/.config" ] || {
+        echo "Kernel packaging error: incomplete source tree in $source_dest" >&2
+        return 1
+    }
 
     rm -f \
         "$PKG/lib/modules/$kernver/build" \
@@ -273,7 +284,9 @@ pkg_stage() {
     ln -s "/usr/src/linux-$kernver" \
         "$PKG/lib/modules/$kernver/source"
 
-    find -L "$PKG/usr/src/linux-$kernver" \
-        -type l \
-        -delete 2>/dev/null || true
+    find -L "$source_dest" -type l -delete 2>/dev/null || true
+    [ -d "$source_dest/include" ] && [ -d "$source_dest/scripts" ] || {
+        echo "Kernel packaging error: source headers/scripts missing from $source_dest" >&2
+        return 1
+    }
 }
