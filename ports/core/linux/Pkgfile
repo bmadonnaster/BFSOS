@@ -5,8 +5,8 @@
 # Optional: pahole
 
 name=linux
-version=6.18.56
-release=2
+version=6.18.57
+release=1
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
 # mix a months-old Debian patch snapshot from another 6.18.y point release into

@@ -5,8 +5,8 @@
 # Optional: pahole
 
 name=linux-mainline
-version=7.2.10
-release=4
+version=7.2.11
+release=1
 build_work=disk
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-${version}.tar.xz
