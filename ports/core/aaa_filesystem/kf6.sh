@@ -1,7 +1,28 @@
 # Begin /etc/profile.d/kf6.sh
 
+# Fallback helper definition if the master login shell function isn't inherited
+if ! type pathappend &>/dev/null; then
+    pathappend() {
+        local dir=$1 var=$2
+        eval "local val=\$$var"
+        if [ -d "$dir" ] && ! echo "$val" | grep -q -E "(^|:)$dir($|:)"; then
+            if [ -z "$val" ]; then
+                eval "export $var=\"$dir\""
+            else
+                eval "export $var=\"$val:$dir\""
+            fi
+        fi
+    }
+fi
+
 KF6_PREFIX=/opt/kf6
 export KF6_PREFIX
+
+# Seed base Qt6 paths if they exist, ensuring core QML components are discoverable
+if [ -d "/opt/qt6" ]; then
+    [ -d "/opt/qt6/lib/plugins" ] && pathappend "/opt/qt6/lib/plugins" QT_PLUGIN_PATH
+    [ -d "/opt/qt6/lib/qml" ]     && pathappend "/opt/qt6/lib/qml"     QML2_IMPORT_PATH
+fi
 
 if [ -d "$KF6_PREFIX" ]; then
     [ -d "$KF6_PREFIX/bin" ] && pathappend "$KF6_PREFIX/bin" PATH
@@ -21,4 +42,8 @@ if [ -d "$KF6_PREFIX" ]; then
 
     [ -d "$KF6_PREFIX/include" ] && pathappend "$KF6_PREFIX/include" CPLUS_INCLUDE_PATH
 fi
+
+# Explicitly export the multi-prefix paths to the active graphical session environment
+export QT_PLUGIN_PATH
+export QML2_IMPORT_PATH
 # End /etc/profile.d/kf6.sh

@@ -4,7 +4,7 @@
 
 name=aaa_filesystem
 version=1
-release=23
+release=24
 # BFSOS distribution release. Change this value when preparing a new
 # BFSOS release; the aaa_filesystem package version remains independent.
 bfs_version=0.9.1.1
