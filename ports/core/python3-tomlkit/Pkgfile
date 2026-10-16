@@ -4,7 +4,7 @@
 # Depends on: python3-build python3-installer python3-poetry-core
 
 name=python3-tomlkit
-version=0.15.1
+version=0.15.2
 release=1
 
 source=(

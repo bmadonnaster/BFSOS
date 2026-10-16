@@ -33,14 +33,14 @@ lrwxrwxrwx	root/root	usr/lib32/dri/meson_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/mi0283qt_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/mxsfb-drm_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/nouveau_dri.so -> libdril_dri.so
-lrwxrwxrwx	root/root	usr/lib32/dri/nouveau_drv_video.so -> ../libgallium-26.2.4.so
+lrwxrwxrwx	root/root	usr/lib32/dri/nouveau_drv_video.so -> ../libgallium-26.2.5.so
 lrwxrwxrwx	root/root	usr/lib32/dri/panel-mipi-dbi_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/pl111_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/r300_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/r600_dri.so -> libdril_dri.so
-lrwxrwxrwx	root/root	usr/lib32/dri/r600_drv_video.so -> ../libgallium-26.2.4.so
+lrwxrwxrwx	root/root	usr/lib32/dri/r600_drv_video.so -> ../libgallium-26.2.5.so
 lrwxrwxrwx	root/root	usr/lib32/dri/radeonsi_dri.so -> libdril_dri.so
-lrwxrwxrwx	root/root	usr/lib32/dri/radeonsi_drv_video.so -> ../libgallium-26.2.4.so
+lrwxrwxrwx	root/root	usr/lib32/dri/radeonsi_drv_video.so -> ../libgallium-26.2.5.so
 lrwxrwxrwx	root/root	usr/lib32/dri/rcar-du_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/repaper_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/rockchip_dri.so -> libdril_dri.so
@@ -54,7 +54,7 @@ lrwxrwxrwx	root/root	usr/lib32/dri/sun4i-drm_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/swrast_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/udl_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/virtio_gpu_dri.so -> libdril_dri.so
-lrwxrwxrwx	root/root	usr/lib32/dri/virtio_gpu_drv_video.so -> ../libgallium-26.2.4.so
+lrwxrwxrwx	root/root	usr/lib32/dri/virtio_gpu_drv_video.so -> ../libgallium-26.2.5.so
 lrwxrwxrwx	root/root	usr/lib32/dri/vkms_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/vmwgfx_dri.so -> libdril_dri.so
 lrwxrwxrwx	root/root	usr/lib32/dri/zink_dri.so -> libdril_dri.so
@@ -73,7 +73,7 @@ lrwxrwxrwx	root/root	usr/lib32/libRusticlOpenCL.so.1 -> libRusticlOpenCL.so.1.0.
 -rwxr-xr-x	root/root	usr/lib32/libRusticlOpenCL.so.1.0.0
 -rwxr-xr-x	root/root	usr/lib32/libVkLayer_INTEL_nullhw.so
 -rwxr-xr-x	root/root	usr/lib32/libVkLayer_MESA_overlay.so
--rwxr-xr-x	root/root	usr/lib32/libgallium-26.2.4.so
+-rwxr-xr-x	root/root	usr/lib32/libgallium-26.2.5.so
 lrwxrwxrwx	root/root	usr/lib32/libgbm.so -> libgbm.so.1
 lrwxrwxrwx	root/root	usr/lib32/libgbm.so.1 -> libgbm.so.1.0.0
 -rwxr-xr-x	root/root	usr/lib32/libgbm.so.1.0.0

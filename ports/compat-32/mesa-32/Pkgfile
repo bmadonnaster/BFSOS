@@ -5,7 +5,7 @@
 # Optional: directx-headers-32 libunwind-32 libva-32 lm_sensors-32
 
 name=mesa-32
-version=26.2.4
+version=26.2.5
 release=1
 source=(https://archive.mesa3d.org/mesa-$version.tar.xz
         x86-linux-gnu
