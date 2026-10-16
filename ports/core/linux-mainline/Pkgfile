@@ -6,21 +6,20 @@
 
 name=linux-mainline
 version=7.2.10
-release=3
-bfs_build_phases=split
+release=4
 build_work=disk
 source=(
     https://www.kernel.org/pub/linux/kernel/v7.x/linux-${version}.tar.xz
     config
 )
 
-pkg_compile() {
+pkg_build() {
     local kernver=""
 
-    make mrproper
+    make mrproper || return 1
 
     cp "$SRC/config" .config
-    make olddefconfig
+    make olddefconfig || return 1
 
     # BFS kernel identity.
     scripts/config --set-str LOCALVERSION "-BFSOS-Mainline"
@@ -150,7 +149,7 @@ pkg_compile() {
     # they simply guarantee that kernels built by this port can support them.
     scripts/config --module DM_VERITY
 
-    make olddefconfig
+    make olddefconfig || return 1
 
     # Do not silently ship another kernel without the storage features the
     # installer exposes.
@@ -206,16 +205,15 @@ pkg_compile() {
 
     echo "Building kernel release: $kernver"
 
-    make bzImage modules
-}
+    make bzImage modules || return 1
 
-pkg_stage() {
-    local kernver="$(make -s kernelrelease)"
+    # pkgmk on BFSOS invokes pkg_build; staging must remain in this function.
+    kernver="$(make -s kernelrelease)"
     [ "$kernver" = "$version-BFSOS-Mainline" ] || {
         echo "Kernel stage version mismatch: $kernver" >&2
         return 1
     }
-    make INSTALL_MOD_PATH="$PKG" modules_install
+    make INSTALL_MOD_PATH="$PKG" modules_install || return 1
 
     if [ ! -d "$PKG/lib/modules/$kernver" ]; then
         echo "Kernel packaging error: modules_install did not create $PKG/lib/modules/$kernver" >&2
@@ -256,13 +254,13 @@ pkg_stage() {
 
     rm -rf "$PKG/lib/firmware"
 
-    make clean
-    make prepare scripts
+    make clean || return 1
+    make prepare scripts || return 1
 
     # Stage the prepared source tree from the current kernel build directory.
     # Do not assume the upstream directory uses the BFSOS package name.
     # A missing tree must fail packaging rather than leave dangling module links.
-    source_dest="$PKG/usr/src/linux-$kernver"
+    local source_dest="$PKG/usr/src/linux-$kernver"
     [ -f Makefile ] && [ -f .config ] || {
         echo "Kernel packaging error: prepared source tree is unavailable." >&2
         return 1
