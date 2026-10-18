@@ -1,6 +1,6 @@
 # Description: GNU compression utility (replacement for compress)
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=gzip
-version=1.14
+version=1.15
 release=1
 source=(https://ftpmirror.gnu.org/gzip/gzip-$version.tar.xz)

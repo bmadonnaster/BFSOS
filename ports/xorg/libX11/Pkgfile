@@ -4,8 +4,8 @@
 # Depends on: libxcb xorgproto xtrans
 
 name=libX11
-version=1.8.13
-release=3
+version=1.8.14
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/libX11-$version.tar.xz)
 
 pkg_build() {

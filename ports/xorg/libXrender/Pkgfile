@@ -4,8 +4,8 @@
 # Depends on: libX11
 
 name=libXrender
-version=0.9.12
-release=2
+version=0.9.13
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/libXrender-$version.tar.xz)
 
 pkg_build() {

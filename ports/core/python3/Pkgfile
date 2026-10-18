@@ -1,11 +1,12 @@
 # Description: Python interpreter, version 3.
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=python3
-version=3.14.7
+version=3.14.8
 release=1
+# BFSOS vendored patch provenance: Python-3.14.8-openssl_4-1.patch <- https://www.linuxfromscratch.org/patches/downloads/Python/Python-3.14.8-openssl_4-1.patch
 source=(
     https://www.python.org/ftp/python/$version/Python-$version.tar.xz
-    https://www.linuxfromscratch.org/patches/downloads/Python/Python-$version-openssl_4-1.patch
+    Python-3.14.8-openssl_4-1.patch
     pyconfig.h
 )
 

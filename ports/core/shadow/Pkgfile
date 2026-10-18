@@ -4,8 +4,8 @@
 # Depends on: libpwquality libxcrypt linux-pam
 
 name=shadow
-version=4.20.2
-release=2
+version=4.20.3
+release=1
 
 source=(
     https://github.com/$name-maint/$name/releases/download/$version/$name-$version.tar.xz

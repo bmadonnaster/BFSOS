@@ -4,8 +4,8 @@
 # Depends on: libXext libXt
 
 name=libXpm
-version=3.5.19
-release=3
+version=3.5.20
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/lib/libXpm-$version.tar.xz)
 
 pkg_build() {
