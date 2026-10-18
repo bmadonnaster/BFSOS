@@ -1,22 +1,32 @@
 # Description: LibreOffice official precompiled RPM bundle repackaged for BFSOS
 # URL: https://www.libreoffice.org/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: cups dbus fontconfig freetype glib gtk3 libX11 libXext libXrender mesa rpm2cpio
+# Depends on: cups dbus fontconfig freetype glib gtk3 libX11 libXext libXrender mesa libarchive
 
 name=libreoffice-bin
 version=26.8.1
-release=1
+release=2
 source=(https://download.documentfoundation.org/libreoffice/stable/$version/rpm/x86_64/LibreOffice_${version}_Linux_x86-64_rpm.tar.gz)
 
 pkg_build() {
-    command -v rpm2cpio >/dev/null || { echo 'libreoffice-bin requires rpm2cpio' >&2; return 1; }
-    command -v cpio >/dev/null || { echo 'libreoffice-bin requires cpio' >&2; return 1; }
+    # libarchive bsdtar reads RPM payloads directly.  No rpm2cpio provider or
+    # fragile pipeline (whose first stage could fail unnoticed) is required.
+    command -v bsdtar >/dev/null || { echo 'libreoffice-bin requires bsdtar (libarchive)' >&2; return 1; }
     local rpm count=0
     mkdir -p "$PKG" || return 1
     # Extract into the package staging root only. Never invoke RPM install scripts.
     while IFS= read -r -d '' rpm; do
         case "$rpm" in *-desktop-integration-*|*-debian-menus-*) continue;; esac
-        (cd "$PKG" && rpm2cpio "$rpm" | cpio -idmu --quiet) || return 1
+        # Reject RPMs containing absolute paths or path traversal before extraction.
+        # Read the archive using the same tool used for extraction.
+        bsdtar -tf "$rpm" >/dev/null || return 1
+        while IFS= read -r entry; do
+            case "$entry" in
+                /*|../*|*/../*|*/..)
+                    echo "libreoffice-bin: unsafe RPM member: $entry" >&2; return 1 ;;
+            esac
+        done < <(bsdtar -tf "$rpm")
+        bsdtar -xf "$rpm" -C "$PKG" --no-same-owner || return 1
         count=$((count+1))
     done < <(find "$SRC" -type f -name '*.rpm' -print0)
     [ "$count" -gt 0 ] || { echo 'libreoffice-bin: no suite RPM payloads found' >&2; return 1; }

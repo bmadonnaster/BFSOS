@@ -180,7 +180,7 @@ def rewrite_version_release(text: str, old: str, new: str, requested_release: st
         text = text[:vm.start()] + f"version={new}" + text[vm.end():]
     rm = re.search(r"(?m)^release=(.*)$", text)
     assert rm
-    new_release = requested_release or ("1" if new != old else rm.group(1).strip())
+    new_release = "1" if new != old else (requested_release or rm.group(1).strip())
     text = text[:rm.start()] + f"release={new_release}" + text[rm.end():]
     return text
 

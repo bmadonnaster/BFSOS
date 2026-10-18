@@ -2,7 +2,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=bash
 version=5.3
-release=1
+release=2
 source=(https://ftpmirror.gnu.org/bash/bash-$version.tar.gz
 )
 #	bashrc
@@ -10,6 +10,7 @@ source=(https://ftpmirror.gnu.org/bash/bash-$version.tar.gz
 build_opt="--prefix=/usr
             --without-bash-malloc
             --with-installed-readline
+            --enable-system-bashrc=/etc/bashrc
             --docdir=/usr/share/doc/$name-$version"
 
 bootstrap_build() {

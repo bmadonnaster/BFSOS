@@ -93,6 +93,29 @@ if [ "$BFS_PKG_BUILD_WORK" = disk ]; then
 fi
 unset bfs_port_build_work bfs_pkg_name bfs_large bfs_tmpfs_root bfs_min_gib bfs_min_kb bfs_tmpfs_free_kb bfs_backend_forced bfs_disk_root bfs_probe bfs_fs
 
+# Maintain per-port download-cache ownership across direct sudo and prt-get.
+# Never recurse into a source cache and never follow symlinks.  Existing
+# directories with unexpected non-root/non-pkgmk owners are left untouched.
+if [ "$(id -u)" -eq 0 ] && id pkgmk >/dev/null 2>&1 && [ -r ./Pkgfile ]; then
+    bfs_cache_pkg="$(sed -n 's/^[[:space:]]*name=\([A-Za-z0-9+_.-]*\)[[:space:]]*$/\1/p' ./Pkgfile | head -n1)"
+    if [ -n "$bfs_cache_pkg" ]; then
+        bfs_cache_parent=/var/cache/pkg/sources
+        bfs_cache_dir="$bfs_cache_parent/$bfs_cache_pkg"
+        if [ -d "$bfs_cache_parent" ] && [ ! -L "$bfs_cache_parent" ] && [ ! -L "$bfs_cache_dir" ]; then
+            if [ -d "$bfs_cache_dir" ]; then
+                bfs_cache_owner="$(stat -c '%U' "$bfs_cache_dir" 2>/dev/null || true)"
+                case "$bfs_cache_owner" in
+                    root|pkgmk) chown pkgmk:pkgmk "$bfs_cache_dir" && chmod 775 "$bfs_cache_dir" ;;
+                    *) printf 'BFSOS pkgmk: unsafe source-cache owner: %s\n' "$bfs_cache_dir" >&2; exit 126 ;;
+                esac
+            elif [ ! -e "$bfs_cache_dir" ]; then
+                install -dm775 -o pkgmk -g pkgmk "$bfs_cache_dir" || exit 126
+            fi
+        fi
+    fi
+fi
+unset bfs_cache_pkg bfs_cache_parent bfs_cache_dir bfs_cache_owner
+
 # Resolve package-build parallelism before pkgmk sources pkgmk.conf.  Explicit
 # BFS_PKG_BUILD_JOBS/JOBS is preserved, otherwise use every available logical
 # CPU.  A simple top-level build_jobs=N is an intentional per-port upper cap.
