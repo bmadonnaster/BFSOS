@@ -10,7 +10,6 @@ source=(https://ftpmirror.gnu.org/bash/bash-$version.tar.gz
 build_opt="--prefix=/usr
             --without-bash-malloc
             --with-installed-readline
-            --enable-system-bashrc=/etc/bashrc
             --docdir=/usr/share/doc/$name-$version"
 
 bootstrap_build() {
@@ -20,6 +19,13 @@ bootstrap_build() {
 	ln -sv bash $TOOLS/bin/sh
 }
 
+pre_build() {
+    sed -i \
+        's|^/\* #define SYS_BASHRC "/etc/bash.bashrc" \*/|#define SYS_BASHRC "/etc/bashrc"|' \
+        config-top.h
+
+    grep -q '^#define SYS_BASHRC "/etc/bashrc"$' config-top.h || return 1
+}
 post_build() {
 	mkdir -p $PKG/bin
 	mv $PKG/usr/bin/bash $PKG/bin
