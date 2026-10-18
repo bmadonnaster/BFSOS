@@ -15080,14 +15080,6 @@ drwxr-xr-x	root/root	usr/share/applications/
 -rw-r--r--	root/root	usr/share/applications/libreoffice-bin-startcenter.desktop
 -rw-r--r--	root/root	usr/share/applications/libreoffice-bin-writer.desktop
 -rw-r--r--	root/root	usr/share/applications/libreoffice-bin-xsltfilter.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-base.desktop -> /opt/libreoffice26.8/share/xdg/base.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-calc.desktop -> /opt/libreoffice26.8/share/xdg/calc.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-draw.desktop -> /opt/libreoffice26.8/share/xdg/draw.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-impress.desktop -> /opt/libreoffice26.8/share/xdg/impress.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-math.desktop -> /opt/libreoffice26.8/share/xdg/math.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-startcenter.desktop -> /opt/libreoffice26.8/share/xdg/startcenter.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-writer.desktop -> /opt/libreoffice26.8/share/xdg/writer.desktop
-lrwxrwxrwx	root/root	usr/share/applications/libreoffice26.8-xsltfilter.desktop -> /opt/libreoffice26.8/share/xdg/xsltfilter.desktop
 drwxr-xr-x	root/root	usr/share/icons/
 drwxr-xr-x	root/root	usr/share/icons/hicolor/
 drwxr-xr-x	root/root	usr/share/icons/hicolor/128x128/

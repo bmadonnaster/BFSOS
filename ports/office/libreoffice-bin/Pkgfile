@@ -5,7 +5,7 @@
 
 name=libreoffice-bin
 version=26.8.1
-release=2
+release=3
 source=(https://download.documentfoundation.org/libreoffice/stable/$version/rpm/x86_64/LibreOffice_${version}_Linux_x86-64_rpm.tar.gz)
 
 pkg_build() {
@@ -44,17 +44,27 @@ pkg_build() {
     rm -f "$PKG/usr-bin-wrapper.tmp"
 }
 post_build() {
-    # Distinguish binary LibreOffice desktop entries
-    # from the source-built LibreOffice package.
     local desktop_file
 
+    # Remove upstream desktop integration links.
+    # Keep the BFSOS-specific libreoffice-bin launchers.
+    find "$PKG/usr/share/applications" \
+        -maxdepth 1 \
+        -name 'libreoffice[0-9]*.desktop' \
+        -delete
+
+    # Identify binary LibreOffice applications in KDE.
     while IFS= read -r -d '' desktop_file; do
         sed -i \
             -e '/^Name=/s/\r$//' \
+            -e '/^Name=/s/ (BIN)$//' \
             -e '/^Name=/s/$/ (BIN)/' \
             "$desktop_file"
     done < <(
-        find "$PKG" -type f -name '*.desktop' \
-            -path '*/applications/*' -print0
+        find "$PKG/usr/share/applications" \
+            -maxdepth 1 \
+            -type f \
+            -name 'libreoffice-bin-*.desktop' \
+            -print0
     )
 }
