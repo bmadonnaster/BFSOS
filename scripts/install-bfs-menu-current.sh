@@ -4874,7 +4874,7 @@ bfs_release_version() {
         if [[ -z "$release" && -r /etc/os-release ]]; then
                 release="$(awk -F= '$1 == "VERSION_ID" {gsub(/^['"']|['"']$/, "", $2); print $2; exit}' /etc/os-release)"
         fi
-        printf '%s\n' "${release:-0.9.1.1}"
+        printf '%s\n' "${release:-1.0-rc1}"
 }
 
 fetch_sourceforge_base() {
