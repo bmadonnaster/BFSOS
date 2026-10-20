@@ -5,7 +5,7 @@
 # Optional: pahole
 
 name=linux-mainline
-version=7.2.11
+version=7.3
 release=1
 build_work=disk
 source=(
@@ -193,7 +193,7 @@ pkg_build() {
         }
     done
 
-    kernver="$(make -s kernelrelease)"
+    kernver="$(make -s kernelrelease)" || return 1
 
     case "$kernver" in
         *-BFSOS-Mainline) ;;
@@ -208,11 +208,18 @@ pkg_build() {
     make bzImage modules || return 1
 
     # pkgmk on BFSOS invokes pkg_build; staging must remain in this function.
-    kernver="$(make -s kernelrelease)"
-    [ "$kernver" = "$version-BFSOS-Mainline" ] || {
-        echo "Kernel stage version mismatch: $kernver" >&2
+    kernver="$(make -s kernelrelease)" || return 1
+
+    # Linux normalizes major.minor releases to major.minor.0.
+    expected_version="$version"
+    if [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+        expected_version="${version}.0"
+    fi
+
+    if [ "$kernver" != "${expected_version}-BFSOS-Mainline" ]; then
+        echo "Kernel stage version mismatch: expected ${expected_version}-BFSOS-Mainline, got $kernver" >&2
         return 1
-    }
+    fi
     make INSTALL_MOD_PATH="$PKG" modules_install || return 1
 
     if [ ! -d "$PKG/lib/modules/$kernver" ]; then
