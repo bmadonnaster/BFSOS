@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser().resolve()
 REMOTE = ("http://", "https://", "ftp://")
 PATCH_SUFFIXES = (".patch", ".diff", ".patch.gz", ".diff.gz", ".patch.xz", ".diff.xz", ".patch.bz2", ".diff.bz2")
-ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip")
+ARCHIVE_SUFFIXES = (".run", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip")
 
 # GNOME source trees are not completely uniform.  Keep exceptions explicit and
 # data-driven instead of teaching the generic version rewrite the wrong rule.

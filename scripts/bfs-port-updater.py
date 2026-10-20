@@ -2326,6 +2326,55 @@ def safe_versioned_library_footprint_change(text: str) -> tuple[bool, list[str]]
         return False, lines
     return sorted(map(_footprint_normalized_signature, missing)) == sorted(map(_footprint_normalized_signature, new)), lines
 
+def safe_routine_footprint_change(text: str) -> tuple[bool, list[str], str]:
+    """Review ordinary package file-list changes, never blindly waive safety.
+
+    Metadata-only diffs are not themselves compilation errors. This accepts
+    ordinary root-owned files, directories and *relative, contained* symlinks.
+    Any privileged mode, unusual owner, path traversal, device, or dangerous
+    location is withheld for explicit maintainer review. Kernel packages have
+    a separate mandatory review path in build_selected().
+    """
+    lines = footprint_mismatch_lines(text)
+    if not lines:
+        return False, lines, "no footprint change rows"
+    for row in lines:
+        if not row.startswith(("NEW ", "MISSING ")):
+            return False, lines, "modified metadata requires review"
+        fields = row.split(None, 3)
+        if len(fields) != 4:
+            return False, lines, "unparseable footprint entry"
+        kind, mode, owner, path_info = fields
+        if owner != "root/root" or len(mode) != 10:
+            return False, lines, "nonstandard file owner or mode"
+        if mode[0] not in "-dl" or any(ch in mode[1:] for ch in "sStT"):
+            return False, lines, "privileged/special file mode"
+        if mode[0] == "-" and mode not in ("-rw-r--r--", "-rwxr-xr-x", "-rw-rw-r--", "-rwxr-xr-x"):
+            return False, lines, "unusual file mode"
+        if mode[0] == "d" and mode not in ("drwxr-xr-x", "drwxrwxr-x"):
+            return False, lines, "unusual directory mode"
+        if mode[0] == "l" and mode != "lrwxrwxrwx":
+            return False, lines, "unusual symlink mode"
+        path, sep, target = path_info.partition(" -> ")
+        parts = path.split("/")
+        if path.startswith("/") or ".." in parts or "." in parts or not path or "//" in path:
+            return False, lines, "unsafe package destination"
+        if not path.startswith(("usr/", "etc/", "opt/", "lib/", "lib64/", "boot/", "bin/", "sbin/")):
+            return False, lines, "unusual package destination"
+        if mode[0] == "l":
+            if not sep or not target or target.startswith("/"):
+                return False, lines, "absolute or missing symlink target"
+            import posixpath
+            resolved = posixpath.normpath(posixpath.join(posixpath.dirname(path), target))
+            if resolved == ".." or resolved.startswith("../"):
+                return False, lines, "symlink escapes package root"
+        elif sep:
+            return False, lines, "unexpected symlink metadata"
+        if path.startswith(("etc/sudoers", "etc/shadow", "etc/passwd", "etc/group", "etc/pam.d/", "etc/security/")):
+            return False, lines, "security-sensitive system file"
+    return True, lines, "ordinary package footprint change"
+
+
 def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
     cmd = pkgmk_build_command(backend, jobs)
     # The initial build stopped at footprint verification, so no package archive
@@ -2530,12 +2579,18 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         combined = cp.stdout or ""
         if cp.returncode and "ERROR: Footprint mismatch found:" in combined:
             safe_fp, fp_lines = safe_versioned_library_footprint_change(combined)
+            footprint_reason = "safe versioned-library change"
+            # Kernel packages are boot-critical: do not auto-approve or alter
+            # their footprint without the dedicated kernel validator/VM tests.
+            protected_kernel = c.port in {"core/linux", "core/linux-mainline", "core/linux-headers"}
+            if not safe_fp and not protected_kernel:
+                safe_fp, fp_lines, footprint_reason = safe_routine_footprint_change(combined)
             print(f"FOOTPRINT CHANGED {c.port}: {len(fp_lines)} mismatch rows", flush=True)
             for line in fp_lines:
                 print(f"  {line}", flush=True)
             if safe_fp:
                 fp_log = LOG_ROOT / f"footprint-{log_stamp}-{safe_port}.log"
-                fp_header = header + "# BFSOS maintainer footprint refresh: safe versioned-library change\n"
+                fp_header = header + f"# BFSOS maintainer footprint refresh: {footprint_reason}\n"
                 pkg_cp = run_build_streaming(pkgmk_footprint_package_command(backend, jobs), port_dir, fp_log, fp_header)
                 if pkg_cp.returncode != 0:
                     results[c.port] = f"FOOTPRINT REVIEW: reviewed package pass failed ({pkg_cp.returncode}); log={fp_log}"
@@ -2553,7 +2608,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                         failed_groups.add(group)
                     continue
             else:
-                results[c.port] = f"FOOTPRINT REVIEW: payload changed beyond safe versioned-library refresh; log={build_log}"
+                results[c.port] = f"FOOTPRINT REVIEW: unsafe/unrecognized footprint change or protected kernel; log={build_log}"
                 if group:
                     failed_groups.add(group)
                 continue
