@@ -139,8 +139,8 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KDDockWidgets-qt6/
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDDockWidgets-qt6/KDDockWidgets-qt6Targets-release.cmake
 -rw-r--r--	root/root	opt/kf6/lib/cmake/KDDockWidgets-qt6/KDDockWidgets-qt6Targets.cmake
 lrwxrwxrwx	root/root	opt/kf6/lib/libkddockwidgets-qt6.so -> libkddockwidgets-qt6.so.3
--rwxr-xr-x	root/root	opt/kf6/lib/libkddockwidgets-qt6.so.2.4.1
-lrwxrwxrwx	root/root	opt/kf6/lib/libkddockwidgets-qt6.so.3 -> libkddockwidgets-qt6.so.2.4.1
+-rwxr-xr-x	root/root	opt/kf6/lib/libkddockwidgets-qt6.so.2.5.0
+lrwxrwxrwx	root/root	opt/kf6/lib/libkddockwidgets-qt6.so.3 -> libkddockwidgets-qt6.so.2.5.0
 drwxr-xr-x	root/root	opt/kf6/mkspecs/
 drwxr-xr-x	root/root	opt/kf6/mkspecs/modules/
 -rw-r--r--	root/root	opt/kf6/mkspecs/modules/qt_KDDockWidgets.pri

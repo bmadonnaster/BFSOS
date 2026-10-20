@@ -7,7 +7,7 @@
 # MONO_VERSION:  11.3.0
 
 name=wine-staging
-version=11.19
+version=11.20
 release=1
 keep_static=1
 source=(https://dl.winehq.org/wine/source/11.x/wine-$version.tar.xz \

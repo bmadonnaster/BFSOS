@@ -613,6 +613,7 @@ drwxr-xr-x	root/root	usr/share/vim/vim92/ftplugin/
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/hurl.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/hyprlang.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/i3config.vim
+-rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/icalendar.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/icon.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/idris2.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/ftplugin/indent.vim
@@ -1962,6 +1963,7 @@ drwxr-xr-x	root/root	usr/share/vim/vim92/syntax/
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/i3config.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/ia64.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/ibasic.vim
+-rw-r--r--	root/root	usr/share/vim/vim92/syntax/icalendar.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/icemenu.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/icon.vim
 -rw-r--r--	root/root	usr/share/vim/vim92/syntax/idl.vim

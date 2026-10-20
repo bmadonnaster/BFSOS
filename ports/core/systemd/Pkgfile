@@ -4,7 +4,7 @@
 # Depends on: linux-pam polkit
 
 name=systemd
-version=261.3
+version=262
 release=1
 
 source=(
