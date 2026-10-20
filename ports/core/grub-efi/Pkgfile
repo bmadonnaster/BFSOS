@@ -1,33 +1,53 @@
+
+# Description: GNU GRUB bootloader for x86_64 UEFI
+# URL: https://www.gnu.org/software/grub/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: freetype fuse2
+
 name=grub-efi
-version=2.14
+version=2.16
 release=1
-source=(https://ftpmirror.gnu.org/grub/grub-$version.tar.xz
-        https://ftpmirror.gnu.org/unifont/unifont-17.0.05/unifont-17.0.05.pcf.gz
-        extra_deps.lst)
-renames=(SKIP unifont-17.0.05.pcf.noextract SKIP)
+
+unifont_version=18.0.01
+
+source=(
+    https://gitlab.freedesktop.org/api/v4/projects/26558/packages/generic/source-assets/grub-$version/grub-$version.tar.xz
+    https://ftpmirror.gnu.org/unifont/unifont-$unifont_version/unifont-$unifont_version.pcf.gz
+    extra_deps.lst
+)
+
+renames=(SKIP "unifont-$unifont_version.pcf.noextract" SKIP)
+
 build_opt="--disable-efiemu
-        --enable-grub-mount
-        --enable-grub-mkfont
-        --enable-device-mapper
-        --with-platform=efi
-        --target=x86_64
-        --disable-werror"
+           --enable-grub-mount
+           --enable-grub-mkfont
+           --enable-device-mapper
+           --with-platform=efi
+           --target=x86_64
+           --disable-werror"
 
 pre_build() {
-        unset CFLAGS
-        unset CXXFLAGS
-        cp $SRC/extra_deps.lst grub-core/
-        mkdir -pv $PKG/usr/share/fonts/unifont
-        gunzip -c ../unifont-17.0.05.pcf.noextract > $PKG/usr/share/fonts/unifont/unifont.pcf
+    unset CFLAGS
+    unset CXXFLAGS
+
+    install -m 0644 \
+        "$SRC/extra_deps.lst" \
+        grub-core/extra_deps.lst || return 1
+
+    install -d \
+        "$PKG/usr/share/fonts/unifont" || return 1
+
+    gzip -dc \
+        "../unifont-$unifont_version.pcf.noextract" \
+        > "$PKG/usr/share/fonts/unifont/unifont.pcf" || return 1
 }
 
 post_build() {
-        rm -rf \
-        $PKG/etc \
-        $PKG/usr/sbin \
-        $PKG/usr/bin \
-        $PKG/usr/share/info \
-        $PKG/usr/share/locale \
-        $PKG/usr/share/grub
+    rm -rf \
+        "$PKG/etc" \
+        "$PKG/usr/sbin" \
+        "$PKG/usr/bin" \
+        "$PKG/usr/share/info" \
+        "$PKG/usr/share/locale" \
+        "$PKG/usr/share/grub"
 }

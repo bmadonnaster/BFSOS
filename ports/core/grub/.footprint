@@ -6,6 +6,7 @@ drwxr-xr-x	root/root	etc/grub.d/
 -rwxr-xr-x	root/root	etc/grub.d/25_bli
 -rwxr-xr-x	root/root	etc/grub.d/30_os-prober
 -rwxr-xr-x	root/root	etc/grub.d/30_uefi-firmware
+-rwxr-xr-x	root/root	etc/grub.d/31_efi_bootnext
 -rwxr-xr-x	root/root	etc/grub.d/40_custom
 -rwxr-xr-x	root/root	etc/grub.d/41_custom
 -rw-r--r--	root/root	etc/grub.d/README
@@ -21,6 +22,7 @@ drwxr-xr-x	root/root	usr/bin/
 -rwxr-xr-x	root/root	usr/bin/grub-mkimage
 -rwxr-xr-x	root/root	usr/bin/grub-mklayout
 -rwxr-xr-x	root/root	usr/bin/grub-mknetdir
+-rwxr-xr-x	root/root	usr/bin/grub-mkpasswd-argon2
 -rwxr-xr-x	root/root	usr/bin/grub-mkpasswd-pbkdf2
 -rwxr-xr-x	root/root	usr/bin/grub-mkrelpath
 -rwxr-xr-x	root/root	usr/bin/grub-mkrescue
@@ -230,6 +232,8 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/gcry_md4.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/gcry_md5.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/gcry_md5.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/gcry_pubkey_dilithium.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/gcry_pubkey_dilithium.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/gcry_rfc2268.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/gcry_rfc2268.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/gcry_rijndael.mod
@@ -368,8 +372,12 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/mdraid1x.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/memdisk.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/memdisk.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/memmove_bench.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/memmove_bench.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/memrw.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/memrw.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/mfa.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/mfa.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/minicmd.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/minicmd.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/minix.mod
@@ -384,6 +392,8 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/minix3_be.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/minix_be.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/minix_be.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/mldsa_test.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/mldsa_test.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/mmap.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/mmap.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/moddep.lst
@@ -416,6 +426,8 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/ntfscomp.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/ntldr.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/ntldr.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/nvme.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/nvme.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/odc.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/odc.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/offsetio.mod
@@ -450,6 +462,8 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/parttool.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/password.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/password.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/password_argon2.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/password_argon2.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/password_pbkdf2.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/password_pbkdf2.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/pata.mod
@@ -628,6 +642,8 @@ drwxr-xr-x	root/root	usr/lib/grub/i386-pc/
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/videotest.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/videotest_checksum.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/videotest_checksum.module
+-rw-r--r--	root/root	usr/lib/grub/i386-pc/virtionet.mod
+-rwxr-xr-x	root/root	usr/lib/grub/i386-pc/virtionet.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/wrmsr.mod
 -rwxr-xr-x	root/root	usr/lib/grub/i386-pc/wrmsr.module
 -rw-r--r--	root/root	usr/lib/grub/i386-pc/xfs.mod
