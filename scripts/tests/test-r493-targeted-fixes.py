@@ -23,7 +23,7 @@ assert 'libarchive' in lib.splitlines()[3]
 assert 'bsdtar -tf "$rpm" >/dev/null || return 1' in lib
 assert 'bsdtar -xf "$rpm" -C "$PKG"' in lib
 ff=(root/'ports/opt/fastfetch/Pkgfile').read_text()
-assert '-DENABLE_IMAGE_LOGO=ON' in ff
+assert '-DENABLE_IMAGE_LOGO="$image_logo"' in ff  # r500 optional backend
 assert '--enable-system-bashrc=/etc/bashrc' in (root/'ports/core/bash/Pkgfile').read_text()
 assert 'bfsos-fastfetch.sh' in (root/'ports/core/aaa_filesystem/bashrc').read_text()
 wrapper=(root/'ports/core/pkgutils/bfs-pkgmk').read_text()

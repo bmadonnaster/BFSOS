@@ -6,14 +6,13 @@
 
 name=lame
 version=4.0
-release=2
+release=3
 source=(https://downloads.sourceforge.net/project/$name/$name/$version/$name-$version.tar.gz
         lame-4.0-id3-utf16.patch
         lame-4.0-export-pinfo.patch)
 
 pkg_build() {
-    ./configure --prefix=/usr --enable-mp3rtp --disable-static &&
-make
-
-    make DESTDIR=$PKG pkghtmldir=/usr/share/doc/$name-$version install
+    ./configure --prefix=/usr --enable-mp3rtp --disable-static || return 1
+    make || return 1
+    make DESTDIR="$PKG" pkghtmldir="/usr/share/doc/$name-$version" install || return 1
 }
