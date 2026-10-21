@@ -5,26 +5,80 @@
 
 name=alsa-ucm-conf
 version=1.2.16.1
-release=1
+release=2
 source=(https://github.com/alsa-project/alsa-ucm-conf/archive/refs/tags/v$version.tar.gz)
 
 pkg_build() {
-    # MSI MEG X870E GODLIKE (USB 0db0:e5c3) uses the Realtek
-    # ALC408x USB audio UCM configuration.
+    # MSI MEG X870E GODLIKE, USB ID 0db0:e5c3.
+    # Register ALC4080 UCM support and route S/PDIF through PCM 2.
+
     python3 - <<'PY'
 from pathlib import Path
+import re
 
-p = Path("ucm2/USB-Audio/USB-Audio.conf")
-s = p.read_text()
+usb = Path("ucm2/conf.d/USB-Audio/USB-Audio.conf")
+hifi = Path("ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf")
 
-old = "|d1d7|d6e7|e1f8))"
-new = "|d1d7|d6e7|e1f8|e5c3))"
+s = usb.read_text()
 
-if "e5c3" not in s:
-    if old not in s:
-        raise SystemExit("ERROR: expected MSI ALC408x matcher not found")
-    s = s.replace(old, new, 1)
-    p.write_text(s)
+# Limit changes to the ALC4080 device-matching block.
+start = s.index("Macro.alc4080.RegexMatch")
+end = s.index("\n}", start) + 2
+
+block = s[start:end]
+
+if "e5c3" not in block:
+    lines = block.splitlines(keepends=True)
+    matches = [i for i, line in enumerate(lines)
+               if line.lstrip().startswith('Id "')]
+
+    if len(matches) != 1:
+        raise SystemExit("ERROR: ALC4080 USB ID matcher not found uniquely")
+
+    i = matches[0]
+    line = lines[i]
+
+    # Extend only the MSI 0db0 group.
+    pattern = r'(\|\(0db0:\()(.*?)(\)\))'
+
+    def add_id(m):
+        if "e5c3" in m.group(2):
+            return m.group(0)
+        return m.group(1) + m.group(2) + "|e5c3" + m.group(3)
+
+    updated, count = re.subn(pattern, add_id, line, count=1)
+
+    if count != 1:
+        raise SystemExit("ERROR: MSI ALC4080 matcher structure changed")
+
+    lines[i] = updated
+    block = "".join(lines)
+    s = s[:start] + block + s[end:]
+
+    usb.write_text(s)
+
+# Confirm this card selects the ALC4080 profile.
+s = usb.read_text()
+block = s[s.index("Macro.alc4080.RegexMatch"):]
+block = block[:block.index("\n}")]
+
+if "e5c3" not in block:
+    raise SystemExit("ERROR: Godlike USB ID not present in ALC4080 matcher")
+
+t = hifi.read_text()
+
+# Extend the existing S/PDIF device-2 exception.
+if "0db0:(1feb|e5c3)" not in t:
+    old = '0db0:1feb)'
+    new = '0db0:(1feb|e5c3))'
+
+    if t.count(old) != 1:
+        raise SystemExit("ERROR: ALC4080 S/PDIF PCM-2 rule changed")
+
+    t = t.replace(old, new, 1)
+    hifi.write_text(t)
+
+print("MSI MEG X870E GODLIKE UCM support verified")
 PY
 
     install -d "$PKG/usr/share/alsa"
