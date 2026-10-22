@@ -1,7 +1,8 @@
 # Description: Python bindings for GLib/GObject/GIO/GTK+/GStreamer
 # URL: https://wiki.gnome.org/Projects/PyGObject
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: gobject-introspection python3-cairo
+# Depends on: gobject-introspection
+# Optional: python3-cairo
 
 name=python3-gobject
 version=3.58.1
@@ -15,6 +16,7 @@ pkg_build() {
 		--wrap-mode nodownload \
 		-D b_lto=true \
 		-D b_pie=true \
+		-Dpycairo=disabled \
 		-D python=/usr/bin/python3
 
 	meson compile -C build -j ${JOBS:-1}
