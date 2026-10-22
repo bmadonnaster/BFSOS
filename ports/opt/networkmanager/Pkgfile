@@ -2,7 +2,7 @@
 # URL: https://networkmanager.dev/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: curl iptables libndp libpsl newt nss polkit systemd wpa_supplicant gobject-introspection
-# Optional: bluez dbus-python gnutls gtk-doc jansson libaudit libbpf libnvme libteam modemmanager upower valgrind dnsmasq firewalld
+# Optional: bluez dbus-python gnutls gtk-doc jansson libaudit libbpf libnvme libteam modemmanager upower valgrind dnsmasq firewalld python3-gobject
 
 name=networkmanager
 version=1.58.1
