@@ -1,0 +1,82 @@
+--- pkgmk
++++ pkgmk
+@@ -637,6 +637,33 @@
+ 	local BUILD_SUCCESSFUL="no"
+ 	local COMPRESSION
+ 
++	# BFSOS universal classic recipe mode: pkg_build runs once as uid pkgmk,
++	# OUTSIDE fakeroot. A fresh, short fakeroot invocation handles only archive
++	# metadata. The staging tree is already prepared by the unprivileged build.
++	if [ "${BFS_PKG_UNIVERSAL_BUILD:-no}" = yes ] && [ "${BFS_PKG_ARCHIVE_ONLY:-no}" != yes ]; then
++		check_file "$TARGET"
++		make_work_dir
++		info "BFSOS: unprivileged classic build: $name"
++		unpack_source
++		cd "$SRC"
++		if ! (set -e -x; build); then
++			error "BFSOS classic build failed: $name"
++			exit 1
++		fi
++		cd "$PKGMK_ROOT"
++		local archive_opts=(-f -kw -cf "$PKGMK_CONFFILE")
++		[ "$PKGMK_IGNORE_FOOTPRINT" = yes ] && archive_opts+=(-if)
++		[ "$PKGMK_IGNORE_NEW" = yes ] && archive_opts+=(-in)
++		[ "$PKGMK_NO_STRIP" = yes ] && archive_opts+=(-ns)
++		info "BFSOS: fakeroot archive-only step: $name"
++		if ! BFS_PKG_ARCHIVE_ONLY=yes fakeroot -- "$PKGMK_COMMAND" "${archive_opts[@]}"; then
++			error "BFSOS archive-only step failed: $name"
++			exit 1
++		fi
++		[ "$PKGMK_KEEP_WORK" = yes ] || remove_work_dir
++		return 0
++	fi
++
+ 	# BFSOS split phases: normal unprivileged compilation first, then a
+ 	# fresh fakeroot process for staging AND archive creation. Legacy ports
+ 	# stay on the original single-phase path.
+@@ -666,7 +693,10 @@
+ 		return 0
+ 	fi
+ 
+-	if [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then
++	if [ "${BFS_PKG_ARCHIVE_ONLY:-no}" = yes ]; then
++		PKG="$PKGMK_WORK_DIR/pkg"
++		SRC="$PKGMK_WORK_DIR/src"
++	elif [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then
+ 		check_file "$TARGET"
+ 		make_work_dir
+ 	else
+@@ -680,10 +710,15 @@
+ 
+ 	info "Building '$TARGET'."
+ 
+-	if [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ]; then unpack_source; fi
++	if [ "${BFS_PKG_STAGE_ONLY:-no}" != yes ] && [ "${BFS_PKG_ARCHIVE_ONLY:-no}" != yes ]; then unpack_source; fi
+ 
+ 	cd $SRC
+-	if [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
++	if [ "${BFS_PKG_ARCHIVE_ONLY:-no}" = yes ]; then
++		# fakeroot tracks a virtual root-owned payload without modifying the
++		# actual build-user ownership on disk. Preserve modes and symlinks.
++		chown -hR 0:0 "$PKG" || { error "Unable to map archive ownership"; exit 1; }
++		true
++	elif [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
+ 		(set -e -x; BFS_PKG_PHASE=stage; export BFS_PKG_PHASE; build)
+ 	else
+ 		(set -e -x; build)
+@@ -1024,6 +1059,15 @@
+ 			;;
+ 	esac
+ 
++	if [ "${BFS_PKG_ARCHIVE_ONLY:-no}" = yes ]; then
++		[ "${BFS_PKG_UNIVERSAL_BUILD:-no}" = yes ] || exit 1
++		[ -d "$PKGMK_WORK_DIR/src" ] && [ -d "$PKGMK_WORK_DIR/pkg" ] || {
++			error 'BFSOS archive-only missing prepared workspace'; exit 1;
++		}
++		build_package
++		exit $?
++	fi
++
+ 	if [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
+ 		[ "${BFS_PKG_SPLIT_BUILD:-no}" = yes ] || exit 1
+ 		[ -d "$PKGMK_WORK_DIR/src" ] || { error 'BFSOS split stage missing prepared source'; exit 1; }

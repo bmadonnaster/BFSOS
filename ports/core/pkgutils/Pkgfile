@@ -5,13 +5,14 @@
 
 name=pkgutils
 version=5.40.12
-release=47
+release=48
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
         extension
         bfs-pkgmk
         bfs-pkgmk-split-phases.patch.txt
+        bfs-pkgmk-universal-build.patch.txt
         pkgutils_source-fallbacks.patch
         pkgutils_numeric-owner-extract.patch
         pkgutils_static-footprint-safe.patch)
@@ -147,8 +148,9 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' pkgmk.in
 }
 
 post_build() {
-        # Phase separation is opt-in; legacy builds keep their original path.
+        # Apply opt-in split phases AND global classic-build/archive phase isolation.
         patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-split-phases.patch.txt" || return 1
+        patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-universal-build.patch.txt" || return 1
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
         fix_pkgmk_cli_precedence "$PKG/usr/bin/pkgmk"
         fix_pkgmk_curl_compatible_downloader "$PKG/usr/bin/pkgmk"

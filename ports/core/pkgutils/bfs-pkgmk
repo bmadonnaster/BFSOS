@@ -271,8 +271,9 @@ run_pkgmk() {
             setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
                 CCACHE_DIR=/var/cache/ccache BFS_PKG_SPLIT_BUILD=yes pkgmk "$@" &
         else
+            printf 'BFSOS pkgmk: universal unprivileged classic build\n' >&2
             setsid runuser -u pkgmk -- env HOME=/var/lib/pkgmk USER=pkgmk LOGNAME=pkgmk \
-                CCACHE_DIR=/var/cache/ccache fakeroot -- pkgmk "$@" &
+                CCACHE_DIR=/var/cache/ccache BFS_PKG_UNIVERSAL_BUILD=yes pkgmk "$@" &
         fi
         bfs_active_pid=$!
         # wait is interrupted by a trapped signal; bfs_interrupt handles the
