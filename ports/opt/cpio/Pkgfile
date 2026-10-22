@@ -6,11 +6,13 @@
 
 name=cpio
 version=2.15
-release=1
+release=2
 source=(https://ftp.gnu.org/gnu/$name/$name-$version.tar.bz2)
 CFLAGS+=' -fcommon'
-build_opt="--prefix=/usr
-            --enable-mt
+# Configure and compile outside fakeroot. Only package staging runs inside it.
+# This avoids the saturated SysV fakeroot queue observed during live installs.
+bfs_build_phases=split
+build_opt="--enable-mt
             --with-rmt=/usr/libexec/rmt"
 pre_build() {
 sed -e "/^extern int (\*xstat)/s/()/(const char * restrict,  struct stat * restrict)/" \
@@ -19,4 +21,26 @@ sed -e "/^int (\*xstat)/s/()/(const char * restrict,  struct stat * restrict)/" 
     -i src/global.c
 CFLAGS+=' -fcommon'
 autoreconf -fi
+}
+
+# BFSOS pkgutils split-build API: configure/make in the unprivileged phase;
+# DESTDIR installation in the short fakeroot staging phase. These phases
+# intentionally use the same preserved build-work directory.
+pkg_compile() {
+    _bfs_collect_build_opts
+    _bfs_configure_test_defaults
+    ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc \
+        --libexecdir=/usr/lib \
+        --localstatedir=/var \
+        --mandir=/usr/share/man \
+        --libdir="${BFS_PKG_LIBDIR:-/usr/lib}" \
+        "${_bfs_configure_test_args[@]}" \
+        "${_bfs_build_opts[@]}" || return 1
+    make -j"${JOBS:-1}" || return 1
+}
+
+pkg_stage() {
+    make DESTDIR="$PKG" install || return 1
 }
