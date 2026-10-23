@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PORT = ROOT / 'ports/core/pkgutils'
 WRAP = (PORT / 'bfs-pkgmk').read_text()
 PKGFILE = (PORT / 'Pkgfile').read_text()
-assert 'release=50' in PKGFILE
+assert 'release=51' in PKGFILE
 assert 'fix_pkgmk_footprint_touch "$PKG/usr/bin/pkgmk"' in PKGFILE
 assert 'bfs_saved_archive=' in WRAP
 assert 'mv -- "$bfs_out" "$bfs_saved_archive"' in WRAP

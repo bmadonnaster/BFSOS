@@ -13,7 +13,7 @@ assert 'BFS_PKG_UNIVERSAL_BUILD:-no' in patch
 assert 'BFS_PKG_ARCHIVE_ONLY=yes fakeroot --' in patch
 assert 'chown -hR 0:0 "$PKG"' in patch
 assert 'bfs-pkgmk-universal-build.patch.txt' in s
-assert 'release=50' in s
+assert 'release=51' in s
 subprocess.run(['bash','-n',str(p/'bfs-pkgmk')],check=True)
 subprocess.run(['bash','-n',str(p/'Pkgfile')],check=True)
 print('r505 global pkgmk privilege boundary: source checks PASS')

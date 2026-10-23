@@ -8459,6 +8459,14 @@ configure_btrfs_snapshots
 mkdir -p /etc/default
 touch /etc/default/grub
 
+# Label generated menu entries as BFSOS, including the advanced submenu.
+# Do not modify UEFI firmware entries or NVRAM boot order here.
+if grep -q '^GRUB_DISTRIBUTOR=' /etc/default/grub; then
+        sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="BFSOS"/' /etc/default/grub
+else
+        printf '%s\n' 'GRUB_DISTRIBUTOR="BFSOS"' >> /etc/default/grub
+fi
+
 grub_get_cmdline_value() {
         local key="$1"
         sed -n "s/^${key}=\"\([^\"]*\)\"/\1/p" /etc/default/grub | head -n1

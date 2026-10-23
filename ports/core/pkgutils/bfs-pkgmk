@@ -236,10 +236,21 @@ bfs_sync_metadata() {
     bfs_uid="$(stat -c %u "$bfs_port_dir")"
     bfs_gid="$(stat -c %g "$bfs_port_dir")"
     for bfs_meta in .md5sum .footprint .signature; do
-        [ -e "$bfs_stage/$bfs_meta" ] || continue
+        case "$bfs_meta" in
+            .footprint) [ "$bfs_update_footprint" = yes ] || continue ;;
+            .md5sum) [ "$bfs_update_md5sum" = yes ] || continue ;;
+            .signature) [ "$bfs_update_signature" = yes ] || continue ;;
+        esac
+        [ -e "$bfs_stage/$bfs_meta" ] || {
+            printf "BFSOS pkgmk: requested metadata not generated: %s\n" "$bfs_meta" >&2
+            return 1
+        }
         if [ ! -f "$bfs_stage/$bfs_meta" ] || [ -L "$bfs_stage/$bfs_meta" ] || [ -L "$bfs_port_dir/$bfs_meta" ]; then
             printf 'BFSOS pkgmk: unsafe metadata path: %s\n' "$bfs_meta" >&2
             return 1
+        fi
+        if [ -f "$bfs_port_dir/$bfs_meta" ] && cmp -s -- "$bfs_stage/$bfs_meta" "$bfs_port_dir/$bfs_meta"; then
+            continue
         fi
         bfs_tmp="$bfs_port_dir/.$${bfs_meta}.bfs-new"
         if ! install -m 644 -o "$bfs_uid" -g "$bfs_gid" "$bfs_stage/$bfs_meta" "$bfs_tmp"; then
@@ -343,12 +354,43 @@ unset bfs_signature_operation bfs_signature_required bfs_signature_override bfs_
 # the new package passes validation. Do not touch a prior archive for -uf.
 bfs_force_build=no
 bfs_metadata_only=no
+bfs_update_footprint=no
+bfs_update_md5sum=no
+bfs_update_signature=no
+bfs_key_arg_pending=no
 for bfs_arg do
+    if [ "$bfs_key_arg_pending" = yes ]; then
+        bfs_key_arg_pending=no
+        continue
+    fi
+    case "$bfs_arg" in
+        -uf|--update-footprint) bfs_update_footprint=yes ;;
+        -um|--update-md5sum) bfs_update_md5sum=yes ;;
+        -us|--update-signature|-rs|--refresh-signature) bfs_update_signature=yes ;;
+        -sk|--secret-key|-pk|--public-key) bfs_key_arg_pending=yes ;;
+    esac
     case "$bfs_arg" in
         -f|--force) bfs_force_build=yes ;;
-        -uf|--update-footprint) bfs_metadata_only=yes ;;
+        -uf|--update-footprint|-um|--update-md5sum|-us|--update-signature|-rs|--refresh-signature|-cs|--check-signature|-cm|--check-md5sum) bfs_metadata_only=yes ;;
     esac
 done
+[ "$bfs_key_arg_pending" = no ] || { echo 'BFSOS pkgmk: missing key-file argument' >&2; exit 2; }
+# Reject conflicting metadata mutations; pkgmk processes only one per call.
+bfs_update_count=0
+for bfs_flag in "$bfs_update_footprint" "$bfs_update_md5sum" "$bfs_update_signature"; do
+    [ "$bfs_flag" = yes ] && bfs_update_count=$((bfs_update_count + 1))
+done
+[ "$bfs_update_count" -le 1 ] || {
+    echo 'BFSOS pkgmk: request one metadata update operation per invocation' >&2
+    exit 2
+}
+# The delegated pkgmk identity must not acquire access to a root-only signing
+# key. Sign with a dedicated secure workflow until an explicit privilege
+# boundary for signing is implemented.
+if [ "$(id -u)" -eq 0 ] && [ "$bfs_update_signature" = yes ]; then
+    echo 'BFSOS pkgmk: root-launched signing is not supported safely with delegated pkgmk; use an authorized unprivileged signer with a readable key' >&2
+    exit 126
+fi
 bfs_previous_archive=""
 bfs_saved_archive=""
 if [ "$(id -u)" -eq 0 ] && [ "$bfs_force_build" = yes ] && [ "$bfs_metadata_only" != yes ]; then

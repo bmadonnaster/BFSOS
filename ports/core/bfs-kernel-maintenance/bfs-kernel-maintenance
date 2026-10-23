@@ -262,6 +262,12 @@ regenerate_grub() (
         mv -Tf -- "$lts_alias" "$alias_tmp"
     fi
 
+    # Fresh minimal installations can lack GRUB_DISTRIBUTOR entirely. Preserve
+    # an administrator's explicit override, but brand unset configurations.
+    if [ -f "$ETC_ROOT/default/grub" ] &&
+       ! grep -q '^[[:space:]]*GRUB_DISTRIBUTOR=' "$ETC_ROOT/default/grub"; then
+        printf '%s\n' 'GRUB_DISTRIBUTOR="BFSOS"' >> "$ETC_ROOT/default/grub"
+    fi
     grub-mkconfig -o "$tmp" || {
         echo "BFSOS kernel maintenance: grub-mkconfig failed; existing grub.cfg was preserved." >&2
         return 1
