@@ -46,7 +46,7 @@
  		check_file "$TARGET"
  		make_work_dir
  	else
-@@ -680,10 +710,15 @@
+@@ -680,10 +710,20 @@
  
  	info "Building '$TARGET'."
  
@@ -59,6 +59,11 @@
 +		# fakeroot tracks a virtual root-owned payload without modifying the
 +		# actual build-user ownership on disk. Preserve modes and symlinks.
 +		chown -hR 0:0 "$PKG" || { error "Unable to map archive ownership"; exit 1; }
++		# Let ports explicitly restore non-root ownership inside this same
++		# short fakeroot session; reject failed metadata adjustments.
++		if command -v bfs_archive_metadata >/dev/null 2>&1; then
++			bfs_archive_metadata || { error "Archive metadata hook failed"; exit 1; }
++		fi
 +		true
 +	elif [ "${BFS_PKG_STAGE_ONLY:-no}" = yes ]; then
  		(set -e -x; BFS_PKG_PHASE=stage; export BFS_PKG_PHASE; build)

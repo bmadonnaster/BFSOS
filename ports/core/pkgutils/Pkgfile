@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=51
+release=52
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -208,15 +208,23 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
 
         # Keep the cache parent root-owned; only build-data directories
         # are writable by the dedicated pkgmk account (UID/GID 82).
-        install -dm755 -o 0 -g 0 "$PKG/var/cache/pkg"
+        install -dm755 "$PKG/var/cache/pkg" || return 1
 
-        install -dm775 -o 82 -g 82 \
+        install -dm775 \
                 "$PKG/var/cache/pkg/sources" \
                 "$PKG/var/cache/pkg/packages" \
                 "$PKG/var/cache/pkg/build-work" \
-                "$PKG/var/cache/pkg/build-work-disk"
+                "$PKG/var/cache/pkg/build-work-disk" || return 1
 
-        install -dm775 -o 82 -g 82 "$PKG/var/cache/ccache"
+        install -dm775 "$PKG/var/cache/ccache" || return 1
+
+        # Non-root post_build creates these directories; install -D may have
+        # created ancestors mode 0700. Correct their real modes before the
+        # archive-only fakeroot phase applies virtual ownership.
+        chmod 0755 "$PKG/var/cache" "$PKG/var/cache/pkg" "$PKG/var/lib" "$PKG/var/lib/pkgmk" || return 1
+        chmod 0775 "$PKG/var/cache/ccache" "$PKG/var/cache/pkg/sources" \
+                "$PKG/var/cache/pkg/packages" "$PKG/var/cache/pkg/build-work" \
+                "$PKG/var/cache/pkg/build-work-disk" || return 1
 
         # Use Zstandard as the default package compression mode.
         sed -i 's,^PKGMK_COMPRESSION_MODE=.*,PKGMK_COMPRESSION_MODE="zst",' "$PKG/usr/bin/pkgmk"
@@ -227,10 +235,10 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
 
         # BFSOS pkgmk extension.  Code sourced by root must live in a
         # root-owned directory; only the runtime timing log is pkgmk-writable.
-        install -dm755 -o 0 -g 0 "$PKG/var/lib/pkgmk"
-        install -m644 -o 0 -g 0 "$SRC/extension" "$PKG/var/lib/pkgmk/extension"
+        install -dm755 "$PKG/var/lib/pkgmk" || return 1
+        install -m644 "$SRC/extension" "$PKG/var/lib/pkgmk/extension" || return 1
         install -Dm755 "$SRC/bfs-pkgmk" "$PKG/usr/bin/bfs-pkgmk"
-        install -m664 -o 82 -g 82 /dev/null "$PKG/var/lib/pkgmk/build-times.log"
+        install -m664 /dev/null "$PKG/var/lib/pkgmk/build-times.log" || return 1
 
         # A pkgutils archive without its dispatcher would make every migrated
         # pkg_build() port unusable after upgrade.  Fail the build instead.
@@ -243,4 +251,22 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
         install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"
         install -m644 "$SRC/pkgmk.conf" "$PKG/etc/pkgmk.conf"
 	rm -f "$PKG/usr/bin/pkgmk.orig"
+}
+
+# r517: Archive-only hook runs INSIDE the bounded fakeroot packaging pass.
+# Compilation and post_build() still run unprivileged; source files do not
+# require or receive root ownership on disk. Keep this hook narrowly scoped
+# to the pkgutils package's declared pkgmk-owned paths.
+bfs_archive_metadata() {
+        local path
+        for path in \
+                var/cache/ccache \
+                var/cache/pkg/sources \
+                var/cache/pkg/packages \
+                var/cache/pkg/build-work \
+                var/cache/pkg/build-work-disk \
+                var/lib/pkgmk/build-times.log; do
+                [ -e "$PKG/$path" ] && [ ! -L "$PKG/$path" ] || return 1
+                chown 82:82 "$PKG/$path" || return 1
+        done
 }
