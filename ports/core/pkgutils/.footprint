@@ -8,7 +8,6 @@ drwxr-xr-x	root/root	usr/bin/
 -rwxr-xr-x	root/root	usr/bin/pkgadd
 lrwxrwxrwx	root/root	usr/bin/pkginfo -> pkgadd
 -rwxr-xr-x	root/root	usr/bin/pkgmk
--rwxr-xr-x	root/root	usr/bin/pkgmk.orig
 lrwxrwxrwx	root/root	usr/bin/pkgrm -> pkgadd
 -rwxr-xr-x	root/root	usr/bin/rejmerge
 drwxr-xr-x	root/root	usr/share/

@@ -1,0 +1,81 @@
+--- pkgmk
++++ pkgmk
+@@ -558,6 +558,23 @@
+ }
+ 
+ 
++# Scoped fakeroot for install targets in classic one-function recipes.
++# This does NOT wrap configure/compile; this may need further handlers for
++# non-make staging commands, which must fail closed instead of publishing.
++_bfs_universal_make() {
++    local arg stage=no
++    for arg in "$@"; do
++        case "$arg" in install|install-*|*-install|install/strip) stage=yes ;; esac
++    done
++    if [ "$stage" = yes ]; then
++        info "BFSOS: scoped fakeroot make install: $name"
++        timeout --signal=TERM --kill-after=10s "${BFS_PKG_STAGE_TIMEOUT:-1800}" \
++            fakeroot -- make "$@"
++    else
++        command make "$@"
++    fi
++}
++
+ build_package() {
+ 	local BUILD_SUCCESSFUL="no"
+ 	local COMPRESSION
+@@ -571,9 +588,36 @@
+ 		info "BFSOS: unprivileged classic build: $name"
+ 		unpack_source
+ 		cd "$SRC"
+-		if ! (set -e -x; build); then
+-			error "BFSOS classic build failed: $name"
+-			exit 1
++		# Do NOT execute build() as a condition of if/!; Bash disables
++		# errexit inside nested functions in that context.
++		# Intercept install targets while leaving configure/compile unprivileged.
++		# Bash function lookup beats the external make executable.
++		(
++			set -e -x
++			make() { _bfs_universal_make "$@"; }
++			build
++		)
++		local bfs_build_rc=$?
++		if [ "$bfs_build_rc" -ne 0 ]; then
++			error "BFSOS classic build failed ($bfs_build_rc): $name"
++			exit "$bfs_build_rc"
++		fi
++		# Required-payload safety net, including with -if enabled.
++		# Additional packages can register mandatory payloads with policy.
++		if [ "$name" = rsync ]; then
++			[ -x "$PKG/usr/bin/rsync" ] || {
++				error "BFSOS rsync mandatory executable missing"
++				exit 1
++			}
++		fi
++		if [ "$name" = sudo ]; then
++			[ -f "$PKG/usr/bin/sudo" ] &&
++			[ -f "$PKG/usr/bin/visudo" ] &&
++			[ -f "$PKG/etc/sudoers" ] &&
++			[ "$(stat -c %a "$PKG/usr/bin/sudo")" = 4755 ] || {
++				error "BFSOS sudo mandatory payload absent or wrong mode"
++				exit 1
++			}
+ 		fi
+ 		cd "$PKGMK_ROOT"
+ 		local archive_opts=(-f -kw -cf "$PKGMK_CONFFILE")
+@@ -598,9 +642,11 @@
+ 		info "BFSOS: compiling outside fakeroot: $name"
+ 		unpack_source
+ 		cd "$SRC"
+-		if ! (set -e -x; BFS_PKG_PHASE=compile; export BFS_PKG_PHASE; build); then
+-			error "BFSOS compile phase failed: $name"
+-			exit 1
++		(set -e -x; BFS_PKG_PHASE=compile; export BFS_PKG_PHASE; build)
++		local bfs_compile_rc=$?
++		if [ "$bfs_compile_rc" -ne 0 ]; then
++			error "BFSOS compile phase failed ($bfs_compile_rc): $name"
++			exit "$bfs_compile_rc"
+ 		fi
+ 		cd "$PKGMK_ROOT"
+ 		info "BFSOS: staging and archiving under fakeroot: $name"

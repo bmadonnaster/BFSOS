@@ -2,7 +2,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=sudo
 version=1.9.17p2
-release=1
+release=2
 
 source=(
     https://www.sudo.ws/dist/$name-$version.tar.gz
@@ -29,10 +29,10 @@ pkg_build() {
         's/current_name->d\.iPAddress->length/ASN1_STRING_length(current_name->d.iPAddress)/g' \
         lib/iolog/hostcheck.c
 
-    ./configure "${build_opt[@]}"
+    ./configure "${build_opt[@]}" || return 1
 
-    make
-    make DESTDIR="$PKG" install
+    make || return 1
+    make DESTDIR="$PKG" install || return 1
 
     # Install PAM configuration
     install -Dm644 \

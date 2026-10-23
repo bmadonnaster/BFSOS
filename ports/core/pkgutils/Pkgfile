@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=48
+release=49
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -13,6 +13,7 @@ source=(https://crux.nu/files/$name-$version.tar.xz
         bfs-pkgmk
         bfs-pkgmk-split-phases.patch.txt
         bfs-pkgmk-universal-build.patch.txt
+        bfs-pkgmk-stage-safety.patch.txt
         pkgutils_source-fallbacks.patch
         pkgutils_numeric-owner-extract.patch
         pkgutils_static-footprint-safe.patch)
@@ -151,6 +152,7 @@ post_build() {
         # Apply opt-in split phases AND global classic-build/archive phase isolation.
         patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-split-phases.patch.txt" || return 1
         patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-universal-build.patch.txt" || return 1
+        patch -d "$PKG/usr/bin" -p0 < "$SRC/bfs-pkgmk-stage-safety.patch.txt" || return 1
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
         fix_pkgmk_cli_precedence "$PKG/usr/bin/pkgmk"
         fix_pkgmk_curl_compatible_downloader "$PKG/usr/bin/pkgmk"
@@ -224,4 +226,5 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
         # Configuration.
         install -m644 "$SRC/pkgadd.conf" "$PKG/etc/pkgadd.conf"
         install -m644 "$SRC/pkgmk.conf" "$PKG/etc/pkgmk.conf"
+	rm -f "$PKG/usr/bin/pkgmk.orig"
 }
