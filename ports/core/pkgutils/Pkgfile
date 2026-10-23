@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=49
+release=50
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -79,6 +79,21 @@ fix_pkgmk_cli_precedence() {
         cat "$tmp" > "$target" || return 1
         rm -f "$tmp"
 }
+
+# r513: -uf updates footprint metadata from an existing archive. An archive
+# need not be writable by the unprivileged account just to refresh metadata.
+# Do not touch an existing package as a side-effect of refreshing .footprint.
+fix_pkgmk_footprint_touch() {
+        local target="$1"
+        local count
+        count="$(grep -Fxc $'\ttouch "$TARGET"' "$target" || true)"
+        [ "$count" = 1 ] || {
+                echo "pkgutils: expected exactly one update_footprint archive touch; found $count" >&2
+                return 1
+        }
+        sed -i '/^[[:space:]]*touch "\$TARGET"$/d' "$target" || return 1
+}
+
 
 # BFSOS curl-compatible downloader support.
 # pkgmk normally enables curl DOWNLOAD_OPTS only when PKGMK_DOWNLOAD_PROG is
@@ -156,6 +171,7 @@ post_build() {
         harden_pkgmk_work_cleanup "$PKG/usr/bin/pkgmk"
         fix_pkgmk_cli_precedence "$PKG/usr/bin/pkgmk"
         fix_pkgmk_curl_compatible_downloader "$PKG/usr/bin/pkgmk"
+        fix_pkgmk_footprint_touch "$PKG/usr/bin/pkgmk" || return 1
 
         # Final/installed pkgmk needs a UTF-8-capable C locale for archives
         # containing non-ASCII pathnames (notably GCC). Support both common

@@ -185,6 +185,13 @@ if [ "$(id -u)" -eq 0 ] && command -v runuser >/dev/null 2>&1 && id pkgmk >/dev/
 fi
 
 bfs_cleanup_stage() {
+    # EXIT also runs after INT/TERM: recover a previously good archive if
+    # the wrapper is interrupted before it reaches normal commit/rollback.
+    if [ -n "${bfs_saved_archive:-}" ] && [ -f "$bfs_saved_archive" ] && [ -n "${bfs_previous_archive:-}" ]; then
+        rm -f -- "$bfs_previous_archive" || true
+        mv -- "$bfs_saved_archive" "$bfs_previous_archive" ||
+            echo 'BFSOS pkgmk: CRITICAL: archived backup requires manual recovery' >&2
+    fi
     if [ -n "$bfs_stage" ]; then
         rm -rf -- "$bfs_stage"
     fi
@@ -330,6 +337,39 @@ if [ ! -e .signature ] && [ ! -L .signature ] \
 fi
 unset bfs_signature_operation bfs_signature_required bfs_signature_override bfs_option
 
+# r513: A root-built package archive can be mode 0644 and cannot be overwritten
+# by the pkgmk account. For an explicit forced rebuild, move only the exact
+# expected archive out of the way under root control, preserving it until
+# the new package passes validation. Do not touch a prior archive for -uf.
+bfs_force_build=no
+bfs_metadata_only=no
+for bfs_arg do
+    case "$bfs_arg" in
+        -f|--force) bfs_force_build=yes ;;
+        -uf|--update-footprint) bfs_metadata_only=yes ;;
+    esac
+done
+bfs_previous_archive=""
+bfs_saved_archive=""
+if [ "$(id -u)" -eq 0 ] && [ "$bfs_force_build" = yes ] && [ "$bfs_metadata_only" != yes ]; then
+    bfs_identity="$(sed -n 's/^name=\([A-Za-z0-9+_.-]*\)$/\1/p' ./Pkgfile | head -n1)"
+    bfs_version="$(sed -n 's/^version=\([A-Za-z0-9+_.-]*\)$/\1/p' ./Pkgfile | head -n1)"
+    bfs_release="$(sed -n 's/^release=\([A-Za-z0-9+_.-]*\)$/\1/p' ./Pkgfile | head -n1)"
+    bfs_outdir=/var/cache/pkg/packages
+    bfs_out="$bfs_outdir/$bfs_identity#$bfs_version-$bfs_release.pkg.tar.zst"
+    if [ -n "$bfs_identity" ] && [ -n "$bfs_version" ] && [ -n "$bfs_release" ] && [ -f "$bfs_out" ]; then
+        [ ! -L "$bfs_out" ] && [ ! -L "$bfs_outdir" ] || {
+            echo 'BFSOS pkgmk: unsafe output symlink; refusing forced build' >&2; exit 126;
+        }
+        bfs_saved_archive="$(mktemp "$bfs_outdir/.bfs-previous-${bfs_identity}.XXXXXXXX")" || exit 126
+        rm -f -- "$bfs_saved_archive"
+        mv -- "$bfs_out" "$bfs_saved_archive" || exit 126
+        bfs_previous_archive="$bfs_out"
+        echo "BFSOS pkgmk: saved existing artifact pending validation: $bfs_out" >&2
+    fi
+fi
+unset bfs_arg bfs_identity bfs_version bfs_release bfs_outdir bfs_out
+
 # Keep the launcher in the parent shell: the signal handler must know the
 # active process-group leader even for builds using a private staging copy.
 bfs_original_workdir="$PWD"
@@ -341,12 +381,6 @@ run_pkgmk "$@"
 status=$?
 set -e
 cd "$bfs_original_workdir"
-if [ "$status" -eq 0 ]; then
-    if ! bfs_sync_metadata; then
-        printf 'BFSOS pkgmk: metadata synchronization failed\n' >&2
-        status=1
-    fi
-fi
 
 # Resolve package identity immediately so a failed build can never leave a
 # reusable archive behind. This also lets us validate successful-looking
@@ -385,19 +419,18 @@ fi
 
 [ -n "$package_dir" ] || package_dir=/var/cache/pkg/packages
 
-cleanup_failed_archives() {
-    [ "$pkg_name" != unknown ] || return 0
-    rm -f -- "$package_dir"/$package_glob 2>/dev/null || true
-}
+# Never remove prior known-good archives on build failure.
+# The forced-build backup below is restored when necessary.
 
 if [ "$status" -eq 0 ] && [ "$pkg_name" != unknown ]; then
     archive_list="/tmp/bfs-pkgmk-archive-list.$$"
+    archive_seen=no
     for archive in "$package_dir"/$package_glob; do
         [ -f "$archive" ] || continue
+        archive_seen=yes
         if ! bsdtar -tf "$archive" >"$archive_list" 2>/dev/null || [ ! -s "$archive_list" ]; then
             printf 'BFSOS pkgmk: rejecting invalid or empty package archive: %s\n' "$archive" >&2
             status=1
-            cleanup_failed_archives
             break
         fi
         # A directory-only archive is not an installable package payload. This
@@ -406,15 +439,44 @@ if [ "$status" -eq 0 ] && [ "$pkg_name" != unknown ]; then
         if ! awk 'substr($0, length($0), 1) != "/" { found=1; exit } END { exit !found }' "$archive_list"; then
             printf 'BFSOS pkgmk: rejecting directory-only package archive: %s\n' "$archive" >&2
             status=1
-            cleanup_failed_archives
             break
         fi
     done
     rm -f "$archive_list" 2>/dev/null || true
+    if [ "$bfs_force_build" = yes ] && [ "$bfs_metadata_only" != yes ] && [ "$archive_seen" = no ]; then
+        echo 'BFSOS pkgmk: forced build produced no archive' >&2
+        status=1
+    fi
 fi
 
-if [ "$status" -ne 0 ]; then
-    cleanup_failed_archives
+# Synchronize metadata only after a successful archive validation.
+if [ "$status" -eq 0 ]; then
+    if ! bfs_sync_metadata; then
+        printf 'BFSOS pkgmk: metadata synchronization failed\n' >&2
+        status=1
+    fi
+fi
+
+# Restore prior known-good archive if any later step fails, including a
+# failed metadata sync. This never recursively changes cache ownership.
+if [ -n "$bfs_saved_archive" ]; then
+    if [ "$status" -eq 0 ]; then
+        if rm -f -- "$bfs_saved_archive"; then
+            bfs_saved_archive=""
+        else
+            status=1
+        fi
+    else
+        if [ -n "$bfs_previous_archive" ]; then
+            rm -f -- "$bfs_previous_archive"
+            if mv -- "$bfs_saved_archive" "$bfs_previous_archive"; then
+                bfs_saved_archive=""
+            else
+                echo 'BFSOS pkgmk: CRITICAL: failed restoring previous archive' >&2
+                status=1
+            fi
+        fi
+    fi
 fi
 
 end_epoch="$(date +%s)"
