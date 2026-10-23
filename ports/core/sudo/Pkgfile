@@ -33,7 +33,9 @@ pkg_build() {
 
     make || return 1
     make DESTDIR="$PKG" install || return 1
-
+	# Secure sudoers permissions
+chmod 0440 "$PKG/etc/sudoers"
+chmod 0440 "$PKG/etc/sudoers.dist"
     # Install PAM configuration
     install -Dm644 \
         "$SRC/$name.pam" \
