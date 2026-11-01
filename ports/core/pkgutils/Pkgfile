@@ -5,7 +5,7 @@
 
 name=pkgutils
 version=5.40.12
-release=52
+release=53
 source=(https://crux.nu/files/$name-$version.tar.xz
         pkgadd.conf
         pkgmk.conf
@@ -216,7 +216,8 @@ unset _bfs_utf8_locale _bfs_locale _bfs_locale_cmd _bfs_pkgmk_path' "$PKG/usr/bi
                 "$PKG/var/cache/pkg/build-work" \
                 "$PKG/var/cache/pkg/build-work-disk" || return 1
 
-        install -dm775 "$PKG/var/cache/ccache" || return 1
+                install -dm775 "$PKG/var/cache/ccache" || return 1
+        	install -dm755 "$PKG/var/lib/pkgmk" || return 1
 
         # Non-root post_build creates these directories; install -D may have
         # created ancestors mode 0700. Correct their real modes before the

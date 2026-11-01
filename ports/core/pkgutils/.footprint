@@ -23,13 +23,13 @@ drwxr-xr-x	root/root	usr/share/man/man8/
 -rw-r--r--	root/root	usr/share/man/man8/rejmerge.8.gz
 drwxr-xr-x	root/root	var/
 drwxr-xr-x	root/root	var/cache/
-drwxrwxr-x	pkgmk/pkgmk	var/cache/ccache/
+drwxrwxr-x	root/root	var/cache/ccache/
 drwxr-xr-x	root/root	var/cache/pkg/
-drwxrwxr-x	pkgmk/pkgmk	var/cache/pkg/build-work-disk/
-drwxrwxr-x	pkgmk/pkgmk	var/cache/pkg/build-work/
-drwxrwxr-x	pkgmk/pkgmk	var/cache/pkg/packages/
-drwxrwxr-x	pkgmk/pkgmk	var/cache/pkg/sources/
+drwxrwxr-x	root/root	var/cache/pkg/build-work-disk/
+drwxrwxr-x	root/root	var/cache/pkg/build-work/
+drwxrwxr-x	root/root	var/cache/pkg/packages/
+drwxrwxr-x	root/root	var/cache/pkg/sources/
 drwxr-xr-x	root/root	var/lib/
 drwxr-xr-x	root/root	var/lib/pkgmk/
--rw-rw-r--	pkgmk/pkgmk	var/lib/pkgmk/build-times.log (EMPTY)
+-rw-rw-r--	root/root	var/lib/pkgmk/build-times.log (EMPTY)
 -rw-r--r--	root/root	var/lib/pkgmk/extension
