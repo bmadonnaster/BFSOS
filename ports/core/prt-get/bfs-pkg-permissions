@@ -1,0 +1,25 @@
+#!/bin/sh
+# BFSOS: explicit, idempotent package build directory setup/repair.
+# Called by prt-get post-install; may be rerun manually by an administrator.
+set -eu
+[ "$(id -u)" -eq 0 ] || { echo "Run as root" >&2; exit 1; }
+getent passwd pkgmk >/dev/null || { echo "pkgmk user missing" >&2; exit 1; }
+getent group pkgmk >/dev/null || { echo "pkgmk group missing" >&2; exit 1; }
+for p in /var /var/cache /var/cache/pkg /var/cache/ccache \
+         /var/cache/pkg/sources /var/cache/pkg/packages \
+         /var/cache/pkg/build-work /var/cache/pkg/build-work-disk; do
+    [ ! -L "$p" ] || { echo "Refusing symlink: $p" >&2; exit 1; }
+done
+for p in /var/cache/pkg /var/cache/pkg/sources /var/cache/pkg/packages \
+         /var/cache/pkg/build-work /var/cache/pkg/build-work-disk /var/cache/ccache; do
+    if [ -e "$p" ] && [ ! -d "$p" ]; then
+        echo "Refusing non-directory: $p" >&2; exit 1
+    fi
+done
+install -d -m 0755 /var/cache/pkg
+for p in /var/cache/pkg/sources /var/cache/pkg/packages \
+         /var/cache/pkg/build-work /var/cache/pkg/build-work-disk /var/cache/ccache; do
+    # Only this directory's owner/mode; never recurse into existing content.
+    install -d -m 0775 -o pkgmk -g pkgmk "$p"
+done
+printf 'BFSOS pkgmk cache ownership verified (no recursive changes)\n'

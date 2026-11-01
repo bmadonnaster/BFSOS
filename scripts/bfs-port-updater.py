@@ -2183,18 +2183,17 @@ def read_build_jobs(port_dir: Path, logical_cpus: int | None = None) -> tuple[in
 
 
 def pkgmk_build_command(backend: str, jobs: int) -> list[str]:
-    """Require bfs-pkgmk and carry build policy through sudo without root-build fallback."""
-    tool = shutil.which("bfs-pkgmk")
-    if not tool:
-        raise RuntimeError("bfs-pkgmk wrapper unavailable: refusing root-run pkgmk fallback")
+    """Use CRUX pkgmk as the pkgmk user; fakeroot supplies archive ownership."""
+    if not shutil.which("sudo") or not shutil.which("fakeroot") or not shutil.which("pkgmk"):
+        raise RuntimeError("sudo, fakeroot and pkgmk are required for CRUX builds")
     return [
-        "sudo", "env",
+        "sudo", "-H", "-u", "pkgmk", "env",
         f"BFS_PKG_BUILD_WORK={backend}",
         f"BFS_PKG_BUILD_JOBS={jobs}",
         f"JOBS={jobs}",
         f"MAKEFLAGS=-j{jobs}",
         f"CMAKE_BUILD_PARALLEL_LEVEL={jobs}",
-        tool, "-d", "-kw", "-f",
+        "fakeroot", "pkgmk", "-d", "-kw", "-f",
     ]
 
 
@@ -2560,9 +2559,8 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         print(f"BUILD-CPU {c.port}: {cpu_diag}", flush=True)
         print(f"BUILDING {c.port} ({c.name})", flush=True)
 
-        # Use bfs-pkgmk when available so the updater follows the same ABI,
-        # build-work, payload-validation, history, and parallel-build policy as
-        # normal BFSOS package builds.  Tee output while the build runs so the
+        # Use standard CRUX fakeroot/pkgmk. Preserve BFSOS build-work
+        # selection and parallel build settings through the environment.  Tee output while the build runs so the
         # UI and the persistent log never go visually silent for long builds.
         log_stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
         safe_port = c.port.replace("/", "-")
@@ -2752,7 +2750,7 @@ def main():
     ap.add_argument("--kernel-only",action="store_true",help="scan only the tree containing BFSOS kernel ports, then show kernel candidates")
     ap.add_argument("--report-only",action="store_true")
     ap.add_argument("--apply",action="store_true",help="apply safe policy-approved candidates (noninteractive)")
-    ap.add_argument("--build",action="store_true",help="with --apply, force-build selected ports using bfs-pkgmk -d -kw -f")
+    ap.add_argument("--build",action="store_true",help="with --apply, force-build selected ports using standard fakeroot pkgmk -d -kw -f")
     ap.add_argument("--install",action="store_true",help="with --apply --build, install through prt-get after build")
     ap.add_argument("--jobs",type=int,default=int(os.environ.get("BFS_AUDIT_JOBS", str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)))))
     ap.add_argument("--timeout",type=int,default=int(os.environ.get("BFS_AUDIT_TIMEOUT","15")))

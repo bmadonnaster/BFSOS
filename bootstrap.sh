@@ -157,6 +157,9 @@ _prepare_target_ccache() {
 max_size = $resolved_size
 EOF_CCACHE
 
+    # Bootstrap uses its temporary pkgmk directly; installed prt-get later
+    # provisions normal/disk workspace roots via bfs-pkg-permissions.
+    # Do not run the installed helper against the build host here.
     # Once the dedicated pkgmk account exists, keep the cache owned by it.
     if chroot "$LFS" /usr/bin/getent passwd pkgmk >/dev/null 2>&1; then
         chown -R 82:82 "$LFS/var/cache/ccache" 2>/dev/null || true

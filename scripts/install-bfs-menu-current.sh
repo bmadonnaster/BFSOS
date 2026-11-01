@@ -7912,6 +7912,11 @@ else
 fi
 
 ensure_pkgmk_build_ownership() {
+        # prt-get install/upgrade provisions these once. On older bases where
+        # the helper is absent, retain the installer-local bootstrap fallback.
+        if [ -x /usr/sbin/bfs-pkg-permissions ]; then
+                /usr/sbin/bfs-pkg-permissions || return 1
+        fi
         if ! getent passwd pkgmk >/dev/null || ! getent group pkgmk >/dev/null; then
                 echo "ERROR: pkgmk user/group missing; cannot provision package caches" >&2
                 return 1

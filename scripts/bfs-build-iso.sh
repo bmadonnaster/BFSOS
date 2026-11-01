@@ -692,8 +692,8 @@ build_iso_package_set() {
 
     chroot "$root" /usr/bin/env -i \
         HOME=/root TERM="${TERM:-linux}" PATH=/usr/bin:/usr/sbin:/bin:/sbin \
-        /bin/bash -lc 'grep -Fq "# BFSOS: command-line options override Pkgfile/pkgmk.conf." /usr/bin/pkgmk' ||
-        die "Updated pkgutils does not contain CLI precedence fix"
+        /bin/bash -lc 'command -v pkgmk >/dev/null && pkgmk --help >/dev/null' ||
+        die "Updated pkgutils does not provide functional CRUX pkgmk"
 
     # pkgutils upgrade may replace /etc/pkgmk.conf; apply isolated policy again.
     set_iso_build_footprint_policy "$root"
