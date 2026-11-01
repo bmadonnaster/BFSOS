@@ -1,15 +1,19 @@
 #!/bin/sh
 
-# BFSOS 0.9.0 migration:
-# Move existing installations from the retired Codeberg repository
-# to the authoritative GitHub repository.
+# BFSOS prt-get post-install migration.
+# Preserve local settings while updating BFSOS defaults.
 
 config=/etc/ports/bfsos.git
+prt_config=/etc/prt-get.conf
 cache=/var/cache/ports-git/bfsos
 
 old_https='https://codeberg.org/bmadonnaster/BFSOS.git'
 old_ssh='git@codeberg.org:bmadonnaster/BFSOS.git'
 new_https='https://github.com/bmadonnaster/BFSOS.git'
+
+# ---------------------------------------------------------
+# Migrate the ports repository from Codeberg to GitHub.
+# ---------------------------------------------------------
 
 if [ -f "$config" ]; then
     current_url="$(sed -n 's/^URL=//p' "$config" | head -n1)"
@@ -21,20 +25,27 @@ if [ -f "$config" ]; then
                 "$config"
 
             printf '%s\n' \
-                "BFSOS ports repository migrated from Codeberg to GitHub."
+                "BFSOS ports repository migrated to GitHub."
             ;;
     esac
 fi
 
-# Preserve local collection customizations while registering the Office tree.
-# An existing installation may retain its previous /etc/ports/bfsos.git.
-if [ -f "$config" ] && ! grep -Eq '(^|[[:space:]])office:ports/office([[:space:]"]|$)' "$config"; then
-    # Append to the quoted list, preserving customized collection order.
-    sed -i '/^COLLECTIONS=/ s/"$/ office:ports\/office"/' "$config"
+# ---------------------------------------------------------
+# Register the Office collection.
+# ---------------------------------------------------------
+
+if [ -f "$config" ] &&
+   ! grep -Eq '(^|[[:space:]])office:ports/office([[:space:]"]|$)' "$config"; then
+
+    sed -i \
+        '/^COLLECTIONS=/ s/"$/ office:ports\/office"/' \
+        "$config"
 fi
 
-# Also migrate an existing cached Git checkout so the next ports -u
-# does not continue using Codeberg.
+# ---------------------------------------------------------
+# Migrate the existing cached Git checkout.
+# ---------------------------------------------------------
+
 if [ -d "$cache/.git" ]; then
     current_remote="$(git -C "$cache" remote get-url origin 2>/dev/null || true)"
 
@@ -45,10 +56,40 @@ if [ -d "$cache/.git" ]; then
     esac
 fi
 
-exit 0
+# ---------------------------------------------------------
+# Migrate prt-get command configuration.
+# Preserve unrelated local settings.
+# ---------------------------------------------------------
 
-# Configure the dedicated build account's cache paths once per prt-get
-# installation/upgrade; do not change ownership during normal builds.
+if [ -f "$prt_config" ]; then
+
+    # Only replace known BFSOS legacy/default settings.
+    # Keep custom commands that users configured themselves.
+
+    sed -i \
+        -e '/^[[:space:]]*makecommand[[:space:]]\+bfs-pkgmk[[:space:]]*$/c\makecommand      sudo -H -u pkgmk /usr/bin/fakeroot /usr/bin/pkgmk' \
+        -e '/^[[:space:]]*#[[:space:]]*addcommand[[:space:]]\+pkgadd[[:space:]]*$/c\addcommand       sudo /usr/bin/pkgadd' \
+        -e '/^[[:space:]]*#[[:space:]]*removecommand[[:space:]]\+pkgrm[[:space:]]*$/c\removecommand    pkgrm' \
+        -e '/^[[:space:]]*#[[:space:]]*runscriptcommand[[:space:]]\+sh[[:space:]]*$/c\runscriptcommand sh' \
+        "$prt_config" || exit 1
+
+    # Also handle a configuration that still uses the
+    # original uncommented pkgmk default.
+    sed -i \
+        '/^[[:space:]]*makecommand[[:space:]]\+pkgmk[[:space:]]*$/c\makecommand      sudo -H -u pkgmk /usr/bin/fakeroot /usr/bin/pkgmk' \
+        "$prt_config" || exit 1
+
+    printf '%s\n' \
+        "BFSOS prt-get configuration migration checked."
+fi
+
+# ---------------------------------------------------------
+# Configure dedicated pkgmk build-account permissions.
+# ---------------------------------------------------------
+
 if [ -x /usr/sbin/bfs-pkg-permissions ]; then
     /usr/sbin/bfs-pkg-permissions || exit 1
 fi
+
+exit 0
+
