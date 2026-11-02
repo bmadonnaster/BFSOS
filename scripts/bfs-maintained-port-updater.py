@@ -23,6 +23,9 @@ import argparse
 import csv
 import dataclasses
 import hashlib
+import bz2
+import gzip
+import lzma
 import json
 import os
 from pathlib import Path
@@ -37,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PORTS_ROOT = Path(os.environ.get("BFSOS_PORTS_ROOT", str(ROOT / "ports"))).expanduser().resolve()
 REMOTE = ("http://", "https://", "ftp://")
 PATCH_SUFFIXES = (".patch", ".diff", ".patch.gz", ".diff.gz", ".patch.xz", ".diff.xz", ".patch.bz2", ".diff.bz2")
-ARCHIVE_SUFFIXES = (".run", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip")
+ARCHIVE_SUFFIXES = (".run", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2", ".tar.zst", ".tgz", ".tbz2", ".txz", ".zip", ".whl")
 
 # GNOME source trees are not completely uniform.  Keep exceptions explicit and
 # data-driven instead of teaching the generic version rewrite the wrong rule.
@@ -162,8 +165,14 @@ def looks_like_patch(path: Path) -> bool:
     if low.startswith((b"<!doctype html", b"<html", b"<?xml")):
         return False
     if path.name.endswith((".gz", ".xz", ".bz2")):
-        # Compressed patch validation occurs after decompression.
-        return True
+        # Compressed word dictionaries and data files are NOT necessarily
+        # patches. Inspect bounded decompressed content before classifying.
+        opener = lzma.open if path.name.endswith(".xz") else (gzip.open if path.name.endswith(".gz") else bz2.open)
+        try:
+            with opener(path, "rb") as stream:
+                raw = stream.read(65536)
+        except (OSError, EOFError, lzma.LZMAError):
+            return False
     text = raw.decode("utf-8", "replace")
     return bool(re.search(r"(?m)^(diff --git |--- [^\n]+\n\+\+\+ |Index: )", text))
 

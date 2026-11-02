@@ -2375,8 +2375,8 @@ def safe_routine_footprint_change(text: str) -> tuple[bool, list[str], str]:
     return True, lines, "ordinary package footprint change"
 
 
-def safe_kernel_version_footprint_change(text: str, old: str, new: str) -> tuple[bool, list[str], str]:
-    """Allow an LTS patch bump whose package paths change only with KVER.
+def safe_kernel_version_footprint_change(text: str, old: str, new: str, flavor: str = "LTS") -> tuple[bool, list[str], str]:
+    """Validate version-only footprint changes for either BFSOS kernel flavor.
 
     Keep metadata identical, validate boot/module/source anchors, and allow
     harmless additional regular source files. Do not approve changed modes,
@@ -2385,7 +2385,16 @@ def safe_kernel_version_footprint_change(text: str, old: str, new: str) -> tuple
     lines = footprint_mismatch_lines(text)
     if not lines or not old or not new or old == new:
         return False, lines, "missing kernel version transition"
-    old_tag, new_tag = f"{old}-BFSOS-LTS", f"{new}-BFSOS-LTS"
+    if flavor not in {"LTS", "Mainline"}:
+        return False, lines, "unrecognized BFSOS kernel flavor"
+    suffix = f"-BFSOS-{flavor}"
+    new_tag = f"{new}{suffix}"
+    old_release = old
+    if flavor == "Mainline":
+        # Linux 7.3's packaged kernel release is 7.3.0, but its source
+        # version is 7.3. Derive only this known kernel release spelling.
+        old_release = old if old.count(".") >= 2 else f"{old}.0"
+    old_tag = f"{old_release}{suffix}"
     parsed = {"MISSING": [], "NEW": []}
     for row in lines:
         fields = row.split(None, 3)
@@ -2414,7 +2423,7 @@ def safe_kernel_version_footprint_change(text: str, old: str, new: str) -> tuple
                      f"boot/System.map-{new_tag}", f"lib/modules/{new_tag}/"):
         if required not in new_locations:
             return False, lines, f"missing kernel anchor: {required}"
-    return True, lines, "validated LTS kernel version-only footprint transition"
+    return True, lines, f"validated {flavor} kernel version-only footprint transition"
 
 
 def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
@@ -2669,8 +2678,9 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             footprint_reason = "safe versioned-library change"
             # Kernel packages use stricter version/path validation.
             protected_kernel = c.port in {"core/linux", "core/linux-mainline", "core/linux-headers"}
-            if c.port == "core/linux" and not safe_fp:
-                safe_fp, fp_lines, footprint_reason = safe_kernel_version_footprint_change(combined, c.old, c.new)
+            if c.port in {"core/linux", "core/linux-mainline"} and not safe_fp:
+                flavor = "Mainline" if c.port == "core/linux-mainline" else "LTS"
+                safe_fp, fp_lines, footprint_reason = safe_kernel_version_footprint_change(combined, c.old, c.new, flavor)
             if not safe_fp and not protected_kernel:
                 safe_fp, fp_lines, footprint_reason = safe_routine_footprint_change(combined)
             print(f"FOOTPRINT CHANGED {c.port}: {len(fp_lines)} mismatch rows", flush=True)

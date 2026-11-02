@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import importlib.util
+import lzma
 from pathlib import Path
 import sys
 import tempfile
@@ -24,6 +25,15 @@ assert mod.remote_patch_raw_tokens("source=(alias.patch::https://example.invalid
 assert mod.source_filename("alias.patch::https://example.invalid/commit/123") == "alias.patch"
 assert mod.is_patch_name("fix.patch.xz")
 assert not mod.is_patch_name("thing.tar.xz")
+assert mod.is_archive_name("pip-26.2.2-py3-none-any.whl")
+assert not mod.is_patch_name("cracklib-words-2.10.4.xz")
+with tempfile.TemporaryDirectory() as td_s:
+    dictionary = Path(td_s) / "cracklib-words-2.10.4.xz"
+    dictionary.write_bytes(lzma.compress(b"apple\nbanana\ncarrot\n"))
+    assert not mod.looks_like_patch(dictionary)
+    patch = Path(td_s) / "fix.patch.xz"
+    patch.write_bytes(lzma.compress(b"--- a/file\n+++ b/file\n@@ -1 +1 @@\n-a\n+b\n"))
+    assert mod.looks_like_patch(patch)
 
 # Bare mainline kernel releases are prefixes of their patch releases.
 with tempfile.TemporaryDirectory() as td_s:

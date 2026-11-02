@@ -3,8 +3,8 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=mtools
-version=4.0.49
-release=2
+version=4.0.50
+release=1
 source=(https://ftpmirror.gnu.org/mtools/$name-$version.tar.bz2)
 
 pkg_build() {

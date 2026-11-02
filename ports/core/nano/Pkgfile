@@ -4,9 +4,9 @@
 # Depends on: file ncurses bzip2 xz
 
 name=nano
-version=9.2
+version=9.3
 release=1
-source=(https://www.nano-editor.org/dist/v${version%%.*}/$name-$version.tar.xz)
+source=(https://www.nano-editor.org/dist/v9/$name-$version.tar.xz)
 
 pkg_build(){
 

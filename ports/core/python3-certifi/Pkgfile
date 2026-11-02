@@ -3,7 +3,7 @@
 # Depends on: 
 
 name=python3-certifi
-version=2026.10.19
+version=2026.10.23
 release=1
 source=(https://files.pythonhosted.org/packages/source/c/certifi/certifi-${version}.tar.gz)
 pkg_build() {

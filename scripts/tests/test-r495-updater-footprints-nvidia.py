@@ -54,6 +54,8 @@ kernel=fp(
     'NEW drwxr-xr-x root/root lib/modules/6.18.60-BFSOS-LTS/',
 )
 assert u.safe_kernel_version_footprint_change(kernel, '6.18.57', '6.18.60')[0]
+mainline = kernel.replace('6.18.57-BFSOS-LTS', '7.3.0-BFSOS-Mainline').replace('6.18.60-BFSOS-LTS', '7.3.1-BFSOS-Mainline')
+assert u.safe_kernel_version_footprint_change(mainline, '7.3', '7.3.1', 'Mainline')[0]
 assert not u.safe_kernel_version_footprint_change(kernel.replace('=======> ERROR: Building failed', 'NEW -rwsr-xr-x root/root usr/bin/suid\n=======> ERROR: Building failed'), '6.18.57', '6.18.60')[0]
 for danger in (
     'NEW -rwsr-xr-x root/root usr/bin/suid',

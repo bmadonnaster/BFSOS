@@ -4,7 +4,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=pkgconf
-version=3.0.8
+version=3.0.10
 release=1
 source=(
     https://distfiles.ariadne.space/pkgconf/pkgconf-$version.tar.xz
