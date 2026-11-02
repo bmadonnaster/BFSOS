@@ -609,7 +609,9 @@ def stale_versioned_remote_companions(meta: Meta, primary_url: str, old: str, la
         url = source_url(src)
         if not url or url == primary_url:
             continue
-        if old in url:
+        # A bare release (7.3) is a prefix of its patch releases (7.3.1).
+        # Match complete version tokens, not substrings of newer versions.
+        if re.search(r"(?<![0-9A-Za-z])" + re.escape(old) + r"(?![0-9.])", url):
             stale.append(url)
     return stale
 

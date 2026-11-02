@@ -21,6 +21,15 @@ for rel in ('opt/nvidia', 'compat-32/nvidia-32'):
     assert '615.78.08.run' not in rewritten  # version-dynamic token preserved
     assert 'NVIDIA-Linux-x86_64-$version.run' in rewritten
 assert m.is_archive_name('NVIDIA-Linux-x86_64-615.78.08.run')
+assert u.pkgmk_footprint_update_command('disk', 8) == ['sudo', 'pkgmk', '-uf']
+assert u.pkgmk_checksum_update_command() == ['sudo', 'pkgmk', '-um']
+original_which = u.shutil.which
+try:
+    u.shutil.which = lambda name: '/usr/bin/' + name
+    assert u.pkgmk_download_only_command('disk', 8)[-1] == '-do'
+    assert '-f' not in u.pkgmk_download_only_command('disk', 8)
+finally:
+    u.shutil.which = original_which
 
 def fp(*entries):
     return '=======> ERROR: Footprint mismatch found:\n'+'\n'.join(entries)+'\n=======> ERROR: Building failed\n'
@@ -32,6 +41,20 @@ assert u.safe_routine_footprint_change(lib)[0]
 unit=fp('NEW -rw-r--r-- root/root usr/lib/systemd/system/clonesetup.target',
         'NEW lrwxrwxrwx root/root usr/lib/systemd/system/initrd.target.wants/systemd-cryptenroll-firstboot.service -> ../systemd-cryptenroll-firstboot.service')
 assert u.safe_routine_footprint_change(unit)[0]
+cache=fp('NEW drwxrwxr-x root/root var/cache/example/')
+assert u.safe_routine_footprint_change(cache)[0]
+kernel=fp(
+    'MISSING -rw-r--r-- root/root boot/vmlinuz-6.18.57-BFSOS-LTS',
+    'MISSING -rw-r--r-- root/root boot/config-6.18.57-BFSOS-LTS',
+    'MISSING -rw-r--r-- root/root boot/System.map-6.18.57-BFSOS-LTS',
+    'MISSING drwxr-xr-x root/root lib/modules/6.18.57-BFSOS-LTS/',
+    'NEW -rw-r--r-- root/root boot/vmlinuz-6.18.60-BFSOS-LTS',
+    'NEW -rw-r--r-- root/root boot/config-6.18.60-BFSOS-LTS',
+    'NEW -rw-r--r-- root/root boot/System.map-6.18.60-BFSOS-LTS',
+    'NEW drwxr-xr-x root/root lib/modules/6.18.60-BFSOS-LTS/',
+)
+assert u.safe_kernel_version_footprint_change(kernel, '6.18.57', '6.18.60')[0]
+assert not u.safe_kernel_version_footprint_change(kernel.replace('=======> ERROR: Building failed', 'NEW -rwsr-xr-x root/root usr/bin/suid\n=======> ERROR: Building failed'), '6.18.57', '6.18.60')[0]
 for danger in (
     'NEW -rwsr-xr-x root/root usr/bin/suid',
     'NEW -rwxrwxrwx root/root usr/bin/worldwrite',
@@ -41,6 +64,7 @@ for danger in (
     'NEW -rw-r--r-- root/root etc/sudoers.d/evil',
     'CHANGED -rw-r--r-- root/root usr/bin/thing',
     'NEW crw------- root/root dev/null',
+    'NEW -rw-r--r-- root/root var/lib/pkg/installed',
 ):
     assert not u.safe_routine_footprint_change(fp(danger))[0], danger
 print('r495 NVIDIA/footprint offline tests: PASS')

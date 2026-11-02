@@ -25,6 +25,13 @@ assert mod.source_filename("alias.patch::https://example.invalid/commit/123") ==
 assert mod.is_patch_name("fix.patch.xz")
 assert not mod.is_patch_name("thing.tar.xz")
 
+# Bare mainline kernel releases are prefixes of their patch releases.
+with tempfile.TemporaryDirectory() as td_s:
+    pkg = Path(td_s) / "Pkgfile"
+    pkg.write_text('name=linux-mainline\nversion=7.3.1\nrelease=1\nsource=(https://www.kernel.org/pub/linux/kernel/v7.x/linux-$version.tar.xz config)\n')
+    meta = mod.eval_meta(pkg)
+    assert mod.stale_versioned_remote_companions(meta, "", "7.3", "7.3.1") == []
+
 with tempfile.TemporaryDirectory() as td_s:
     td = Path(td_s)
     (td / "Pkgfile").write_text('name=test\nversion=1.2.4\nrelease=1\nsource=(helper-1.2.3.conf)\n')

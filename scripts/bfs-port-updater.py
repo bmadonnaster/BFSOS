@@ -10,6 +10,7 @@ exception and follow the BFSOS kernel policy.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import concurrent.futures
 import csv
 import dataclasses
@@ -2358,7 +2359,7 @@ def safe_routine_footprint_change(text: str) -> tuple[bool, list[str], str]:
         parts = path.split("/")
         if path.startswith("/") or ".." in parts or "." in parts or not path or "//" in path:
             return False, lines, "unsafe package destination"
-        if not path.startswith(("usr/", "etc/", "opt/", "lib/", "lib64/", "boot/", "bin/", "sbin/")):
+        if not path.startswith(("usr/", "etc/", "opt/", "lib/", "lib32/", "lib64/", "boot/", "bin/", "sbin/", "var/")):
             return False, lines, "unusual package destination"
         if mode[0] == "l":
             if not sep or not target or target.startswith("/"):
@@ -2369,9 +2370,51 @@ def safe_routine_footprint_change(text: str) -> tuple[bool, list[str], str]:
                 return False, lines, "symlink escapes package root"
         elif sep:
             return False, lines, "unexpected symlink metadata"
-        if path.startswith(("etc/sudoers", "etc/shadow", "etc/passwd", "etc/group", "etc/pam.d/", "etc/security/")):
+        if path.startswith(("etc/sudoers", "etc/shadow", "etc/passwd", "etc/group", "etc/pam.d/", "etc/security/", "var/lib/pkg/", "var/lib/pkgmk/")):
             return False, lines, "security-sensitive system file"
     return True, lines, "ordinary package footprint change"
+
+
+def safe_kernel_version_footprint_change(text: str, old: str, new: str) -> tuple[bool, list[str], str]:
+    """Allow an LTS patch bump whose package paths change only with KVER.
+
+    Keep metadata identical, validate boot/module/source anchors, and allow
+    harmless additional regular source files. Do not approve changed modes,
+    owners, removed modules or new executable payloads automatically.
+    """
+    lines = footprint_mismatch_lines(text)
+    if not lines or not old or not new or old == new:
+        return False, lines, "missing kernel version transition"
+    old_tag, new_tag = f"{old}-BFSOS-LTS", f"{new}-BFSOS-LTS"
+    parsed = {"MISSING": [], "NEW": []}
+    for row in lines:
+        fields = row.split(None, 3)
+        if len(fields) != 4 or fields[0] not in parsed:
+            return False, lines, "modified or unparseable kernel metadata"
+        kind, mode, owner, location = fields
+        if owner != "root/root" or len(mode) != 10 or any(c in mode[1:] for c in "sStT"):
+            return False, lines, "privileged or unexpected kernel ownership/mode"
+        path = location.split(" -> ", 1)[0]
+        if path.startswith("/") or ".." in path.split("/"):
+            return False, lines, "unsafe kernel path"
+        if kind == "MISSING" and old_tag not in location:
+            return False, lines, "removed path outside old kernel version"
+        if kind == "NEW" and new_tag not in location:
+            return False, lines, "new path outside new kernel version"
+        parsed[kind].append((mode, owner, location.replace(old_tag, "<KVER>").replace(new_tag, "<KVER>")))
+    missing, added = Counter(parsed["MISSING"]), Counter(parsed["NEW"])
+    if missing - added:
+        return False, lines, "kernel file removed or metadata changed beyond version"
+    extra = list((added - missing).elements())
+    for mode, owner, location in extra:
+        if mode != "-rw-rw-r--" or not location.startswith("usr/src/linux-<KVER>/"):
+            return False, lines, "unexpected added kernel payload"
+    new_locations = [row.split(None, 3)[3] for row in lines if row.startswith("NEW ")]
+    for required in (f"boot/vmlinuz-{new_tag}", f"boot/config-{new_tag}",
+                     f"boot/System.map-{new_tag}", f"lib/modules/{new_tag}/"):
+        if required not in new_locations:
+            return False, lines, f"missing kernel anchor: {required}"
+    return True, lines, "validated LTS kernel version-only footprint transition"
 
 
 def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
@@ -2382,9 +2425,20 @@ def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
 
 
 def pkgmk_footprint_update_command(backend: str, jobs: int) -> list[str]:
-    cmd = pkgmk_build_command(backend, jobs)
-    # Once the reviewed package exists, regenerate .footprint from that archive.
-    return cmd[:-3] + ["-d", "-uf", "-kw"]
+    # BFSOS keeps the source cache owned by pkgmk while the checkout may be
+    # root-owned. Match the maintainer's existing CRUX metadata command.
+    # This is metadata-only; compilation remains sudo -u pkgmk + fakeroot.
+    return ["sudo", "pkgmk", "-uf"]
+
+
+def pkgmk_checksum_update_command() -> list[str]:
+    """Standard CRUX checksum refresh for protected port/cache paths."""
+    return ["sudo", "pkgmk", "-um"]
+
+
+def pkgmk_download_only_command(backend: str, jobs: int) -> list[str]:
+    """Use CRUX -do: -d alone also starts a build."""
+    return pkgmk_build_command(backend, jobs)[:-3] + ["-do"]
 
 
 def cleanup_successful_build_work(root: str | Path, package_name: str) -> tuple[bool, str]:
@@ -2436,7 +2490,6 @@ def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: d
             "INFRASTRUCTURE FAILED:",
             "BLOCKED: build workspace out of space",
             "BLOCKED: build workspace preflight failed",
-            "FOOTPRINT REVIEW:",
         )
         for rel in sorted(selected):
             result = results.get(rel, "")
@@ -2573,20 +2626,63 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             if group:
                 failed_groups.add(group)
             continue
+        # A changed Pkgfile normally has no .md5sum yet. Generate it before
+        # the unprivileged build, otherwise pkgmk attempts to create it in a
+        # root/user-owned ports checkout and reports Permission denied.
+        checksum_path = port_dir / ".md5sum"
+        if not checksum_path.exists():
+            if checksum_path.is_symlink():
+                results[c.port] = "METADATA FAILED: refusing symlinked .md5sum"
+                if group:
+                    failed_groups.add(group)
+                continue
+            checksum_log = LOG_ROOT / f"checksum-{log_stamp}-{safe_port}.log"
+            # -do fetches sources without starting compilation or writing .md5sum.
+            download_cmd = pkgmk_download_only_command(backend, jobs)
+            download_cp = run_build_streaming(download_cmd, port_dir, checksum_log, header)
+            if download_cp.returncode:
+                results[c.port] = f"METADATA FAILED: source download failed ({download_cp.returncode}); log={checksum_log}"
+                if group:
+                    failed_groups.add(group)
+                continue
+            checksum_cp = run_build_streaming(pkgmk_checksum_update_command(), port_dir, checksum_log, header)
+            if checksum_cp.returncode or not checksum_path.is_file():
+                results[c.port] = f"METADATA FAILED: checksum refresh failed ({checksum_cp.returncode}); log={checksum_log}"
+                if group:
+                    failed_groups.add(group)
+                continue
         cp = run_build_streaming(build_cmd, port_dir, build_log, header)
         combined = cp.stdout or ""
+        # pkgmk may have built the archive while failing to write a checksum
+        # into a protected checkout. Repair only when the log identifies that
+        # exact metadata permission problem; never run this on every port.
+        if re.search(r"\.md5sum[^\n]*(?:Permission denied|not writable)|(?:Permission denied|not writable)[^\n]*\.md5sum", combined, re.I):
+            checksum_log = LOG_ROOT / f"checksum-{log_stamp}-{safe_port}.log"
+            checksum_cp = run_build_streaming(pkgmk_checksum_update_command(), port_dir, checksum_log, header)
+            if checksum_cp.returncode:
+                results[c.port] = f"METADATA FAILED: checksum refresh failed ({checksum_cp.returncode}); log={checksum_log}"
+                if group:
+                    failed_groups.add(group)
+                continue
         if cp.returncode and "ERROR: Footprint mismatch found:" in combined:
             safe_fp, fp_lines = safe_versioned_library_footprint_change(combined)
             footprint_reason = "safe versioned-library change"
-            # Kernel packages are boot-critical: do not auto-approve or alter
-            # their footprint without the dedicated kernel validator/VM tests.
+            # Kernel packages use stricter version/path validation.
             protected_kernel = c.port in {"core/linux", "core/linux-mainline", "core/linux-headers"}
+            if c.port == "core/linux" and not safe_fp:
+                safe_fp, fp_lines, footprint_reason = safe_kernel_version_footprint_change(combined, c.old, c.new)
             if not safe_fp and not protected_kernel:
                 safe_fp, fp_lines, footprint_reason = safe_routine_footprint_change(combined)
             print(f"FOOTPRINT CHANGED {c.port}: {len(fp_lines)} mismatch rows", flush=True)
             for line in fp_lines:
                 print(f"  {line}", flush=True)
             if safe_fp:
+                footprint_path = port_dir / ".footprint"
+                if footprint_path.is_symlink() or not footprint_path.is_file():
+                    results[c.port] = "FOOTPRINT REVIEW: missing or symlinked original .footprint"
+                    if group:
+                        failed_groups.add(group)
+                    continue
                 fp_log = LOG_ROOT / f"footprint-{log_stamp}-{safe_port}.log"
                 fp_header = header + f"# BFSOS maintainer footprint refresh: {footprint_reason}\n"
                 pkg_cp = run_build_streaming(pkgmk_footprint_package_command(backend, jobs), port_dir, fp_log, fp_header)
@@ -2601,7 +2697,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
                     cp = fp_cp
                     results[c.port] = "BUILT; FOOTPRINT UPDATED"
                 else:
-                    results[c.port] = f"FOOTPRINT REVIEW: automatic refresh failed ({fp_cp.returncode}); log={fp_log}"
+                    results[c.port] = f"METADATA FAILED: compiled archive preserved; footprint refresh failed ({fp_cp.returncode}); log={fp_log}"
                     if group:
                         failed_groups.add(group)
                     continue
