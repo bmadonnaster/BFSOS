@@ -4,8 +4,8 @@
 # Depends on: libtiff
 # Optional: libjpeg-turbo
 name=lcms2
-version=2.19.1
-release=3
+version=2.20
+release=1
 source=(https://github.com/mm2/Little-CMS/releases/download/lcms${version}/lcms2-$version.tar.gz)
 
 pkg_build() {

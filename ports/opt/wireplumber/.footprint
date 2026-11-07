@@ -50,11 +50,9 @@ drwxr-xr-x	root/root	usr/include/wireplumber-0.5/wp/
 -rw-r--r--	root/root	usr/include/wireplumber-0.5/wp/wpenums.h
 -rw-r--r--	root/root	usr/include/wireplumber-0.5/wp/wpversion.h
 drwxr-xr-x	root/root	usr/lib/
-drwxr-xr-x	root/root	usr/lib/girepository-1.0/
--rw-r--r--	root/root	usr/lib/girepository-1.0/Wp-0.5.typelib
 lrwxrwxrwx	root/root	usr/lib/libwireplumber-0.5.so -> libwireplumber-0.5.so.0
-lrwxrwxrwx	root/root	usr/lib/libwireplumber-0.5.so.0 -> libwireplumber-0.5.so.0.518.0
--rwxr-xr-x	root/root	usr/lib/libwireplumber-0.5.so.0.518.0
+lrwxrwxrwx	root/root	usr/lib/libwireplumber-0.5.so.0 -> libwireplumber-0.5.so.0.519.0
+-rwxr-xr-x	root/root	usr/lib/libwireplumber-0.5.so.0.519.0
 drwxr-xr-x	root/root	usr/lib/pkgconfig/
 -rw-r--r--	root/root	usr/lib/pkgconfig/wireplumber-0.5.pc
 drwxr-xr-x	root/root	usr/lib/systemd/
@@ -85,8 +83,6 @@ drwxr-xr-x	root/root	usr/share/
 drwxr-xr-x	root/root	usr/share/bash-completion/
 drwxr-xr-x	root/root	usr/share/bash-completion/completions/
 -rw-r--r--	root/root	usr/share/bash-completion/completions/wpctl
-drwxr-xr-x	root/root	usr/share/gir-1.0/
--rw-r--r--	root/root	usr/share/gir-1.0/Wp-0.5.gir
 drwxr-xr-x	root/root	usr/share/wireplumber/
 drwxr-xr-x	root/root	usr/share/wireplumber/scripts/
 drwxr-xr-x	root/root	usr/share/wireplumber/scripts/client/

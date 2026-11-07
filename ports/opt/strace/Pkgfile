@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=strace
-version=7.2
+version=7.3
 release=1
 source=(https://strace.io/files/$version/$name-$version.tar.xz)
 

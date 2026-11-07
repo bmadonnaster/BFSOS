@@ -60,6 +60,8 @@ drwxr-xr-x	root/root	usr/include/wayland-protocols/
 -rw-r--r--	root/root	usr/include/wayland-protocols/xwayland-keyboard-grab-unstable-v1-enum.h
 -rw-r--r--	root/root	usr/include/wayland-protocols/xwayland-shell-v1-enum.h
 -rw-r--r--	root/root	usr/include/wayland-protocols/xx-cutouts-v1-enum.h
+-rw-r--r--	root/root	usr/include/wayland-protocols/xx-hotkey-v1-enum.h
+-rw-r--r--	root/root	usr/include/wayland-protocols/xx-image-capture-color-management-v1-enum.h
 -rw-r--r--	root/root	usr/include/wayland-protocols/xx-input-method-v2-enum.h
 -rw-r--r--	root/root	usr/include/wayland-protocols/xx-keyboard-filter-v1-enum.h
 -rw-r--r--	root/root	usr/include/wayland-protocols/xx-session-management-v1-enum.h

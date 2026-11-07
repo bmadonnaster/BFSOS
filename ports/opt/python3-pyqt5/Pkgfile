@@ -5,17 +5,21 @@
 
 name=python3-pyqt5
 version=5.15.11
-release=3
-source=(https://files.pythonhosted.org/packages/source/P/PyQt5/PyQt5-$version.tar.gz)
+release=5
+
+source=(
+    https://files.pythonhosted.org/packages/source/P/PyQt5/PyQt5-$version.tar.gz
+    python3.15-compat.patch)
 
 pkg_build() {
     local pyver
-    pyver=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 
-    yes yes | \
-      PATH=/opt/qt5/bin:$PATH \
-      DESTDIR="$PKG" \
-      sip-install \
+    pyver=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")') || return 1
+
+    PATH=/opt/qt5/bin:$PATH \
+    DESTDIR="$PKG" \
+    sip-install \
+        --confirm-license \
         --target-dir "/usr/lib/python${pyver}/site-packages" \
-        --scripts-dir "/usr/bin" || return 1
+        --scripts-dir /usr/bin || return 1
 }

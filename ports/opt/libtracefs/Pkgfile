@@ -5,7 +5,7 @@
 # Optional: asciidoc xmlto
 
 name=libtracefs
-version=1.8.3
+version=1.8.4
 release=1
 source=(https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/snapshot/libtracefs-$version.tar.gz)
 

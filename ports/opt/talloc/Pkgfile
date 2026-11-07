@@ -6,3 +6,10 @@ name=talloc
 version=2.5.0
 release=1
 source=(https://www.samba.org/ftp/${name}/${name}-${version}.tar.gz)
+post_build() {
+    # Samba already owns the Python talloc binding.
+    # Prevent duplicate package ownership.
+    find "$PKG/usr/lib" \
+        -path '*/site-packages/talloc.cpython-*.so' \
+        -type f -delete
+}

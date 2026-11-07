@@ -1,0 +1,12 @@
+--- a/sipbuild/generator/parser/parser_manager.py
++++ b/sipbuild/generator/parser/parser_manager.py
+@@ -1937,6 +1937,10 @@
+                 # major version so use the default.
+                 major = DEFAULT_ABI_MAJOR
++        elif major <= 13 and not minimums:
++            # Allow older ABIs that don't specify %MinimumABIVersion. This
++            # case can be removed in SIP v7.
++            pass
+         else:
+             # Check that this major version is supported and that any minor
+             # version meets the minimum requirements.

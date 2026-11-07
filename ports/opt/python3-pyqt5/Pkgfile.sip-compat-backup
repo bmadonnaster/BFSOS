@@ -1,0 +1,73 @@
+# Description: Python 3 bindings for Qt 5
+# URL: https://www.riverbankcomputing.com/software/pyqt/
+# Maintainer: Brian Madonna <bmadonnaster@gmail.com>
+# Depends on: pyqt5-sip python3-pyqt-builder python3-sip qt5
+
+name=python3-pyqt5
+version=5.15.11
+release=4
+
+# SIP 6.17 removed built-in PyQt-specific parser support.
+# SIP 6.16.1 works with PyQt5 5.15.11 but requires the
+# upstream legacy ABI compatibility fix.
+sip_compat_version=6.16.1
+
+source=(
+    https://files.pythonhosted.org/packages/source/P/PyQt5/PyQt5-${version}.tar.gz
+    https://files.pythonhosted.org/packages/source/s/sip/sip-${sip_compat_version}.tar.gz
+    sip-6.16.1-legacy-abi.patch
+)
+
+# The patch targets SIP's source tree, not PyQt5.
+PKGMK_AUTO_PATCH=no
+
+pkg_build() {
+    local pyver
+    local sip_venv
+    local sip_source
+
+    # Handle multiple extracted source directories.
+    if [ ! -f pyproject.toml ]; then
+        cd "PyQt5-${version}" || return 1
+    fi
+
+    pyver=$(python3 -c \
+        'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")') \
+        || return 1
+
+    sip_venv="$(pwd)/_sip_compat_venv"
+    sip_source="$(pwd)/../sip-${sip_compat_version}"
+
+    # Verify the pinned SIP source exists.
+    if [ ! -f "$sip_source/pyproject.toml" ]; then
+        echo "ERROR: SIP ${sip_compat_version} source missing." >&2
+        return 1
+    fi
+
+    # Apply the official upstream SIP legacy ABI fix.
+    patch -d "$sip_source" -Np1 \
+        -i "$SRC/sip-6.16.1-legacy-abi.patch" || return 1
+
+    # Create an isolated environment while retaining access
+    # to system build dependencies such as PyQt-builder.
+    python3 -m venv --system-site-packages "$sip_venv" || return 1
+
+    # Install SIP 6.16.1 from the downloaded source.
+    # No network access or system-wide Python changes.
+    "$sip_venv/bin/python" -m pip install \
+        --no-index \
+        --no-deps \
+        --no-build-isolation \
+        "$sip_source" || return 1
+
+    # Verify that the correct SIP version is being used.
+    "$sip_venv/bin/sip-install" --version || return 1
+
+    # Build and install PyQt5 into the package staging directory.
+    PATH="$sip_venv/bin:/opt/qt5/bin:$PATH" \
+    DESTDIR="$PKG" \
+    "$sip_venv/bin/sip-install" \
+        --confirm-license \
+        --target-dir "/usr/lib/python${pyver}/site-packages" \
+        --scripts-dir "/usr/bin" || return 1
+}

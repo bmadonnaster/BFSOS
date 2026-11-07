@@ -4,8 +4,8 @@
 # Depends on: curl leptonica libarchive
 
 name=tesseract
-version=5.5.3
-release=5
+version=5.5.4
+release=1
 
 source=(
 https://github.com/tesseract-ocr/tesseract/archive/refs/tags/$version.tar.gz

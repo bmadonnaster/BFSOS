@@ -4,8 +4,8 @@
 # Optional: gdb llvm which
 
 name=valgrind
-version=3.27.1
-release=2
+version=3.28.0
+release=1
 source=(https://sourceware.org/pub/$name/$name-$version.tar.bz2)
 
 pkg_build() {

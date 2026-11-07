@@ -4,7 +4,7 @@
 # Depends on: meson wlroots wayland wayland-protocols libinput libxkbcommon libxml2 glib cairo pango pixman libpng libdrm
 
 name=labwc
-version=0.20.2
+version=0.20.3
 release=1
 source=(https://github.com/labwc/labwc/archive/refs/tags/${version}.tar.gz)
 

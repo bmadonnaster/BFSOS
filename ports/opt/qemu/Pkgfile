@@ -5,7 +5,7 @@
 # Optional: pipewire pulseaudio
 
 name=qemu
-version=11.1.2
+version=11.1.3
 release=1
 build_work=disk
 configure_out_of_tree=yes

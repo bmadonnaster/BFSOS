@@ -5,8 +5,8 @@
 
 
 name=xkeyboard-config
-version=2.48
-release=3
+version=2.49
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/data/$name/$name-$version.tar.xz)
 
 pkg_build() {

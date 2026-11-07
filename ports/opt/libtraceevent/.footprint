@@ -7,8 +7,8 @@ drwxr-xr-x	root/root	usr/include/traceevent/
 -rw-r--r--	root/root	usr/include/traceevent/trace-seq.h
 drwxr-xr-x	root/root	usr/lib/
 lrwxrwxrwx	root/root	usr/lib/libtraceevent.so -> libtraceevent.so.1
-lrwxrwxrwx	root/root	usr/lib/libtraceevent.so.1 -> libtraceevent.so.1.9.0
--rwxr-xr-x	root/root	usr/lib/libtraceevent.so.1.9.0
+lrwxrwxrwx	root/root	usr/lib/libtraceevent.so.1 -> libtraceevent.so.1.9.1
+-rwxr-xr-x	root/root	usr/lib/libtraceevent.so.1.9.1
 drwxr-xr-x	root/root	usr/lib/pkgconfig/
 -rw-r--r--	root/root	usr/lib/pkgconfig/libtraceevent.pc
 drwxr-xr-x	root/root	usr/lib/traceevent/
