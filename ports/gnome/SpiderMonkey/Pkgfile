@@ -3,7 +3,7 @@
 
 name=SpiderMonkey
 version=140.15.0esr
-release=4
+release=5
 source=(https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz)
 
 pkg_build () {
@@ -107,8 +107,11 @@ replace_once(
 )
 PY
 
-    mkdir -p obj
+    # Mozilla's default $HOME/.mozbuild may be root-owned when pkgmk builds
+    # via sudo/fakeroot. Keep its state inside this writable build tree.
+    mkdir -p obj/mozbuild || return 1
     cd obj
+    export MOZBUILD_STATE_PATH="$PWD/mozbuild"
 
     ../js/src/configure --prefix=/usr           \
                         --disable-debug-symbols \
@@ -125,4 +128,5 @@ PY
     rm -vf "$PKG/usr/lib/libjs_static.ajs"
     sed -i '/@NSPR_CFLAGS@/d' "$PKG/usr/bin/js140-config"
     sed '$i#define XP_UNIX' -i "$PKG/usr/include/mozjs-140/js-config.h"
+    unset MOZBUILD_STATE_PATH
 }

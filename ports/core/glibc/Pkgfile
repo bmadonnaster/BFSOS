@@ -5,7 +5,7 @@
 
 name=glibc
 version=2.44
-release=9
+release=10
 source=(
     https://ftpmirror.gnu.org/glibc/glibc-$version.tar.xz
     glibc-fhs-1.patch

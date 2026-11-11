@@ -1763,7 +1763,9 @@ def retry_failed_updates(rows, selected, ports_root: Path):
             results[rel] = f"BUILD RETRY FAILED ({cp.returncode}); log={retry_log}"
             continue
 
-        if "INSTALL FAILED" in row.get("result", ""):
+        if "INSTALL FAILED" in row.get("result", "") and defer_kernel_install(rel):
+            results[rel] = "BUILT; KERNEL INSTALL DEFERRED: sync ports and run sysup for installation hooks"
+        elif "INSTALL FAILED" in row.get("result", ""):
             meta = eval_pkgfile(port_dir / "Pkgfile", ports_root)
             package_dir = Path(_pkgmk_conf_path_value("PKGMK_PACKAGE_DIR", "/var/cache/pkg/packages"))
             archives = sorted(package_dir.glob(f"{meta.name}#{meta.version}-{meta.release}.pkg.tar.*"))
@@ -2378,9 +2380,9 @@ def safe_routine_footprint_change(text: str) -> tuple[bool, list[str], str]:
 def safe_kernel_version_footprint_change(text: str, old: str, new: str, flavor: str = "LTS") -> tuple[bool, list[str], str]:
     """Validate version-only footprint changes for either BFSOS kernel flavor.
 
-    Keep metadata identical, validate boot/module/source anchors, and allow
-    harmless additional regular source files. Do not approve changed modes,
-    owners, removed modules or new executable payloads automatically.
+    Validate versioned boot/module/source paths and metadata. The list of
+    built modules can legitimately change between kernel releases, so require
+    old and new tree anchors without demanding identical module inventories.
     """
     lines = footprint_mismatch_lines(text)
     if not lines or not old or not new or old == new:
@@ -2388,14 +2390,16 @@ def safe_kernel_version_footprint_change(text: str, old: str, new: str, flavor: 
     if flavor not in {"LTS", "Mainline"}:
         return False, lines, "unrecognized BFSOS kernel flavor"
     suffix = f"-BFSOS-{flavor}"
-    new_tag = f"{new}{suffix}"
-    old_release = old
-    if flavor == "Mainline":
-        # Linux 7.3's packaged kernel release is 7.3.0, but its source
-        # version is 7.3. Derive only this known kernel release spelling.
-        old_release = old if old.count(".") >= 2 else f"{old}.0"
-    old_tag = f"{old_release}{suffix}"
+    # The initial mainline release may be spelled 7.3 by the source archive
+    # but 7.3.0 by the kernel build system.
+    def release(v: str) -> str:
+        return f"{v}.0" if flavor == "Mainline" and v.count(".") == 1 else v
+
+    old_tag, new_tag = f"{release(old)}{suffix}", f"{release(new)}{suffix}"
+    if old_tag == new_tag:
+        return False, lines, "kernel release did not change"
     parsed = {"MISSING": [], "NEW": []}
+    new_locations = []
     for row in lines:
         fields = row.split(None, 3)
         if len(fields) != 4 or fields[0] not in parsed:
@@ -2403,27 +2407,81 @@ def safe_kernel_version_footprint_change(text: str, old: str, new: str, flavor: 
         kind, mode, owner, location = fields
         if owner != "root/root" or len(mode) != 10 or any(c in mode[1:] for c in "sStT"):
             return False, lines, "privileged or unexpected kernel ownership/mode"
-        path = location.split(" -> ", 1)[0]
-        if path.startswith("/") or ".." in path.split("/"):
+        path, _, target = location.partition(" -> ")
+        if path.startswith("/") or ".." in path.split("/") or "//" in path:
             return False, lines, "unsafe kernel path"
-        if kind == "MISSING" and old_tag not in location:
-            return False, lines, "removed path outside old kernel version"
-        if kind == "NEW" and new_tag not in location:
-            return False, lines, "new path outside new kernel version"
-        parsed[kind].append((mode, owner, location.replace(old_tag, "<KVER>").replace(new_tag, "<KVER>")))
+        tag = old_tag if kind == "MISSING" else new_tag
+        # Old footprints produced by BFSOS included a literal
+        # <kernel-version> placeholder in their modules subtree. Accept this
+        # *only* as an old module path and still require a real new path.
+        old_placeholder = kind == "MISSING" and path.startswith("lib/modules/<kernel-version>/")
+        module_path = path.startswith(f"lib/modules/{tag}/") or path == f"lib/modules/{tag}/"
+        boot_path = path.startswith(("boot/vmlinuz-", "boot/config-", "boot/System.map-")) and tag in path
+        source_path = path.startswith(f"usr/src/linux-{tag}/")
+        boot_link = path == ("boot/vmlinuz-lts" if flavor == "LTS" else "boot/vmlinuz-mainline")
+        if boot_link:
+            if mode != "lrwxrwxrwx" or target != f"vmlinuz-{tag}":
+                return False, lines, "unexpected boot symlink target"
+            normalized = f"{path} -> vmlinuz-<KVER>"
+        elif module_path or boot_path or source_path or old_placeholder:
+            normalized = location.replace(tag, "<KVER>")
+            if old_placeholder:
+                normalized = normalized.replace("lib/modules/<kernel-version>/", "lib/modules/<KVER>/")
+            normalized = normalized.replace(f"lib/modules/{tag}/", "lib/modules/<KVER>/")
+        else:
+            return False, lines, "kernel payload changed outside known versioned paths"
+        if mode[0] not in "-dl":
+            return False, lines, "unexpected kernel payload type"
+        if mode[0] == "l" and not boot_link:
+            # The kernel build/source links are absolute by design. Any
+            # additional symlink must remain within its package subtree.
+            expected_source = f"/usr/src/linux-{tag}"
+            if path in (f"lib/modules/{tag}/build", f"lib/modules/{tag}/source") or old_placeholder and path in (
+                "lib/modules/<kernel-version>/build", "lib/modules/<kernel-version>/source"
+            ):
+                if target != expected_source:
+                    return False, lines, "unexpected kernel source symlink"
+            else:
+                import posixpath
+                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(path), target))
+                if not target or target.startswith("/") or resolved.startswith("../") or resolved == "..":
+                    return False, lines, "unsafe kernel symlink"
+        parsed[kind].append((mode, owner, normalized))
+        if kind == "NEW":
+            new_locations.append(path)
     missing, added = Counter(parsed["MISSING"]), Counter(parsed["NEW"])
-    if missing - added:
-        return False, lines, "kernel file removed or metadata changed beyond version"
-    extra = list((added - missing).elements())
-    for mode, owner, location in extra:
-        if mode != "-rw-rw-r--" or not location.startswith("usr/src/linux-<KVER>/"):
-            return False, lines, "unexpected added kernel payload"
-    new_locations = [row.split(None, 3)[3] for row in lines if row.startswith("NEW ")]
+    # Boot payload changes must be strictly a version rename. Source files
+    # and modules may be added/removed by upstream kernel releases, but only
+    # inside their respective version-qualified trees.
+    for mode, owner, location in list((missing - added).elements()) + list((added - missing).elements()):
+        if location.startswith("lib/modules/<KVER>/"):
+            if mode not in {"-rw-r--r--", "-rw-rw-r--", "drwxr-xr-x", "drwxrwxr-x", "lrwxrwxrwx"}:
+                return False, lines, "unexpected kernel module metadata"
+        elif location.startswith("usr/src/linux-<KVER>/"):
+            if mode not in {"-rw-r--r--", "-rw-rw-r--", "-rwxr-xr-x", "drwxr-xr-x", "drwxrwxr-x", "lrwxrwxrwx"}:
+                return False, lines, "unexpected kernel source metadata"
+        else:
+            return False, lines, "kernel boot payload or symlink changed beyond version"
     for required in (f"boot/vmlinuz-{new_tag}", f"boot/config-{new_tag}",
-                     f"boot/System.map-{new_tag}", f"lib/modules/{new_tag}/"):
+                     f"boot/System.map-{new_tag}"):
         if required not in new_locations:
             return False, lines, f"missing kernel anchor: {required}"
+    # Some BFSOS pkgmk footprints normalize every module path to the literal
+    # <kernel-version> token. In that case modules generate no diff rows at
+    # all, so a versioned module anchor cannot be inferred from the mismatch.
+    # The Pkgfile itself verifies the staged module tree during compilation.
+    module_changes = [p for p in new_locations if p.startswith("lib/modules/")]
+    if module_changes and f"lib/modules/{new_tag}/" not in new_locations:
+        return False, lines, "missing new module tree anchor"
     return True, lines, f"validated {flavor} kernel version-only footprint transition"
+
+
+KERNEL_IMAGE_FLAVORS = {"core/linux": "LTS", "core/linux-mainline": "Mainline"}
+
+
+def defer_kernel_install(port: str) -> bool:
+    """Both kernel images use the same build-only and sysup-install policy."""
+    return port in KERNEL_IMAGE_FLAVORS
 
 
 def pkgmk_footprint_package_command(backend: str, jobs: int) -> list[str]:
@@ -2496,6 +2554,7 @@ def rollback_failed_build_ports(selected: set[str], ports_root: Path, results: d
     try:
         rollback_prefixes = (
             "BUILD FAILED",
+            "DEFERRED: prerequisite",
             "INFRASTRUCTURE FAILED:",
             "BLOCKED: build workspace out of space",
             "BLOCKED: build workspace preflight failed",
@@ -2554,7 +2613,7 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
         if c.port == "core/linux-headers" and "core/linux" in selected:
             lts_result = str(results.get("core/linux", ""))
             if not lts_result.startswith(("BUILT", "FOOTPRINT UPDATED")) or "FAILED" in lts_result:
-                results[c.port] = "BUILD FAILED: LTS kernel not validated; headers deferred"
+                results[c.port] = "DEFERRED: prerequisite LTS kernel package build not validated; headers not attempted"
                 continue
 
         port_dir = ports_root/c.port
@@ -2677,10 +2736,10 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
             safe_fp, fp_lines = safe_versioned_library_footprint_change(combined)
             footprint_reason = "safe versioned-library change"
             # Kernel packages use stricter version/path validation.
-            protected_kernel = c.port in {"core/linux", "core/linux-mainline", "core/linux-headers"}
-            if c.port in {"core/linux", "core/linux-mainline"} and not safe_fp:
-                flavor = "Mainline" if c.port == "core/linux-mainline" else "LTS"
-                safe_fp, fp_lines, footprint_reason = safe_kernel_version_footprint_change(combined, c.old, c.new, flavor)
+            protected_kernel = c.port in KERNEL_IMAGE_FLAVORS or c.port == "core/linux-headers"
+            if c.port in KERNEL_IMAGE_FLAVORS and not safe_fp:
+                safe_fp, fp_lines, footprint_reason = safe_kernel_version_footprint_change(
+                    combined, c.old, c.new, KERNEL_IMAGE_FLAVORS[c.port])
             if not safe_fp and not protected_kernel:
                 safe_fp, fp_lines, footprint_reason = safe_routine_footprint_change(combined)
             print(f"FOOTPRINT CHANGED {c.port}: {len(fp_lines)} mismatch rows", flush=True)
@@ -2737,7 +2796,13 @@ def build_selected(cands, selected, ports_root: Path, install: bool, results):
 
         if not str(results.get(c.port, "")).startswith("BUILT; FOOTPRINT UPDATED"):
             results[c.port] = "BUILT"
-        if install:
+        if install and defer_kernel_install(c.port):
+            # A direct pkgadd installs the kernel without invoking the port's
+            # post-install hook (dracut, initramfs verification, GRUB update).
+            # Leave images packaged for the normal ports -u / sysup workflow.
+            results[c.port] = ("BUILT; KERNEL INSTALL DEFERRED: sync ports and run sysup"
+                               + ("; FOOTPRINT UPDATED" if "FOOTPRINT UPDATED" in str(results.get(c.port, "")) else ""))
+        elif install:
             # Install the verified artifact just built; prt-get depinst would
             # invoke pkgmk again and may rebuild it or install an older cache.
             package_dir = Path(_pkgmk_conf_path_value("PKGMK_PACKAGE_DIR", "/var/cache/pkg/packages"))

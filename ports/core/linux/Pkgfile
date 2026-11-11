@@ -5,7 +5,7 @@
 # Optional: pahole
 
 name=linux
-version=6.18.60
+version=6.18.63
 release=1
 
 # Keep the LTS package on the current upstream 6.18.y point release.  Do not
