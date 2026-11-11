@@ -25,9 +25,9 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KF6Notifications/
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Notifications.so -> libKF6Notifications.so.6
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6Notifications.so.6 -> libKF6Notifications.so.6.31.0
 -rwxr-xr-x	root/root	opt/kf6/lib/libKF6Notifications.so.6.31.0
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/
--rwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/KNotifications.cpython-314-x86_64-linux-gnu.so
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/
+-rwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/KNotifications.cpython-315-x86_64-linux-gnu.so
 drwxr-xr-x	root/root	opt/kf6/lib/qml/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/

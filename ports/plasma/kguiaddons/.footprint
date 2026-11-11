@@ -55,9 +55,9 @@ lrwxrwxrwx	root/root	opt/kf6/lib/libKF6GuiAddons.so.6 -> libKF6GuiAddons.so.6.31
 -rwxr-xr-x	root/root	opt/kf6/lib/libKF6GuiAddons.so.6.31.0
 drwxr-xr-x	root/root	opt/kf6/lib/pkgconfig/
 -rw-r--r--	root/root	opt/kf6/lib/pkgconfig/KF6GuiAddons.pc
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/
--rwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/KGuiAddons.cpython-314-x86_64-linux-gnu.so
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/
+-rwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/KGuiAddons.cpython-315-x86_64-linux-gnu.so
 drwxr-xr-x	root/root	opt/kf6/lib/qml/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/
 drwxr-xr-x	root/root	opt/kf6/lib/qml/org/kde/

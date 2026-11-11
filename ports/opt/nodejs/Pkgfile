@@ -5,16 +5,23 @@
 # Optional: brotli c-ares icu libnghttp3 libngtcp2 simdjson simdutf
 
 name=nodejs
-version=26.12.0
+version=26.13.0
 release=1
-source=(https://nodejs.org/dist/v$version/node-v$version.tar.xz
-  v8-icu79.patch)
+source=(
+    https://nodejs.org/dist/v$version/node-v$version.tar.xz
+    unbundle-uv.patch
+    node-icu79.patch
+)
 
 PKGMK_AUTO_PATCH=no
 
 pkg_build() {
 
-  patch -Np1 -i "$SRC/v8-icu79.patch" || return 1
+   patch -Np1 -i "$SRC/unbundle-uv.patch" || return 1
+
+  patch -Np1 -d deps/v8 \
+    -i "$SRC/node-icu79.patch" || return 1
+
   rm deps/uv/uv.gyp deps/zlib/zlib.gyp || return 1
 
   prt-get isinst brotli && PKGMK_NODEJS+=' --shared-brotli'

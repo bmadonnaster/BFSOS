@@ -17,9 +17,9 @@ drwxr-xr-x	root/root	opt/kf6/lib/cmake/KF6StatusNotifierItem/
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6StatusNotifierItem.so -> libKF6StatusNotifierItem.so.6
 lrwxrwxrwx	root/root	opt/kf6/lib/libKF6StatusNotifierItem.so.6 -> libKF6StatusNotifierItem.so.6.31.0
 -rwxr-xr-x	root/root	opt/kf6/lib/libKF6StatusNotifierItem.so.6.31.0
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/
-drwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/
--rwxr-xr-x	root/root	opt/kf6/lib/python3.14/site-packages/KStatusNotifierItem.cpython-314-x86_64-linux-gnu.so
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/
+drwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/
+-rwxr-xr-x	root/root	opt/kf6/lib/python3.15/site-packages/KStatusNotifierItem.cpython-315-x86_64-linux-gnu.so
 drwxr-xr-x	root/root	opt/kf6/share/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/
 drwxr-xr-x	root/root	opt/kf6/share/dbus-1/interfaces/
