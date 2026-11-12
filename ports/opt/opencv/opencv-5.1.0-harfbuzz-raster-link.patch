@@ -1,0 +1,10 @@
+--- a/cmake/OpenCVFindHarfBuzz.cmake
++++ b/cmake/OpenCVFindHarfBuzz.cmake
+@@ -73,6 +73,7 @@
+       if(HARFBUZZ_HAS_RASTER)
+         set(HARFBUZZ_INCLUDE_DIR "${_hb_inc}" CACHE INTERNAL "")
+         set(HARFBUZZ_LIBRARIES "${_hb_libs}" CACHE INTERNAL "")
++        set(HARFBUZZ_LIBRARIES "${_hb_libs}")
+         set(HAVE_HARFBUZZ 1)
+       else()
+         message(STATUS "HarfBuzz: found system version ${HARFBUZZ_VERSION} but it lacks the hb-raster API; building the bundled copy instead")

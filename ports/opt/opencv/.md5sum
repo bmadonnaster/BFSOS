@@ -1,2 +1,3 @@
-cde5268c7b5017bca871fb40d8fd6b52  opencv-5.0.0.tar.gz
-aa9b3867682fbcef1a59db3cd4887456  opencv_contrib-5.0.0.tar.gz
+49a468b69deb73fe6d10511a720cc1fd  opencv-5.1.0-harfbuzz-raster-link.patch
+0cc6c9bd199223be79acd7a9a66bf896  opencv-5.1.0.tar.gz
+0676e04a754e3dcc8394582c48c46c1c  opencv_contrib-5.1.0.tar.gz

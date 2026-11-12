@@ -4,15 +4,17 @@
 # Depends on: cmake ninja unzip gst-plugins-base gtk3 jasper libexif libjpeg-turbo libpng libtiff libwebp openjpeg2 v4l-utils
 
 name=opencv
-version=5.0.0
+version=5.1.0
 release=1
 
 source=(
   https://github.com/opencv/opencv/archive/$version/$name-$version.tar.gz
   https://github.com/opencv/opencv_contrib/archive/$version/opencv_contrib-$version.tar.gz
+  opencv-5.1.0-harfbuzz-raster-link.patch
 )
 
 pkg_build() {
+
   cmake -S . -B build -G Ninja \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib \

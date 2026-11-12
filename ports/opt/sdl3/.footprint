@@ -85,8 +85,8 @@ drwxr-xr-x	root/root	usr/lib/cmake/SDL3/
 -rw-r--r--	root/root	usr/lib/cmake/SDL3/SDL3sharedTargets-release.cmake
 -rw-r--r--	root/root	usr/lib/cmake/SDL3/SDL3sharedTargets.cmake
 lrwxrwxrwx	root/root	usr/lib/libSDL3.so -> libSDL3.so.0
-lrwxrwxrwx	root/root	usr/lib/libSDL3.so.0 -> libSDL3.so.0.4.18
--rwxr-xr-x	root/root	usr/lib/libSDL3.so.0.4.18
+lrwxrwxrwx	root/root	usr/lib/libSDL3.so.0 -> libSDL3.so.0.4.20
+-rwxr-xr-x	root/root	usr/lib/libSDL3.so.0.4.20
 drwxr-xr-x	root/root	usr/lib/pkgconfig/
 -rw-r--r--	root/root	usr/lib/pkgconfig/sdl3.pc
 drwxr-xr-x	root/root	usr/share/

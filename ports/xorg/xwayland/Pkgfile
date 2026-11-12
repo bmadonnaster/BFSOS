@@ -4,7 +4,7 @@
 # Depends on: libxcvt pixman wayland-protocols xorg-apps xorg-fonts libepoxy libtirpc
 
 name=xwayland
-version=24.1.14
+version=24.1.15
 release=1
 source=(https://xorg.freedesktop.org/archive/individual/xserver/$name-$version.tar.xz)
 

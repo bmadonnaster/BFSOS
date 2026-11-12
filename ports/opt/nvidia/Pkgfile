@@ -4,12 +4,14 @@
 # Depends on: gtk gtk3 libglvnd
 
 name=nvidia
-version=615.78.08
+version=620.70.06
 release=1
-source=(https://download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run \
+source=(https://us.download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run \
+	https://github.com/NVIDIA/open-gpu-kernel-modules/archive/$version/nvidia-open-$version.tar.gz \
 	90-nvidia-uvm.rules 10-nvidia-drm-outputclass.conf nvidia-powerd.rc)
 
-pkg_build() {
+build() {
+  set -e
 	sh NVIDIA-Linux-x86_64-$version.run --extract-only
 	cd NVIDIA-Linux-x86_64-$version
 
@@ -31,18 +33,16 @@ pkg_build() {
 	install -D -m 0644 10_nvidia.json $PKG/usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
 	# GBM libraries and config
-	install -m 0755 libnvidia-egl-gbm.so.1.1.1 $PKG/usr/lib/
-	ln -s libnvidia-egl-gbm.so.1.1.1 $PKG/usr/lib/libnvidia-egl-gbm.so.1
-	ln -s libnvidia-egl-gbm.so.1.1.1 $PKG/usr/lib/libnvidia-egl-gbm.so
+	install -m 0755 libnvidia-egl-gbm.so.1.1.3 $PKG/usr/lib/
+	ln -s libnvidia-egl-gbm.so.1.1.3 $PKG/usr/lib/libnvidia-egl-gbm.so.1
+	ln -s libnvidia-egl-gbm.so.1.1.3 $PKG/usr/lib/libnvidia-egl-gbm.so
 	install -D -m 0644 15_nvidia_gbm.json $PKG/usr/share/egl/egl_external_platform.d/15_nvidia_gbm.json
 	install -d -m 0755 $PKG/usr/lib/gbm
-	ln -s libnvidia-allocator.so.$version $PKG/usr/lib/gbm/nvidia-drm_gbm.so
+	ln -s ../libnvidia-allocator.so.$version $PKG/usr/lib/gbm/nvidia-drm_gbm.so
 
 	# wayland config
 	if prt-get isinst wayland > /dev/null; then
 		# let egl-wayland handle the library
-		echo -e "\n\nINFO: wayland is installed; if nvidia eglstream support is desired/needed, install 'egl-wayland'!\n\n"
-		sleep 5
 		install -d $PKG/usr/share/egl/egl_external_platform.d
 		install -m 0644 10_nvidia_wayland.json $PKG/usr/share/egl/egl_external_platform.d/
 	fi
@@ -60,7 +60,7 @@ pkg_build() {
 	install -D -m 0644 nvidia_layers.json $PKG/usr/share/vulkan/implicit_layer.d/nvidia_layers.json
 
 	# driver component libraries
-	for C in cfg {e,}glcore gl{si,vkspirv} rtcore allocator; do
+	for C in allocator cfg {e,}glcore gl{si,vkspirv} gpucomp rtcore; do
 		install -m 0755 libnvidia-${C}.so.$version $PKG/usr/lib/
 		ln -s libnvidia-${C}.so.$version $PKG/usr/lib/libnvidia-${C}.so.1
 		ln -s libnvidia-${C}.so.$version $PKG/usr/lib/libnvidia-${C}.so
@@ -81,6 +81,13 @@ pkg_build() {
 	install -m 0755 libnvidia-ptxjitcompiler.so.$version $PKG/usr/lib/
 	ln -s libnvidia-ptxjitcompiler.so.$version $PKG/usr/lib/libnvidia-ptxjitcompiler.so.1
 	ln -s libnvidia-ptxjitcompiler.so.$version $PKG/usr/lib/libnvidia-ptxjitcompiler.so
+
+	# CRUX 620 additional compute libraries
+	install -m 0755 libnvidia-pkcs11-openssl3.so.$version $PKG/usr/lib/
+	ln -s libnvidia-pkcs11-openssl3.so.$version $PKG/usr/lib/libnvidia-pkcs11-openssl3.so.1
+	install -m 0755 libnvidia-nvvm.so.$version $PKG/usr/lib/
+	ln -s libnvidia-nvvm.so.$version $PKG/usr/lib/libnvidia-nvvm.so.4
+	install -m 0755 libnvidia-nvvm70.so.4 $PKG/usr/lib/
 
 	# OpenCL libraries and config
 	install -m 0755 libOpenCL.so.1.0.0 $PKG/usr/lib/
@@ -142,18 +149,14 @@ pkg_build() {
 	# NGX for wine/proton
 	if prt-get listinst --regex '^wine' >/dev/null 2>&1; then
 		install -d $PKG/usr/lib/nvidia/wine
-		install -m 0755 nvngx.dll $PKG/usr/lib/nvidia/wine/
-		install -m 0755 _nvngx.dll $PKG/usr/lib/nvidia/wine/
+		install -m 0755 *.dll $PKG/usr/lib/nvidia/wine/
 	fi
 
 	# gpucomp shader compilation library
-	install -m 0755 libnvidia-gpucomp.so.$version $PKG/usr/lib/
-	ln -s libnvidia-gpucomp.so.$version $PKG/usr/lib/libnvidia-gpucomp.so.1
-	ln -s libnvidia-gpucomp.so.$version $PKG/usr/lib/libnvidia-gpucomp.so
 
 	# GSP firmware
 	install -d $PKG/lib/firmware/$name/$version
-	install -m 0644 firmware/gsp_*.bin $PKG/lib/firmware/$name/$version/
+	install -m 0644 firmware/{gsp,ucodes}_*.bin $PKG/lib/firmware/$name/$version/
 
 	# X driver config
 	install -D -m 0644 $SRC/10-nvidia-drm-outputclass.conf \
@@ -173,9 +176,20 @@ pkg_build() {
 	# nvidia-uvm udev rules file
 	install -D -m 0644 $SRC/90-nvidia-uvm.rules $PKG/lib/udev/rules.d/90-nvidia-uvm.rules
 
-	# kernel modules
-	cd kernel
-	IGNORE_CC_MISMATCH=1 make module
-	install -d $PKG/lib/modules/$(uname -r)/extra
-	install -m 0644 *.ko $PKG/lib/modules/$(uname -r)/extra/
+	# Kernel modules: follow CRUX 620 open-module default; allow explicit legacy module selection.
+	# Never build against an unspecified kernel when KVER is provided.
+	local kernel_version="${KVER:-$(uname -r)}"
+	local kernel_build="/lib/modules/$kernel_version/build"
+	[ -d "$kernel_build" ] || { echo "Missing kernel build tree: $kernel_build" >&2; return 1; }
+	export SYSSRC="$kernel_build"
+	install -d "$PKG/lib/modules/$kernel_version/extra"
+	if [ "${NVIDIA_PROPRIETARY_MODULES:-0}" = 1 ]; then
+		cd kernel
+		IGNORE_CC_MISMATCH=1 make module
+		install -m 0644 ./*.ko "$PKG/lib/modules/$kernel_version/extra/"
+	else
+		cd "$SRC/open-gpu-kernel-modules-$version"
+		make modules -j"${JOBS:-1}"
+		install -m 0644 kernel-open/*.ko "$PKG/lib/modules/$kernel_version/extra/"
+	fi
 }

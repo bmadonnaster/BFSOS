@@ -1,7 +1,7 @@
 # Description: Userspace device management daemon
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=eudev
-version=3.2.15
+version=3.3.0
 release=1
 source=(https://github.com/$name-project/$name/releases/download/v$version/$name-$version.tar.gz)
 build_opt="--sbindir=/sbin

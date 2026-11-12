@@ -4,7 +4,7 @@
 # Depends on: json-c dbus dnsmasq glib gnutls libcap-ng libnl libpcap libseccomp libssh2 libxml2 libxslt nftables parted polkit qemu readline systemd yajl
 
 name=libvirt
-version=12.8.0
+version=12.9.0
 release=1
 source=(
     https://download.libvirt.org/libvirt-$version.tar.xz
@@ -18,7 +18,8 @@ build_opt=(
     -Ddriver_libvirtd=enabled
     -Ddriver_qemu=enabled
     -Ddriver_network=enabled
-    -Ddriver_secrets=enabled
+    -Ddriver_secret=enabled
+    -Ddriver_storage=enabled
     -Dstorage_dir=enabled
     -Dstorage_fs=enabled
     -Dstorage_disk=enabled

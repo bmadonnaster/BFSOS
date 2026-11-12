@@ -74,6 +74,7 @@ drwxr-xr-x	root/root	usr/lib/krb5/plugins/
 drwxr-xr-x	root/root	usr/lib/krb5/plugins/authdata/
 drwxr-xr-x	root/root	usr/lib/krb5/plugins/kdb/
 -rwxr-xr-x	root/root	usr/lib/krb5/plugins/kdb/db2.so
+-rwxr-xr-x	root/root	usr/lib/krb5/plugins/kdb/kldap.so
 -rwxr-xr-x	root/root	usr/lib/krb5/plugins/kdb/klmdb.so
 drwxr-xr-x	root/root	usr/lib/krb5/plugins/libkrb5/
 drwxr-xr-x	root/root	usr/lib/krb5/plugins/preauth/
@@ -103,6 +104,9 @@ lrwxrwxrwx	root/root	usr/lib/libkadm5srv_mit.so.12 -> libkadm5srv_mit.so.12.0
 lrwxrwxrwx	root/root	usr/lib/libkdb5.so -> libkdb5.so.10.0
 lrwxrwxrwx	root/root	usr/lib/libkdb5.so.10 -> libkdb5.so.10.0
 -rwxr-xr-x	root/root	usr/lib/libkdb5.so.10.0
+lrwxrwxrwx	root/root	usr/lib/libkdb_ldap.so -> libkdb_ldap.so.1.0
+lrwxrwxrwx	root/root	usr/lib/libkdb_ldap.so.1 -> libkdb_ldap.so.1.0
+-rwxr-xr-x	root/root	usr/lib/libkdb_ldap.so.1.0
 lrwxrwxrwx	root/root	usr/lib/libkrad.so -> libkrad.so.0.0
 lrwxrwxrwx	root/root	usr/lib/libkrad.so.0 -> libkrad.so.0.0
 -rwxr-xr-x	root/root	usr/lib/libkrad.so.0.0
@@ -132,6 +136,7 @@ drwxr-xr-x	root/root	usr/sbin/
 -rwxr-xr-x	root/root	usr/sbin/gss-server
 -rwxr-xr-x	root/root	usr/sbin/kadmin.local
 -rwxr-xr-x	root/root	usr/sbin/kadmind
+-rwxr-xr-x	root/root	usr/sbin/kdb5_ldap_util
 -rwxr-xr-x	root/root	usr/sbin/kdb5_util
 -rwxr-xr-x	root/root	usr/sbin/kprop
 -rwxr-xr-x	root/root	usr/sbin/kpropd

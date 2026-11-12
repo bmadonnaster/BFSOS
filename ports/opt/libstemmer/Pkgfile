@@ -3,7 +3,7 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=libstemmer
-version=3.1.1
+version=3.2.0
 release=1
 keep_static=1
 source=(https://snowballstem.org/dist/libstemmer_c-$version.tar.gz)

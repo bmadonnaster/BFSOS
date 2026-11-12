@@ -3,8 +3,8 @@
 # Depends on: boost lua
 
 name=highlight
-version=4.21
-release=5
+version=4.22
+release=1
 source=(https://fra.de.distfiles.macports.org/highlight/${name}-${version}.tar.bz2)
 
 pkg_build() {

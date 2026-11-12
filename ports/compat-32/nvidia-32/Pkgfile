@@ -1,12 +1,12 @@
 # Description: NVIDIA Linux Display Driver (production branch)
 # URL: http://www.nvidia.com/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
-# Depends on: libglvnd-32
+# Depends on: libglvnd-32 nvidia
 
 name=nvidia-32
-version=615.78.08
+version=620.70.06
 release=1
-source=(https://download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run)
+source=(https://us.download.nvidia.com/XFree86/Linux-x86_64/$version/NVIDIA-Linux-x86_64-$version.run)
 
 # Custom build required: prebuilt vendor archive supplies its own 32-bit payload
 pkg_build() {

@@ -3,6 +3,6 @@
 # Depends on: gnutls gtk3 libgcrypt glib gobject-introspection vala
 
 name=gtk-vnc
-version=1.5.0
-release=2
-source=(https://download.gnome.org/sources/${name}/${version%.*}/${name}-${version}.tar.xz)
+version=1.6.0
+release=1
+source=(https://download.gnome.org/sources/${name}/1.6/${name}-${version}.tar.xz)

@@ -65,6 +65,19 @@ drwxr-xr-x	root/root	etc/logrotate.d/
 -rw-r--r--	root/root	etc/logrotate.d/libvirtd.libxl
 -rw-r--r--	root/root	etc/logrotate.d/libvirtd.lxc
 -rw-r--r--	root/root	etc/logrotate.d/libvirtd.qemu
+-rw-r--r--	root/root	etc/logrotate.d/virtchd
+-rw-r--r--	root/root	etc/logrotate.d/virtinterfaced
+-rw-r--r--	root/root	etc/logrotate.d/virtlockd
+-rw-r--r--	root/root	etc/logrotate.d/virtlogd
+-rw-r--r--	root/root	etc/logrotate.d/virtlxcd
+-rw-r--r--	root/root	etc/logrotate.d/virtnetworkd
+-rw-r--r--	root/root	etc/logrotate.d/virtnodedevd
+-rw-r--r--	root/root	etc/logrotate.d/virtnwfilterd
+-rw-r--r--	root/root	etc/logrotate.d/virtproxyd
+-rw-r--r--	root/root	etc/logrotate.d/virtqemud
+-rw-r--r--	root/root	etc/logrotate.d/virtsecretd
+-rw-r--r--	root/root	etc/logrotate.d/virtstoraged
+-rw-r--r--	root/root	etc/logrotate.d/virtvboxd
 drwxr-xr-x	root/root	etc/sasl2/
 -rw-r--r--	root/root	etc/sasl2/libvirt.conf
 drwxr-xr-x	root/root	etc/ssh/
@@ -133,19 +146,19 @@ drwxr-xr-x	root/root	usr/lib/firewalld/zones/
 -rwxr-xr-x	root/root	usr/lib/libnss_libvirt.so.2
 -rwxr-xr-x	root/root	usr/lib/libnss_libvirt_guest.so.2
 lrwxrwxrwx	root/root	usr/lib/libvirt-admin.so -> libvirt-admin.so.0
-lrwxrwxrwx	root/root	usr/lib/libvirt-admin.so.0 -> libvirt-admin.so.0.12008.0
--rwxr-xr-x	root/root	usr/lib/libvirt-admin.so.0.12008.0
+lrwxrwxrwx	root/root	usr/lib/libvirt-admin.so.0 -> libvirt-admin.so.0.12009.0
+-rwxr-xr-x	root/root	usr/lib/libvirt-admin.so.0.12009.0
 -rwxr-xr-x	root/root	usr/lib/libvirt-guests.sh
 lrwxrwxrwx	root/root	usr/lib/libvirt-lxc.so -> libvirt-lxc.so.0
-lrwxrwxrwx	root/root	usr/lib/libvirt-lxc.so.0 -> libvirt-lxc.so.0.12008.0
--rwxr-xr-x	root/root	usr/lib/libvirt-lxc.so.0.12008.0
+lrwxrwxrwx	root/root	usr/lib/libvirt-lxc.so.0 -> libvirt-lxc.so.0.12009.0
+-rwxr-xr-x	root/root	usr/lib/libvirt-lxc.so.0.12009.0
 lrwxrwxrwx	root/root	usr/lib/libvirt-qemu.so -> libvirt-qemu.so.0
-lrwxrwxrwx	root/root	usr/lib/libvirt-qemu.so.0 -> libvirt-qemu.so.0.12008.0
--rwxr-xr-x	root/root	usr/lib/libvirt-qemu.so.0.12008.0
+lrwxrwxrwx	root/root	usr/lib/libvirt-qemu.so.0 -> libvirt-qemu.so.0.12009.0
+-rwxr-xr-x	root/root	usr/lib/libvirt-qemu.so.0.12009.0
 -rwxr-xr-x	root/root	usr/lib/libvirt-ssh-proxy
 lrwxrwxrwx	root/root	usr/lib/libvirt.so -> libvirt.so.0
-lrwxrwxrwx	root/root	usr/lib/libvirt.so.0 -> libvirt.so.0.12008.0
--rwxr-xr-x	root/root	usr/lib/libvirt.so.0.12008.0
+lrwxrwxrwx	root/root	usr/lib/libvirt.so.0 -> libvirt.so.0.12009.0
+-rwxr-xr-x	root/root	usr/lib/libvirt.so.0.12009.0
 drwxr-xr-x	root/root	usr/lib/libvirt/
 drwxr-xr-x	root/root	usr/lib/libvirt/connection-driver/
 -rwxr-xr-x	root/root	usr/lib/libvirt/connection-driver/libvirt_driver_ch.so

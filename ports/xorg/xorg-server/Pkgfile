@@ -7,7 +7,7 @@ name=xorg-server
 version=21.1.25
 release=3
 source=(https://xorg.freedesktop.org/archive/individual/xserver/$name-$version.tar.xz
-https://linuxfromscratch.org/patches/downloads/xorg-server/xorg-server-21.1.25-tearfree_backport-1.patch)
+xorg-server-21.1.25-tearfree_backport-1.patch)
 
 pkg_build() {
 	mkdir build &&

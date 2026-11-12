@@ -152,6 +152,7 @@ drwxr-xr-x	root/root	usr/share/highlight/langDefs/
 -rw-r--r--	root/root	usr/share/highlight/langDefs/lotus.lang
 -rw-r--r--	root/root	usr/share/highlight/langDefs/lua.lang
 -rw-r--r--	root/root	usr/share/highlight/langDefs/luban.lang
+-rw-r--r--	root/root	usr/share/highlight/langDefs/m4.lang
 -rw-r--r--	root/root	usr/share/highlight/langDefs/makefile.lang
 -rw-r--r--	root/root	usr/share/highlight/langDefs/maple.lang
 -rw-r--r--	root/root	usr/share/highlight/langDefs/markdown.lang
@@ -284,6 +285,7 @@ drwxr-xr-x	root/root	usr/share/highlight/plugins/
 -rw-r--r--	root/root	usr/share/highlight/plugins/asciidoc_html_add_links.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/bash_functions.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/bash_ref_man7_org.lua
+-rw-r--r--	root/root	usr/share/highlight/plugins/color_swatches.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/comment_links.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/cpp_qt.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/cpp_ref_cplusplus_com.lua
@@ -318,6 +320,7 @@ drwxr-xr-x	root/root	usr/share/highlight/plugins/
 -rw-r--r--	root/root	usr/share/highlight/plugins/outhtml_tooltips.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/perl_ref_perl_org.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/python_ref_python_org.lua
+-rw-r--r--	root/root	usr/share/highlight/plugins/rainbow_brackets.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/reduce_filesize.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/sam_seq.lua
 -rw-r--r--	root/root	usr/share/highlight/plugins/scala_ref_scala_lang_org.lua
