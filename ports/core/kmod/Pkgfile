@@ -1,7 +1,7 @@
 # Description: Kernel module utilities and library
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=kmod
-version=34.2
+version=34.3
 release=1
 source=(https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-$version.tar.xz)
 build_opt="-D openssl=enabled -D xz=enabled -D zlib=enabled -D manpages=false"

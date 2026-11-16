@@ -1,11 +1,15 @@
 # Description: The Almquist shell, a POSIX-compliant /bin/sh implementation
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 name=dash
-version=0.5.13.5
+version=0.5.13.6
 release=1
-source=(https://cdn.netbsd.org/pub/pkgsrc/distfiles/dash-$version.tar.gz)
+source=(https://git.kernel.org/pub/scm/utils/dash/dash.git/snapshot/dash-$version.tar.gz)
 build_opt="--bindir=/bin"
 
 post_build() {
 	ln -sv dash $PKG/bin/sh
+}
+
+pre_build() {
+    autoreconf -fi
 }

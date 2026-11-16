@@ -5,8 +5,8 @@
 # Optional: java-runtime hunspell
 
 name=libreoffice
-version=26.8.1
-release=2
+version=26.8.3
+release=1
 
 # LibreOffice requires a persistent, generously sized build workspace.
 build_work=disk

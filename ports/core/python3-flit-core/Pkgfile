@@ -4,7 +4,7 @@
 # Depends on: python3
 
 name=python3-flit-core
-version=4.1.0
+version=4.2.0
 release=1
 
 source=(https://pypi.org/packages/source/f/flit-core/flit_core-$version.tar.gz)

@@ -3,8 +3,8 @@
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 
 name=fmt
-version=12.2.0
-release=3
+version=12.2.1
+release=1
 keep_static=1
 source=(https://github.com/fmtlib/fmt/releases/download/$version/fmt-$version.zip)
 

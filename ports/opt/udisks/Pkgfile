@@ -5,8 +5,8 @@
 #Optional:     gobject-introspection dbus-python gtk-doc lvm2 python3-gobject exFAT libiscsi btrfs-progs dosfstools gptfdisk mdadm xfsprogs
 
 name=udisks
-version=2.11.2
-release=2
+version=2.12.0
+release=1
 source=(https://github.com/storaged-project/$name/releases/download/$name-$version/$name-$version.tar.bz2)
 
 pkg_build() {

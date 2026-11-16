@@ -6,6 +6,6 @@ version=0.22.1
 release=1
 source=(https://files.pythonhosted.org/packages/source/m/meson_python/meson_python-${version}.tar.gz)
 pkg_build() {
-python3 -m build --wheel --no-isolation
-python3 -m installer --destdir="$PKG" dist/*.whl
+python3 -m build --wheel --no-isolation || return 1
+python3 -m installer --destdir="$PKG" dist/*.whl || return 1
 }

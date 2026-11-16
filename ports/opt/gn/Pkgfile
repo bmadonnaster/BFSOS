@@ -4,13 +4,19 @@
 # Depends on: llvm ninja python3
 
 name=gn
-version=0.20260907
+version=0.20261112
 release=1
-source=(https://gn.googlesource.com/gn/+archive/5df47e556efde72cc576d8a3af23b58b614345bd.tar.gz)
+source=(https://gn.googlesource.com/gn/+archive/24d41137fac7ea2828590181ebd8284fe7437253.tar.gz)
 
 # Custom build required: GN bootstraps its own Ninja graph with build/gen.py;
 # this is not a normal BFSOS configure/CMake/Meson/Make project.
-pkg_build() {
+build() {
+    # Use BFSOS system LLVM/Clang instead of Google's CIPD toolchain.
+    export CC=clang
+    export CXX=clang++
+    export LD=clang++
+    export AR=llvm-ar
+
     python3 build/gen.py --allow-warnings || return 1
     ninja -C out gn || return 1
     install -Dm755 out/gn "$PKG/usr/bin/gn" || return 1

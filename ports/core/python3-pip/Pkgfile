@@ -1,18 +1,22 @@
 # Description: A tool for installing and managing Python packages.
-# URL: https://pypi.python.org/pypi/pip/
+# URL: https://pypi.org/project/pip/
 # Maintainer: Brian Madonna <bmadonnaster@gmail.com>
 # Depends on: python3-setuptools
 
 name=python3-pip
-version=26.2.2
+version=26.3
 release=1
 
 source=(
-    https://files.pythonhosted.org/packages/py3/${name:8:1}/${name#*-}/${name#*-}-$version-py3-none-any.whl
+    https://files.pythonhosted.org/packages/py3/p/pip/pip-$version-py3-none-any.whl
 )
 
 pkg_build() {
-    wheel="$SRC/${name#*-}-$version-py3-none-any.whl"
+    local wheel="$SRC/pip-$version-py3-none-any.whl"
+    local pyver
+
+    pyver=$(/usr/bin/python3 -c \
+        'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")') || return 1
 
     PYTHONPATH="$wheel" \
         /usr/bin/python3 -m pip install \
@@ -22,19 +26,21 @@ pkg_build() {
         --ignore-installed \
         --prefix=/usr \
         --root="$PKG" \
-        "$wheel"
+        "$wheel" || return 1
 
-    # Keep pip, pip3, and the versioned pip command for compatibility.
+    # Byte-compile for the active Python version.
+    local sitepkg="$PKG/usr/lib/python${pyver}/site-packages"
 
-    # Byte-compile after installation.
+    [ -d "$sitepkg" ] || return 1
+
     /usr/bin/python3 -m compileall \
         -q \
         -f \
-        -d /usr/lib/python${PYTHON_VERSION:-3.14}/site-packages \
-        "$PKG/usr/lib/python3.14/site-packages"
+        -d "/usr/lib/python${pyver}/site-packages" \
+        "$sitepkg" || return 1
 
     # Ensure packaged Python files are not group/world writable.
-    find "$PKG/usr/lib/python"*"/site-packages" \
+    find "$sitepkg" \
         -type f \
-        -exec chmod go-w '{}' +
+        -exec chmod go-w '{}' + || return 1
 }

@@ -4,8 +4,8 @@
 # Depends on: libxcvt pixman xorg-fonts xkeyboard-config libepoxy libtirpc libinput systemd xorg-apps
 
 name=xorg-server
-version=21.1.25
-release=3
+version=21.1.26
+release=1
 source=(https://xorg.freedesktop.org/archive/individual/xserver/$name-$version.tar.xz
 xorg-server-21.1.25-tearfree_backport-1.patch)
 
