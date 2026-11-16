@@ -4,6 +4,6 @@
 # Depends on: libfm-qt kwindowsystem xdg-desktop-portal
 
 name=xdg-desktop-portal-lxqt
-version=1.4.0
-release=2
+version=1.5.0
+release=1
 source=(https://github.com/lxqt/${name}/releases/download/${version}/${name}-${version}.tar.xz)

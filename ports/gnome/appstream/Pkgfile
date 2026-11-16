@@ -3,7 +3,7 @@
 # Depends on: curl itstool libxml2 libxmlb libyaml libfyaml docbook-xsl-nons
 
 name=appstream
-version=1.2.1
+version=1.2.3
 release=1
 source=(https://www.freedesktop.org/software/${name}/releases/AppStream-${version}.tar.xz)
 
